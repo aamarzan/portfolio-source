@@ -221,7 +221,7 @@ window.addEventListener('load', () => {
     // If the animation has NOT been played, run the sequence
     const welcomeText = document.getElementById('welcome-text');
     const identity = document.getElementById('identity-container');
-    const exploreText = document.getElementById('explore-text');
+    //const exploreText = document.getElementById('explore-text');
 
     if (preloader) {
         // Step 1: Add a class to start the CSS animations
@@ -234,7 +234,7 @@ window.addEventListener('load', () => {
             
             // Step 3: Set a flag to remember the animation has played
             sessionStorage.setItem('animationPlayed', 'true');
-        }, 11000); // 11000ms = 11 seconds
+        }, 8000); // 8000ms = 8 seconds
     } else {
         body.classList.add('loaded');
     }
