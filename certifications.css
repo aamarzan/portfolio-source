@@ -2,7 +2,7 @@
 .certifications-cover {
     height: 50vh;
     width: auto; 
-    background-image: url('media/certifications/image/cover (cropped).jpg'); /* You can change this image path later */
+    background-image: url('media/certification/image/cover (cropped).jpg'); /* You can change this image path later */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -75,7 +75,7 @@
 @media (max-width: 768px) {
     .certifications-cover {
         /* CORRECTED: This sets the new background image specifically for mobile */
-        background-image: url('media/certifications/image/cover.jpg');
+        background-image: url('media/certification/image/cover.jpg');
         height: auto; /* Let the aspect ratio control the height */
         aspect-ratio: 14 / 9; /* Sets the exact 16:9 ratio */
         background-attachment: scroll;
