@@ -55,6 +55,7 @@ body.mirna-page main .mirna-container header p {
 body.mirna-page .tabs {
     display: flex;
     justify-content: center;
+    gap: 12px;
     margin-bottom: 20px;
     border-bottom: 2px solid #ddd;
 }
@@ -62,7 +63,7 @@ body.mirna-page .tabs {
 /* Restored original tab button style */
 body.mirna-page .tab-btn {
     flex: 0 0 auto; /* don’t stretch */
-    min-width: 300px; /* adjust to taste */
+    min-width: 280px; /* adjust to taste */
     padding: 12px; /* slightly smaller padding */
     cursor: pointer;
     border-radius: 5px;
