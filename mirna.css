@@ -1,10 +1,7 @@
 /* Ultra-premium design with minimal light gradient + glassmorphism */
 
-/* Background: white to light sky blue diagonal animation */
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
+/* Page background (scoped) */
+body.mirna-page {
     color: #333;
     background: linear-gradient(135deg, #ffffff, #e3f2fd);
     background-size: 400% 400%;
@@ -19,19 +16,8 @@ body {
     100% { background-position: 0% 0%; }
 }
 
-/* Remove glassmorphism only from the header's container */
-#main-header .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    background: none;
-    backdrop-filter: none;
-    box-shadow: none;
-}
-
-
-/* Glassmorphic container */
-.container {
+/* Main content container only */
+body.mirna-page main .container {
     max-width: 1000px;
     margin: 40px auto;
     padding: 40px;
@@ -48,30 +34,30 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header */
-header {
+/* Page title & description */
+body.mirna-page main header {
     text-align: center;
     margin-bottom: 30px;
 }
-header h1 {
+body.mirna-page main header h1 {
     font-size: 2.2rem;
     font-weight: 800;
     margin-bottom: 10px;
     color: #0d47a1;
 }
-header p {
+body.mirna-page main header p {
     font-size: 1rem;
     color: #444;
 }
 
 /* Tabs Navigation */
-.tabs {
+body.mirna-page .tabs {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
     border-bottom: 2px solid #ddd;
 }
-.tab-btn {
+body.mirna-page .tab-btn {
     flex: 1;
     padding: 14px;
     cursor: pointer;
@@ -81,33 +67,34 @@ header p {
     transition: all 0.3s ease;
     color: #555;
 }
-.tab-btn.active {
+body.mirna-page .tab-btn.active {
     color: #0d47a1;
     border-bottom: 3px solid #0d47a1;
 }
-.tab-btn:hover {
+body.mirna-page .tab-btn:hover {
     color: #1565c0;
 }
 
 /* Card Style */
-.card {
+body.mirna-page .card {
     display: none;
     padding: 20px;
     animation: fadeIn 0.8s ease;
 }
-.card.active {
+body.mirna-page .card.active {
     display: block;
 }
 
 /* Inputs */
-label {
+body.mirna-page label {
     display: block;
     margin-bottom: 6px;
     font-weight: 600;
     color: #333;
 }
-
-textarea, input[type="number"], input[type="file"] {
+body.mirna-page textarea,
+body.mirna-page input[type="number"],
+body.mirna-page input[type="file"] {
     width: 100%;
     padding: 14px;
     border-radius: 12px;
@@ -119,15 +106,14 @@ textarea, input[type="number"], input[type="file"] {
     background: rgba(255, 255, 255, 0.7);
     transition: all 0.4s ease;
 }
-
-/* Hover glow on input */
-textarea:focus, input:focus {
+body.mirna-page textarea:focus,
+body.mirna-page input:focus {
     box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
     border-color: #2196f3;
 }
 
 /* Prediction Button */
-button {
+body.mirna-page button {
     display: block;
     width: 100%;
     padding: 14px;
@@ -142,21 +128,18 @@ button {
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
-
-/* Gradient animation for button */
 @keyframes blackBlueShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-
-button:hover {
+body.mirna-page button:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
 /* Loader */
-#loader {
+body.mirna-page #loader {
     text-align: center;
     padding: 20px;
     font-style: italic;
@@ -164,10 +147,10 @@ button:hover {
 }
 
 /* Results */
-#results-area {
+body.mirna-page #results-area {
     margin-top: 30px;
 }
-table {
+body.mirna-page table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
@@ -175,21 +158,21 @@ table {
     border-radius: 12px;
     overflow: hidden;
 }
-th, td {
+body.mirna-page th, body.mirna-page td {
     padding: 14px;
     text-align: center;
     border-bottom: 1px solid #ddd;
     color: #333;
 }
-thead {
+body.mirna-page thead {
     background: #e3f2fd;
 }
-tbody tr:nth-child(even) {
+body.mirna-page tbody tr:nth-child(even) {
     background: #f9f9f9;
 }
 
 /* Download button */
-#download-btn {
+body.mirna-page #download-btn {
     margin-top: 20px;
     padding: 12px;
     background: #0d47a1;
@@ -199,31 +182,22 @@ tbody tr:nth-child(even) {
     font-weight: 700;
     transition: all 0.3s ease;
 }
-#download-btn:hover {
+body.mirna-page #download-btn:hover {
     background: #1565c0;
     transform: translateY(-2px);
 }
 
-/* --- Force footer solid black on miRNA page --- */
-#main-footer {
-    background: #000 !important;  /* Override gradient bleed */
+/* Footer (scoped) */
+body.mirna-page #main-footer {
+    background: #000 !important;
     color: #ccc;
 }
-
-#main-footer .container {
-    background: none !important;  /* Remove glassmorphism inside footer */
+body.mirna-page #main-footer .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: none !important;
     backdrop-filter: none !important;
     box-shadow: none !important;
+    border-radius: 0;
 }
-
-/* Footer container should not use glassmorphism spacing */
-#main-footer .container {
-    max-width: 1200px;   /* matches your other pages */
-    margin: 0 auto;
-    padding: 20px;       /* reduced padding like homepage */
-    background: none;    /* remove glass background */
-    border-radius: 0;    /* remove rounded corners */
-    box-shadow: none;
-    backdrop-filter: none;
-}
-
