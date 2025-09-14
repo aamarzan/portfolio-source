@@ -198,7 +198,19 @@
 
     <!-- Fixed relative path from /mirna/ -->
     <audio id="click-sound" src="../media/sounds/click-sound.mp3" preload="auto"></audio>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const runBtn = document.querySelector('#prediction-form button[type="submit"]');
+        const clickSound = document.getElementById('click-sound');
 
+        if (runBtn && clickSound) {
+            runBtn.addEventListener('click', function () {
+                clickSound.currentTime = 0;
+                clickSound.play();
+            });
+        }
+    });
+    </script>
     <!-- Global/site scripts -->
     <script src="../script.js"></script>
     <!-- Page script -->

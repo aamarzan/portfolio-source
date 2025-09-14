@@ -43,7 +43,7 @@ body.mirna-page main .mirna-container header h1 {
     font-size: 2.2rem;
     font-weight: 800;
     margin-bottom: 10px;
-    color: #0d47a1;
+    color: #3d2e2fd1;
 }
 body.mirna-page main .mirna-container header p {
     font-size: 1rem;
@@ -57,22 +57,28 @@ body.mirna-page .tabs {
     margin-bottom: 20px;
     border-bottom: 2px solid #ddd;
 }
+
+/* Restored original tab button style */
 body.mirna-page .tab-btn {
     flex: 1;
     padding: 14px;
     cursor: pointer;
-    border: none;
-    background: none;
+    border-radius: 5px;
+    background: #fff;
+    color: var(--button-default-blue);
+    border: 2px solid var(--button-default-blue);
     font-weight: 600;
-    transition: all 0.3s ease;
-    color: #555;
+    transition: background-color 0.3s, color 0.3s;
+    animation: none;
 }
 body.mirna-page .tab-btn.active {
-    color: #0d47a1;
-    border-bottom: 3px solid #0d47a1;
+    background-color: var(--button-default-blue);
+    color: #fff;
+    border-bottom: none;
 }
 body.mirna-page .tab-btn:hover {
-    color: #1565c0;
+    background-color: var(--button-default-blue);
+    color: #fff;
 }
 
 /* Card Style */
@@ -112,8 +118,8 @@ body.mirna-page input:focus {
     border-color: #2196f3;
 }
 
-/* Prediction Button */
-body.mirna-page main .mirna-container button {
+/* Run Prediction Button (unchanged gradient style) */
+body.mirna-page main .mirna-container button[type="submit"] {
     display: block;
     width: 100%;
     padding: 14px;
@@ -133,7 +139,7 @@ body.mirna-page main .mirna-container button {
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-body.mirna-page main .mirna-container button:hover {
+body.mirna-page main .mirna-container button[type="submit"]:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
