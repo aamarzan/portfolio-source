@@ -48,6 +48,7 @@ body.mirna-page main .mirna-container header h1 {
 body.mirna-page main .mirna-container header p {
     font-size: 1rem;
     color: #444;
+    text-align: center;
 }
 
 /* Tabs Navigation */
@@ -60,13 +61,14 @@ body.mirna-page .tabs {
 
 /* Restored original tab button style */
 body.mirna-page .tab-btn {
-    flex: 1;
-    padding: 14px;
+    flex: 0 0 auto; /* don’t stretch */
+    min-width: 300px; /* adjust to taste */
+    padding: 12px; /* slightly smaller padding */
     cursor: pointer;
     border-radius: 5px;
     background: #fff;
     color: var(--button-default-blue);
-    border: 2px solid var(--button-default-blue);
+    border: 1px solid var(--button-default-blue);
     font-weight: 600;
     transition: background-color 0.3s, color 0.3s;
     animation: none;
