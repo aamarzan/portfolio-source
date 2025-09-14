@@ -1,6 +1,8 @@
-/* Ultra-premium design with minimal light gradient + glassmorphism */
+/* ===========================
+   miRNA Page Styles (Scoped)
+   =========================== */
 
-/* Page background (scoped) */
+/* Background animation for miRNA page only */
 body.mirna-page {
     color: #333;
     background: linear-gradient(135deg, #ffffff, #e3f2fd);
@@ -9,15 +11,14 @@ body.mirna-page {
     line-height: 1.6;
 }
 
-/* Slow gradient background animation */
 @keyframes subtleSky {
     0% { background-position: 0% 0%; }
     50% { background-position: 100% 100%; }
     100% { background-position: 0% 0%; }
 }
 
-/* Main content container only */
-body.mirna-page main .container {
+/* Main content container (inside <main>) */
+body.mirna-page main .mirna-container {
     max-width: 1000px;
     margin: 40px auto;
     padding: 40px;
@@ -28,24 +29,23 @@ body.mirna-page main .container {
     animation: fadeIn 1.2s ease forwards;
 }
 
-/* Fade-in effect */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 /* Page title & description */
-body.mirna-page main header {
+body.mirna-page main .mirna-container header {
     text-align: center;
     margin-bottom: 30px;
 }
-body.mirna-page main header h1 {
+body.mirna-page main .mirna-container header h1 {
     font-size: 2.2rem;
     font-weight: 800;
     margin-bottom: 10px;
     color: #0d47a1;
 }
-body.mirna-page main header p {
+body.mirna-page main .mirna-container header p {
     font-size: 1rem;
     color: #444;
 }
@@ -113,7 +113,7 @@ body.mirna-page input:focus {
 }
 
 /* Prediction Button */
-body.mirna-page button {
+body.mirna-page main .mirna-container button {
     display: block;
     width: 100%;
     padding: 14px;
@@ -133,7 +133,7 @@ body.mirna-page button {
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-body.mirna-page button:hover {
+body.mirna-page main .mirna-container button:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
