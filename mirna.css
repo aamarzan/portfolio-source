@@ -19,6 +19,15 @@ body {
     100% { background-position: 0% 0%; }
 }
 
+/* Remove glassmorphism only from the header's container */
+#main-header .container {
+    background: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    padding: 0; /* optional: match your other pages' header spacing */
+}
+
+
 /* Glassmorphic container */
 .container {
     max-width: 1000px;
