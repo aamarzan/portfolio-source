@@ -52,6 +52,9 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: {
+                "X-API-Key": API_KEY
+            },
             body: formData
         });
 
