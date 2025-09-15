@@ -231,9 +231,13 @@ def predict():
         competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
 
         results = []
-        
+        for primary_record in SeqIO.parse(io.StringIO(fasta_string), "fasta"):
+            primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
+
+        # --- Normalize to dict if tuple ---
         def ensure_dict(data):
             if isinstance(data, tuple):
+                # Assume tuple like (id, sequence) or similar
                 return {
                     "sequence": data[1] if len(data) > 1 else "",
                     "gc_content": 0.0,
@@ -241,11 +245,7 @@ def predict():
                     "conservation": 0.0
                 }
             return data
-        
-        for primary_record in SeqIO.parse(io.StringIO(fasta_string), "fasta"):
-            primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
 
-        # Normalize all
         primary_processed = ensure_dict(primary_processed)
         target_processed = ensure_dict(target_processed)
         competitor_processed = ensure_dict(competitor_processed)

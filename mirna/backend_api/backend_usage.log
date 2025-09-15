@@ -259,3 +259,37 @@ AttributeError: 'tuple' object has no attribute 'get'
 
 2025-09-16 00:02:09,433 | WARNING |  * Debugger is active!
 2025-09-16 00:02:09,435 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 00:03:41,136 | INFO | 127.0.0.1 - - [16/Sep/2025 00:03:41] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:03:55,250 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 14.08s
+2025-09-16 00:03:55,479 | INFO | 127.0.0.1 - - [16/Sep/2025 00:03:55] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:04:38,835 | INFO | 127.0.0.1 - - [16/Sep/2025 00:04:38] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:04:53,308 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 14.35s
+2025-09-16 00:04:53,571 | INFO | 127.0.0.1 - - [16/Sep/2025 00:04:53] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:05:21,621 | INFO | 127.0.0.1 - - [16/Sep/2025 00:05:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:05:35,036 | INFO | Prediction success | miRNA: cel-lin-4 | Duration: 13.29s
+2025-09-16 00:05:35,309 | INFO | 127.0.0.1 - - [16/Sep/2025 00:05:35] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:06:19,763 | INFO | 127.0.0.1 - - [16/Sep/2025 00:06:19] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:06:34,771 | INFO | Prediction success | miRNA: cel-mir-34 | Duration: 14.95s
+2025-09-16 00:06:35,034 | INFO | 127.0.0.1 - - [16/Sep/2025 00:06:35] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:33:49,616 | INFO | 127.0.0.1 - - [16/Sep/2025 00:33:49] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:35:10,579 | INFO | Prediction success | miRNA: cel-mir-34 | Duration: 80.79s
+2025-09-16 00:35:10,943 | INFO | 127.0.0.1 - - [16/Sep/2025 00:35:10] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:43:03,401 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 00:43:05,683 | INFO |  * Restarting with stat
+2025-09-16 00:43:48,386 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 00:43:49,016 | WARNING |  * Debugger is active!
+2025-09-16 00:43:49,027 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 00:45:21,109 | INFO | 127.0.0.1 - - [16/Sep/2025 00:45:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:45:53,206 | INFO | Prediction success | miRNA: cel-mir-37 | Duration: 32.04s
+2025-09-16 00:45:53,600 | INFO | 127.0.0.1 - - [16/Sep/2025 00:45:53] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:47:04,450 | INFO | 127.0.0.1 - - [16/Sep/2025 00:47:04] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 00:47:34,092 | INFO | Prediction success | miRNA: cel-mir-37 | Duration: 29.61s
+2025-09-16 00:47:34,403 | INFO | 127.0.0.1 - - [16/Sep/2025 00:47:34] "POST /predict HTTP/1.1" 200 -
+2025-09-16 00:50:16,930 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 00:50:18,251 | INFO |  * Restarting with stat
+2025-09-16 00:50:26,659 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 00:50:26,976 | WARNING |  * Debugger is active!
+2025-09-16 00:50:26,979 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 00:56:39,418 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
