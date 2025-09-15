@@ -419,3 +419,8 @@ subprocess.TimeoutExpired: Command '['RNAfold']' timed out after 60 seconds
 2025-09-16 01:55:01,431 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 11.82s
 2025-09-16 01:55:01,586 | INFO | 127.0.0.1 - - [16/Sep/2025 01:55:01] "POST /predict HTTP/1.1" 200 -
 2025-09-16 02:10:14,847 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 02:10:17,545 | INFO |  * Restarting with stat
+2025-09-16 02:10:27,725 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 02:10:28,317 | WARNING |  * Debugger is active!
+2025-09-16 02:10:28,320 | INFO |  * Debugger PIN: 819-598-734
