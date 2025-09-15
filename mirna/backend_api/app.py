@@ -216,20 +216,16 @@ def predict():
         from Bio import SeqIO
         import io
 
-        fasta_string = request.form.get('primary_molecules')
-        target_seq = request.form.get('target_molecule')
+        fasta_string = request.form.get('primary_molecules', '')
+        target_seq = request.form.get('target_molecule', '')
         competitor_seq = request.form.get('competitor_molecule', '')
 
-        if not all([fasta_string, target_seq]):
+        if not fasta_string.strip() or not target_seq.strip():
             logging.warning("Missing required sequences in request.")
             send_ga_event("prediction_error", {"reason": "missing_sequences"})
             return jsonify({"error": "miRNA and Target sequences are required."}), 400
 
-        # Process shared molecules (target and competitor) once
-        target_processed = process_molecule_universal((("target", target_seq), {}, 'target_molecule'))
-        competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
-
-        # Normalize to dict if the processor returns a tuple in edge cases
+        # Helpers
         def ensure_dict(data):
             if isinstance(data, tuple):
                 return {
@@ -242,18 +238,55 @@ def predict():
                 }
             return data
 
-        target_processed = ensure_dict(target_processed)
-        competitor_processed = ensure_dict(competitor_processed)
+        def parse_single_fasta_or_raw(seq_text, default_id):
+            # Try FASTA parse
+            recs = list(SeqIO.parse(io.StringIO(seq_text), "fasta"))
+            if len(recs) == 1:
+                return recs[0].id, str(recs[0].seq)
+            if len(recs) > 1:
+                return None  # signal multi
+            # Fallback: treat as raw string
+            raw = seq_text.strip()
+            if raw:
+                return default_id, raw
+            return default_id, ""  # empty
 
-        # Parse all FASTA records
+        # Validate target: must be exactly one sequence (FASTA or raw)
+        target_parsed = parse_single_fasta_or_raw(target_seq, "target")
+        if target_parsed is None:
+            return jsonify({"error": "Please enter only one target sequence."}), 400
+        target_id, target_str = target_parsed
+        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
+        target_processed = ensure_dict(target_processed)
+
+        # Validate competitor: allow none or exactly one sequence
+        competitor_processed = {'sequence': ''}
+        if competitor_seq.strip():
+            competitor_parsed = parse_single_fasta_or_raw(competitor_seq, "competitor")
+            if competitor_parsed is None:
+                return jsonify({"error": "Please enter only one competitor sequence."}), 400
+            comp_id, comp_str = competitor_parsed
+            competitor_processed = process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule'))
+            competitor_processed = ensure_dict(competitor_processed)
+
+        # Parse all primary miRNAs (FASTA); also accept raw multi-line by wrapping lines as single FASTA
         records = list(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
+        if not records:
+            # If user pasted raw lines without headers, create a single pseudo-record
+            raw = fasta_string.strip()
+            if raw:
+                records = [type('R', (), {'id': 'primary_1', 'seq': raw})()]
         if not records:
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
 
         results = []
         for primary_record in records:
-            primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
+            # Support both SeqRecord and pseudo-record
+            pri_id = getattr(primary_record, 'id', 'primary')
+            pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
+
+            primary_processed = process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule'))
             primary_processed = ensure_dict(primary_processed)
 
             # Baseline (no competitor)
@@ -261,28 +294,29 @@ def predict():
             pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
             pred_no_comp = float(np.square(pred_no_comp_transformed))
 
-            # With competitor (only if a competitor sequence was provided)
-            if competitor_seq and competitor_seq.strip():
+            # With competitor (only if a valid competitor sequence was provided)
+            if competitor_processed.get('sequence', '').strip():
                 inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
                 pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
                 pred_with_comp = float(np.square(pred_with_comp_transformed))
-                comp_effect = float(pred_no_comp - pred_with_comp)
             else:
-                # No competitor provided; mirror baseline and set effect to 0.0
                 pred_with_comp = pred_no_comp
-                comp_effect = 0.0
+
+            comp_effect = float(pred_no_comp - pred_with_comp)
 
             results.append({
-                "mirna_id": primary_record.id,
-                "predicted_affinity_baseline": pred_no_comp,
-                "predicted_affinity_with_competitor": pred_with_comp,
-                "competitive_effect (higher_is_better)": comp_effect
+                # Keep both keys for backward compatibility with your frontend
+                'primary_molecule_id': pri_id,
+                'mirna_id': pri_id,
+                'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
+                'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
+                'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
             })
 
             # Per-record logging and GA
             duration = (datetime.now() - start_time).total_seconds()
-            logging.info(f"Prediction success | miRNA: {primary_record.id} | Duration: {duration:.2f}s")
-            send_ga_event("prediction", {"mirna_id": primary_record.id, "duration_sec": duration})
+            logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
+            send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
 
         return jsonify(results)
 
@@ -290,6 +324,7 @@ def predict():
         logging.exception(f"Prediction error: {e}")
         send_ga_event("prediction_error", {"exception": str(e)[:200]})
         return jsonify({"error": "An internal server error occurred."}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
