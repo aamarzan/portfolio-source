@@ -323,3 +323,99 @@ AttributeError: 'tuple' object has no attribute 'get'
 2025-09-16 01:12:03,045 | WARNING |  * Debugger is active!
 2025-09-16 01:12:03,048 | INFO |  * Debugger PIN: 819-598-734
 2025-09-16 01:12:46,536 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 01:12:47,500 | INFO |  * Restarting with stat
+2025-09-16 01:12:55,741 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 01:12:56,076 | WARNING |  * Debugger is active!
+2025-09-16 01:12:56,078 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 01:13:29,716 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 01:13:30,716 | INFO |  * Restarting with stat
+2025-09-16 01:13:37,401 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 01:13:37,713 | WARNING |  * Debugger is active!
+2025-09-16 01:13:37,715 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 01:15:00,872 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 01:15:01,255 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-16 01:15:01,255 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-16 01:15:01,261 | INFO |  * Restarting with stat
+2025-09-16 01:15:09,402 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 01:15:09,788 | WARNING |  * Debugger is active!
+2025-09-16 01:15:09,791 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 01:16:17,045 | INFO | 127.0.0.1 - - [16/Sep/2025 01:16:17] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:17:34,652 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 77.56s
+2025-09-16 01:17:35,682 | INFO | Prediction success | miRNA: cel-lin-4 | Duration: 78.59s
+2025-09-16 01:17:36,564 | INFO | Prediction success | miRNA: cel-mir-1 | Duration: 79.47s
+2025-09-16 01:17:38,578 | WARNING | Failed to send GA event: HTTPSConnectionPool(host='www.google-analytics.com', port=443): Max retries exceeded with url: /mp/collect?measurement_id=G-XXXXXXX&api_secret=your_secret (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x00000282DBEA9CD0>, 'Connection to www.google-analytics.com timed out. (connect timeout=2)'))
+2025-09-16 01:17:39,289 | INFO | Prediction success | miRNA: cel-mir-2 | Duration: 82.20s
+2025-09-16 01:17:40,433 | INFO | Prediction success | miRNA: cel-mir-34 | Duration: 83.34s
+2025-09-16 01:17:41,319 | INFO | Prediction success | miRNA: cel-mir-35 | Duration: 84.23s
+2025-09-16 01:17:42,207 | INFO | Prediction success | miRNA: cel-mir-36 | Duration: 85.12s
+2025-09-16 01:17:43,149 | INFO | Prediction success | miRNA: cel-mir-37 | Duration: 86.06s
+2025-09-16 01:17:43,348 | INFO | 127.0.0.1 - - [16/Sep/2025 01:17:43] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:18:52,267 | INFO | 127.0.0.1 - - [16/Sep/2025 01:18:52] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:19:23,424 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 31.13s
+2025-09-16 01:19:23,593 | INFO | 127.0.0.1 - - [16/Sep/2025 01:19:23] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:20:20,458 | INFO | 127.0.0.1 - - [16/Sep/2025 01:20:20] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:21:50,786 | ERROR | Prediction error: Command '['RNAfold']' timed out after 60 seconds
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 230, in predict
+    competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 343, in process_molecule_universal
+    structural_features_1d = predict_rna_structure_1d(nt_sequence)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 115, in predict_rna_structure_1d
+    result = subprocess.run(
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 552, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1211, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1632, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['RNAfold']' timed out after 60 seconds
+2025-09-16 01:21:51,090 | INFO | 127.0.0.1 - - [16/Sep/2025 01:21:51] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 01:25:07,117 | INFO | 127.0.0.1 - - [16/Sep/2025 01:25:07] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:25:44,687 | WARNING | No FASTA records parsed from primary_molecules.
+2025-09-16 01:25:44,689 | INFO | 127.0.0.1 - - [16/Sep/2025 01:25:44] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-16 01:26:24,962 | INFO | 127.0.0.1 - - [16/Sep/2025 01:26:24] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:27:01,826 | WARNING | No FASTA records parsed from primary_molecules.
+2025-09-16 01:27:01,827 | INFO | 127.0.0.1 - - [16/Sep/2025 01:27:01] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-16 01:28:17,092 | INFO | 127.0.0.1 - - [16/Sep/2025 01:28:17] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:29:41,895 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 84.77s
+2025-09-16 01:29:42,112 | INFO | 127.0.0.1 - - [16/Sep/2025 01:29:42] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:30:29,113 | INFO | 127.0.0.1 - - [16/Sep/2025 01:30:29] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:31:49,701 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 80.50s
+2025-09-16 01:31:49,945 | INFO | 127.0.0.1 - - [16/Sep/2025 01:31:49] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:32:54,548 | INFO | 127.0.0.1 - - [16/Sep/2025 01:32:54] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:33:24,186 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 29.58s
+2025-09-16 01:33:24,378 | INFO | 127.0.0.1 - - [16/Sep/2025 01:33:24] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:36:03,088 | INFO | 127.0.0.1 - - [16/Sep/2025 01:36:03] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:36:14,524 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 11.40s
+2025-09-16 01:36:14,741 | INFO | 127.0.0.1 - - [16/Sep/2025 01:36:14] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:38:00,860 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:00] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:38:08,310 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:08] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:38:16,726 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 15.84s
+2025-09-16 01:38:17,349 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:17] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:38:22,701 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:22] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:38:24,465 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 16.06s
+2025-09-16 01:38:24,672 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:24] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:38:34,400 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 11.64s
+2025-09-16 01:38:34,613 | INFO | 127.0.0.1 - - [16/Sep/2025 01:38:34] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:41:31,510 | INFO | 127.0.0.1 - - [16/Sep/2025 01:41:31] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:41:42,673 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 11.13s
+2025-09-16 01:41:42,861 | INFO | 127.0.0.1 - - [16/Sep/2025 01:41:42] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:54:27,775 | INFO | 127.0.0.1 - - [16/Sep/2025 01:54:27] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:54:48,832 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 21.01s
+2025-09-16 01:54:49,041 | INFO | 127.0.0.1 - - [16/Sep/2025 01:54:49] "POST /predict HTTP/1.1" 200 -
+2025-09-16 01:54:49,577 | INFO | 127.0.0.1 - - [16/Sep/2025 01:54:49] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 01:55:01,431 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 11.82s
+2025-09-16 01:55:01,586 | INFO | 127.0.0.1 - - [16/Sep/2025 01:55:01] "POST /predict HTTP/1.1" 200 -
+2025-09-16 02:10:14,847 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
