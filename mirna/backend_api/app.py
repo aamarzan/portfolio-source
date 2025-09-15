@@ -226,11 +226,28 @@ def predict():
             send_ga_event("prediction_error", {"reason": "missing_sequences"})
             return jsonify({"error": "miRNA and Target sequences are required."}), 400
 
+        # Process molecules
         target_processed = process_molecule_universal((("target", target_seq), {}, 'target_molecule'))
         competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
 
         primary_record = next(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
         primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
+
+        # --- Normalize to dict if tuple ---
+        def ensure_dict(data):
+            if isinstance(data, tuple):
+                # Assume tuple like (id, sequence) or similar
+                return {
+                    "sequence": data[1] if len(data) > 1 else "",
+                    "gc_content": 0.0,
+                    "dg": 0.0,
+                    "conservation": 0.0
+                }
+            return data
+
+        primary_processed = ensure_dict(primary_processed)
+        target_processed = ensure_dict(target_processed)
+        competitor_processed = ensure_dict(competitor_processed)
 
         # Predictions
         inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
