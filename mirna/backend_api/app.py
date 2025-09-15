@@ -10,26 +10,26 @@ from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import load_model
 import joblib
 from spektral.layers import GCSConv
+import logging
+from datetime import datetime
+import requests  # For GA4 Measurement Protocol
 
 # Import from your project's own final scripts
 from molecule_processors import process_molecule_universal
 
-import logging
-from datetime import datetime
-import requests  # NEW: for GA4 Measurement Protocol
+# =========================
+# Configuration
+# =========================
+API_KEY = os.getenv("API_KEY", "supersecret123")
 
-# =========================
 # Google Analytics (GA4) Measurement Protocol
-# =========================
-# Replace with your real values (or load from environment variables for security)
-GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-2YNVQSMXTM")
-GA_API_SECRET = os.getenv("GA_API_SECRET", "1bmox9EpRBq1Sf3T5Qn6NA")
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
+GA_API_SECRET = os.getenv("GA_API_SECRET", "your_secret")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
 
 def send_ga_event(event_name, params):
     """Send a custom event to Google Analytics 4 via Measurement Protocol."""
     try:
-        # client_id is required; can be any stable identifier for backend
         payload = {
             "client_id": "backend_server",
             "events": [{
@@ -38,30 +38,37 @@ def send_ga_event(event_name, params):
             }]
         }
         r = requests.post(GA_URL, json=payload, timeout=2)
-        # GA returns 204 No Content on success
         if r.status_code != 204:
             logging.warning(f"GA event status {r.status_code}: {r.text}")
     except Exception as e:
         logging.warning(f"Failed to send GA event: {e}")
 
-# Configure logging
+# =========================
+# Logging setup
+# =========================
 logging.basicConfig(
     filename='backend_usage.log',
     level=logging.INFO,
     format='%(asctime)s | %(levelname)s | %(message)s'
 )
 
-# --- Initial Setup ---
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-warnings.filterwarnings(action='ignore', category=UserWarning)
-
+# =========================
+# Flask app setup
+# =========================
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = 'temp_uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# API key protection middleware
+@app.before_request
+def require_api_key():
+    if request.endpoint == 'predict':
+        key = request.headers.get("X-API-Key")
+        if key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
 
-# --- CUSTOM OBJECTS DEFINITIONS ---
+# =========================
+# TensorFlow custom objects
+# =========================
 class PositionalEncoding(Layer):
     def __init__(self, max_len, embed_dim, **kwargs):
         super(PositionalEncoding, self).__init__(**kwargs)
@@ -96,8 +103,10 @@ def create_weighted_mse(pos_weight=5.0, threshold=0.1):
         return mse * weights
     return weighted_mse
 
-# --- Load Model and Scaler at Startup ---
-MODELS_DIR = 'model_files'  # updated to match your folder name
+# =========================
+# Load Model and Scaler
+# =========================
+MODELS_DIR = 'model_files'
 model = None
 scaler = None
 
@@ -110,10 +119,9 @@ try:
         'GCSConv': GCSConv
     }
 
-    model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')  # updated filename
+    model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')
     scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
 
-    # Debug: print absolute paths being used
     print(f"Looking for model at: {os.path.abspath(model_path)}")
     print(f"Looking for scaler at: {os.path.abspath(scaler_path)}")
 
@@ -126,6 +134,9 @@ try:
 except Exception as e:
     print(f"FATAL: Could not load model or scaler on startup. Error: {e}")
 
+# =========================
+# Helper functions
+# =========================
 def one_hot_encode_sequence(sequence, max_len):
     nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
     encoded_seq = np.zeros((max_len, len(nucleotide_map)), dtype=np.float32)
@@ -134,7 +145,6 @@ def one_hot_encode_sequence(sequence, max_len):
     return encoded_seq
 
 def prepare_web_input(primary_data, target_data, competitor_data, scaler, model):
-    """Prepares the input dictionary required by the loaded Keras model."""
     model_inputs = {inp.name: inp.shape for inp in model.inputs}
     max_primary_len = model_inputs['primary_sequence_input'][1]
     max_target_len = model_inputs['target_sequence_input'][1]
@@ -172,11 +182,13 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
 
     return inputs
 
+# =========================
+# Routes
+# =========================
 @app.route('/predict', methods=['POST'])
 def predict():
     if not model or not scaler:
         logging.error("Prediction attempted but model/scaler not loaded.")
-        # GA: model not ready
         send_ga_event("prediction_error", {"reason": "model_not_loaded"})
         return jsonify({"error": "Model or scaler is not available on the server."}), 500
 
@@ -195,7 +207,6 @@ def predict():
             send_ga_event("prediction_error", {"reason": "missing_sequences"})
             return jsonify({"error": "miRNA and Target sequences are required."}), 400
 
-        # Process molecules
         target_processed = process_molecule_universal((("target", target_seq), {}, 'target_molecule'))
         competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
 
