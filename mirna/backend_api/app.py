@@ -4,7 +4,8 @@ import json
 import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-CORS(app, origins=["https://aamarzan.com"])
+app = Flask(__name__)
+CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"])
 from werkzeug.utils import secure_filename
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
