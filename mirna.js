@@ -7,12 +7,13 @@ let predictionResults = [];
 // Local backend for development:
 const LOCAL_API = "http://127.0.0.1:8080/predict";
 // Production backend (replace with your deployed URL when ready):
-const PROD_API = "https://aamarzan-miRNA-affinity.hf.space/predict";
+const PROD_API = "https://mirna.aamarzan.com/predict";
 
 // Automatically choose based on where the page is running
 const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? LOCAL_API
     : PROD_API;
+const API_KEY = "supersecret123";
 
 document.getElementById('prediction-form').addEventListener('submit', async function(event) {
     event.preventDefault();
