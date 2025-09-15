@@ -88,3 +88,19 @@
 
 2025-09-15 22:42:40,534 | WARNING |  * Debugger is active!
 2025-09-15 22:42:40,542 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 22:43:16,638 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-15 22:43:17,488 | INFO |  * Restarting with stat
+2025-09-15 22:43:24,708 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 22:43:25,048 | WARNING |  * Debugger is active!
+2025-09-15 22:43:25,050 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 22:45:09,126 | INFO | 127.0.0.1 - - [15/Sep/2025 22:45:09] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:47:52,845 | INFO | 127.0.0.1 - - [15/Sep/2025 22:47:52] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:49:19,506 | INFO | 127.0.0.1 - - [15/Sep/2025 22:49:19] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:50:45,459 | INFO | 127.0.0.1 - - [15/Sep/2025 22:50:45] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:50:58,882 | INFO | 127.0.0.1 - - [15/Sep/2025 22:50:58] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:51:16,575 | INFO | 127.0.0.1 - - [15/Sep/2025 22:51:16] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:53:22,560 | INFO | 127.0.0.1 - - [15/Sep/2025 22:53:22] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-09-15 22:53:22,844 | INFO | 127.0.0.1 - - [15/Sep/2025 22:53:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-09-15 22:53:31,850 | INFO | 127.0.0.1 - - [15/Sep/2025 22:53:31] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:54:30,056 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
