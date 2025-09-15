@@ -31,3 +31,37 @@
 
 2025-09-15 13:20:46,092 | WARNING |  * Debugger is active!
 2025-09-15 13:20:46,103 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 21:19:35,935 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 21:19:36,535 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-15 21:19:36,535 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-15 21:19:36,537 | INFO |  * Restarting with stat
+2025-09-15 21:19:44,028 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 21:19:44,357 | WARNING |  * Debugger is active!
+2025-09-15 21:19:44,360 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 21:21:42,117 | INFO | 127.0.0.1 - - [15/Sep/2025 21:21:42] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-09-15 21:21:42,587 | INFO | 127.0.0.1 - - [15/Sep/2025 21:21:42] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-09-15 21:22:15,816 | INFO | 127.0.0.1 - - [15/Sep/2025 21:22:15] "[33mGET / HTTP/1.1[0m" 404 -
+2025-09-15 21:31:57,459 | INFO | 127.0.0.1 - - [15/Sep/2025 21:31:57] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 21:32:14,605 | INFO | 127.0.0.1 - - [15/Sep/2025 21:32:14] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 21:35:30,507 | INFO | 127.0.0.1 - - [15/Sep/2025 21:35:30] "[31m[1mGET /predict HTTP/1.1[0m" 405 -
+2025-09-15 21:54:52,194 | INFO | 127.0.0.1 - - [15/Sep/2025 21:54:52] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 21:55:35,834 | INFO | 127.0.0.1 - - [15/Sep/2025 21:55:35] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 21:57:10,475 | WARNING | Missing required sequences in request.
+2025-09-15 21:57:10,865 | INFO | 127.0.0.1 - - [15/Sep/2025 21:57:10] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-15 21:58:14,044 | WARNING | Missing required sequences in request.
+2025-09-15 21:58:14,274 | INFO | 127.0.0.1 - - [15/Sep/2025 21:58:14] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-15 21:58:48,634 | WARNING | Missing required sequences in request.
+2025-09-15 21:58:48,876 | INFO | 127.0.0.1 - - [15/Sep/2025 21:58:48] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-15 22:03:38,088 | INFO | 127.0.0.1 - - [15/Sep/2025 22:03:38] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:18:41,941 | INFO | 127.0.0.1 - - [15/Sep/2025 22:18:41] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:19:19,532 | INFO | 127.0.0.1 - - [15/Sep/2025 22:19:19] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:20:28,014 | INFO | 127.0.0.1 - - [15/Sep/2025 22:20:28] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:22:12,759 | INFO | 127.0.0.1 - - [15/Sep/2025 22:22:12] "[31m[1mPOST /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:22:21,818 | INFO | 127.0.0.1 - - [15/Sep/2025 22:22:21] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:24:11,312 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-15 22:24:13,844 | INFO |  * Restarting with stat
