@@ -1,5 +1,6 @@
 import os
 import warnings
+import pandas as pd
 import json
 import numpy as np
 from flask import Flask, request, jsonify
@@ -160,9 +161,17 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
         primary_data.get('dg', 0.0),
         primary_data.get('conservation', 0.0)
     ]
+
+    # Pad with zeros if fewer features than scaler expects
     if len(num_features) < scaler.n_features_in_:
         num_features += [0.0] * (scaler.n_features_in_ - len(num_features))
-    scaled_numerical = scaler.transform([num_features])
+
+    # If scaler was trained with column names, preserve them
+    if hasattr(scaler, 'feature_names_in_'):
+        df_features = pd.DataFrame([num_features], columns=scaler.feature_names_in_)
+        scaled_numerical = scaler.transform(df_features)
+    else:
+        scaled_numerical = scaler.transform([num_features])
 
     inputs = {
         'primary_sequence_input': np.array([one_hot_encode_sequence(primary_data.get('sequence', ''), max_primary_len)]),
