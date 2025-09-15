@@ -1,7 +1,18 @@
-// script.js (Final Corrected Version)
+// mirna.js (Upgraded & Backend-Ready)
 
 // Global variable to hold results for the download function
 let predictionResults = [];
+
+// === CONFIGURE API BASE URL ===
+// Local backend for development:
+const LOCAL_API = "http://127.0.0.1:8080/predict";
+// Production backend (replace with your deployed URL when ready):
+const PROD_API = "https://aamarzan-miRNA-affinity.hf.space/predict";
+
+// Automatically choose based on where the page is running
+const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? LOCAL_API
+    : PROD_API;
 
 document.getElementById('prediction-form').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -9,10 +20,10 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     // UI elements
     const loader = document.getElementById('loader');
     const resultsContainer = document.getElementById('results-container');
-    
+
     // Switch to the results tab to show the loader
-    openTab(document.querySelector('button[onclick*="results-tab"]'), 'results-tab'); 
-    
+    openTab(document.querySelector('button[onclick*="results-tab"]'), 'results-tab');
+
     loader.classList.remove('hidden');
     resultsContainer.innerHTML = '';
     predictionResults = []; // Clear previous results
@@ -26,29 +37,30 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     formData.append('competitor_molecule', document.getElementById('competitor-seq').value);
     formData.append('target_start', document.getElementById('target-start').value);
     formData.append('target_end', document.getElementById('target-end').value);
-    
+
     // Get file objects from the inputs
     const mirnaFile = document.getElementById('mirna-file').files[0];
     const targetFile = document.getElementById('target-file').files[0];
     const competitorFile = document.getElementById('competitor-file').files[0];
-    
+
     // Append files only if they have been selected by the user
     if (mirnaFile) formData.append('mirna_3d_file', mirnaFile);
     if (targetFile) formData.append('target_3d_file', targetFile);
     if (competitorFile) formData.append('competitor_3d_file', competitorFile);
 
-    // --- THIS IS THE CORRECTED URL WITH THE /predict ENDPOINT ---
-    const API_URL = 'https://aamarzan-miRNA-affinity.hf.space/predict'; 
-
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            body: formData 
+            body: formData
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'A server error occurred.');
+            let errorMsg = 'A server error occurred.';
+            try {
+                const errorData = await response.json();
+                if (errorData.error) errorMsg = errorData.error;
+            } catch (_) {}
+            throw new Error(errorMsg);
         }
 
         const results = await response.json();
@@ -71,11 +83,16 @@ function displayResults(results) {
 
     let table = '<table><thead><tr><th>miRNA ID</th><th>Score (with Competitor)</th><th>Baseline Score</th><th>Competitive Effect</th></tr></thead><tbody>';
     results.forEach(item => {
+        // Match backend keys exactly
+        const withComp = item.predicted_affinity_with_competitor ?? item.score_with_competitor;
+        const baseline = item.predicted_affinity_baseline ?? item.baseline_score;
+        const compEffect = item["competitive_effect (higher_is_better)"] ?? item.competitive_effect;
+
         table += `<tr>
             <td>${item.mirna_id}</td>
-            <td>${item.score_with_competitor.toFixed(4)}</td>
-            <td>${item.baseline_score.toFixed(4)}</td>
-            <td>${item.competitive_effect.toFixed(4)}</td>
+            <td>${Number(withComp).toFixed(4)}</td>
+            <td>${Number(baseline).toFixed(4)}</td>
+            <td>${Number(compEffect).toFixed(4)}</td>
         </tr>`;
     });
     table += '</tbody></table>';
@@ -93,11 +110,15 @@ function downloadCSV() {
     const csvRows = [headers];
 
     predictionResults.forEach(item => {
+        const withComp = item.predicted_affinity_with_competitor ?? item.score_with_competitor;
+        const baseline = item.predicted_affinity_baseline ?? item.baseline_score;
+        const compEffect = item["competitive_effect (higher_is_better)"] ?? item.competitive_effect;
+
         const row = [
             item.mirna_id,
-            item.score_with_competitor.toFixed(4),
-            item.baseline_score.toFixed(4),
-            item.competitive_effect.toFixed(4)
+            Number(withComp).toFixed(4),
+            Number(baseline).toFixed(4),
+            Number(compEffect).toFixed(4)
         ];
         csvRows.push(row.join(','));
     });
@@ -113,7 +134,7 @@ function downloadCSV() {
     document.body.removeChild(a);
 }
 
-// Tabs function (Corrected to accept the button element itself)
+// Tabs function
 function openTab(element, tabId) {
     document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));

@@ -1,0 +1,14 @@
+flask
+flask-cors
+gunicorn
+tensorflow
+numpy
+pandas
+biopython
+safetensors
+spektral
+scikit-learn
+tqdm
+pyarrow
+joblib
+requests==2.32.3
