@@ -1,0 +1,177 @@
+# website code 
+
+import os
+import warnings
+import json
+import numpy as np
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+import tensorflow as tf
+from tensorflow.keras.layers import Layer
+from tensorflow.keras.models import load_model
+import joblib
+from spektral.layers import GCSConv
+
+# Import from your project's own final scripts
+from molecule_processors import process_molecule_universal
+
+# --- Initial Setup ---
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+warnings.filterwarnings(action='ignore', category=UserWarning)
+
+app = Flask(__name__)
+CORS(app)
+
+UPLOAD_FOLDER = 'temp_uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# --- CUSTOM OBJECTS DEFINITIONS (FROM YOUR s3_build_model.py) ---
+class PositionalEncoding(Layer):
+    def __init__(self, max_len, embed_dim, **kwargs):
+        super(PositionalEncoding, self).__init__(**kwargs)
+        self.max_len = max_len
+        self.embed_dim = embed_dim
+        self.pos_encoding = self.positional_encoding(max_len, embed_dim)
+    def get_config(self):
+        config = super().get_config()
+        config.update({"max_len": self.max_len, "embed_dim": self.embed_dim})
+        return config
+    def positional_encoding(self, max_len, embed_dim):
+        pos = np.arange(max_len)[:, np.newaxis]
+        i = np.arange(embed_dim)[np.newaxis, :]
+        angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(embed_dim))
+        angle_rads = pos * angle_rates
+        angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+        angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+        pos_encoding = angle_rads[np.newaxis, ...]
+        return tf.cast(pos_encoding, dtype=tf.float32)
+    def call(self, x):
+        seq_len = tf.shape(x)[1]
+        return x + self.pos_encoding[:, :seq_len, :]
+
+def create_weighted_mse(pos_weight=5.0, threshold=0.1):
+    def weighted_mse(y_true, y_pred):
+        mse_loss = tf.keras.losses.MeanSquaredError()
+        mse = mse_loss(y_true, y_pred)
+        weights = tf.where(y_true >= threshold, pos_weight, 1.0)
+        return mse * weights
+    return weighted_mse
+
+# --- Load Model and Scaler at Startup ---
+MODELS_DIR = 'models'
+model = None
+scaler = None
+
+try:
+    print("--- Loading Model and Scaler ---")
+    
+    # Define custom objects needed to load the Keras model
+    custom_objects = {
+        'PositionalEncoding': PositionalEncoding,
+        'weighted_mse': create_weighted_mse(),
+        'GCSConv': GCSConv
+    }
+    
+    # Load the trained Keras model
+    model_path = os.path.join(MODELS_DIR, 'best_supreme_model.keras')
+    model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
+    print("  - Keras model loaded successfully.")
+
+    # Load the fitted scaler from the .pkl file
+    scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
+    scaler = joblib.load(scaler_path)
+    print("  - Scaler loaded successfully.")
+
+except Exception as e:
+    print(f"FATAL: Could not load model or scaler on startup. Error: {e}")
+
+def one_hot_encode_sequence(sequence, max_len):
+    nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
+    encoded_seq = np.zeros((max_len, len(nucleotide_map)), dtype=np.float32)
+    for i, char in enumerate(sequence[:max_len]):
+        encoded_seq[i, nucleotide_map.get(char.upper(), 4)] = 1
+    return encoded_seq
+
+def prepare_web_input(primary_data, target_data, competitor_data, scaler, model):
+    """Prepares the input dictionary required by the loaded Keras model."""
+    model_inputs = {inp.name: inp.shape for inp in model.inputs}
+    max_primary_len = model_inputs['primary_sequence_input'][1]
+    max_target_len = model_inputs['target_sequence_input'][1]
+    max_competitor_len = model_inputs['competitor_sequence_input'][1]
+
+    num_features = [primary_data.get('gc_content', 0.5), primary_data.get('dg', 0.0), primary_data.get('conservation', 0.0)]
+    if len(num_features) < scaler.n_features_in_:
+        num_features += [0.0] * (scaler.n_features_in_ - len(num_features))
+    scaled_numerical = scaler.transform([num_features])
+    
+    inputs = {
+        'primary_sequence_input': np.array([one_hot_encode_sequence(primary_data.get('sequence', ''), max_primary_len)]),
+        'target_sequence_input': np.array([one_hot_encode_sequence(target_data.get('sequence', ''), max_target_len)]),
+        'competitor_sequence_input': np.array([one_hot_encode_sequence(competitor_data.get('sequence', ''), max_competitor_len)]),
+        'numerical_features_input': scaled_numerical
+    }
+    
+    if 'primary_structure_input' in model_inputs:
+        structure_vector = json.loads(primary_data.get('structure_vector', '[]'))
+        structure_padded = np.zeros((max_primary_len, 1), dtype=np.float32)
+        structure_padded[:len(structure_vector), 0] = structure_vector
+        inputs['primary_structure_input'] = np.array([structure_padded])
+        
+    if 'target_adjacency_input' in model_inputs:
+        adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')))
+        padded_adj = np.zeros((max_target_len, max_target_len), dtype=np.float32)
+        if adj_matrix.size > 0:
+            h, w = adj_matrix.shape
+            padded_adj[:h, :w] = adj_matrix
+        inputs['target_adjacency_input'] = np.array([padded_adj])
+        
+    return inputs
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    if not model or not scaler:
+        return jsonify({"error": "Model or scaler is not available on the server."}), 500
+    
+    try:
+        from Bio import SeqIO
+        import io
+
+        fasta_string = request.form.get('primary_molecules')
+        target_seq = request.form.get('target_molecule')
+        competitor_seq = request.form.get('competitor_molecule', '')
+
+        if not all([fasta_string, target_seq]):
+            return jsonify({"error": "miRNA and Target sequences are required."}), 400
+
+        target_processed = process_molecule_universal((("target", target_seq), {}, 'target_molecule'))
+        competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
+        
+        primary_record = next(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
+        primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
+
+        inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
+        pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
+        
+        inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+        pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
+
+        pred_with_comp = np.square(pred_with_comp_transformed)
+        pred_no_comp = np.square(pred_no_comp_transformed)
+
+        results = [{
+            'mirna_id': primary_record.id,
+            'predicted_affinity_baseline': float(pred_no_comp),
+            'predicted_affinity_with_competitor': float(pred_with_comp),
+            'competitive_effect (higher_is_better)': float(pred_no_comp - pred_with_comp),
+        }]
+        
+        return jsonify(results)
+
+    except Exception as e:
+        print(f"An error occurred during prediction: {e}")
+        return jsonify({"error": "An internal server error occurred."}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 8080))
+    app.run(debug=True, host='0.0.0.0', port=port)

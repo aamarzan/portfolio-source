@@ -60,6 +60,14 @@ app = Flask(__name__)
 # Allow CORS for your frontend domains
 CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
+# Set max upload size (e.g., 100 MB)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
+
+from werkzeug.exceptions import RequestEntityTooLarge
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(e):
+    return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
+
 # API key protection middleware
 @app.before_request
 def require_api_key():

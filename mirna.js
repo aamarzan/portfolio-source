@@ -30,6 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
     bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 });
 
+const MAX_FILE_SIZE_MB = 100;
+
+function validateFileSize(file) {
+    if (file && file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        alert(`File "${file.name}" exceeds ${MAX_FILE_SIZE_MB} MB limit.`);
+        return false;
+    }
+    return true;
+}
+
 // Bind file -> textarea content
 function bindFileToTextarea(fileInputId, textareaId) {
     const fileInput = document.getElementById(fileInputId);
@@ -104,6 +114,20 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     const mirnaFile = document.getElementById('mirna-file')?.files?.[0];
     const targetFile = document.getElementById('target-file')?.files?.[0];
     const competitorFile = document.getElementById('competitor-file')?.files?.[0];
+
+    // Validate sizes before appending
+    if (mirnaFile && !validateFileSize(mirnaFile)) {
+        document.getElementById('mirna-file').value = '';
+        return;
+    }
+    if (targetFile && !validateFileSize(targetFile)) {
+        document.getElementById('target-File').value = '';
+        return;
+    } 
+    if (competitorFile && !validateFileSize(competitorFile)) {
+        document.getElementById('competitor-File').value = '';
+        return;
+    }
 
     if (mirnaFile) formData.append('mirna_3d_file', mirnaFile);
     if (targetFile) formData.append('target_3d_file', targetFile);

@@ -470,3 +470,106 @@ Traceback (most recent call last):
     raise TimeoutExpired(self.args, orig_timeout)
 subprocess.TimeoutExpired: Command '['RNAfold']' timed out after 60 seconds
 2025-09-16 04:08:37,336 | INFO | 127.0.0.1 - - [16/Sep/2025 04:08:37] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 04:42:40,328 | INFO | 127.0.0.1 - - [16/Sep/2025 04:42:40] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:43:39,439 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 04:43:39,867 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-16 04:43:39,867 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-16 04:43:39,869 | INFO |  * Restarting with stat
+2025-09-16 04:43:50,127 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 04:43:50,950 | WARNING |  * Debugger is active!
+2025-09-16 04:43:50,956 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 04:46:17,625 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:17] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:46:17,879 | ERROR | Prediction error: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 219, in predict
+    fasta_string = request.form.get('primary_molecules', '')
+                   ^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 389, in parse
+    raise RequestEntityTooLarge()
+werkzeug.exceptions.RequestEntityTooLarge: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+2025-09-16 04:46:18,438 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:18] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 04:46:36,514 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:36] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:46:36,700 | ERROR | Prediction error: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 219, in predict
+    fasta_string = request.form.get('primary_molecules', '')
+                   ^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 389, in parse
+    raise RequestEntityTooLarge()
+werkzeug.exceptions.RequestEntityTooLarge: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+2025-09-16 04:46:36,865 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:36] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 04:46:48,150 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:48] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:46:48,415 | ERROR | Prediction error: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 219, in predict
+    fasta_string = request.form.get('primary_molecules', '')
+                   ^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\formparser.py", line 389, in parse
+    raise RequestEntityTooLarge()
+werkzeug.exceptions.RequestEntityTooLarge: 413 Request Entity Too Large: The data value transmitted exceeds the capacity limit.
+2025-09-16 04:46:48,577 | INFO | 127.0.0.1 - - [16/Sep/2025 04:46:48] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 05:05:55,946 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 05:05:59,729 | INFO |  * Restarting with stat
+2025-09-16 05:06:08,996 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 05:06:09,589 | WARNING |  * Debugger is active!
+2025-09-16 05:06:09,600 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 05:08:24,226 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 05:08:25,403 | INFO |  * Restarting with stat
+2025-09-16 05:08:31,861 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 05:08:32,174 | WARNING |  * Debugger is active!
+2025-09-16 05:08:32,176 | INFO |  * Debugger PIN: 819-598-734

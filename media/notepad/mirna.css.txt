@@ -1,0 +1,195 @@
+/*website file
+/* Ultra-premium design with minimal light gradient + glassmorphism */
+
+/* Background: white to light sky blue diagonal animation */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background: linear-gradient(135deg, #ffffff, #e3f2fd);
+    background-size: 400% 400%;
+    animation: subtleSky 60s ease infinite;
+    line-height: 1.6;
+}
+
+/* Slow gradient background animation */
+@keyframes subtleSky {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+}
+
+/* Glassmorphic container */
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 1.2s ease forwards;
+}
+
+/* Fade-in effect */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #0d47a1;
+}
+header p {
+    font-size: 1rem;
+    color: #444;
+}
+
+/* Tabs Navigation */
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+}
+.tab-btn {
+    flex: 1;
+    padding: 14px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: #555;
+}
+.tab-btn.active {
+    color: #0d47a1;
+    border-bottom: 3px solid #0d47a1;
+}
+.tab-btn:hover {
+    color: #1565c0;
+}
+
+/* Card Style */
+.card {
+    display: none;
+    padding: 20px;
+    animation: fadeIn 0.8s ease;
+}
+.card.active {
+    display: block;
+}
+
+/* Inputs */
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+textarea, input[type="number"], input[type="file"] {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    transition: all 0.4s ease;
+}
+
+/* Hover glow on input */
+textarea:focus, input:focus {
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    border-color: #2196f3;
+}
+
+/* Prediction Button */
+button {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(270deg, #000000, #0d47a1);
+    background-size: 400% 400%;
+    animation: blackBlueShift 20s ease infinite;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Gradient animation for button */
+@keyframes blackBlueShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Loader */
+#loader {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #0d47a1;
+}
+
+/* Results */
+#results-area {
+    margin-top: 30px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+th, td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+}
+thead {
+    background: #e3f2fd;
+}
+tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+/* Download button */
+#download-btn {
+    margin-top: 20px;
+    padding: 12px;
+    background: #0d47a1;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+#download-btn:hover {
+    background: #1565c0;
+    transform: translateY(-2px);
+}
