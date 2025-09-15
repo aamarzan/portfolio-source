@@ -112,20 +112,27 @@
             <!-- Input Card -->
             <div id="input-tab" class="card active">
                 <form id="prediction-form">
+                    <!-- Primary miRNA -->
                     <label for="primary-seqs">Primary miRNA Sequence(s) (FASTA):</label>
-                    <textarea id="primary-seqs" required placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..."></textarea>
+                    <textarea id="primary-seqs" required placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..." class="sequence-input"></textarea>
+                    <input type="file" id="mirna-seq-file" accept=".fasta,.fas,.fa,.txt" />
 
+                    <!-- Target -->
                     <label for="target-seq">Target Molecule Sequence:</label>
-                    <textarea id="target-seq" required placeholder="Enter the full RNA target sequence..."></textarea>
+                    <textarea id="target-seq" required placeholder="Enter the full RNA target sequence..." class="sequence-input"></textarea>
+                    <input type="file" id="target-seq-file" accept=".fasta,.fas,.fa,.txt" />
 
+                    <!-- Competitor -->
                     <label for="competitor-seq">Competitor Molecule Sequence (Optional):</label>
-                    <textarea id="competitor-seq" placeholder="Enter the competitor sequence..."></textarea>
+                    <textarea id="competitor-seq" placeholder="Enter the competitor sequence..." class="sequence-input"></textarea>
+                    <input type="file" id="competitor-seq-file" accept=".fasta,.fas,.fa,.txt" />
 
+                    <!-- Optional PDB uploads -->
                     <div class="file-uploads">
-                        <label>Upload 3D Files (Optional):</label>
-                        <input type="file" id="mirna-file" accept=".pdb, .cif" />
-                        <input type="file" id="target-file" accept=".pdb, .cif" />
-                        <input type="file" id="competitor-file" accept=".pdb, .cif" />
+                        <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
+                        <input type="file" id="mirna-file" accept=".pdb,.cif" />
+                        <input type="file" id="target-file" accept=".pdb,.cif" />
+                        <input type="file" id="competitor-file" accept=".pdb,.cif" />
                     </div>
 
                     <button type="submit">Run Prediction</button>

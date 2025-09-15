@@ -436,3 +436,37 @@ subprocess.TimeoutExpired: Command '['RNAfold']' timed out after 60 seconds
 
 2025-09-16 03:33:36,021 | WARNING |  * Debugger is active!
 2025-09-16 03:33:36,033 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 04:06:12,943 | INFO | 127.0.0.1 - - [16/Sep/2025 04:06:12] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:06:53,845 | INFO | Prediction success | miRNA: cel-let-7 | Duration: 40.83s
+2025-09-16 04:06:54,616 | INFO | Prediction success | miRNA: cel-lin-4 | Duration: 41.60s
+2025-09-16 04:06:55,226 | INFO | Prediction success | miRNA: cel-mir-1 | Duration: 42.21s
+2025-09-16 04:06:55,807 | INFO | Prediction success | miRNA: cel-mir-2 | Duration: 42.79s
+2025-09-16 04:06:56,538 | INFO | Prediction success | miRNA: cel-mir-34 | Duration: 43.52s
+2025-09-16 04:06:57,102 | INFO | Prediction success | miRNA: cel-mir-35 | Duration: 44.09s
+2025-09-16 04:06:57,872 | INFO | Prediction success | miRNA: cel-mir-36 | Duration: 44.86s
+2025-09-16 04:06:58,460 | INFO | Prediction success | miRNA: cel-mir-37 | Duration: 45.44s
+2025-09-16 04:06:59,241 | INFO | Prediction success | miRNA: cel-mir-38 | Duration: 46.23s
+2025-09-16 04:06:59,775 | INFO | Prediction success | miRNA: cel-mir-39 | Duration: 46.76s
+2025-09-16 04:06:59,930 | INFO | 127.0.0.1 - - [16/Sep/2025 04:06:59] "POST /predict HTTP/1.1" 200 -
+2025-09-16 04:07:36,544 | INFO | 127.0.0.1 - - [16/Sep/2025 04:07:36] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 04:08:37,034 | ERROR | Prediction error: Command '['RNAfold']' timed out after 60 seconds
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 259, in predict
+    target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 343, in process_molecule_universal
+    structural_features_1d = predict_rna_structure_1d(nt_sequence)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 115, in predict_rna_structure_1d
+    result = subprocess.run(
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 552, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1211, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1632, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['RNAfold']' timed out after 60 seconds
+2025-09-16 04:08:37,336 | INFO | 127.0.0.1 - - [16/Sep/2025 04:08:37] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -

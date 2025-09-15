@@ -211,3 +211,8 @@ body.mirna-page #main-footer .container {
     box-shadow: none !important;
     border-radius: 0;
 }
+
+textarea.sequence-input {
+    height: 200px; /* adjust to taste */
+    resize: vertical; /* let user drag to resize if they want */
+}

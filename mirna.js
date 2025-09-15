@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Bind file inputs to textareas
-    bindFileToTextarea('mirna-file', 'primary-seqs');
-    bindFileToTextarea('target-file', 'target-seq');
-    bindFileToTextarea('competitor-file', 'competitor-seq');
+    bindFileToTextarea('mirna-seq-file', 'primary-seqs');
+    bindFileToTextarea('target-seq-file', 'target-seq');
+    bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 });
 
 // Bind file -> textarea content
