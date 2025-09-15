@@ -230,8 +230,9 @@ def predict():
         target_processed = process_molecule_universal((("target", target_seq), {}, 'target_molecule'))
         competitor_processed = process_molecule_universal((("competitor", competitor_seq), {}, 'competitor_molecule'))
 
-        primary_record = next(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
-        primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
+        results = []
+        for primary_record in SeqIO.parse(io.StringIO(fasta_string), "fasta"):
+            primary_processed = process_molecule_universal(((primary_record.id, str(primary_record.seq)), {}, 'primary_molecule'))
 
         # --- Normalize to dict if tuple ---
         def ensure_dict(data):
@@ -259,12 +260,12 @@ def predict():
         pred_with_comp = np.square(pred_with_comp_transformed)
         pred_no_comp = np.square(pred_no_comp_transformed)
 
-        results = [{
+        results.append({
             'mirna_id': primary_record.id,
             'predicted_affinity_baseline': float(pred_no_comp),
             'predicted_affinity_with_competitor': float(pred_with_comp),
             'competitive_effect (higher_is_better)': float(pred_no_comp - pred_with_comp),
-        }]
+        })
 
         # Log success
         duration = (datetime.now() - start_time).total_seconds()

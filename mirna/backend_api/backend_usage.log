@@ -242,3 +242,20 @@ Traceback (most recent call last):
 AttributeError: 'tuple' object has no attribute 'get'
 2025-09-15 23:44:19,558 | INFO | 127.0.0.1 - - [15/Sep/2025 23:44:19] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
 2025-09-16 00:01:29,979 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 00:01:34,722 | INFO |  * Restarting with stat
+2025-09-16 00:01:44,937 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 00:01:45,486 | WARNING |  * Debugger is active!
+2025-09-16 00:01:45,491 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 00:02:01,696 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 00:02:02,087 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-16 00:02:02,087 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-16 00:02:02,089 | INFO |  * Restarting with stat
+2025-09-16 00:02:09,125 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 00:02:09,433 | WARNING |  * Debugger is active!
+2025-09-16 00:02:09,435 | INFO |  * Debugger PIN: 819-598-734
