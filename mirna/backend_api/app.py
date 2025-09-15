@@ -4,8 +4,6 @@ import json
 import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-app = Flask(__name__)
-CORS(app)
 from werkzeug.utils import secure_filename
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
@@ -58,11 +56,16 @@ logging.basicConfig(
 # Flask app setup
 # =========================
 app = Flask(__name__)
-CORS(app)
+# Allow CORS for your frontend domains
+CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
 # API key protection middleware
 @app.before_request
 def require_api_key():
+    # Allow CORS preflight requests
+    if request.method == "OPTIONS":
+        return '', 200
+
     if request.endpoint == 'predict':
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
@@ -187,8 +190,13 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
 # =========================
 # Routes
 # =========================
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
+    # OPTIONS requests are handled in before_request, so no need to check here
+    key = request.headers.get("X-API-Key")
+    if key != API_KEY:
+        return jsonify({"error": "Unauthorized"}), 401
+
     if not model or not scaler:
         logging.error("Prediction attempted but model/scaler not loaded.")
         send_ga_event("prediction_error", {"reason": "model_not_loaded"})

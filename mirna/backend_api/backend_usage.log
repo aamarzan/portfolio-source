@@ -104,3 +104,35 @@
 2025-09-15 22:53:22,844 | INFO | 127.0.0.1 - - [15/Sep/2025 22:53:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
 2025-09-15 22:53:31,850 | INFO | 127.0.0.1 - - [15/Sep/2025 22:53:31] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
 2025-09-15 22:54:30,056 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-15 22:54:32,619 | INFO |  * Restarting with stat
+2025-09-15 22:54:44,876 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 22:54:45,590 | WARNING |  * Debugger is active!
+2025-09-15 22:54:45,598 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 22:55:37,787 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 22:55:38,118 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-15 22:55:38,118 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-15 22:55:38,120 | INFO |  * Restarting with stat
+2025-09-15 22:55:44,198 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 22:55:44,496 | WARNING |  * Debugger is active!
+2025-09-15 22:55:44,499 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 22:56:44,687 | INFO | 127.0.0.1 - - [15/Sep/2025 22:56:44] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 22:57:10,994 | INFO | 127.0.0.1 - - [15/Sep/2025 22:57:10] "[31m[1mOPTIONS /predict HTTP/1.1[0m" 401 -
+2025-09-15 23:03:57,944 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-15 23:03:59,175 | INFO |  * Restarting with stat
+2025-09-15 23:04:10,378 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 23:04:11,137 | WARNING |  * Debugger is active!
+2025-09-15 23:04:11,146 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 23:07:41,491 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-15 23:07:42,613 | INFO |  * Restarting with stat
+2025-09-15 23:07:53,091 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-15 23:07:53,994 | WARNING |  * Debugger is active!
+2025-09-15 23:07:54,001 | INFO |  * Debugger PIN: 819-598-734
+2025-09-15 23:11:51,839 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
