@@ -22,8 +22,8 @@ import requests  # NEW: for GA4 Measurement Protocol
 # Google Analytics (GA4) Measurement Protocol
 # =========================
 # Replace with your real values (or load from environment variables for security)
-GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-QG7G90FF1Q")
-GA_API_SECRET = os.getenv("GA_API_SECRET", "G6PTnUPVTxWpG4fgamWjuA")
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-2YNVQSMXTM")
+GA_API_SECRET = os.getenv("GA_API_SECRET", "1bmox9EpRBq1Sf3T5Qn6NA")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
 
 def send_ga_event(event_name, params):
