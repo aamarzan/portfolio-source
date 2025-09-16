@@ -3036,3 +3036,22 @@ Traceback (most recent call last):
 ValueError: Missing data for input "primary_structure_input". You passed a data dictionary with keys ['primary_sequence_input', 'target_sequence_input', 'competitor_sequence_input', 'numerical_features_input']. Expected the following keys: ['competitor_sequence_input', 'numerical_features_input', 'primary_sequence_input', 'primary_structure_input', 'target_sequence_input']
 2025-09-17 00:31:38,045 | INFO | 127.0.0.1 - - [17/Sep/2025 00:31:38] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
 2025-09-17 00:39:59,665 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 00:40:03,939 | INFO |  * Restarting with stat
+2025-09-17 00:40:16,492 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 00:40:17,440 | WARNING |  * Debugger is active!
+2025-09-17 00:40:17,451 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 00:45:16,630 | INFO | 127.0.0.1 - - [17/Sep/2025 00:45:16] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 00:45:54,450 | ERROR | Prediction error: Missing data for input "primary_structure_input". You passed a data dictionary with keys ['primary_sequence_input', 'target_sequence_input', 'competitor_sequence_input', 'numerical_features_input']. Expected the following keys: ['competitor_sequence_input', 'numerical_features_input', 'primary_sequence_input', 'primary_structure_input', 'target_sequence_input']
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 307, in predict
+    with_comp = model.predict(inputs_with_comp, verbose=0).squeeze()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\layers\input_spec.py", line 149, in assert_input_compatibility
+    raise ValueError(
+ValueError: Missing data for input "primary_structure_input". You passed a data dictionary with keys ['primary_sequence_input', 'target_sequence_input', 'competitor_sequence_input', 'numerical_features_input']. Expected the following keys: ['competitor_sequence_input', 'numerical_features_input', 'primary_sequence_input', 'primary_structure_input', 'target_sequence_input']
+2025-09-17 00:45:54,771 | INFO | 127.0.0.1 - - [17/Sep/2025 00:45:54] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-17 00:51:40,299 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 00:51:43,930 | INFO |  * Restarting with stat
