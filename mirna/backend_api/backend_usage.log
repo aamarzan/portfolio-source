@@ -3719,3 +3719,55 @@ ValueError: could not broadcast input array from shape (119,) into shape (100,)
 
 2025-09-17 02:59:55,092 | WARNING |  * Debugger is active!
 2025-09-17 02:59:55,095 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 03:03:07,988 | INFO | 127.0.0.1 - - [17/Sep/2025 03:03:07] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 03:04:24,340 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 76.32s
+2025-09-17 03:04:25,420 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 77.40s
+2025-09-17 03:04:26,466 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 78.45s
+2025-09-17 03:04:27,566 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 79.55s
+2025-09-17 03:04:28,569 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 80.55s
+2025-09-17 03:04:29,492 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 81.47s
+2025-09-17 03:04:30,383 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 82.36s
+2025-09-17 03:04:31,437 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 83.42s
+2025-09-17 03:04:32,378 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 84.36s
+2025-09-17 03:04:33,274 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 85.25s
+2025-09-17 03:04:34,328 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 86.31s
+2025-09-17 03:04:35,539 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 87.52s
+2025-09-17 03:04:36,523 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 88.50s
+2025-09-17 03:04:37,525 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 89.51s
+2025-09-17 03:04:38,483 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 90.46s
+2025-09-17 03:04:39,461 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 91.44s
+2025-09-17 03:04:40,368 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 92.35s
+2025-09-17 03:04:41,298 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 93.28s
+2025-09-17 03:04:42,338 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 94.32s
+2025-09-17 03:04:43,323 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 95.30s
+2025-09-17 03:04:44,296 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 96.28s
+2025-09-17 03:04:45,215 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 97.20s
+2025-09-17 03:04:46,159 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 98.14s
+2025-09-17 03:04:47,276 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 99.26s
+2025-09-17 03:04:48,238 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 100.22s
+2025-09-17 03:04:49,441 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 101.42s
+2025-09-17 03:04:50,638 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 102.62s
+2025-09-17 03:04:51,741 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 103.72s
+2025-09-17 03:04:52,788 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 104.77s
+2025-09-17 03:04:53,912 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 105.89s
+2025-09-17 03:04:55,032 | INFO | Prediction success | miRNA: hsa-mir-32 | Duration: 107.01s
+2025-09-17 03:04:56,005 | INFO | Prediction success | miRNA: hsa-mir-33a | Duration: 107.99s
+2025-09-17 03:04:57,174 | INFO | Prediction success | miRNA: hsa-mir-92a-1 | Duration: 109.15s
+2025-09-17 03:04:58,320 | INFO | Prediction success | miRNA: hsa-mir-92a-2 | Duration: 110.30s
+2025-09-17 03:04:59,471 | INFO | Prediction success | miRNA: hsa-mir-93 | Duration: 111.45s
+2025-09-17 03:05:00,696 | INFO | Prediction success | miRNA: hsa-mir-95 | Duration: 112.68s
+2025-09-17 03:05:01,854 | INFO | Prediction success | miRNA: hsa-mir-96 | Duration: 113.84s
+2025-09-17 03:05:02,978 | INFO | Prediction success | miRNA: hsa-mir-98 | Duration: 114.96s
+2025-09-17 03:05:03,883 | INFO | Prediction success | miRNA: hsa-mir-99a | Duration: 115.86s
+2025-09-17 03:05:04,793 | INFO | Prediction success | miRNA: hsa-mir-100 | Duration: 116.77s
+2025-09-17 03:05:05,768 | INFO | Prediction success | miRNA: hsa-mir-101-1 | Duration: 117.75s
+2025-09-17 03:05:06,902 | INFO | Prediction success | miRNA: hsa-mir-29b-1 | Duration: 118.88s
+2025-09-17 03:05:07,934 | INFO | Prediction success | miRNA: hsa-mir-29b-2 | Duration: 119.91s
+2025-09-17 03:05:08,960 | INFO | Prediction success | miRNA: hsa-mir-103a-2 | Duration: 120.94s
+2025-09-17 03:05:09,989 | INFO | Prediction success | miRNA: hsa-mir-103a-1 | Duration: 121.97s
+2025-09-17 03:05:11,072 | INFO | Prediction success | miRNA: hsa-mir-105-1 | Duration: 123.05s
+2025-09-17 03:05:11,403 | INFO | 127.0.0.1 - - [17/Sep/2025 03:05:11] "POST /predict HTTP/1.1" 200 -
+2025-09-17 03:10:37,170 | INFO | 127.0.0.1 - - [17/Sep/2025 03:10:37] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 03:11:12,573 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 35.32s
+2025-09-17 03:11:12,730 | INFO | 127.0.0.1 - - [17/Sep/2025 03:11:12] "POST /predict HTTP/1.1" 200 -
+2025-09-17 03:13:46,193 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

@@ -12,7 +12,7 @@ const API_URL = window.location.hostname === "localhost" || window.location.host
 const API_KEY = "supersecret123";
 
 const MAX_FILE_SIZE_MB = 100;
-const MAX_MIRNAS = 200; // adjust to safe backend limit
+const MAX_MIRNAS = 1000; // lifted single-run cap
 
 document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');

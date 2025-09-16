@@ -209,7 +209,10 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
         inputs['primary_structure_input'] = np.array([structure_padded])
 
     if 'target_adjacency_input' in model_inputs:
-        adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')))
+        adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')), dtype=np.float32)
+        # 🔹 Truncate if larger than model expects
+        if adj_matrix.shape[0] > max_target_len:
+            adj_matrix = adj_matrix[:max_target_len, :max_target_len]
         padded_adj = np.zeros((max_target_len, max_target_len), dtype=np.float32)
         if adj_matrix.size > 0:
             h, w = adj_matrix.shape
