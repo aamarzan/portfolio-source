@@ -200,7 +200,10 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
     }
 
     if 'primary_structure_input' in model_inputs:
-        structure_vector = json.loads(primary_data.get('structure_vector', '[]'))
+        structure_vector = np.array(json.loads(primary_data.get('structure_vector', '[]')), dtype=np.float32)
+        # Truncate if longer than model expects
+        if len(structure_vector) > max_primary_len:
+            structure_vector = structure_vector[:max_primary_len]
         structure_padded = np.zeros((max_primary_len, 1), dtype=np.float32)
         structure_padded[:len(structure_vector), 0] = structure_vector
         inputs['primary_structure_input'] = np.array([structure_padded])

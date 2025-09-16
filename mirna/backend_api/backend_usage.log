@@ -3628,3 +3628,94 @@ werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) 
 2025-09-17 02:42:03,032 | WARNING |  * Debugger is active!
 2025-09-17 02:42:03,035 | INFO |  * Debugger PIN: 819-598-734
 2025-09-17 02:42:55,062 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 02:42:55,722 | INFO |  * Restarting with stat
+2025-09-17 02:43:02,283 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 02:43:02,570 | WARNING |  * Debugger is active!
+2025-09-17 02:43:02,573 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 02:46:24,936 | INFO | 127.0.0.1 - - [17/Sep/2025 02:46:24] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 02:46:52,203 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 27.24s
+2025-09-17 02:46:52,845 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 27.88s
+2025-09-17 02:46:53,375 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 28.41s
+2025-09-17 02:46:53,922 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 28.96s
+2025-09-17 02:46:54,484 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 29.52s
+2025-09-17 02:46:55,027 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 30.07s
+2025-09-17 02:46:55,561 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 30.60s
+2025-09-17 02:46:56,101 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 31.14s
+2025-09-17 02:46:56,676 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 31.71s
+2025-09-17 02:46:57,217 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 32.26s
+2025-09-17 02:46:57,728 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 32.77s
+2025-09-17 02:46:58,254 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 33.29s
+2025-09-17 02:46:58,809 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 33.85s
+2025-09-17 02:46:59,371 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 34.41s
+2025-09-17 02:46:59,894 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 34.93s
+2025-09-17 02:47:00,436 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 35.47s
+2025-09-17 02:47:00,988 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 36.03s
+2025-09-17 02:47:01,524 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 36.56s
+2025-09-17 02:47:02,044 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 37.08s
+2025-09-17 02:47:02,609 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 37.65s
+2025-09-17 02:47:03,175 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 38.21s
+2025-09-17 02:47:03,694 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 38.73s
+2025-09-17 02:47:04,324 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 39.36s
+2025-09-17 02:47:04,898 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 39.94s
+2025-09-17 02:47:05,458 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 40.50s
+2025-09-17 02:47:06,003 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 41.04s
+2025-09-17 02:47:06,571 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 41.61s
+2025-09-17 02:47:07,138 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 42.18s
+2025-09-17 02:47:07,799 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 42.84s
+2025-09-17 02:47:08,359 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 43.40s
+2025-09-17 02:47:08,537 | INFO | 127.0.0.1 - - [17/Sep/2025 02:47:08] "POST /predict HTTP/1.1" 200 -
+2025-09-17 02:47:39,438 | INFO | 127.0.0.1 - - [17/Sep/2025 02:47:39] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 02:48:04,876 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 25.38s
+2025-09-17 02:48:05,436 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 25.94s
+2025-09-17 02:48:05,968 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 26.47s
+2025-09-17 02:48:06,860 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 27.37s
+2025-09-17 02:48:07,384 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 27.89s
+2025-09-17 02:48:07,916 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 28.42s
+2025-09-17 02:48:08,430 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 28.94s
+2025-09-17 02:48:08,947 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 29.45s
+2025-09-17 02:48:09,477 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 29.98s
+2025-09-17 02:48:09,999 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 30.51s
+2025-09-17 02:48:10,550 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 31.06s
+2025-09-17 02:48:11,070 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 31.58s
+2025-09-17 02:48:11,578 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 32.08s
+2025-09-17 02:48:12,086 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 32.59s
+2025-09-17 02:48:12,577 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 33.08s
+2025-09-17 02:48:13,094 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 33.60s
+2025-09-17 02:48:13,588 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 34.09s
+2025-09-17 02:48:14,155 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 34.66s
+2025-09-17 02:48:14,661 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 35.17s
+2025-09-17 02:48:15,197 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 35.70s
+2025-09-17 02:48:15,703 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 36.21s
+2025-09-17 02:48:16,204 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 36.71s
+2025-09-17 02:48:16,724 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 37.23s
+2025-09-17 02:48:17,220 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 37.73s
+2025-09-17 02:48:17,735 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 38.24s
+2025-09-17 02:48:18,237 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 38.74s
+2025-09-17 02:48:18,784 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 39.29s
+2025-09-17 02:48:19,304 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 39.81s
+2025-09-17 02:48:19,814 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 40.32s
+2025-09-17 02:48:20,292 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 40.80s
+2025-09-17 02:48:20,806 | INFO | Prediction success | miRNA: hsa-mir-32 | Duration: 41.31s
+2025-09-17 02:48:21,343 | INFO | Prediction success | miRNA: hsa-mir-33a | Duration: 41.85s
+2025-09-17 02:48:21,893 | INFO | Prediction success | miRNA: hsa-mir-92a-1 | Duration: 42.40s
+2025-09-17 02:48:22,443 | INFO | Prediction success | miRNA: hsa-mir-92a-2 | Duration: 42.95s
+2025-09-17 02:48:22,988 | INFO | Prediction success | miRNA: hsa-mir-93 | Duration: 43.49s
+2025-09-17 02:48:23,571 | INFO | Prediction success | miRNA: hsa-mir-95 | Duration: 44.08s
+2025-09-17 02:48:24,174 | INFO | Prediction success | miRNA: hsa-mir-96 | Duration: 44.68s
+2025-09-17 02:48:24,426 | ERROR | Prediction error: could not broadcast input array from shape (119,) into shape (100,)
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 316, in predict
+    inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 205, in prepare_web_input
+    structure_padded[:len(structure_vector), 0] = structure_vector
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not broadcast input array from shape (119,) into shape (100,)
+2025-09-17 02:48:24,634 | INFO | 127.0.0.1 - - [17/Sep/2025 02:48:24] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-17 02:59:44,950 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 02:59:46,834 | INFO |  * Restarting with stat
+2025-09-17 02:59:54,790 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 02:59:55,092 | WARNING |  * Debugger is active!
+2025-09-17 02:59:55,095 | INFO |  * Debugger PIN: 819-598-734
