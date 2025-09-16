@@ -2636,3 +2636,279 @@ ValueError: could not broadcast input array from shape (119,) into shape (100,)
 2025-09-16 21:24:32,084 | WARNING |  * Debugger is active!
 2025-09-16 21:24:32,096 | INFO |  * Debugger PIN: 819-598-734
 2025-09-16 21:34:32,796 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 21:34:36,113 | INFO |  * Restarting with stat
+2025-09-16 21:34:51,725 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 21:34:53,291 | WARNING |  * Debugger is active!
+2025-09-16 21:34:53,303 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 21:44:09,828 | INFO | 127.0.0.1 - - [16/Sep/2025 21:44:09] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 21:45:49,440 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 99.27s
+2025-09-16 21:45:50,616 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 100.44s
+2025-09-16 21:45:51,722 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 101.55s
+2025-09-16 21:45:52,782 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 102.61s
+2025-09-16 21:45:54,124 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 103.95s
+2025-09-16 21:45:55,225 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 105.05s
+2025-09-16 21:45:56,293 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 106.12s
+2025-09-16 21:45:57,414 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 107.24s
+2025-09-16 21:45:58,454 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 108.28s
+2025-09-16 21:45:59,550 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 109.38s
+2025-09-16 21:46:00,561 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 110.39s
+2025-09-16 21:46:01,643 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 111.47s
+2025-09-16 21:46:02,607 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 112.43s
+2025-09-16 21:46:03,622 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 113.45s
+2025-09-16 21:46:05,167 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 114.99s
+2025-09-16 21:46:06,456 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 116.28s
+2025-09-16 21:46:07,927 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 117.75s
+2025-09-16 21:46:09,550 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 119.38s
+2025-09-16 21:46:10,750 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 120.58s
+2025-09-16 21:46:11,959 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 121.79s
+2025-09-16 21:46:13,110 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 122.94s
+2025-09-16 21:46:14,232 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 124.06s
+2025-09-16 21:46:15,287 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 125.11s
+2025-09-16 21:46:16,401 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 126.23s
+2025-09-16 21:46:17,529 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 127.35s
+2025-09-16 21:46:18,656 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 128.48s
+2025-09-16 21:46:19,948 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 129.77s
+2025-09-16 21:46:21,040 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 130.87s
+2025-09-16 21:46:22,504 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 132.33s
+2025-09-16 21:46:23,689 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 133.52s
+2025-09-16 21:46:24,977 | INFO | Prediction success | miRNA: hsa-mir-32 | Duration: 134.80s
+2025-09-16 21:46:26,114 | INFO | Prediction success | miRNA: hsa-mir-33a | Duration: 135.94s
+2025-09-16 21:46:27,208 | INFO | Prediction success | miRNA: hsa-mir-92a-1 | Duration: 137.03s
+2025-09-16 21:46:28,352 | INFO | Prediction success | miRNA: hsa-mir-92a-2 | Duration: 138.18s
+2025-09-16 21:46:29,333 | INFO | Prediction success | miRNA: hsa-mir-93 | Duration: 139.16s
+2025-09-16 21:46:30,419 | INFO | Prediction success | miRNA: hsa-mir-95 | Duration: 140.24s
+2025-09-16 21:46:31,688 | INFO | Prediction success | miRNA: hsa-mir-96 | Duration: 141.51s
+2025-09-16 21:46:32,012 | ERROR | Prediction error: could not broadcast input array from shape (119,) into shape (100,)
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 319, in predict
+    inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 208, in prepare_web_input
+    structure_padded[:len(structure_vector), 0] = structure_vector
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not broadcast input array from shape (119,) into shape (100,)
+2025-09-16 21:46:32,176 | INFO | 127.0.0.1 - - [16/Sep/2025 21:46:32] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 21:47:29,039 | INFO | 127.0.0.1 - - [16/Sep/2025 21:47:29] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 21:49:01,604 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 92.34s
+2025-09-16 21:49:02,599 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 93.34s
+2025-09-16 21:49:03,742 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 94.48s
+2025-09-16 21:49:04,922 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 95.66s
+2025-09-16 21:49:05,966 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 96.71s
+2025-09-16 21:49:07,047 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 97.79s
+2025-09-16 21:49:08,015 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 98.75s
+2025-09-16 21:49:09,099 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 99.84s
+2025-09-16 21:49:10,146 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 100.88s
+2025-09-16 21:49:11,189 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 101.93s
+2025-09-16 21:49:12,301 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 103.04s
+2025-09-16 21:49:13,372 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 104.11s
+2025-09-16 21:49:14,397 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 105.14s
+2025-09-16 21:49:15,501 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 106.24s
+2025-09-16 21:49:16,593 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 107.33s
+2025-09-16 21:49:18,248 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 108.99s
+2025-09-16 21:49:19,264 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 110.00s
+2025-09-16 21:49:20,634 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 111.37s
+2025-09-16 21:49:21,754 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 112.49s
+2025-09-16 21:49:22,841 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 113.58s
+2025-09-16 21:49:23,810 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 114.55s
+2025-09-16 21:49:25,088 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 115.83s
+2025-09-16 21:49:26,107 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 116.85s
+2025-09-16 21:49:27,340 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 118.08s
+2025-09-16 21:49:28,377 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 119.12s
+2025-09-16 21:49:29,347 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 120.09s
+2025-09-16 21:49:30,444 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 121.18s
+2025-09-16 21:49:31,517 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 122.26s
+2025-09-16 21:49:32,519 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 123.26s
+2025-09-16 21:49:33,602 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 124.34s
+2025-09-16 21:49:34,745 | INFO | Prediction success | miRNA: hsa-mir-32 | Duration: 125.48s
+2025-09-16 21:49:35,819 | INFO | Prediction success | miRNA: hsa-mir-33a | Duration: 126.56s
+2025-09-16 21:49:36,890 | INFO | Prediction success | miRNA: hsa-mir-92a-1 | Duration: 127.63s
+2025-09-16 21:49:37,898 | INFO | Prediction success | miRNA: hsa-mir-92a-2 | Duration: 128.64s
+2025-09-16 21:49:39,005 | INFO | Prediction success | miRNA: hsa-mir-93 | Duration: 129.74s
+2025-09-16 21:49:40,015 | INFO | Prediction success | miRNA: hsa-mir-95 | Duration: 130.75s
+2025-09-16 21:49:41,006 | INFO | Prediction success | miRNA: hsa-mir-96 | Duration: 131.75s
+2025-09-16 21:49:41,248 | ERROR | Prediction error: could not broadcast input array from shape (119,) into shape (100,)
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 319, in predict
+    inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 208, in prepare_web_input
+    structure_padded[:len(structure_vector), 0] = structure_vector
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not broadcast input array from shape (119,) into shape (100,)
+2025-09-16 21:49:41,462 | INFO | 127.0.0.1 - - [16/Sep/2025 21:49:41] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 21:53:47,987 | INFO | 127.0.0.1 - - [16/Sep/2025 21:53:47] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 21:55:17,170 | INFO | Prediction success | miRNA: hsa-let-7a-1 | Duration: 88.85s
+2025-09-16 21:55:18,210 | INFO | Prediction success | miRNA: hsa-let-7a-2 | Duration: 89.89s
+2025-09-16 21:55:19,181 | INFO | Prediction success | miRNA: hsa-let-7a-3 | Duration: 90.87s
+2025-09-16 21:55:20,122 | INFO | Prediction success | miRNA: hsa-let-7b | Duration: 91.81s
+2025-09-16 21:55:21,478 | INFO | Prediction success | miRNA: hsa-let-7c | Duration: 93.16s
+2025-09-16 21:55:22,638 | INFO | Prediction success | miRNA: hsa-let-7d | Duration: 94.32s
+2025-09-16 21:55:23,610 | INFO | Prediction success | miRNA: hsa-let-7e | Duration: 95.29s
+2025-09-16 21:55:24,622 | INFO | Prediction success | miRNA: hsa-let-7f-1 | Duration: 96.31s
+2025-09-16 21:55:25,750 | INFO | Prediction success | miRNA: hsa-let-7f-2 | Duration: 97.43s
+2025-09-16 21:55:26,862 | INFO | Prediction success | miRNA: hsa-mir-15a | Duration: 98.55s
+2025-09-16 21:55:27,912 | INFO | Prediction success | miRNA: hsa-mir-16-1 | Duration: 99.60s
+2025-09-16 21:55:28,893 | INFO | Prediction success | miRNA: hsa-mir-17 | Duration: 100.58s
+2025-09-16 21:55:29,875 | INFO | Prediction success | miRNA: hsa-mir-18a | Duration: 101.56s
+2025-09-16 21:55:31,003 | INFO | Prediction success | miRNA: hsa-mir-19a | Duration: 102.69s
+2025-09-16 21:55:32,366 | INFO | Prediction success | miRNA: hsa-mir-19b-1 | Duration: 104.05s
+2025-09-16 21:55:33,442 | INFO | Prediction success | miRNA: hsa-mir-19b-2 | Duration: 105.13s
+2025-09-16 21:55:34,645 | INFO | Prediction success | miRNA: hsa-mir-20a | Duration: 106.33s
+2025-09-16 21:55:35,766 | INFO | Prediction success | miRNA: hsa-mir-21 | Duration: 107.45s
+2025-09-16 21:55:36,954 | INFO | Prediction success | miRNA: hsa-mir-22 | Duration: 108.64s
+2025-09-16 21:55:37,929 | INFO | Prediction success | miRNA: hsa-mir-23a | Duration: 109.61s
+2025-09-16 21:55:38,878 | INFO | Prediction success | miRNA: hsa-mir-24-1 | Duration: 110.56s
+2025-09-16 21:55:39,743 | INFO | Prediction success | miRNA: hsa-mir-24-2 | Duration: 111.43s
+2025-09-16 21:55:40,855 | INFO | Prediction success | miRNA: hsa-mir-25 | Duration: 112.54s
+2025-09-16 21:55:41,916 | INFO | Prediction success | miRNA: hsa-mir-26a-1 | Duration: 113.60s
+2025-09-16 21:55:42,925 | INFO | Prediction success | miRNA: hsa-mir-26b | Duration: 114.61s
+2025-09-16 21:55:44,005 | INFO | Prediction success | miRNA: hsa-mir-27a | Duration: 115.69s
+2025-09-16 21:55:45,262 | INFO | Prediction success | miRNA: hsa-mir-28 | Duration: 116.95s
+2025-09-16 21:55:46,263 | INFO | Prediction success | miRNA: hsa-mir-29a | Duration: 117.95s
+2025-09-16 21:55:47,172 | INFO | Prediction success | miRNA: hsa-mir-30a | Duration: 118.86s
+2025-09-16 21:55:48,248 | INFO | Prediction success | miRNA: hsa-mir-31 | Duration: 119.93s
+2025-09-16 21:55:49,310 | INFO | Prediction success | miRNA: hsa-mir-32 | Duration: 120.99s
+2025-09-16 21:55:50,365 | INFO | Prediction success | miRNA: hsa-mir-33a | Duration: 122.05s
+2025-09-16 21:55:51,435 | INFO | Prediction success | miRNA: hsa-mir-92a-1 | Duration: 123.12s
+2025-09-16 21:55:52,503 | INFO | Prediction success | miRNA: hsa-mir-92a-2 | Duration: 124.19s
+2025-09-16 21:55:53,838 | INFO | Prediction success | miRNA: hsa-mir-93 | Duration: 125.52s
+2025-09-16 21:55:54,978 | INFO | Prediction success | miRNA: hsa-mir-95 | Duration: 126.66s
+2025-09-16 21:55:56,416 | INFO | Prediction success | miRNA: hsa-mir-96 | Duration: 128.10s
+2025-09-16 21:55:56,661 | ERROR | Prediction error: could not broadcast input array from shape (119,) into shape (100,)
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 319, in predict
+    inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 208, in prepare_web_input
+    structure_padded[:len(structure_vector), 0] = structure_vector
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not broadcast input array from shape (119,) into shape (100,)
+2025-09-16 21:55:57,462 | INFO | 127.0.0.1 - - [16/Sep/2025 21:55:57] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 21:57:12,123 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 21:57:13,587 | INFO |  * Restarting with stat
+2025-09-16 21:57:22,666 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 21:57:23,012 | WARNING |  * Debugger is active!
+2025-09-16 21:57:23,014 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:16:02,785 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:16:07,385 | INFO |  * Restarting with stat
+2025-09-16 22:16:19,928 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:16:20,691 | WARNING |  * Debugger is active!
+2025-09-16 22:16:20,701 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:27:55,315 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:27:57,346 | INFO |  * Restarting with stat
+2025-09-16 22:28:07,802 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:28:08,460 | WARNING |  * Debugger is active!
+2025-09-16 22:28:08,466 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:31:01,935 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:31:04,190 | INFO |  * Restarting with stat
+2025-09-16 22:31:15,574 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:31:16,319 | WARNING |  * Debugger is active!
+2025-09-16 22:31:16,325 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:32:39,860 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:32:40,740 | INFO |  * Restarting with stat
+2025-09-16 22:32:48,030 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:32:48,390 | WARNING |  * Debugger is active!
+2025-09-16 22:32:48,393 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:32:53,139 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:32:53,992 | INFO |  * Restarting with stat
+2025-09-16 22:33:01,044 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:33:01,372 | WARNING |  * Debugger is active!
+2025-09-16 22:33:01,374 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:34:45,935 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:34:46,987 | INFO |  * Restarting with stat
+2025-09-16 22:34:54,822 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:34:55,124 | WARNING |  * Debugger is active!
+2025-09-16 22:34:55,127 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:35:51,455 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:35:52,519 | INFO |  * Restarting with stat
+2025-09-16 22:35:58,994 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:35:59,307 | WARNING |  * Debugger is active!
+2025-09-16 22:35:59,311 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:36:17,787 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:36:18,940 | INFO |  * Restarting with stat
+2025-09-16 22:36:25,112 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:36:25,418 | WARNING |  * Debugger is active!
+2025-09-16 22:36:25,420 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:36:49,738 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:36:50,780 | INFO |  * Restarting with stat
+2025-09-16 22:36:56,941 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:36:57,275 | WARNING |  * Debugger is active!
+2025-09-16 22:36:57,278 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:45:19,351 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:45:20,382 | INFO |  * Restarting with stat
+2025-09-16 22:45:29,565 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:45:30,032 | WARNING |  * Debugger is active!
+2025-09-16 22:45:30,041 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:46:19,407 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:46:20,596 | INFO |  * Restarting with stat
+2025-09-16 22:46:29,640 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:46:30,356 | WARNING |  * Debugger is active!
+2025-09-16 22:46:30,363 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:46:43,032 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:46:43,955 | INFO |  * Restarting with stat
+2025-09-16 22:46:53,484 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:46:54,222 | WARNING |  * Debugger is active!
+2025-09-16 22:46:54,230 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:47:48,147 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:47:50,782 | INFO |  * Restarting with stat
+2025-09-16 22:48:01,005 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:48:01,710 | WARNING |  * Debugger is active!
+2025-09-16 22:48:01,718 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:48:19,466 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:48:20,393 | INFO |  * Restarting with stat
+2025-09-16 22:48:28,397 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:48:28,791 | WARNING |  * Debugger is active!
+2025-09-16 22:48:28,800 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:48:50,869 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:48:51,742 | INFO |  * Restarting with stat
+2025-09-16 22:48:58,720 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:48:59,127 | WARNING |  * Debugger is active!
+2025-09-16 22:48:59,130 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:54:26,172 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:54:27,877 | INFO |  * Restarting with stat
+2025-09-16 22:54:38,060 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:54:38,701 | WARNING |  * Debugger is active!
+2025-09-16 22:54:38,706 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:57:12,549 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:57:13,833 | INFO |  * Restarting with stat
+2025-09-16 22:57:22,014 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:57:22,365 | WARNING |  * Debugger is active!
+2025-09-16 22:57:22,367 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:57:30,325 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:57:31,439 | INFO |  * Restarting with stat
+2025-09-16 22:57:38,815 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:57:39,256 | WARNING |  * Debugger is active!
+2025-09-16 22:57:39,259 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:58:42,238 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:58:43,187 | INFO |  * Restarting with stat
+2025-09-16 22:58:49,648 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:58:49,942 | WARNING |  * Debugger is active!
+2025-09-16 22:58:49,947 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 22:59:46,020 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 22:59:47,283 | INFO |  * Restarting with stat
+2025-09-16 22:59:53,473 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 22:59:53,794 | WARNING |  * Debugger is active!
+2025-09-16 22:59:53,797 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 23:00:30,788 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

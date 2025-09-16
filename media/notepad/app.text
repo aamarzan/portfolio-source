@@ -4,6 +4,8 @@ import pandas as pd
 import json
 import numpy as np
 from flask import Flask, request, jsonify
+import uuid
+progress_store = {}  # In-memory job progress tracker
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import tensorflow as tf
@@ -12,6 +14,7 @@ from tensorflow.keras.models import load_model
 import joblib
 from spektral.layers import GCSConv
 import logging
+from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 import requests  # For GA4 Measurement Protocol
 
@@ -57,8 +60,21 @@ logging.basicConfig(
 # Flask app setup
 # =========================
 app = Flask(__name__)
+
+# Set max upload size to 100 MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
+
 # Allow CORS for your frontend domains
-CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
+CORS(app, origins=[
+    "https://aamarzan.com",
+    "https://www.aamarzan.com",
+    "https://mirna.aamarzan.com"
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
+
+from werkzeug.exceptions import RequestEntityTooLarge
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(e):
+    return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
 
 # API key protection middleware
 @app.before_request
@@ -71,6 +87,11 @@ def require_api_key():
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
             return jsonify({"error": "Unauthorized"}), 401
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    logging.exception("Unexpected error: %s", e)
+    return jsonify({"error": "Unexpected error occurred. Please try again later or contact support."}), 500
 
 # =========================
 # TensorFlow custom objects
@@ -212,6 +233,8 @@ def predict():
         return jsonify({"error": "Model or scaler is not available on the server."}), 500
 
     start_time = datetime.now()
+    job_id = str(uuid.uuid4())
+    progress_store[job_id] = {"status": "running", "progress": 0}
     try:
         from Bio import SeqIO
         import io
@@ -279,52 +302,97 @@ def predict():
         if not records:
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
+        
+        MAX_MIRNAS = 1000  # match frontend limit
+        if len(records) > MAX_MIRNAS:
+            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
 
+        BATCH_SIZE = 128  # adjust to fit RAM/CPU/GPU
         results = []
-        for primary_record in records:
-            # Support both SeqRecord and pseudo-record
-            pri_id = getattr(primary_record, 'id', 'primary')
-            pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
 
-            primary_processed = process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule'))
-            primary_processed = ensure_dict(primary_processed)
+        # Preprocess target and competitor once (use parsed strings)
+        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
+        competitor_processed = process_molecule_universal(((comp_id if competitor_seq.strip() else "competitor", competitor_processed.get('sequence', '')), {}, 'competitor_molecule'))
+        # Note: competitor_processed above is already a dict; the second line is only needed if you want to repipeline it through process_molecule_universal. Otherwise, just keep the earlier competitor_processed as-is and remove this recomputation entirely.
 
-            # Baseline (no competitor)
-            inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
-            pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
-            pred_no_comp = float(np.square(pred_no_comp_transformed))
+        # Precompute encodings for target/competitor
+        model_inputs = {inp.name: inp.shape for inp in model.inputs}
+        max_primary_len = model_inputs['primary_sequence_input'][1]
+        max_target_len = model_inputs['target_sequence_input'][1]
+        max_competitor_len = model_inputs['competitor_sequence_input'][1]
 
-            # With competitor (only if a valid competitor sequence was provided)
-            if competitor_processed.get('sequence', '').strip():
-                inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
-                pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
-                pred_with_comp = float(np.square(pred_with_comp_transformed))
-            else:
-                pred_with_comp = pred_no_comp
+        target_seq_encoded = one_hot_encode_sequence(target_processed.get('sequence', ''), max_target_len)
+        comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
 
-            comp_effect = float(pred_no_comp - pred_with_comp)
+        num_features = [0.5, 0.0, 0.0]
+        if scaler.n_features_in_ > 3:
+            num_features += [0.0] * (scaler.n_features_in_ - 3)
+        scaled_numerical = scaler.transform([num_features])[0]
 
-            results.append({
-                # Keep both keys for backward compatibility with your frontend
-                'primary_molecule_id': pri_id,
-                'mirna_id': pri_id,
-                'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
-                'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
-                'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
-            })
+        
+        # Process in mini-batches
+        for i in range(0, len(records), BATCH_SIZE):
+            batch_start = datetime.now()
+            batch_records = records[i:i+BATCH_SIZE]
+            primary_batch = [
+                process_molecule_universal(((rec.id, str(rec.seq)), {}, 'primary_molecule'))
+                for rec in batch_records
+            ]
+            # After predictions and results.append(...)
+            logging.info(f"Processed batch {i//BATCH_SIZE + 1} of {len(records)//BATCH_SIZE + 1} | {len(batch_records)} miRNAs")
+            batch_duration = (datetime.now() - batch_start).total_seconds()
+            logging.info(f"Batch {i//BATCH_SIZE + 1} duration: {batch_duration:.2f}s")
+            
+            inputs_with_comp = {
+                'primary_sequence_input': np.stack([one_hot_encode_sequence(p['sequence'], max_primary_len) for p in primary_batch]),
+                'target_sequence_input': np.repeat(target_seq_encoded[np.newaxis, ...], len(primary_batch), axis=0),
+                'competitor_sequence_input': np.repeat(comp_seq_encoded[np.newaxis, ...], len(primary_batch), axis=0),
+                'numerical_features_input': np.stack([scaled_numerical for _ in primary_batch])
+            }
 
-            # Per-record logging and GA
-            duration = (datetime.now() - start_time).total_seconds()
-            logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
-            send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
+            with_comp = model.predict(inputs_with_comp, verbose=0).squeeze()
 
-        return jsonify(results)
+            # Baseline: competitor empty
+            empty_comp_encoded = one_hot_encode_sequence('', max_competitor_len)
+            inputs_no_comp = inputs_with_comp.copy()
+            inputs_no_comp['competitor_sequence_input'] = np.repeat(empty_comp_encoded[np.newaxis, ...], len(primary_batch), axis=0)
+            no_comp = model.predict(inputs_no_comp, verbose=0).squeeze()
+
+            pred_with = np.square(with_comp)
+            pred_base = np.square(no_comp)
+
+            for rec, p_base, p_with in zip(batch_records, pred_base, pred_with):
+                results.append({
+                    'mirna_id': rec.id,
+                    'predicted_affinity_baseline': float(p_base),
+                    'predicted_affinity_with_competitor': float(p_with),
+                    'competitive_effect (higher_is_better)': float(p_base - p_with),
+                })
+            progress_store[job_id]["progress"] = int(((i + BATCH_SIZE) / len(records)) * 100)
+            
+            # Now log after finishing this batch
+            from math import ceil
+            total_batches = ceil(len(records) / BATCH_SIZE)
+            batch_duration = (datetime.now() - batch_start).total_seconds()
+            logging.info(f"Processed batch {i//BATCH_SIZE + 1} of {total_batches} | {len(batch_records)} miRNAs | {batch_duration:.2f}s")
+
+        
+        total_duration = (datetime.now() - start_time).total_seconds()
+        progress_store[job_id]["status"] = "completed"
+        progress_store[job_id]["progress"] = 100
+        logging.info(f"Total prediction time: {total_duration:.2f}s for {len(records)} miRNAs")
+        return jsonify({"status": "completed", "job_id": job_id, "results": results})
 
     except Exception as e:
         logging.exception(f"Prediction error: {e}")
         send_ga_event("prediction_error", {"exception": str(e)[:200]})
         return jsonify({"error": "An internal server error occurred."}), 500
 
+@app.route('/status/<job_id>', methods=['GET'])
+def check_status(job_id):
+    if job_id not in progress_store:
+        return jsonify({"error": "Job ID not found"}), 404
+    return jsonify(progress_store[job_id])
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
