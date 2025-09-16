@@ -231,7 +231,6 @@ def get_config():
 
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
-    # OPTIONS handled in before_request
     key = request.headers.get("X-API-Key")
     if key != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
@@ -269,97 +268,99 @@ def predict():
             return data
 
         def parse_single_fasta_or_raw(seq_text, default_id):
-            # Try FASTA parse
             recs = list(SeqIO.parse(io.StringIO(seq_text), "fasta"))
             if len(recs) == 1:
                 return recs[0].id, str(recs[0].seq)
             if len(recs) > 1:
-                return None  # signal multi
-            # Fallback: treat as raw string
+                return None
             raw = seq_text.strip()
             if raw:
                 return default_id, raw
-            return default_id, ""  # empty
+            return default_id, ""
 
-        # Validate target: must be exactly one sequence (FASTA or raw)
+        # Target
         target_parsed = parse_single_fasta_or_raw(target_seq, "target")
         if target_parsed is None:
             return jsonify({"error": "Please enter only one target sequence."}), 400
         target_id, target_str = target_parsed
-        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-        target_processed = ensure_dict(target_processed)
+        target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
 
-        # Validate competitor: allow none or exactly one sequence
+        # Competitor
         competitor_processed = {'sequence': ''}
         if competitor_seq.strip():
             competitor_parsed = parse_single_fasta_or_raw(competitor_seq, "competitor")
             if competitor_parsed is None:
                 return jsonify({"error": "Please enter only one competitor sequence."}), 400
             comp_id, comp_str = competitor_parsed
-            competitor_processed = process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule'))
-            competitor_processed = ensure_dict(competitor_processed)
+            competitor_processed = ensure_dict(process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule')))
 
-        # Parse all primary miRNAs (FASTA); also accept raw multi-line by wrapping lines as single FASTA
+        # Primaries
         records = list(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
         if not records:
-            # If user pasted raw lines without headers, create a single pseudo-record
             raw = fasta_string.strip()
             if raw:
                 records = [type('R', (), {'id': 'primary_1', 'seq': raw})()]
         if not records:
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
-        
-        if len(records) > MIRNA_MAX:
-            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MIRNA_MAX}."}), 400
 
+        MAX_MIRNAS = 1000  # lifted cap
+        if len(records) > MAX_MIRNAS:
+            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
+
+        # --- Small batch processing ---
+        BATCH_SIZE = 20
         results = []
-        for primary_record in records:
-            # Support both SeqRecord and pseudo-record
-            pri_id = getattr(primary_record, 'id', 'primary')
-            pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
 
-            primary_processed = process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule'))
-            primary_processed = ensure_dict(primary_processed)
+        for batch_start in range(0, len(records), BATCH_SIZE):
+            batch_records = records[batch_start:batch_start + BATCH_SIZE]
 
-            # Baseline (no competitor)
-            inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
-            pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
-            pred_no_comp = float(np.square(pred_no_comp_transformed))
+            for primary_record in batch_records:
+                pri_id = getattr(primary_record, 'id', 'primary')
+                pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
 
-            # With competitor (only if a valid competitor sequence was provided)
-            if competitor_processed.get('sequence', '').strip():
-                inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
-                pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
-                pred_with_comp = float(np.square(pred_with_comp_transformed))
-            else:
-                pred_with_comp = pred_no_comp
+                primary_processed = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
 
-            comp_effect = float(pred_no_comp - pred_with_comp)
+                # Baseline
+                inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
+                pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
+                pred_no_comp = float(np.square(pred_no_comp_transformed))
 
-            results.append({
-                # Keep both keys for backward compatibility with your frontend
-                'primary_molecule_id': pri_id,
-                'mirna_id': pri_id,
-                'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
-                'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
-                'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
-            })
+                # With competitor
+                if competitor_processed.get('sequence', '').strip():
+                    inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
+                    pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
+                    pred_with_comp = float(np.square(pred_with_comp_transformed))
+                else:
+                    pred_with_comp = pred_no_comp
 
-            # Per-record logging and GA
-            duration = (datetime.now() - start_time).total_seconds()
-            logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
-            send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
+                comp_effect = float(pred_no_comp - pred_with_comp)
+
+                results.append({
+                    'primary_molecule_id': pri_id,
+                    'mirna_id': pri_id,
+                    'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
+                    'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
+                    'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
+                })
+
+                duration = (datetime.now() - start_time).total_seconds()
+                logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
+                send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
 
         return jsonify({"status": "completed", "results": results})
 
     except Exception as e:
         logging.exception(f"Prediction error: {e}")
         send_ga_event("prediction_error", {"exception": str(e)[:200]})
-        return jsonify({"error": "An internal server error occurred."}), 500
-
+        return jsonify({
+            "error": (
+                "We encountered an unexpected technical issue while processing your request. "
+                "Our team has been notified and is working to resolve it. "
+                "Please try again later — your trust matters to us."
+            )
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
-
