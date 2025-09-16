@@ -63,7 +63,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
 # Allow CORS for your frontend domains
-CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
+CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com", "https://mirna.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
 # Set max upload size (e.g., 100 MB)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
@@ -84,10 +84,6 @@ def require_api_key():
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
             return jsonify({"error": "Unauthorized"}), 401
-
-@app.errorhandler(RequestEntityTooLarge)
-def handle_large_file(e):
-    return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
@@ -166,10 +162,11 @@ except Exception as e:
 # Helper functions
 # =========================
 def one_hot_encode_sequence(sequence, max_len):
+    sequence = (sequence or "").upper().replace('T', 'U')
     nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
     encoded_seq = np.zeros((max_len, len(nucleotide_map)), dtype=np.float32)
     for i, char in enumerate(sequence[:max_len]):
-        encoded_seq[i, nucleotide_map.get(char.upper(), 4)] = 1
+        encoded_seq[i, nucleotide_map.get(char, 4)] = 1
     return encoded_seq
 
 def prepare_web_input(primary_data, target_data, competitor_data, scaler, model):
@@ -302,7 +299,7 @@ def predict():
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
         
-        MAX_MIRNAS = 200  # match frontend limit
+        MAX_MIRNAS = 1000  # lifted single-run cap
         if len(records) > MAX_MIRNAS:
             return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
 
