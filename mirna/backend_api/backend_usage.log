@@ -2630,3 +2630,9 @@ ValueError: could not broadcast input array from shape (119,) into shape (100,)
 2025-09-16 21:12:05,140 | WARNING |  * Debugger is active!
 2025-09-16 21:12:05,145 | INFO |  * Debugger PIN: 819-598-734
 2025-09-16 21:24:14,186 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 21:24:19,641 | INFO |  * Restarting with stat
+2025-09-16 21:24:31,108 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 21:24:32,084 | WARNING |  * Debugger is active!
+2025-09-16 21:24:32,096 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 21:34:32,796 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
