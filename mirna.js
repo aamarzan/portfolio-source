@@ -12,7 +12,25 @@ const API_URL = window.location.hostname === "localhost" || window.location.host
 const API_KEY = "supersecret123";
 
 const MAX_FILE_SIZE_MB = 100;
-const MAX_MIRNAS = 1000; // lifted single-run cap
+
+let MAX_MIRNAS = 1000; // default fallback
+async function loadConfig() {
+  try {
+    const base = API_URL.replace(/\/predict$/, '');
+    const res = await fetch(`${base}/config`, { method: 'GET' });
+    if (res.ok) {
+      const cfg = await res.json();
+      if (typeof cfg.mirna_max === "number") {
+        MAX_MIRNAS = cfg.mirna_max;
+      }
+    }
+  } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfig();
+  // existing bindings...
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');

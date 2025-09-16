@@ -28,6 +28,7 @@ API_KEY = os.getenv("API_KEY", "supersecret123")
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
 GA_API_SECRET = os.getenv("GA_API_SECRET", "your_secret")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
+MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 
 def send_ga_event(event_name, params):
     """Send a custom event to Google Analytics 4 via Measurement Protocol."""
@@ -224,6 +225,10 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
 # =========================
 # Routes
 # =========================
+@app.route('/config', methods=['GET'])
+def get_config():
+    return jsonify({"mirna_max": MIRNA_MAX})
+
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
     # OPTIONS handled in before_request
@@ -305,9 +310,8 @@ def predict():
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
         
-        MAX_MIRNAS = 1000  # lifted single-run cap
-        if len(records) > MAX_MIRNAS:
-            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
+        if len(records) > MIRNA_MAX:
+            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MIRNA_MAX}."}), 400
 
         results = []
         for primary_record in records:
