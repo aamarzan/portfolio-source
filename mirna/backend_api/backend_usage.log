@@ -2982,3 +2982,4 @@ Traceback (most recent call last):
 AttributeError: 'tuple' object has no attribute 'get'
 2025-09-17 00:19:11,985 | INFO | 127.0.0.1 - - [17/Sep/2025 00:19:11] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
 2025-09-17 00:22:14,010 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 00:22:17,799 | INFO |  * Restarting with stat
