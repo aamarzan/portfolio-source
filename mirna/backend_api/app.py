@@ -12,6 +12,7 @@ from tensorflow.keras.models import load_model
 import joblib
 from spektral.layers import GCSConv
 import logging
+from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 import requests  # For GA4 Measurement Protocol
 
@@ -57,6 +58,10 @@ logging.basicConfig(
 # Flask app setup
 # =========================
 app = Flask(__name__)
+
+# Set max upload size to 100 MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
+
 # Allow CORS for your frontend domains
 CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
@@ -79,6 +84,15 @@ def require_api_key():
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
             return jsonify({"error": "Unauthorized"}), 401
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_file(e):
+    return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    logging.exception("Unexpected error: %s", e)
+    return jsonify({"error": "Unexpected error occurred. Please try again later or contact support."}), 500
 
 # =========================
 # TensorFlow custom objects
@@ -287,6 +301,10 @@ def predict():
         if not records:
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
+        
+        MAX_MIRNAS = 50  # match frontend limit
+        if len(records) > MAX_MIRNAS:
+            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
 
         results = []
         for primary_record in records:
@@ -326,7 +344,7 @@ def predict():
             logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
             send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
 
-        return jsonify(results)
+        return jsonify({"status": "completed", "results": results})
 
     except Exception as e:
         logging.exception(f"Prediction error: {e}")
