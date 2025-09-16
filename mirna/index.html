@@ -131,13 +131,20 @@
                     <textarea id="competitor-seq" placeholder="Enter the competitor sequence..." class="sequence-input"></textarea>
                     <small>Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
                     <input type="file" id="competitor-seq-file" accept=".fasta,.fas,.fa,.txt" />
-                    
+                    <br>
+                    <br>
 
                     <!-- Optional PDB uploads -->
                     <div class="file-uploads">
                         <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
+                        <br>
+                        <label for="mirna-seq-file">Upload miRNA Structure File:</label>
                         <input type="file" id="mirna-file" accept=".pdb,.cif" />
+                        <br>
+                        <label for="target-file">Upload Target Structure File:</label>
                         <input type="file" id="target-file" accept=".pdb,.cif" />
+                        <br>
+                        <label for="competitor-file">Upload Competitor Structure File:</label>
                         <input type="file" id="competitor-file" accept=".pdb,.cif" />
                     </div>
 
