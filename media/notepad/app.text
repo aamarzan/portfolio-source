@@ -279,8 +279,6 @@ def predict():
         if target_parsed is None:
             return jsonify({"error": "Please enter only one target sequence."}), 400
         target_id, target_str = target_parsed
-        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-        target_processed = ensure_dict(target_processed)
 
         # Validate competitor: allow none or exactly one sequence
         competitor_processed = {'sequence': ''}
@@ -368,7 +366,9 @@ def predict():
                     'predicted_affinity_with_competitor': float(p_with),
                     'competitive_effect (higher_is_better)': float(p_base - p_with),
                 })
-            progress_store[job_id]["progress"] = int(((i + BATCH_SIZE) / len(records)) * 100)
+            progress_store[job_id]["progress"] = min(
+                99, int(((i + len(batch_records)) / len(records)) * 100)
+            )
             
             # Now log after finishing this batch
             from math import ceil

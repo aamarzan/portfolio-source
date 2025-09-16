@@ -71,7 +71,6 @@ CORS(app, origins=[
     "https://mirna.aamarzan.com"
 ], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
-from werkzeug.exceptions import RequestEntityTooLarge
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):
     return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
@@ -165,10 +164,12 @@ except Exception as e:
 # Helper functions
 # =========================
 def one_hot_encode_sequence(sequence, max_len):
+    # Normalize DNA -> RNA
+    sequence = (sequence or "").upper().replace('T', 'U')
     nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
     encoded_seq = np.zeros((max_len, len(nucleotide_map)), dtype=np.float32)
     for i, char in enumerate(sequence[:max_len]):
-        encoded_seq[i, nucleotide_map.get(char.upper(), 4)] = 1
+        encoded_seq[i, nucleotide_map.get(char, 4)] = 1
     return encoded_seq
 
 def prepare_web_input(primary_data, target_data, competitor_data, scaler, model):
@@ -279,8 +280,6 @@ def predict():
         if target_parsed is None:
             return jsonify({"error": "Please enter only one target sequence."}), 400
         target_id, target_str = target_parsed
-        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-        target_processed = ensure_dict(target_processed)
 
         # Validate competitor: allow none or exactly one sequence
         competitor_processed = {'sequence': ''}
@@ -291,6 +290,8 @@ def predict():
             comp_id, comp_str = competitor_parsed
             competitor_processed = process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule'))
             competitor_processed = ensure_dict(competitor_processed)
+        else:
+            comp_id = "competitor"
 
         # Parse all primary miRNAs (FASTA); also accept raw multi-line by wrapping lines as single FASTA
         records = list(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
@@ -302,7 +303,7 @@ def predict():
         if not records:
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
-        
+
         MAX_MIRNAS = 1000  # match frontend limit
         if len(records) > MAX_MIRNAS:
             return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
@@ -312,8 +313,10 @@ def predict():
 
         # Preprocess target and competitor once (use parsed strings)
         target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-        competitor_processed = process_molecule_universal(((comp_id if competitor_seq.strip() else "competitor", competitor_processed.get('sequence', '')), {}, 'competitor_molecule'))
-        # Note: competitor_processed above is already a dict; the second line is only needed if you want to repipeline it through process_molecule_universal. Otherwise, just keep the earlier competitor_processed as-is and remove this recomputation entirely.
+        target_processed = ensure_dict(target_processed)
+        # If competitor was provided, it's already processed above; otherwise keep empty dict with sequence ''
+        if competitor_seq.strip() == '':
+            competitor_processed = {'sequence': ''}
 
         # Precompute encodings for target/competitor
         model_inputs = {inp.name: inp.shape for inp in model.inputs}
@@ -329,20 +332,18 @@ def predict():
             num_features += [0.0] * (scaler.n_features_in_ - 3)
         scaled_numerical = scaler.transform([num_features])[0]
 
-        
         # Process in mini-batches
+        from math import ceil
+        total_batches = ceil(len(records) / BATCH_SIZE)
+
         for i in range(0, len(records), BATCH_SIZE):
             batch_start = datetime.now()
             batch_records = records[i:i+BATCH_SIZE]
             primary_batch = [
-                process_molecule_universal(((rec.id, str(rec.seq)), {}, 'primary_molecule'))
+                ensure_dict(process_molecule_universal(((rec.id, str(rec.seq)), {}, 'primary_molecule')))
                 for rec in batch_records
             ]
-            # After predictions and results.append(...)
-            logging.info(f"Processed batch {i//BATCH_SIZE + 1} of {len(records)//BATCH_SIZE + 1} | {len(batch_records)} miRNAs")
-            batch_duration = (datetime.now() - batch_start).total_seconds()
-            logging.info(f"Batch {i//BATCH_SIZE + 1} duration: {batch_duration:.2f}s")
-            
+
             inputs_with_comp = {
                 'primary_sequence_input': np.stack([one_hot_encode_sequence(p['sequence'], max_primary_len) for p in primary_batch]),
                 'target_sequence_input': np.repeat(target_seq_encoded[np.newaxis, ...], len(primary_batch), axis=0),
@@ -368,19 +369,18 @@ def predict():
                     'predicted_affinity_with_competitor': float(p_with),
                     'competitive_effect (higher_is_better)': float(p_base - p_with),
                 })
-            progress_store[job_id]["progress"] = int(((i + BATCH_SIZE) / len(records)) * 100)
-            
-            # Now log after finishing this batch
-            from math import ceil
-            total_batches = ceil(len(records) / BATCH_SIZE)
-            batch_duration = (datetime.now() - batch_start).total_seconds()
-            logging.info(f"Processed batch {i//BATCH_SIZE + 1} of {total_batches} | {len(batch_records)} miRNAs | {batch_duration:.2f}s")
 
-        
+            # Update progress and log after finishing this batch
+            progress_store[job_id]["progress"] = min(
+                99, int(((i + len(batch_records)) / len(records)) * 100)
+            )
+            batch_duration = (datetime.now() - batch_start).total_seconds()
+            logging.info(f"[{job_id}] Processed batch {i//BATCH_SIZE + 1} of {total_batches} | {len(batch_records)} miRNAs | {batch_duration:.2f}s")
+
         total_duration = (datetime.now() - start_time).total_seconds()
         progress_store[job_id]["status"] = "completed"
         progress_store[job_id]["progress"] = 100
-        logging.info(f"Total prediction time: {total_duration:.2f}s for {len(records)} miRNAs")
+        logging.info(f"[{job_id}] Total prediction time: {total_duration:.2f}s for {len(records)} miRNAs")
         return jsonify({"status": "completed", "job_id": job_id, "results": results})
 
     except Exception as e:
@@ -397,4 +397,3 @@ def check_status(job_id):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
-

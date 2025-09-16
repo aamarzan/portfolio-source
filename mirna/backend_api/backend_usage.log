@@ -2912,3 +2912,73 @@ ValueError: could not broadcast input array from shape (119,) into shape (100,)
 2025-09-16 22:59:53,794 | WARNING |  * Debugger is active!
 2025-09-16 22:59:53,797 | INFO |  * Debugger PIN: 819-598-734
 2025-09-16 23:00:30,788 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 23:00:31,906 | INFO |  * Restarting with stat
+2025-09-16 23:00:39,052 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 23:00:39,428 | WARNING |  * Debugger is active!
+2025-09-16 23:00:39,431 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 23:05:12,978 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 23:05:14,584 | INFO |  * Restarting with stat
+2025-09-16 23:05:27,043 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 23:05:27,863 | WARNING |  * Debugger is active!
+2025-09-16 23:05:27,868 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 23:08:44,411 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-16 23:08:46,647 | INFO |  * Restarting with stat
+2025-09-16 23:08:58,317 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-16 23:08:59,400 | WARNING |  * Debugger is active!
+2025-09-16 23:08:59,409 | INFO |  * Debugger PIN: 819-598-734
+2025-09-16 23:34:40,972 | INFO | 127.0.0.1 - - [16/Sep/2025 23:34:40] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 23:35:22,371 | ERROR | Prediction error: 'tuple' object has no attribute 'get'
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 323, in predict
+    comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+2025-09-16 23:35:22,738 | INFO | 127.0.0.1 - - [16/Sep/2025 23:35:22] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 23:35:55,403 | INFO | 127.0.0.1 - - [16/Sep/2025 23:35:55] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 23:36:32,846 | ERROR | Prediction error: 'tuple' object has no attribute 'get'
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 323, in predict
+    comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+2025-09-16 23:36:33,049 | INFO | 127.0.0.1 - - [16/Sep/2025 23:36:33] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-16 23:38:42,615 | INFO | 127.0.0.1 - - [16/Sep/2025 23:38:42] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-16 23:39:16,905 | ERROR | Prediction error: 'tuple' object has no attribute 'get'
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 323, in predict
+    comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+2025-09-16 23:39:17,126 | INFO | 127.0.0.1 - - [16/Sep/2025 23:39:17] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-17 00:05:31,057 | INFO | 127.0.0.1 - - [17/Sep/2025 00:05:31] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 00:06:12,288 | ERROR | Prediction error: 'tuple' object has no attribute 'get'
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 323, in predict
+    comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+2025-09-17 00:06:12,624 | INFO | 127.0.0.1 - - [17/Sep/2025 00:06:12] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-17 00:14:58,043 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 00:15:02,159 | INFO |  * Restarting with stat
+2025-09-17 00:15:15,865 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 00:15:16,304 | WARNING |  * Debugger is active!
+2025-09-17 00:15:16,307 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 00:15:23,766 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 00:15:24,561 | INFO |  * Restarting with stat
+2025-09-17 00:15:32,614 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 00:15:32,968 | WARNING |  * Debugger is active!
+2025-09-17 00:15:32,970 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 00:18:56,513 | INFO | 127.0.0.1 - - [17/Sep/2025 00:18:56] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 00:19:11,688 | ERROR | Prediction error: 'tuple' object has no attribute 'get'
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 325, in predict
+    comp_seq_encoded = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+2025-09-17 00:19:11,985 | INFO | 127.0.0.1 - - [17/Sep/2025 00:19:11] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-17 00:22:14,010 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

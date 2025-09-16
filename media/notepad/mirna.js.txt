@@ -4,33 +4,37 @@
 let predictionResults = [];
 
 // === CONFIGURE API BASE URL ===
-// Local backend for development:
 const LOCAL_API = "http://127.0.0.1:8080/predict";
-// Production backend (replace with your deployed URL when ready):
 const PROD_API = "https://mirna.aamarzan.com/predict";
-
-// Automatically choose based on where the page is running
 const API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? LOCAL_API
     : PROD_API;
 const API_KEY = "supersecret123";
 
-// On load: bind file inputs and show idle message
+const MAX_FILE_SIZE_MB = 100;
+const MAX_MIRNAS = 1000; // adjust to safe backend limit
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Idle message
     const loader = document.getElementById('loader');
     if (loader) {
         loader.textContent = "Please input your sequences to start a prediction.";
         loader.classList.remove('hidden');
     }
 
-    // Bind file inputs to textareas
+    // Bind sequence file inputs to textareas
     bindFileToTextarea('mirna-seq-file', 'primary-seqs');
     bindFileToTextarea('target-seq-file', 'target-seq');
     bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 });
 
-// Bind file -> textarea content
+function validateFileSize(file) {
+    if (file && file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        alert(`File "${file.name}" exceeds ${MAX_FILE_SIZE_MB} MB limit.`);
+        return false;
+    }
+    return true;
+}
+
 function bindFileToTextarea(fileInputId, textareaId) {
     const fileInput = document.getElementById(fileInputId);
     const textarea = document.getElementById(textareaId);
@@ -45,7 +49,6 @@ function bindFileToTextarea(fileInputId, textareaId) {
     });
 }
 
-// Count FASTA records in a text block; treat raw non-empty as one record
 function countFastaRecords(seqText) {
     if (!seqText) return 0;
     const lines = seqText.trim().split(/\r?\n/);
@@ -60,14 +63,24 @@ function countFastaRecords(seqText) {
 document.getElementById('prediction-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    // UI elements
     const loader = document.getElementById('loader');
     const resultsContainer = document.getElementById('results-container');
 
-    // Instant validation for target/competitor counts before calling backend
+    const primarySeqs = document.getElementById('primary-seqs').value.trim();
     const targetSeq = document.getElementById('target-seq').value.trim();
     const competitorSeq = document.getElementById('competitor-seq').value.trim();
 
+    // Limit check for miRNA count
+    const mirnaCount = countFastaRecords(primarySeqs);
+    if (mirnaCount > MAX_MIRNAS) {
+        resultsContainer.innerHTML = `<p style="color: red;">
+            You entered ${mirnaCount} miRNAs, but the maximum allowed is ${MAX_MIRNAS}.
+            Please reduce your input and try again.
+        </p>`;
+        return;
+    }
+
+    // Validate target/competitor counts
     if (countFastaRecords(targetSeq) > 1) {
         resultsContainer.innerHTML = '<p style="color: red;">Please enter only one target sequence.</p>';
         return;
@@ -77,33 +90,43 @@ document.getElementById('prediction-form').addEventListener('submit', async func
         return;
     }
 
-    // Switch to the results tab to show the loader
+    // Switch to results tab
     const resultsTabButton = document.querySelector('button[onclick*="results-tab"]');
     if (resultsTabButton) openTab(resultsTabButton, 'results-tab');
 
-    // Show running loader and clear prior results
+    // Show loader
     if (loader) {
         loader.textContent = "Running prediction...";
         loader.classList.remove('hidden');
     }
     resultsContainer.innerHTML = '';
-    predictionResults = []; // Clear previous results
+    predictionResults = [];
 
-    // Create a FormData object to hold all text and file data
     const formData = new FormData();
-
-    // Append text and number values from the form
-    formData.append('primary_molecules', document.getElementById('primary-seqs').value);
+    formData.append('primary_molecules', primarySeqs);
     formData.append('target_molecule', targetSeq);
     formData.append('competitor_molecule', competitorSeq);
-    // If you use these in backend later:
     formData.append('target_start', document.getElementById('target-start')?.value ?? '');
     formData.append('target_end', document.getElementById('target-end')?.value ?? '');
 
-    // Get file objects (optional 3D files — you’re not parsing them yet, but keeping compatibility)
+    // Get optional PDB/CIF files
     const mirnaFile = document.getElementById('mirna-file')?.files?.[0];
     const targetFile = document.getElementById('target-file')?.files?.[0];
     const competitorFile = document.getElementById('competitor-file')?.files?.[0];
+
+    // Validate sizes
+    if (mirnaFile && !validateFileSize(mirnaFile)) {
+        document.getElementById('mirna-file').value = '';
+        return;
+    }
+    if (targetFile && !validateFileSize(targetFile)) {
+        document.getElementById('target-file').value = '';
+        return;
+    }
+    if (competitorFile && !validateFileSize(competitorFile)) {
+        document.getElementById('competitor-file').value = '';
+        return;
+    }
 
     if (mirnaFile) formData.append('mirna_3d_file', mirnaFile);
     if (targetFile) formData.append('target_3d_file', targetFile);
@@ -112,29 +135,37 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                "X-API-Key": API_KEY
-            },
+            headers: { "X-API-Key": API_KEY },
             body: formData
         });
 
         if (!response.ok) {
-            let errorMsg = 'A server error occurred.';
+            let errorMsg;
             try {
                 const errorData = await response.json();
-                if (errorData.error) errorMsg = errorData.error;
+                errorMsg = errorData.error || null;
             } catch (_) {}
-            throw new Error(errorMsg);
+            throw new Error(errorMsg || 'Something went wrong while processing your request. Please try again later.');
         }
 
-        const results = await response.json();
-        predictionResults = results; // Save results for the download button
-        displayResults(results);
+        const data = await response.json();
+        predictionResults = data.results; // Save only the results array
+        displayResults(data.results);
+
+        if (loader) {
+            if (data.status === "completed") {
+                loader.textContent = "✅ Prediction completed. Results are shown below.";
+            } else {
+                loader.textContent = "ℹ️ Prediction finished.";
+            }
+            setTimeout(() => loader.classList.add('hidden'), 3000);
+        }
 
     } catch (error) {
-        resultsContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-    } finally {
-        // Hide loader when finished; keep results visible
+        const friendlyMessage = error.message && !error.message.includes('server error')
+            ? error.message
+            : 'Something went wrong while processing your request. Please try again later.';
+        resultsContainer.innerHTML = `<p style="color: red;">${friendlyMessage}</p>`;
         if (loader) loader.classList.add('hidden');
     }
 });
@@ -146,7 +177,6 @@ function displayResults(results) {
         return;
     }
 
-    // Build table: prefer primary_molecule_id, fallback to mirna_id
     let table = '<table><thead><tr>' +
         '<th>Primary Molecule ID</th>' +
         '<th>Predicted Affinity (Baseline)</th>' +
@@ -156,8 +186,6 @@ function displayResults(results) {
 
     results.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-
-        // Values from backend are already formatted to 10 decimals; display as-is.
         const baseline = item.predicted_affinity_baseline ?? item.baseline_score ?? '';
         const withComp = item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '';
         const compEffect = item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '';
