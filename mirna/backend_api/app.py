@@ -302,7 +302,7 @@ def predict():
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
         
-        MAX_MIRNAS = 50  # match frontend limit
+        MAX_MIRNAS = 200  # match frontend limit
         if len(records) > MAX_MIRNAS:
             return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
 
