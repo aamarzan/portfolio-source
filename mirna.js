@@ -265,7 +265,7 @@ function displayResults(results) {
       showingSorted = !showingSorted;
       const rows = showingSorted ? sorted : predictionResults;
       container.innerHTML =
-        container.innerHTML.split("</div></div>")[0] + // preserve header controls
+        container.innerHTML.split("</div></div>")[0] +
         "</div></div>" +
         buildResultsTable(rows);
       document.getElementById("download-btn")?.addEventListener("click", downloadCSV);
@@ -290,7 +290,6 @@ function buildResultsTable(rows) {
     const compEffect =
       item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? "";
 
-    // Keep formatting flexible: numeric to fixed, else pass-through
     const fmt = (v) =>
       typeof v === "number" && isFinite(v) ? v.toFixed(10) : String(v);
 
