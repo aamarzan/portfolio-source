@@ -15,23 +15,21 @@ import logging
 from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 import requests  # For GA4 Measurement Protocol
-
-# Import from your project's own final scripts
 from molecule_processors import process_molecule_universal
 
 # =========================
 # Configuration
 # =========================
 API_KEY = os.getenv("API_KEY", "supersecret123")
+MIRNA_MAX = int(os.getenv("MIRNA_MAX", "1000"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "24"))
 
 # Google Analytics (GA4) Measurement Protocol
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
 GA_API_SECRET = os.getenv("GA_API_SECRET", "your_secret")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
-MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 
 def send_ga_event(event_name, params):
-    """Send a custom event to Google Analytics 4 via Measurement Protocol."""
     try:
         payload = {
             "client_id": "backend_server",
@@ -59,28 +57,22 @@ logging.basicConfig(
 # Flask app setup
 # =========================
 app = Flask(__name__)
-
-# Set max upload size to 100 MB
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
-# Allow CORS for your frontend domains
-CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com", "https://mirna.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
+CORS(app, origins=[
+    "https://aamarzan.com",
+    "https://www.aamarzan.com",
+    "https://mirna.aamarzan.com"
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
-# Set max upload size (e.g., 100 MB)
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
-
-from werkzeug.exceptions import RequestEntityTooLarge
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):
     return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
 
-# API key protection middleware
 @app.before_request
 def require_api_key():
-    # Allow CORS preflight requests
     if request.method == "OPTIONS":
         return '', 200
-
     if request.endpoint == 'predict':
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
@@ -90,6 +82,11 @@ def require_api_key():
 def handle_unexpected_error(e):
     logging.exception("Unexpected error: %s", e)
     return jsonify({"error": "Unexpected error occurred. Please try again later or contact support."}), 500
+
+# Config endpoint for frontend
+@app.route('/config', methods=['GET'])
+def get_config():
+    return jsonify({"mirna_max": MIRNA_MAX})
 
 # =========================
 # TensorFlow custom objects
@@ -137,30 +134,21 @@ scaler = None
 
 try:
     print("--- Loading Model and Scaler ---")
-
     custom_objects = {
         'PositionalEncoding': PositionalEncoding,
         'weighted_mse': create_weighted_mse(),
         'GCSConv': GCSConv
     }
-
     model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')
     scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
-
-    print(f"Looking for model at: {os.path.abspath(model_path)}")
-    print(f"Looking for scaler at: {os.path.abspath(scaler_path)}")
-
     model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
-    print("  - Keras model loaded successfully.")
-
     scaler = joblib.load(scaler_path)
-    print("  - Scaler loaded successfully.")
-
+    print("Model and scaler loaded successfully.")
 except Exception as e:
     print(f"FATAL: Could not load model or scaler on startup. Error: {e}")
 
 # =========================
-# Helper functions
+# Helpers
 # =========================
 def one_hot_encode_sequence(sequence, max_len):
     sequence = (sequence or "").upper().replace('T', 'U')
@@ -181,12 +169,9 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
         primary_data.get('dg', 0.0),
         primary_data.get('conservation', 0.0)
     ]
-
-    # Pad with zeros if fewer features than scaler expects
-    if len(num_features) < scaler.n_features_in_:
+    if hasattr(scaler, 'n_features_in_') and len(num_features) < scaler.n_features_in_:
         num_features += [0.0] * (scaler.n_features_in_ - len(num_features))
 
-    # If scaler was trained with column names, preserve them
     if hasattr(scaler, 'feature_names_in_'):
         df_features = pd.DataFrame([num_features], columns=scaler.feature_names_in_)
         scaled_numerical = scaler.transform(df_features)
@@ -201,18 +186,17 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
     }
 
     if 'primary_structure_input' in model_inputs:
-        structure_vector = np.array(json.loads(primary_data.get('structure_vector', '[]')), dtype=np.float32)
-        # Truncate if longer than model expects
-        if len(structure_vector) > max_primary_len:
-            structure_vector = structure_vector[:max_primary_len]
-        structure_padded = np.zeros((max_primary_len, 1), dtype=np.float32)
-        structure_padded[:len(structure_vector), 0] = structure_vector
-        inputs['primary_structure_input'] = np.array([structure_padded])
+        sv = np.array(json.loads(primary_data.get('structure_vector', '[]')), dtype=np.float32)
+        if sv.shape[0] > max_primary_len:
+            sv = sv[:max_primary_len]
+        sp = np.zeros((max_primary_len, 1), dtype=np.float32)
+        if sv.size > 0:
+            sp[:sv.shape[0], 0] = sv
+        inputs['primary_structure_input'] = np.array([sp])
 
     if 'target_adjacency_input' in model_inputs:
         adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')), dtype=np.float32)
-        # 🔹 Truncate if larger than model expects
-        if adj_matrix.shape[0] > max_target_len:
+        if adj_matrix.ndim == 2 and adj_matrix.shape[0] > max_target_len:
             adj_matrix = adj_matrix[:max_target_len, :max_target_len]
         padded_adj = np.zeros((max_target_len, max_target_len), dtype=np.float32)
         if adj_matrix.size > 0:
@@ -222,13 +206,10 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
 
     return inputs
 
-# =========================
-# Routes
-# =========================
-@app.route('/config', methods=['GET'])
-def get_config():
-    return jsonify({"mirna_max": MIRNA_MAX})
 
+# =========================
+# Batched prediction route
+# =========================
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
     key = request.headers.get("X-API-Key")
@@ -304,46 +285,91 @@ def predict():
             logging.warning("No FASTA records parsed from primary_molecules.")
             return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
 
-        MAX_MIRNAS = 1000  # lifted cap
-        if len(records) > MAX_MIRNAS:
-            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
+        if len(records) > MIRNA_MAX:
+            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MIRNA_MAX}."}), 400
 
-        # --- Small batch processing ---
-        BATCH_SIZE = 20
         results = []
+        # Process in small batches to save RAM and avoid timeouts
+        for start in range(0, len(records), BATCH_SIZE):
+            batch_records = records[start:start + BATCH_SIZE]
 
-        for batch_start in range(0, len(records), BATCH_SIZE):
-            batch_records = records[batch_start:batch_start + BATCH_SIZE]
+            # Build batch inputs
+            prim_seq_list = []
+            num_feat_list = []
+            prim_struct_list = []
 
-            for primary_record in batch_records:
-                pri_id = getattr(primary_record, 'id', 'primary')
-                pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
+            model_inputs = {inp.name: inp.shape for inp in model.inputs}
+            max_primary_len = model_inputs['primary_sequence_input'][1]
+            max_target_len = model_inputs['target_sequence_input'][1]
+            max_competitor_len = model_inputs['competitor_sequence_input'][1]
 
-                primary_processed = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
+            target_seq_enc = one_hot_encode_sequence(target_processed.get('sequence', ''), max_target_len)
+            comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+            empty_comp_enc = one_hot_encode_sequence('', max_competitor_len)
 
-                # Baseline
-                inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
-                pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
-                pred_no_comp = float(np.square(pred_no_comp_transformed))
+            for rec in batch_records:
+                pri_id = getattr(rec, 'id', 'primary')
+                pri_seq = str(getattr(rec, 'seq', '')) if hasattr(rec, 'seq') else str(rec)
 
-                # With competitor
-                if competitor_processed.get('sequence', '').strip():
-                    inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
-                    pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
-                    pred_with_comp = float(np.square(pred_with_comp_transformed))
-                else:
-                    pred_with_comp = pred_no_comp
+                pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
+                prim_seq_list.append(one_hot_encode_sequence(pdata.get('sequence', ''), max_primary_len))
 
-                comp_effect = float(pred_no_comp - pred_with_comp)
+                nf = [
+                    pdata.get('gc_content', 0.5),
+                    pdata.get('dg', 0.0),
+                    pdata.get('conservation', 0.0)
+                ]
+                if hasattr(scaler, 'n_features_in_') and len(nf) < scaler.n_features_in_:
+                    nf += [0.0] * (scaler.n_features_in_ - len(nf))
+                num_feat_list.append(nf)
 
+                if 'primary_structure_input' in model_inputs:
+                    sv = np.array(json.loads(pdata.get('structure_vector', '[]')), dtype=np.float32)
+                    if sv.shape[0] > max_primary_len:
+                        sv = sv[:max_primary_len]
+                    sp = np.zeros((max_primary_len, 1), dtype=np.float32)
+                    if sv.size > 0:
+                        sp[:sv.shape[0], 0] = sv
+                    prim_struct_list.append(sp)
+
+            # Scale numerical features
+            if hasattr(scaler, 'feature_names_in_'):
+                df = pd.DataFrame(num_feat_list, columns=scaler.feature_names_in_)
+                scaled_num = scaler.transform(df)
+            else:
+                scaled_num = scaler.transform(num_feat_list)
+
+            batch_size = len(batch_records)
+            common_inputs = {
+                'primary_sequence_input': np.stack(prim_seq_list),
+                'target_sequence_input': np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0),
+                'numerical_features_input': scaled_num
+            }
+            if 'primary_structure_input' in model_inputs:
+                common_inputs['primary_structure_input'] = np.stack(prim_struct_list) if prim_struct_list else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
+
+            with_comp = dict(common_inputs)
+            with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
+
+            no_comp = dict(common_inputs)
+            no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+
+            # Predict once per condition
+            preds_with = model.predict(with_comp, verbose=0).squeeze()
+            preds_no = model.predict(no_comp, verbose=0).squeeze()
+
+            pred_with_sq = np.square(preds_with)
+            pred_no_sq = np.square(preds_no)
+
+            for rec, p_base, p_with in zip(batch_records, pred_no_sq, pred_with_sq):
+                pri_id = getattr(rec, 'id', 'primary')
                 results.append({
                     'primary_molecule_id': pri_id,
                     'mirna_id': pri_id,
-                    'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
-                    'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
-                    'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
+                    'predicted_affinity_baseline': format(float(p_base), '.10f'),
+                    'predicted_affinity_with_competitor': format(float(p_with), '.10f'),
+                    'competitive_effect (higher_is_better)': format(float(p_base - p_with), '.10f'),
                 })
-
                 duration = (datetime.now() - start_time).total_seconds()
                 logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
                 send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
@@ -357,7 +383,7 @@ def predict():
             "error": (
                 "We encountered an unexpected technical issue while processing your request. "
                 "Our team has been notified and is working to resolve it. "
-                "Please try again later — your trust matters to us."
+                "Please try again shortly — your trust matters to us."
             )
         }), 500
 
