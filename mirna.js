@@ -13,7 +13,7 @@ const API_KEY = "supersecret123";
 
 const MAX_FILE_SIZE_MB = 100;
 
-let MAX_MIRNAS = 1000; // default fallback
+let MAX_MIRNAS = 5000; // default fallback
 async function loadConfig() {
   try {
     const base = API_URL.replace(/\/predict$/, '');
