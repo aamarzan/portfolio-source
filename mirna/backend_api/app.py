@@ -21,7 +21,7 @@ from molecule_processors import process_molecule_universal
 # Configuration
 # =========================
 API_KEY = os.getenv("API_KEY", "supersecret123")
-MIRNA_MAX = int(os.getenv("MIRNA_MAX", "1000"))
+MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 
 # Google Analytics (GA4) Measurement Protocol
