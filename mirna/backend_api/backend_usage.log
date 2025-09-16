@@ -3055,3 +3055,18 @@ ValueError: Missing data for input "primary_structure_input". You passed a data 
 2025-09-17 00:45:54,771 | INFO | 127.0.0.1 - - [17/Sep/2025 00:45:54] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
 2025-09-17 00:51:40,299 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
 2025-09-17 00:51:43,930 | INFO |  * Restarting with stat
+2025-09-17 00:59:24,979 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 00:59:25,408 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-17 00:59:25,409 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-17 00:59:42,338 | INFO | 127.0.0.1 - - [17/Sep/2025 00:59:42] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 01:00:02,890 | ERROR | Prediction error: name 'sampler' is not defined
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 289, in predict
+    df_features = pd.DataFrame([num_features], columns=sampler.feature_names_in_)  # <-- keep names
+                                                       ^^^^^^^
+NameError: name 'sampler' is not defined
+2025-09-17 01:00:03,173 | INFO | 127.0.0.1 - - [17/Sep/2025 01:00:03] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -

@@ -344,6 +344,7 @@ def predict():
     except Exception as e:
         logging.exception(f"Prediction error: {e}")
         send_ga_event("prediction_error", {"exception": str(e)[:200]})
+        # include the exception text in the JSON while debugging
         return jsonify({"error": f"Internal server error: {e}"}), 500
 
 @app.route('/status/<job_id>', methods=['GET'])
