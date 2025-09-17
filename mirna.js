@@ -228,13 +228,13 @@ function displayResults(results) {
         return;
     }
 
-    // Sort results by competitive effect descending
+    // Sort by predicted affinity with competitor (descending)
     results.sort((a, b) =>
-        parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
-        parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0)
+        parseFloat(b.predicted_affinity_with_competitor ?? b.score_with_competitor ?? 0) -
+        parseFloat(a.predicted_affinity_with_competitor ?? a.score_with_competitor ?? 0)
     );
 
-    // Classification guide panel (now above the table)
+    // Classification guide panel
     const legendHTML = `
     <div class="affinity-legend">
       <h4>Affinity Classification Guide</h4>
@@ -264,9 +264,9 @@ function displayResults(results) {
         const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
         const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
         const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-        const score = parseFloat(compEffect) || 0;
 
-        // Category-based background color
+        const score = parseFloat(withComp) || 0; // use predicted affinity with competitor for color
+
         let bgColor;
         if (score <= 0.25) bgColor = 'rgba(255,0,0,0.3)';       // red
         else if (score <= 0.50) bgColor = 'rgba(255,165,0,0.3)'; // orange
@@ -284,7 +284,6 @@ function displayResults(results) {
 
     const downloadButton = '<button id="download-btn">Download Results as CSV</button>';
 
-    // Guide above table
     container.innerHTML = legendHTML + table + downloadButton;
 
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
