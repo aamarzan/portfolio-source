@@ -234,6 +234,14 @@ function displayResults(results) {
         parseFloat(a.predicted_affinity_with_competitor ?? a.score_with_competitor ?? 0)
     );
 
+    // Gradient color function (0 = red, 1 = green)
+    function getGradientColor(score) {
+        const s = Math.max(0, Math.min(1, parseFloat(score) || 0));
+        const r = Math.round(255 * (1 - s));
+        const g = Math.round(255 * s);
+        return `rgba(${r},${g},0,0.3)`;
+    }
+
     // Classification guide panel
     const legendHTML = `
     <div class="affinity-legend">
@@ -253,7 +261,11 @@ function displayResults(results) {
     </div>
     `;
 
-    let table = '<table><thead><tr>' +
+    // Download button right after guide
+    const downloadButton = '<div style="margin-bottom:20px;"><button id="download-btn">Download Results as CSV</button></div>';
+
+    // Build table
+    let table = '<table style="margin-bottom:20px;"><thead><tr>' +
         '<th>Primary Molecule ID</th>' +
         '<th>Predicted Affinity (Baseline)</th>' +
         '<th>Predicted Affinity (With Competitor)</th>' +
@@ -266,13 +278,7 @@ function displayResults(results) {
         const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
         const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
 
-        const score = parseFloat(withComp) || 0; // use predicted affinity with competitor for color
-
-        let bgColor;
-        if (score <= 0.25) bgColor = 'rgba(255,0,0,0.3)';       // red
-        else if (score <= 0.50) bgColor = 'rgba(255,165,0,0.3)'; // orange
-        else if (score <= 0.75) bgColor = 'rgba(255,255,0,0.3)'; // yellow
-        else bgColor = 'rgba(0,255,0,0.3)';                      // green
+        const bgColor = getGradientColor(withComp);
 
         table += `<tr style="background-color:${bgColor}">
             <td>${id}</td>
@@ -283,9 +289,8 @@ function displayResults(results) {
     });
     table += '</tbody></table>';
 
-    const downloadButton = '<button id="download-btn">Download Results as CSV</button>';
-
-    container.innerHTML = legendHTML + table + downloadButton;
+    // Render
+    container.innerHTML = legendHTML + downloadButton + table;
 
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
