@@ -253,7 +253,6 @@ function displayResults(results) {
     </div>
     `;
 
-    
     let table = '<table><thead><tr>' +
         '<th>Primary Molecule ID</th>' +
         '<th>Predicted Affinity (Baseline)</th>' +
