@@ -157,6 +157,18 @@ body.mirna-page #loader {
 }
 
 /* Results */
+.gradient-scale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+.gradient-bar {
+  flex: 1;
+  height: 20px;
+  background: linear-gradient(to right, red, orange, yellow, green);
+  border: 1px solid #ccc;
+}
 body.mirna-page #results-area {
     margin-top: 30px;
 }

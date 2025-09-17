@@ -231,10 +231,10 @@ def start_prediction():
         if raw:
             records = [type('R', (), {'id': 'primary_1', 'seq': raw})()]
     if not records:
-        return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
 
     if len(records) > MIRNA_MAX:
-        return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MIRNA_MAX}."}), 400
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences. Please reduce your input and try again."}), 400
 
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(records), "completed": 0}
@@ -275,7 +275,7 @@ def process_job(job_id, records, target_seq, competitor_seq):
         target_parsed = parse_single_fasta_or_raw(target_seq, "target")
         if target_parsed is None:
             jobs[job_id]["status"] = "error"
-            jobs[job_id]["error"] = "Please enter only one target sequence."
+            jobs[job_id]["error"] = "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."
             return
         target_id, target_str = target_parsed
         target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
@@ -285,7 +285,7 @@ def process_job(job_id, records, target_seq, competitor_seq):
             competitor_parsed = parse_single_fasta_or_raw(competitor_seq, "competitor")
             if competitor_parsed is None:
                 jobs[job_id]["status"] = "error"
-                jobs[job_id]["error"] = "Please enter only one competitor sequence."
+                jobs[job_id]["error"] = "Your competitor input contains multiple sequences. Please provide exactly one competitor sequence to proceed."
                 return
             comp_id, comp_str = competitor_parsed
             competitor_processed = ensure_dict(process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule')))

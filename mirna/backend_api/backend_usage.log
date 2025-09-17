@@ -7370,3 +7370,288 @@ TypeError: 'numpy.float32' object is not iterable
 2025-09-17 06:44:28,261 | INFO | 127.0.0.1 - - [17/Sep/2025 06:44:28] "GET /progress/3da37b80-af97-440c-82a2-4498eb71ef70 HTTP/1.1" 200 -
 2025-09-17 06:44:29,829 | INFO | 127.0.0.1 - - [17/Sep/2025 06:44:29] "GET /progress/3da37b80-af97-440c-82a2-4498eb71ef70 HTTP/1.1" 200 -
 2025-09-17 06:44:29,970 | INFO | 127.0.0.1 - - [17/Sep/2025 06:44:29] "GET /download/3da37b80-af97-440c-82a2-4498eb71ef70 HTTP/1.1" 200 -
+2025-09-17 11:34:55,986 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 11:34:57,305 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.0.104:8080
+2025-09-17 11:34:57,305 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-17 11:34:57,309 | INFO |  * Restarting with stat
+2025-09-17 11:35:05,943 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 11:35:06,371 | WARNING |  * Debugger is active!
+2025-09-17 11:35:06,385 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 12:00:21,425 | INFO | 127.0.0.1 - - [17/Sep/2025 12:00:21] "GET /config HTTP/1.1" 200 -
+2025-09-17 12:46:10,214 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 12:46:10,511 | INFO | 127.0.0.1 - - [17/Sep/2025 12:46:10] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-09-17 13:00:52,720 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:00:52,728 | INFO | 127.0.0.1 - - [17/Sep/2025 13:00:52] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-09-17 13:00:52,987 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:00:52,994 | INFO | 127.0.0.1 - - [17/Sep/2025 13:00:52] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-09-17 13:01:06,476 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:01:06,478 | INFO | 127.0.0.1 - - [17/Sep/2025 13:01:06] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-09-17 13:01:06,700 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:01:06,702 | INFO | 127.0.0.1 - - [17/Sep/2025 13:01:06] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-09-17 13:01:19,453 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:01:19,455 | INFO | 127.0.0.1 - - [17/Sep/2025 13:01:19] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-09-17 13:01:19,813 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 13:01:19,814 | INFO | 127.0.0.1 - - [17/Sep/2025 13:01:19] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-09-17 13:14:50,860 | INFO | 127.0.0.1 - - [17/Sep/2025 13:14:50] "GET /config HTTP/1.1" 200 -
+2025-09-17 13:31:51,149 | INFO | 127.0.0.1 - - [17/Sep/2025 13:31:51] "GET /config HTTP/1.1" 200 -
+2025-09-17 13:39:42,498 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:42] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 13:39:43,816 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:43] "POST /predict HTTP/1.1" 200 -
+2025-09-17 13:39:44,200 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:44] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:46,308 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:46] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:48,797 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:48] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:50,825 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:50] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:52,769 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:52] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:54,712 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:54] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:56,721 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:56] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:39:58,604 | INFO | 127.0.0.1 - - [17/Sep/2025 13:39:58] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:40:00,486 | INFO | 127.0.0.1 - - [17/Sep/2025 13:40:00] "GET /progress/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 13:40:01,114 | INFO | 127.0.0.1 - - [17/Sep/2025 13:40:01] "GET /download/a37c47bb-4d85-4238-8b95-3d7dd205fbfe HTTP/1.1" 200 -
+2025-09-17 14:06:29,605 | INFO | 127.0.0.1 - - [17/Sep/2025 14:06:29] "GET /config HTTP/1.1" 200 -
+2025-09-17 14:08:06,567 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:06] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 14:08:07,395 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:07] "POST /predict HTTP/1.1" 200 -
+2025-09-17 14:08:08,030 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:08] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:10,133 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:10] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:11,875 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:11] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:13,575 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:13] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:15,342 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:15] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:17,241 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:17] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:19,384 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:19] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:21,281 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:21] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:23,182 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:23] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:25,073 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:25] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:27,273 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:27] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:29,701 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:29] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:31,593 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:31] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:33,474 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:33] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:35,360 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:35] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:37,243 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:37] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:39,238 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:39] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:40,972 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:40] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:42,644 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:42] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:44,332 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:44] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:46,811 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:46] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:48,701 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:48] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:50,605 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:50] "GET /progress/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:08:51,587 | INFO | 127.0.0.1 - - [17/Sep/2025 14:08:51] "GET /download/d4fc141e-0dbc-4d17-a3fb-e9b2c20c5df4 HTTP/1.1" 200 -
+2025-09-17 14:09:08,052 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:08] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 14:09:08,498 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:08] "POST /predict HTTP/1.1" 200 -
+2025-09-17 14:09:08,750 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:08] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:10,476 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:10] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:12,152 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:12] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:14,086 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:14] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:16,082 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:16] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:17,976 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:17] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:19,923 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:19] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:21,825 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:21] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:23,713 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:23] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:25,393 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:25] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:27,069 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:27] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:28,892 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:28] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:30,785 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:30] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:32,683 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:32] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:34,571 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:34] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:36,236 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:36] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:37,899 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:37] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:39,907 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:39] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:41,592 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:41] "GET /progress/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:09:41,921 | INFO | 127.0.0.1 - - [17/Sep/2025 14:09:41] "GET /download/70de234b-4bb1-43d1-a7d2-969e718d85bc HTTP/1.1" 200 -
+2025-09-17 14:39:43,712 | INFO | 127.0.0.1 - - [17/Sep/2025 14:39:43] "GET /config HTTP/1.1" 200 -
+2025-09-17 14:41:53,425 | INFO | 127.0.0.1 - - [17/Sep/2025 14:41:53] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 14:41:53,945 | INFO | 127.0.0.1 - - [17/Sep/2025 14:41:53] "POST /predict HTTP/1.1" 200 -
+2025-09-17 14:41:54,344 | INFO | 127.0.0.1 - - [17/Sep/2025 14:41:54] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:41:57,934 | INFO | 127.0.0.1 - - [17/Sep/2025 14:41:57] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:41:59,617 | INFO | 127.0.0.1 - - [17/Sep/2025 14:41:59] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:01,352 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:01] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:03,067 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:03] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:05,046 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:05] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:06,949 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:06] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:08,981 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:08] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:10,723 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:10] "GET /progress/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 14:42:10,913 | INFO | 127.0.0.1 - - [17/Sep/2025 14:42:10] "GET /download/ac0147dc-fc81-4ca1-b22e-d7e8918825d2 HTTP/1.1" 200 -
+2025-09-17 17:39:58,602 | INFO | 127.0.0.1 - - [17/Sep/2025 17:39:58] "GET /config HTTP/1.1" 200 -
+2025-09-17 17:40:14,106 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:14] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 17:40:14,587 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:14] "POST /predict HTTP/1.1" 200 -
+2025-09-17 17:40:14,802 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:14] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:16,490 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:16] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:22,472 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:22] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:24,219 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:24] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:25,913 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:25] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:27,793 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:27] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:29,765 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:29] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:31,501 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:31] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:33,835 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:33] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:35,800 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:35] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:37,565 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:37] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:39,284 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:39] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:41,220 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:41] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:42,903 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:42] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:44,715 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:44] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:46,438 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:46] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:48,128 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:48] "GET /progress/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:40:48,299 | INFO | 127.0.0.1 - - [17/Sep/2025 17:40:48] "GET /download/ec837801-cefc-4ab0-abf0-29b7effe7dc4 HTTP/1.1" 200 -
+2025-09-17 17:45:24,310 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:24] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 17:45:24,462 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:24] "POST /predict HTTP/1.1" 200 -
+2025-09-17 17:45:24,612 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:24] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:26,784 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:26] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:28,493 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:28] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:30,444 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:30] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:32,167 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:32] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:33,922 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:33] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:35,834 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:35] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:37,603 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:37] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:39,369 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:39] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:41,549 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:41] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:43,204 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:43] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:44,897 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:44] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:46,718 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:46] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:48,471 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:48] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:50,766 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:50] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:52,525 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:52] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:54,289 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:54] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:56,755 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:56] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:45:59,687 | INFO | 127.0.0.1 - - [17/Sep/2025 17:45:59] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:46:01,492 | INFO | 127.0.0.1 - - [17/Sep/2025 17:46:01] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:46:03,442 | INFO | 127.0.0.1 - - [17/Sep/2025 17:46:03] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:46:05,443 | INFO | 127.0.0.1 - - [17/Sep/2025 17:46:05] "GET /progress/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 17:46:05,636 | INFO | 127.0.0.1 - - [17/Sep/2025 17:46:05] "GET /download/230ac3fc-52af-4a6e-98cf-9b7db9ec50c6 HTTP/1.1" 200 -
+2025-09-17 20:13:38,554 | INFO | 127.0.0.1 - - [17/Sep/2025 20:13:38] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:14:16,159 | ERROR | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-09-17 20:14:16,224 | INFO | 127.0.0.1 - - [17/Sep/2025 20:14:16] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
+2025-09-17 20:14:17,470 | INFO | 127.0.0.1 - - [17/Sep/2025 20:14:17] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:14:18,816 | INFO | 127.0.0.1 - - [17/Sep/2025 20:14:18] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:14:41,472 | INFO | 127.0.0.1 - - [17/Sep/2025 20:14:41] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:14:45,388 | INFO | 127.0.0.1 - - [17/Sep/2025 20:14:45] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:21:51,138 | INFO | 127.0.0.1 - - [17/Sep/2025 20:21:51] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:35:43,769 | INFO | 127.0.0.1 - - [17/Sep/2025 20:35:43] "GET /config HTTP/1.1" 200 -
+2025-09-17 20:56:04,457 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 20:56:08,538 | INFO |  * Restarting with stat
+2025-09-17 20:56:52,578 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 20:56:52,959 | WARNING |  * Debugger is active!
+2025-09-17 20:56:52,962 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 21:01:44,806 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

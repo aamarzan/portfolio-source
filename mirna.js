@@ -100,7 +100,7 @@ document.getElementById('prediction-form').addEventListener('submit', async func
 
     // Validate target/competitor counts
     if (countFastaRecords(targetSeq) > 1) {
-        resultsContainer.innerHTML = '<p style="color: red;">Please enter only one target sequence.</p>';
+        resultsContainer.innerHTML = '<p style="color: red;">Your target input contains multiple sequences. Please provide exactly one target sequence to proceed.</p>';
         return;
     }
     if (countFastaRecords(competitorSeq) > 1) {
@@ -235,23 +235,51 @@ function displayResults(results) {
         '<th>Competitive Effect (higher is better)</th>' +
         '</tr></thead><tbody>';
 
+    // Sort results by competitive effect descending
+    results.sort((a, b) => parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
+                        parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0));
+
     results.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-        const baseline = item.predicted_affinity_baseline ?? item.baseline_score ?? '';
-        const withComp = item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '';
-        const compEffect = item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '';
+        const baseline = parseFloat(item.predicted_affinity_baseline ?? item.baseline_score ?? 0);
+        const withComp = parseFloat(item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? 0);
+        const compEffect = parseFloat(item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? 0);
 
-        table += `<tr>
+        // Map score 0–1 to gradient red→green
+        const r = Math.round(255 - (compEffect * 255));
+        const g = Math.round(compEffect * 255);
+        const b = 0;
+        const bgColor = `rgb(${r},${g},${b},0.3)`; // light tint
+
+        table += `<tr style="background-color:${bgColor}">
             <td>${id}</td>
-            <td>${baseline}</td>
-            <td>${withComp}</td>
-            <td>${compEffect}</td>
+            <td>${baseline.toFixed(4)}</td>
+            <td>${withComp.toFixed(4)}</td>
+            <td>${compEffect.toFixed(4)}</td>
         </tr>`;
     });
     table += '</tbody></table>';
 
     const downloadButton = '<button id="download-btn">Download Results as CSV</button>';
-    container.innerHTML = table + downloadButton;
+
+    const legendHTML = `
+    <div class="affinity-legend">
+    <h4>Affinity Classification Guide</h4>
+    <table>
+        <thead>
+        <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
+        </thead>
+        <tbody>
+        <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
+        <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
+        <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
+        <tr style="background-color:rgba(0,255,0,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
+        </tbody>
+    </table>
+    </div>
+    `;
+
+    container.innerHTML = table + downloadButton + legendHTML;
 
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
@@ -261,6 +289,9 @@ function downloadCSV() {
 
     const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
     const csvRows = [headers];
+    
+    predictionResults.sort((a, b) => parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
+                                     parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0));
 
     predictionResults.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
