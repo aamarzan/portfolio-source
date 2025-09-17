@@ -243,10 +243,11 @@ function displayResults(results) {
           <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
         </thead>
         <tbody>
-          <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
-          <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
-          <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
           <tr style="background-color:rgba(0,255,0,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
+          <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
+          <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
+          <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
+          
         </tbody>
       </table>
     </div>
