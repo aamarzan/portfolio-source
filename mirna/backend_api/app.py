@@ -341,8 +341,8 @@ def process_job(job_id, records, target_seq, competitor_seq):
             no_comp = dict(common_inputs)
             no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
 
-            preds_with = model.predict(with_comp, verbose=0).squeeze()
-            preds_no = model.predict(no_comp, verbose=0).squeeze()
+            preds_with = model.predict(with_comp, verbose=0).reshape(-1)
+            preds_no = model.predict(no_comp, verbose=0).reshape(-1)
             pred_with_sq = np.square(preds_with)
             pred_no_sq = np.square(preds_no)
 
