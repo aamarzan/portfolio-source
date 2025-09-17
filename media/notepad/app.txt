@@ -3,6 +3,8 @@ import warnings
 import pandas as pd
 import json
 import numpy as np
+import threading
+import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -15,14 +17,15 @@ import logging
 from werkzeug.exceptions import RequestEntityTooLarge
 from datetime import datetime
 import requests  # For GA4 Measurement Protocol
-
-# Import from your project's own final scripts
 from molecule_processors import process_molecule_universal
 
 # =========================
 # Configuration
 # =========================
 API_KEY = os.getenv("API_KEY", "supersecret123")
+MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "5"))
+jobs = {}  # job_id -> {"status": "...", "results": [], "error": None, "total": 0, "completed": 0}
 
 # Google Analytics (GA4) Measurement Protocol
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
@@ -30,7 +33,6 @@ GA_API_SECRET = os.getenv("GA_API_SECRET", "your_secret")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
 
 def send_ga_event(event_name, params):
-    """Send a custom event to Google Analytics 4 via Measurement Protocol."""
     try:
         payload = {
             "client_id": "backend_server",
@@ -58,41 +60,36 @@ logging.basicConfig(
 # Flask app setup
 # =========================
 app = Flask(__name__)
-
-# Set max upload size to 100 MB
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
-# Allow CORS for your frontend domains
-CORS(app, origins=["https://aamarzan.com", "https://www.aamarzan.com"], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
+CORS(app, origins=[
+    "https://aamarzan.com",
+    "https://www.aamarzan.com",
+    "https://mirna.aamarzan.com"
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key"])
 
-# Set max upload size (e.g., 100 MB)
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
-
-from werkzeug.exceptions import RequestEntityTooLarge
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):
     return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
 
-# API key protection middleware
 @app.before_request
 def require_api_key():
-    # Allow CORS preflight requests
     if request.method == "OPTIONS":
         return '', 200
-
     if request.endpoint == 'predict':
         key = request.headers.get("X-API-Key")
         if key != API_KEY:
             return jsonify({"error": "Unauthorized"}), 401
 
-@app.errorhandler(RequestEntityTooLarge)
-def handle_large_file(e):
-    return jsonify({"error": f"Uploaded file is too large. Max size is {app.config['MAX_CONTENT_LENGTH'] // (1024*1024)} MB."}), 413
-
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
     logging.exception("Unexpected error: %s", e)
     return jsonify({"error": "Unexpected error occurred. Please try again later or contact support."}), 500
+
+# Config endpoint for frontend
+@app.route('/config', methods=['GET'])
+def get_config():
+    return jsonify({"mirna_max": MIRNA_MAX})
 
 # =========================
 # TensorFlow custom objects
@@ -140,36 +137,28 @@ scaler = None
 
 try:
     print("--- Loading Model and Scaler ---")
-
     custom_objects = {
         'PositionalEncoding': PositionalEncoding,
         'weighted_mse': create_weighted_mse(),
         'GCSConv': GCSConv
     }
-
     model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')
     scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
-
-    print(f"Looking for model at: {os.path.abspath(model_path)}")
-    print(f"Looking for scaler at: {os.path.abspath(scaler_path)}")
-
     model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
-    print("  - Keras model loaded successfully.")
-
     scaler = joblib.load(scaler_path)
-    print("  - Scaler loaded successfully.")
-
+    print("Model and scaler loaded successfully.")
 except Exception as e:
     print(f"FATAL: Could not load model or scaler on startup. Error: {e}")
 
 # =========================
-# Helper functions
+# Helpers
 # =========================
 def one_hot_encode_sequence(sequence, max_len):
+    sequence = (sequence or "").upper().replace('T', 'U')
     nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
     encoded_seq = np.zeros((max_len, len(nucleotide_map)), dtype=np.float32)
     for i, char in enumerate(sequence[:max_len]):
-        encoded_seq[i, nucleotide_map.get(char.upper(), 4)] = 1
+        encoded_seq[i, nucleotide_map.get(char, 4)] = 1
     return encoded_seq
 
 def prepare_web_input(primary_data, target_data, competitor_data, scaler, model):
@@ -183,12 +172,9 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
         primary_data.get('dg', 0.0),
         primary_data.get('conservation', 0.0)
     ]
-
-    # Pad with zeros if fewer features than scaler expects
-    if len(num_features) < scaler.n_features_in_:
+    if hasattr(scaler, 'n_features_in_') and len(num_features) < scaler.n_features_in_:
         num_features += [0.0] * (scaler.n_features_in_ - len(num_features))
 
-    # If scaler was trained with column names, preserve them
     if hasattr(scaler, 'feature_names_in_'):
         df_features = pd.DataFrame([num_features], columns=scaler.feature_names_in_)
         scaled_numerical = scaler.transform(df_features)
@@ -203,13 +189,18 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
     }
 
     if 'primary_structure_input' in model_inputs:
-        structure_vector = json.loads(primary_data.get('structure_vector', '[]'))
-        structure_padded = np.zeros((max_primary_len, 1), dtype=np.float32)
-        structure_padded[:len(structure_vector), 0] = structure_vector
-        inputs['primary_structure_input'] = np.array([structure_padded])
+        sv = np.array(json.loads(primary_data.get('structure_vector', '[]')), dtype=np.float32)
+        if sv.shape[0] > max_primary_len:
+            sv = sv[:max_primary_len]
+        sp = np.zeros((max_primary_len, 1), dtype=np.float32)
+        if sv.size > 0:
+            sp[:sv.shape[0], 0] = sv
+        inputs['primary_structure_input'] = np.array([sp])
 
     if 'target_adjacency_input' in model_inputs:
-        adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')))
+        adj_matrix = np.array(json.loads(target_data.get('adjacency_matrix', '[]')), dtype=np.float32)
+        if adj_matrix.ndim == 2 and adj_matrix.shape[0] > max_target_len:
+            adj_matrix = adj_matrix[:max_target_len, :max_target_len]
         padded_adj = np.zeros((max_target_len, max_target_len), dtype=np.float32)
         if adj_matrix.size > 0:
             h, w = adj_matrix.shape
@@ -218,36 +209,46 @@ def prepare_web_input(primary_data, target_data, competitor_data, scaler, model)
 
     return inputs
 
+
 # =========================
-# Routes
+# Batched prediction route
 # =========================
-@app.route('/predict', methods=['POST', 'OPTIONS'])
-def predict():
-    # OPTIONS handled in before_request
+@app.route('/predict', methods=['POST'])
+def start_prediction():
     key = request.headers.get("X-API-Key")
     if key != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
 
-    if not model or not scaler:
-        logging.error("Prediction attempted but model/scaler not loaded.")
-        send_ga_event("prediction_error", {"reason": "model_not_loaded"})
-        return jsonify({"error": "Model or scaler is not available on the server."}), 500
+    fasta_string = request.form.get('primary_molecules', '')
+    target_seq = request.form.get('target_molecule', '')
+    competitor_seq = request.form.get('competitor_molecule', '')
 
-    start_time = datetime.now()
+    from Bio import SeqIO
+    import io
+    records = list(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
+    if not records:
+        raw = fasta_string.strip()
+        if raw:
+            records = [type('R', (), {'id': 'primary_1', 'seq': raw})()]
+    if not records:
+        return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
+
+    if len(records) > MIRNA_MAX:
+        return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MIRNA_MAX}."}), 400
+
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(records), "completed": 0}
+
+    # Start background thread
+    threading.Thread(target=process_job, args=(job_id, records, target_seq, competitor_seq), daemon=True).start()
+
+    return jsonify({"job_id": job_id, "status": "started"})
+
+def process_job(job_id, records, target_seq, competitor_seq):
     try:
         from Bio import SeqIO
         import io
 
-        fasta_string = request.form.get('primary_molecules', '')
-        target_seq = request.form.get('target_molecule', '')
-        competitor_seq = request.form.get('competitor_molecule', '')
-
-        if not fasta_string.strip() or not target_seq.strip():
-            logging.warning("Missing required sequences in request.")
-            send_ga_event("prediction_error", {"reason": "missing_sequences"})
-            return jsonify({"error": "miRNA and Target sequences are required."}), 400
-
-        # Helpers
         def ensure_dict(data):
             if isinstance(data, tuple):
                 return {
@@ -261,98 +262,130 @@ def predict():
             return data
 
         def parse_single_fasta_or_raw(seq_text, default_id):
-            # Try FASTA parse
             recs = list(SeqIO.parse(io.StringIO(seq_text), "fasta"))
             if len(recs) == 1:
                 return recs[0].id, str(recs[0].seq)
             if len(recs) > 1:
-                return None  # signal multi
-            # Fallback: treat as raw string
+                return None
             raw = seq_text.strip()
             if raw:
                 return default_id, raw
-            return default_id, ""  # empty
+            return default_id, ""
 
-        # Validate target: must be exactly one sequence (FASTA or raw)
         target_parsed = parse_single_fasta_or_raw(target_seq, "target")
         if target_parsed is None:
-            return jsonify({"error": "Please enter only one target sequence."}), 400
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = "Please enter only one target sequence."
+            return
         target_id, target_str = target_parsed
-        target_processed = process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-        target_processed = ensure_dict(target_processed)
+        target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
 
-        # Validate competitor: allow none or exactly one sequence
         competitor_processed = {'sequence': ''}
         if competitor_seq.strip():
             competitor_parsed = parse_single_fasta_or_raw(competitor_seq, "competitor")
             if competitor_parsed is None:
-                return jsonify({"error": "Please enter only one competitor sequence."}), 400
+                jobs[job_id]["status"] = "error"
+                jobs[job_id]["error"] = "Please enter only one competitor sequence."
+                return
             comp_id, comp_str = competitor_parsed
-            competitor_processed = process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule'))
-            competitor_processed = ensure_dict(competitor_processed)
+            competitor_processed = ensure_dict(process_molecule_universal(((comp_id, comp_str), {}, 'competitor_molecule')))
 
-        # Parse all primary miRNAs (FASTA); also accept raw multi-line by wrapping lines as single FASTA
-        records = list(SeqIO.parse(io.StringIO(fasta_string), "fasta"))
-        if not records:
-            # If user pasted raw lines without headers, create a single pseudo-record
-            raw = fasta_string.strip()
-            if raw:
-                records = [type('R', (), {'id': 'primary_1', 'seq': raw})()]
-        if not records:
-            logging.warning("No FASTA records parsed from primary_molecules.")
-            return jsonify({"error": "No valid FASTA records found in miRNA input."}), 400
-        
-        MAX_MIRNAS = 200  # match frontend limit
-        if len(records) > MAX_MIRNAS:
-            return jsonify({"error": f"Too many miRNAs submitted. Max allowed is {MAX_MIRNAS}."}), 400
+        model_inputs = {inp.name: inp.shape for inp in model.inputs}
+        max_primary_len = model_inputs['primary_sequence_input'][1]
+        max_target_len = model_inputs['target_sequence_input'][1]
+        max_competitor_len = model_inputs['competitor_sequence_input'][1]
 
-        results = []
-        for primary_record in records:
-            # Support both SeqRecord and pseudo-record
-            pri_id = getattr(primary_record, 'id', 'primary')
-            pri_seq = str(getattr(primary_record, 'seq', '')) if hasattr(primary_record, 'seq') else str(primary_record)
+        target_seq_enc = one_hot_encode_sequence(target_processed.get('sequence', ''), max_target_len)
+        comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
+        empty_comp_enc = one_hot_encode_sequence('', max_competitor_len)
 
-            primary_processed = process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule'))
-            primary_processed = ensure_dict(primary_processed)
+        for start in range(0, len(records), BATCH_SIZE):
+            batch_records = records[start:start + BATCH_SIZE]
+            prim_seq_list, num_feat_list, prim_struct_list = [], [], []
 
-            # Baseline (no competitor)
-            inputs_no_comp = prepare_web_input(primary_processed, target_processed, {'sequence': ''}, scaler, model)
-            pred_no_comp_transformed = model.predict(inputs_no_comp, verbose=0)[0][0]
-            pred_no_comp = float(np.square(pred_no_comp_transformed))
+            for rec in batch_records:
+                pri_id = getattr(rec, 'id', 'primary')
+                pri_seq = str(getattr(rec, 'seq', '')) if hasattr(rec, 'seq') else str(rec)
+                pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
+                prim_seq_list.append(one_hot_encode_sequence(pdata.get('sequence', ''), max_primary_len))
+                nf = [pdata.get('gc_content', 0.5), pdata.get('dg', 0.0), pdata.get('conservation', 0.0)]
+                if hasattr(scaler, 'n_features_in_') and len(nf) < scaler.n_features_in_:
+                    nf += [0.0] * (scaler.n_features_in_ - len(nf))
+                num_feat_list.append(nf)
+                if 'primary_structure_input' in model_inputs:
+                    sv = np.array(json.loads(pdata.get('structure_vector', '[]')), dtype=np.float32)
+                    if sv.shape[0] > max_primary_len:
+                        sv = sv[:max_primary_len]
+                    sp = np.zeros((max_primary_len, 1), dtype=np.float32)
+                    if sv.size > 0:
+                        sp[:sv.shape[0], 0] = sv
+                    prim_struct_list.append(sp)
 
-            # With competitor (only if a valid competitor sequence was provided)
-            if competitor_processed.get('sequence', '').strip():
-                inputs_with_comp = prepare_web_input(primary_processed, target_processed, competitor_processed, scaler, model)
-                pred_with_comp_transformed = model.predict(inputs_with_comp, verbose=0)[0][0]
-                pred_with_comp = float(np.square(pred_with_comp_transformed))
+            if hasattr(scaler, 'feature_names_in_'):
+                df = pd.DataFrame(num_feat_list, columns=scaler.feature_names_in_)
+                scaled_num = scaler.transform(df)
             else:
-                pred_with_comp = pred_no_comp
+                scaled_num = scaler.transform(num_feat_list)
 
-            comp_effect = float(pred_no_comp - pred_with_comp)
+            batch_size = len(batch_records)
+            common_inputs = {
+                'primary_sequence_input': np.stack(prim_seq_list),
+                'target_sequence_input': np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0),
+                'numerical_features_input': scaled_num
+            }
+            if 'primary_structure_input' in model_inputs:
+                common_inputs['primary_structure_input'] = np.stack(prim_struct_list) if prim_struct_list else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
 
-            results.append({
-                # Keep both keys for backward compatibility with your frontend
-                'primary_molecule_id': pri_id,
-                'mirna_id': pri_id,
-                'predicted_affinity_baseline': format(pred_no_comp, '.10f'),
-                'predicted_affinity_with_competitor': format(pred_with_comp, '.10f'),
-                'competitive_effect (higher_is_better)': format(comp_effect, '.10f'),
-            })
+            with_comp = dict(common_inputs)
+            with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
+            no_comp = dict(common_inputs)
+            no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
 
-            # Per-record logging and GA
-            duration = (datetime.now() - start_time).total_seconds()
-            logging.info(f"Prediction success | miRNA: {pri_id} | Duration: {duration:.2f}s")
-            send_ga_event("prediction", {"mirna_id": pri_id, "duration_sec": duration})
+            preds_with = model.predict(with_comp, verbose=0).squeeze()
+            preds_no = model.predict(no_comp, verbose=0).squeeze()
+            pred_with_sq = np.square(preds_with)
+            pred_no_sq = np.square(preds_no)
 
-        return jsonify({"status": "completed", "results": results})
+            for rec, p_base, p_with in zip(batch_records, pred_no_sq, pred_with_sq):
+                pri_id = getattr(rec, 'id', 'primary')
+                jobs[job_id]["results"].append({
+                    'primary_molecule_id': pri_id,
+                    'mirna_id': pri_id,
+                    'predicted_affinity_baseline': format(float(p_base), '.10f'),
+                    'predicted_affinity_with_competitor': format(float(p_with), '.10f'),
+                    'competitive_effect (higher_is_better)': format(float(p_base - p_with), '.10f'),
+                })
+                jobs[job_id]["completed"] += 1
+
+        jobs[job_id]["status"] = "completed"
 
     except Exception as e:
         logging.exception(f"Prediction error: {e}")
-        send_ga_event("prediction_error", {"exception": str(e)[:200]})
-        return jsonify({"error": "An internal server error occurred."}), 500
+        jobs[job_id]["status"] = "error"
+
+@app.route('/progress/<job_id>', methods=['GET'])
+def get_progress(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    return jsonify({
+        "status": job["status"],
+        "completed": job["completed"],
+        "total": job["total"],
+        "error": job["error"],
+        "results": job["results"] if job["status"] == "completed" else []
+    })
+
+@app.route('/download/<job_id>', methods=['GET'])
+def download_results(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    if job["status"] != "completed":
+        return jsonify({"error": "Job not completed yet"}), 400
+    return jsonify({"results": job["results"]})
 
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
-

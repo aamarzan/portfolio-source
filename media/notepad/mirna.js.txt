@@ -12,7 +12,25 @@ const API_URL = window.location.hostname === "localhost" || window.location.host
 const API_KEY = "supersecret123";
 
 const MAX_FILE_SIZE_MB = 100;
-const MAX_MIRNAS = 1000; // lifted single-run cap
+
+let MAX_MIRNAS = 5000; // default fallback
+async function loadConfig() {
+  try {
+    const base = API_URL.replace(/\/predict$/, '');
+    const res = await fetch(`${base}/config`, { method: 'GET' });
+    if (res.ok) {
+      const cfg = await res.json();
+      if (typeof cfg.mirna_max === "number") {
+        MAX_MIRNAS = cfg.mirna_max;
+      }
+    }
+  } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfig();
+  // existing bindings...
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
@@ -133,33 +151,65 @@ document.getElementById('prediction-form').addEventListener('submit', async func
     if (competitorFile) formData.append('competitor_3d_file', competitorFile);
 
     try {
-        const response = await fetch(API_URL, {
+        // 1) Start job
+        const startRes = await fetch(API_URL, {
             method: 'POST',
             headers: { "X-API-Key": API_KEY },
             body: formData
         });
 
-        if (!response.ok) {
+        if (!startRes.ok) {
             let errorMsg;
             try {
-                const errorData = await response.json();
+                const errorData = await startRes.json();
                 errorMsg = errorData.error || null;
             } catch (_) {}
-            throw new Error(errorMsg || 'Something went wrong while processing your request. Please try again later.');
+            throw new Error(errorMsg || 'Something went wrong while starting your job. Please try again later.');
         }
 
-        const data = await response.json();
-        predictionResults = data.results; // Save only the results array
-        displayResults(data.results);
+        const { job_id } = await startRes.json();
+        if (!job_id) throw new Error('No job ID returned from server.');
 
-        if (loader) {
-            if (data.status === "completed") {
-                loader.textContent = "✅ Prediction completed. Results are shown below.";
-            } else {
-                loader.textContent = "ℹ️ Prediction finished.";
+        // 2) Poll progress until completed
+        const base = API_URL.replace(/\/predict$/, '');
+        const progressUrl = `${base}/progress/${job_id}`;
+        const downloadUrl = `${base}/download/${job_id}`;
+
+        const poll = async () => {
+            const res = await fetch(progressUrl, { method: 'GET' });
+            if (!res.ok) throw new Error('Failed to check job progress.');
+            const data = await res.json();
+
+            if (data.status === 'running') {
+                if (loader) loader.textContent = `Processing... ${data.completed}/${data.total} completed`;
+                setTimeout(poll, 1500);
+                return;
             }
-            setTimeout(() => loader.classList.add('hidden'), 3000);
-        }
+
+            if (data.status === 'error') {
+                throw new Error(data.error || 'We encountered a technical issue while processing your request.');
+            }
+
+            if (data.status === 'completed') {
+                if (loader) loader.textContent = "Fetching final results...";
+                // 3) Download final results
+                const dr = await fetch(downloadUrl, { method: 'GET' });
+                if (!dr.ok) throw new Error('Failed to download results.');
+                const finalData = await dr.json();
+
+                predictionResults = finalData.results || [];
+                displayResults(predictionResults);
+
+                if (loader) {
+                    loader.textContent = "✅ Prediction completed. Results are shown below.";
+                    setTimeout(() => loader.classList.add('hidden'), 3000);
+                }
+            }
+        };
+
+        // initial progress message then start polling
+        if (loader) loader.textContent = "Job started. Preparing batches...";
+        poll();
 
     } catch (error) {
         const friendlyMessage = error.message && !error.message.includes('server error')
@@ -168,6 +218,7 @@ document.getElementById('prediction-form').addEventListener('submit', async func
         resultsContainer.innerHTML = `<p style="color: red;">${friendlyMessage}</p>`;
         if (loader) loader.classList.add('hidden');
     }
+
 });
 
 function displayResults(results) {
