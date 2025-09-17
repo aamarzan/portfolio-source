@@ -8523,3 +8523,4 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-17 23:01:31,997 | INFO | 127.0.0.1 - - [17/Sep/2025 23:01:31] "GET /config HTTP/1.1" 200 -
 2025-09-17 23:03:58,421 | INFO | 127.0.0.1 - - [17/Sep/2025 23:03:58] "GET /config HTTP/1.1" 200 -
 2025-09-17 23:09:10,468 | INFO | 127.0.0.1 - - [17/Sep/2025 23:09:10] "GET /config HTTP/1.1" 200 -
+2025-09-17 23:35:57,077 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

@@ -364,6 +364,7 @@ def process_job(job_id, records, target_seq, competitor_seq):
         jobs[job_id]["status"] = "error"
 
 
+
 @app.route('/progress/<job_id>', methods=['GET'])
 def get_progress(job_id):
     job = jobs.get(job_id)
