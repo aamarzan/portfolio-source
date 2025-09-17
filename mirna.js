@@ -261,6 +261,15 @@ function displayResults(results) {
     </div>
     `;
 
+    // Gradient scale bar
+    const gradientScaleHTML = `
+    <div class="gradient-scale" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <span>0</span>
+      <div style="flex:1;height:20px;background:linear-gradient(to right, red, orange, yellow, green);border:1px solid #ccc;"></div>
+      <span>1</span>
+    </div>
+    `;
+
     // Download button right after guide
     const downloadButton = '<div style="margin-bottom:20px;"><button id="download-btn">Download Results as CSV</button></div>';
 
@@ -277,7 +286,6 @@ function displayResults(results) {
         const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
         const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
         const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-
         const bgColor = getGradientColor(withComp);
 
         table += `<tr style="background-color:${bgColor}">
