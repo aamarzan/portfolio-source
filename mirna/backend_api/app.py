@@ -239,10 +239,10 @@ def start_prediction():
     job_id = str(uuid.uuid4())
     jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(records), "completed": 0}
 
-    # Start background thread
     threading.Thread(target=process_job, args=(job_id, records, target_seq, competitor_seq), daemon=True).start()
 
     return jsonify({"job_id": job_id, "status": "started"})
+
 
 def process_job(job_id, records, target_seq, competitor_seq):
     try:
@@ -363,6 +363,7 @@ def process_job(job_id, records, target_seq, competitor_seq):
         logging.exception(f"Prediction error: {e}")
         jobs[job_id]["status"] = "error"
 
+
 @app.route('/progress/<job_id>', methods=['GET'])
 def get_progress(job_id):
     job = jobs.get(job_id)
@@ -376,6 +377,7 @@ def get_progress(job_id):
         "results": job["results"] if job["status"] == "completed" else []
     })
 
+
 @app.route('/download/<job_id>', methods=['GET'])
 def download_results(job_id):
     job = jobs.get(job_id)
@@ -384,7 +386,6 @@ def download_results(job_id):
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
     return jsonify({"results": job["results"]})
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))

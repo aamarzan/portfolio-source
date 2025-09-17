@@ -6891,3 +6891,23 @@ ValueError: could not broadcast input array from shape (119,) into shape (100,)
 2025-09-17 05:30:43,502 | WARNING |  * Debugger is active!
 2025-09-17 05:30:43,510 | INFO |  * Debugger PIN: 819-598-734
 2025-09-17 05:39:11,138 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 05:39:13,134 | INFO |  * Restarting with stat
+2025-09-17 05:39:20,926 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-17 05:39:21,248 | WARNING |  * Debugger is active!
+2025-09-17 05:39:21,251 | INFO |  * Debugger PIN: 819-598-734
+2025-09-17 06:05:09,390 | INFO | 127.0.0.1 - - [17/Sep/2025 06:05:09] "GET /config HTTP/1.1" 200 -
+2025-09-17 06:06:03,018 | INFO | 127.0.0.1 - - [17/Sep/2025 06:06:03] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 06:06:03,951 | INFO | 127.0.0.1 - - [17/Sep/2025 06:06:03] "POST /predict HTTP/1.1" 200 -
+2025-09-17 06:06:34,869 | INFO | 127.0.0.1 - - [17/Sep/2025 06:06:34] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 06:06:34,918 | INFO | 127.0.0.1 - - [17/Sep/2025 06:06:34] "POST /predict HTTP/1.1" 200 -
+2025-09-17 06:07:40,142 | INFO | 127.0.0.1 - - [17/Sep/2025 06:07:40] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-17 06:07:40,188 | INFO | 127.0.0.1 - - [17/Sep/2025 06:07:40] "POST /predict HTTP/1.1" 200 -
+2025-09-17 06:08:11,382 | ERROR | Prediction error: 'numpy.float32' object is not iterable
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 349, in process_job
+    for rec, p_base, p_with in zip(batch_records, pred_no_sq, pred_with_sq):
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'numpy.float32' object is not iterable
+2025-09-17 06:24:11,266 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-17 06:24:14,834 | INFO |  * Restarting with stat

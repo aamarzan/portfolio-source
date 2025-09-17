@@ -24,7 +24,7 @@ from molecule_processors import process_molecule_universal
 # =========================
 API_KEY = os.getenv("API_KEY", "supersecret123")
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "5"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 jobs = {}  # job_id -> {"status": "...", "results": [], "error": None, "total": 0, "completed": 0}
 
 # Google Analytics (GA4) Measurement Protocol
