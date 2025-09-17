@@ -156,6 +156,25 @@ body.mirna-page #loader {
     color: #0d47a1;
 }
 
+.affinity-guide {
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: #fafafa;
+}
+.affinity-guide table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.affinity-guide th, .affinity-guide td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+}
+.affinity-guide th {
+  background: #f0f0f0;
+}
+
 /* Results */
 .gradient-scale {
   display: flex;

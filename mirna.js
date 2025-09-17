@@ -228,6 +228,30 @@ function displayResults(results) {
         return;
     }
 
+    // Sort results by competitive effect descending
+    results.sort((a, b) =>
+        parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
+        parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0)
+    );
+
+    // Classification guide panel (now above the table)
+    const legendHTML = `
+    <div class="affinity-legend">
+      <h4>Affinity Classification Guide</h4>
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
+          <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
+          <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
+          <tr style="background-color:rgba(0,255,0,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
+        </tbody>
+      </table>
+    </div>
+    `;
+
     let table = '<table><thead><tr>' +
         '<th>Primary Molecule ID</th>' +
         '<th>Predicted Affinity (Baseline)</th>' +
@@ -235,51 +259,33 @@ function displayResults(results) {
         '<th>Competitive Effect (higher is better)</th>' +
         '</tr></thead><tbody>';
 
-    // Sort results by competitive effect descending
-    results.sort((a, b) => parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
-                        parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0));
-
     results.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-        const baseline = parseFloat(item.predicted_affinity_baseline ?? item.baseline_score ?? 0);
-        const withComp = parseFloat(item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? 0);
-        const compEffect = parseFloat(item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? 0);
+        const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
+        const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
+        const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+        const score = parseFloat(compEffect) || 0;
 
-        // Map score 0–1 to gradient red→green
-        const r = Math.round(255 - (compEffect * 255));
-        const g = Math.round(compEffect * 255);
-        const b = 0;
-        const bgColor = `rgb(${r},${g},${b},0.3)`; // light tint
+        // Category-based background color
+        let bgColor;
+        if (score <= 0.25) bgColor = 'rgba(255,0,0,0.3)';       // red
+        else if (score <= 0.50) bgColor = 'rgba(255,165,0,0.3)'; // orange
+        else if (score <= 0.75) bgColor = 'rgba(255,255,0,0.3)'; // yellow
+        else bgColor = 'rgba(0,255,0,0.3)';                      // green
 
         table += `<tr style="background-color:${bgColor}">
             <td>${id}</td>
-            <td>${baseline.toFixed(4)}</td>
-            <td>${withComp.toFixed(4)}</td>
-            <td>${compEffect.toFixed(4)}</td>
+            <td>${baseline}</td>
+            <td>${withComp}</td>
+            <td>${compEffect}</td>
         </tr>`;
     });
     table += '</tbody></table>';
 
     const downloadButton = '<button id="download-btn">Download Results as CSV</button>';
 
-    const legendHTML = `
-    <div class="affinity-legend">
-    <h4>Affinity Classification Guide</h4>
-    <table>
-        <thead>
-        <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
-        </thead>
-        <tbody>
-        <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
-        <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
-        <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
-        <tr style="background-color:rgba(0,255,0,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
-        </tbody>
-    </table>
-    </div>
-    `;
-
-    container.innerHTML = table + downloadButton + legendHTML;
+    // Guide above table
+    container.innerHTML = legendHTML + table + downloadButton;
 
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
