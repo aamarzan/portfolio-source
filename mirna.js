@@ -237,9 +237,21 @@ function displayResults(results) {
     // Gradient color function (0 = red, 1 = green)
     function getGradientColor(score) {
         const s = Math.max(0, Math.min(1, parseFloat(score) || 0));
-        const r = Math.round(255 * (1 - s));
-        const g = Math.round(255 * s);
-        return `rgba(${r},${g},0,0.3)`;
+        const viridis = [
+            [68, 1, 84],    // #440154
+            [59, 82, 139],  // #3b528b
+            [33, 144, 141], // #21908d
+            [93, 201, 99],  // #5dc963
+            [253, 231, 37]  // #fde725
+        ];
+        const idx = s * (viridis.length - 1);
+        const low = Math.floor(idx);
+        const high = Math.min(low + 1, viridis.length - 1);
+        const t = idx - low;
+        const r = Math.round(viridis[low][0] + t * (viridis[high][0] - viridis[low][0]));
+        const g = Math.round(viridis[low][1] + t * (viridis[high][1] - viridis[low][1]));
+        const b = Math.round(viridis[low][2] + t * (viridis[high][2] - viridis[low][2]));
+        return `rgba(${r},${g},${b},0.3)`;
     }
 
     // Classification guide panel
@@ -251,10 +263,10 @@ function displayResults(results) {
           <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
         </thead>
         <tbody>
-          <tr style="background-color:rgba(0,255,0,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
-          <tr style="background-color:rgba(255,255,0,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
-          <tr style="background-color:rgba(255,165,0,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
-          <tr style="background-color:rgba(255,0,0,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
+          <tr style="background-color:rgba(189,223,38,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
+          <tr style="background-color:rgba(74,193,109,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
+          <tr style="background-color:rgba(43,116,142,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
+          <tr style="background-color:rgba(72,36,117,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
           
         </tbody>
       </table>

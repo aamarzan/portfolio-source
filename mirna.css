@@ -185,7 +185,13 @@ body.mirna-page #loader {
 .gradient-bar {
   flex: 1;
   height: 20px;
-  background: linear-gradient(to right, red, orange, yellow, green);
+  background: linear-gradient(to right,
+    #440154, /* deep purple */
+    #3b528b, /* blue */
+    #21908d, /* teal */
+    #5dc963, /* green */
+    #fde725  /* yellow */
+);
   border: 1px solid #ccc;
 }
 body.mirna-page #results-area {
@@ -246,4 +252,25 @@ body.mirna-page #main-footer .container {
 textarea.sequence-input {
     height: 200px; /* adjust to taste */
     resize: vertical; /* let user drag to resize if they want */
+}
+
+.gradient-scale-container {
+  margin-bottom: 20px;
+}
+.gradient-scale-bar {
+  height: 20px;
+  background: linear-gradient(to right,
+    #440154, /* dark purple */
+    #3b528b, /* blue */
+    #21908d, /* teal */
+    #5dc963, /* green */
+    #fde725  /* yellow */
+  );
+  border: 1px solid #ccc;
+}
+.gradient-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  margin-top: 4px;
 }
