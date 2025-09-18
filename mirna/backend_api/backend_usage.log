@@ -8913,3 +8913,4 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-18 11:49:50,002 | INFO | 127.0.0.1 - - [18/Sep/2025 11:49:50] "GET /progress/5af1ed0d-02f3-4eb3-bdc0-61c1eaa0001e HTTP/1.1" 200 -
 2025-09-18 11:49:51,565 | INFO | 127.0.0.1 - - [18/Sep/2025 11:49:51] "GET /progress/5af1ed0d-02f3-4eb3-bdc0-61c1eaa0001e HTTP/1.1" 200 -
 2025-09-18 11:49:51,605 | INFO | 127.0.0.1 - - [18/Sep/2025 11:49:51] "GET /download/5af1ed0d-02f3-4eb3-bdc0-61c1eaa0001e HTTP/1.1" 200 -
+2025-09-18 11:53:56,812 | INFO | 127.0.0.1 - - [18/Sep/2025 11:53:56] "GET /config HTTP/1.1" 200 -
