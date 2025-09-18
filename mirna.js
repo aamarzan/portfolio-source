@@ -279,7 +279,13 @@ function displayResults(results) {
     const gradientScaleHTML = `
     <div class="gradient-scale" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
       <span>0</span>
-      <div style="flex:1;height:20px;background:linear-gradient(to right, red, orange, yellow, green);border:1px solid #ccc;"></div>
+      <div style="flex:1;height:20px;background:linear-gradient(to right,
+        #440154, /* deep purple */
+        #3b528b, /* blue */
+        #21908d, /* teal */
+        #5dc963, /* green */
+        #fde725  /* yellow */);
+        border:1px solid #ccc;"></div>
       <span>1</span>
     </div>
     `;
