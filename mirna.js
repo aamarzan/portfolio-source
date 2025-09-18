@@ -318,7 +318,7 @@ function displayResults(results) {
     table += '</tbody></table>';
 
     // Render
-    container.innerHTML = legendHTML + gradientScaleHTML + downloadButton + table;
+    container.innerHTML = legendHTML + downloadButton + table;
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
 
