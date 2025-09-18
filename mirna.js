@@ -223,6 +223,8 @@ document.getElementById('prediction-form').addEventListener('submit', async func
 
 function displayResults(results) {
     const container = document.getElementById('results-container');
+    container.innerHTML = '';
+    
     if (!results || results.length === 0) {
         container.innerHTML = '<p>No results to display.</p>';
         return;
@@ -310,8 +312,7 @@ function displayResults(results) {
     table += '</tbody></table>';
 
     // Render
-    container.innerHTML = legendHTML + downloadButton + table;
-
+    container.innerHTML = legendHTML + gradientScaleHTML + downloadButton + table;
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
 
