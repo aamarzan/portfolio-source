@@ -25,7 +25,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 # TensorFlow / Keras
 import tensorflow as tf
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer # type: ignore
 from spektral.layers import GCSConv
 import joblib
 
