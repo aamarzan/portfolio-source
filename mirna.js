@@ -230,10 +230,10 @@ function displayResults(results) {
         return;
     }
 
-    // Sort by predicted affinity with competitor (descending)
+    // 1) Sort by baseline (descending)
     results.sort((a, b) =>
-        parseFloat(b.predicted_affinity_with_competitor ?? b.score_with_competitor ?? 0) -
-        parseFloat(a.predicted_affinity_with_competitor ?? a.score_with_competitor ?? 0)
+    parseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0) -
+    parseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0)
     );
 
     // Gradient color function (0 = red, 1 = green)
@@ -306,7 +306,7 @@ function displayResults(results) {
         const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
         const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
         const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-        const bgColor = getGradientColor(withComp);
+        const bgColor = getGradientColor(baseline);
 
         table += `<tr style="background-color:${bgColor}">
             <td>${id}</td>
@@ -328,8 +328,8 @@ function downloadCSV() {
     const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
     const csvRows = [headers];
     
-    predictionResults.sort((a, b) => parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
-                                     parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0));
+    predictionResults.sort((a, b) => parseFloat(b["predicted_affinity_baseline"] ?? b.baseline_score ?? 0) -
+                                     parseFloat(a["predicted_affinity_baseline"] ?? a.baseline_score ?? 0));
 
     predictionResults.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
@@ -357,4 +357,35 @@ function openTab(element, tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     element.classList.add('active');
+}
+
+function hasFastaHeaders(text) {
+  if (!text || !text.trim()) return false;
+  // At least one header line is required for miRNAs when multiple are allowed
+  return text.split(/\r?\n/).some(line => line.trim().startsWith('>'));
+}
+
+// In submit handler, before building formData:
+const primaryHasHeaders = hasFastaHeaders(primarySeqs);
+if (!primaryHasHeaders) {
+  resultsContainer.innerHTML = `<p style="color:red;">
+    Your miRNA input is missing FASTA headers.
+    Please add a line starting with ">" (e.g., >hsa-let-7a-5p) for each sequence so we can label results by accession/ID.
+  </p>`;
+  return;
+}
+
+// For target/competitor we accept one sequence; we encourage providing an ID:
+const targetHasHeader = hasFastaHeaders(targetSeq);
+if (!targetHasHeader) {
+  // Not a hard block, but warn inline:
+  resultsContainer.innerHTML = `<p style="color: #b36b00;">
+    Tip: Add a FASTA header to the target (e.g., >target1) so it’s traceable in results.
+  </p>` + resultsContainer.innerHTML;
+}
+const competitorHasHeader = hasFastaHeaders(competitorSeq);
+if (competitorSeq && !competitorHasHeader) {
+  resultsContainer.innerHTML = `<p style="color: #b36b00;">
+    Tip: Add a FASTA header to the competitor (e.g., >comp1) so it’s traceable in results.
+  </p>` + resultsContainer.innerHTML;
 }
