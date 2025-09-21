@@ -100,7 +100,7 @@ document.getElementById('prediction-form').addEventListener('submit', async func
 
     // Validate target/competitor counts
     if (countFastaRecords(targetSeq) > 1) {
-        resultsContainer.innerHTML = '<p style="color: red;">Please enter only one target sequence.</p>';
+        resultsContainer.innerHTML = '<p style="color: red;">Your target input contains multiple sequences. Please provide exactly one target sequence to proceed.</p>';
         return;
     }
     if (countFastaRecords(competitorSeq) > 1) {
@@ -223,12 +223,78 @@ document.getElementById('prediction-form').addEventListener('submit', async func
 
 function displayResults(results) {
     const container = document.getElementById('results-container');
+    container.innerHTML = '';
+    
     if (!results || results.length === 0) {
         container.innerHTML = '<p>No results to display.</p>';
         return;
     }
 
-    let table = '<table><thead><tr>' +
+    // Sort by predicted affinity with competitor (descending)
+    results.sort((a, b) =>
+        parseFloat(b.predicted_affinity_with_competitor ?? b.score_with_competitor ?? 0) -
+        parseFloat(a.predicted_affinity_with_competitor ?? a.score_with_competitor ?? 0)
+    );
+
+    // Gradient color function (0 = red, 1 = green)
+    function getGradientColor(score) {
+        const s = Math.max(0, Math.min(1, parseFloat(score) || 0));
+        const viridis = [
+            [68, 1, 84],    // #440154
+            [59, 82, 139],  // #3b528b
+            [33, 144, 141], // #21908d
+            [93, 201, 99],  // #5dc963
+            [253, 231, 37]  // #fde725
+        ];
+        const idx = s * (viridis.length - 1);
+        const low = Math.floor(idx);
+        const high = Math.min(low + 1, viridis.length - 1);
+        const t = idx - low;
+        const r = Math.round(viridis[low][0] + t * (viridis[high][0] - viridis[low][0]));
+        const g = Math.round(viridis[low][1] + t * (viridis[high][1] - viridis[low][1]));
+        const b = Math.round(viridis[low][2] + t * (viridis[high][2] - viridis[low][2]));
+        return `rgba(${r},${g},${b},0.3)`;
+    }
+
+    // Classification guide panel
+    const legendHTML = `
+    <div class="affinity-legend">
+      <h4>Affinity Classification Guide</h4>
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background-color:rgba(189,223,38,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; robust experimental evidence; prioritized for validation</td></tr>
+          <tr style="background-color:rgba(74,193,109,0.3)"><td>Medium Affinity</td><td>0.51–0.75</td><td>Moderate binding; candidate for multi-feature confirmation</td></tr>
+          <tr style="background-color:rgba(43,116,142,0.3)"><td>Low Affinity</td><td>0.26–0.50</td><td>Weakly predicted or weak biophysical/experimental support</td></tr>
+          <tr style="background-color:rgba(72,36,117,0.3)"><td>No Affinity</td><td>0.00–0.25</td><td>No meaningful binding; indistinguishable from random</td></tr>
+          
+        </tbody>
+      </table>
+    </div>
+    `;
+
+    // Gradient scale bar
+    const gradientScaleHTML = `
+    <div class="gradient-scale" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <span>0</span>
+      <div style="flex:1;height:20px;background:linear-gradient(to right,
+        #440154, /* deep purple */
+        #3b528b, /* blue */
+        #21908d, /* teal */
+        #5dc963, /* green */
+        #fde725  /* yellow */);
+        border:1px solid #ccc;"></div>
+      <span>1</span>
+    </div>
+    `;
+
+    // Download button right after guide
+    const downloadButton = '<div style="margin-bottom:20px;"><button id="download-btn">Download Results as CSV</button></div>';
+
+    // Build table
+    let table = '<table style="margin-bottom:20px;"><thead><tr>' +
         '<th>Primary Molecule ID</th>' +
         '<th>Predicted Affinity (Baseline)</th>' +
         '<th>Predicted Affinity (With Competitor)</th>' +
@@ -237,11 +303,12 @@ function displayResults(results) {
 
     results.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-        const baseline = item.predicted_affinity_baseline ?? item.baseline_score ?? '';
-        const withComp = item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '';
-        const compEffect = item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '';
+        const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
+        const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
+        const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+        const bgColor = getGradientColor(withComp);
 
-        table += `<tr>
+        table += `<tr style="background-color:${bgColor}">
             <td>${id}</td>
             <td>${baseline}</td>
             <td>${withComp}</td>
@@ -250,9 +317,8 @@ function displayResults(results) {
     });
     table += '</tbody></table>';
 
-    const downloadButton = '<button id="download-btn">Download Results as CSV</button>';
-    container.innerHTML = table + downloadButton;
-
+    // Render
+    container.innerHTML = legendHTML + downloadButton + table;
     document.getElementById('download-btn').addEventListener('click', downloadCSV);
 }
 
@@ -261,6 +327,9 @@ function downloadCSV() {
 
     const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
     const csvRows = [headers];
+    
+    predictionResults.sort((a, b) => parseFloat(b["competitive_effect (higher_is_better)"] ?? b.competitive_effect ?? 0) -
+                                     parseFloat(a["competitive_effect (higher_is_better)"] ?? a.competitive_effect ?? 0));
 
     predictionResults.forEach(item => {
         const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';

@@ -1,0 +1,276 @@
+/* ===========================
+   miRNA Page Styles (Scoped)
+   =========================== */
+
+/* Background animation for miRNA page only */
+body.mirna-page {
+    color: #333;
+    background: linear-gradient(135deg, #ffffff, #e3f2fd);
+    background-size: 400% 400%;
+    animation: subtleSky 60s ease infinite;
+    line-height: 1.6;
+}
+
+@keyframes subtleSky {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+}
+
+/* Main content container (inside <main>) */
+body.mirna-page main .mirna-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 40px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 1.2s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Page title & description */
+body.mirna-page main .mirna-container header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+body.mirna-page main .mirna-container header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #3d2e2fd1;
+}
+body.mirna-page main .mirna-container header p {
+    font-size: 1rem;
+    color: #444;
+    text-align: center;
+}
+
+
+/* Tabs Navigation */
+body.mirna-page .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+}
+
+/* Restored original tab button style */
+body.mirna-page .tab-btn {
+    flex: 0 0 auto; /* don’t stretch */
+    min-width: 280px; /* adjust to taste */
+    padding: 12px; /* slightly smaller padding */
+    cursor: pointer;
+    border-radius: 5px;
+    background: #fff;
+    color: var(--button-default-blue);
+    border: 1px solid var(--button-default-blue);
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+    animation: none;
+}
+body.mirna-page .tab-btn.active {
+    background-color: var(--button-default-blue);
+    color: #fff;
+    border-bottom: none;
+}
+body.mirna-page .tab-btn:hover {
+    background-color: var(--button-default-blue);
+    color: #fff;
+}
+
+/* Card Style */
+body.mirna-page .card {
+    display: none;
+    padding: 20px;
+    animation: fadeIn 0.8s ease;
+}
+body.mirna-page .card.active {
+    display: block;
+}
+
+/* Inputs */
+body.mirna-page label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+}
+body.mirna-page textarea,
+body.mirna-page input[type="number"],
+body.mirna-page input[type="file"] {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    transition: all 0.4s ease;
+}
+body.mirna-page textarea:focus,
+body.mirna-page input:focus {
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    border-color: #2196f3;
+}
+
+/* Run Prediction Button (unchanged gradient style) */
+body.mirna-page main .mirna-container button[type="submit"] {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(270deg, #000000, #0d47a1);
+    background-size: 400% 400%;
+    animation: blackBlueShift 20s ease infinite;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+@keyframes blackBlueShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+body.mirna-page main .mirna-container button[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Loader */
+body.mirna-page #loader {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #0d47a1;
+}
+
+.affinity-guide {
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: #fafafa;
+}
+.affinity-guide table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.affinity-guide th, .affinity-guide td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: left;
+}
+.affinity-guide th {
+  background: #f0f0f0;
+}
+
+/* Results */
+.gradient-scale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+.gradient-bar {
+  flex: 1;
+  height: 20px;
+  background: linear-gradient(to right,
+    #440154, /* deep purple */
+    #3b528b, /* blue */
+    #21908d, /* teal */
+    #5dc963, /* green */
+    #fde725  /* yellow */
+);
+  border: 1px solid #ccc;
+}
+body.mirna-page #results-area {
+    margin-top: 30px;
+}
+body.mirna-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+body.mirna-page th, body.mirna-page td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+}
+body.mirna-page thead {
+    background: #e3f2fd;
+}
+body.mirna-page tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+/* Download button */
+body.mirna-page #download-btn {
+    margin-top: 20px;
+    padding: 12px;
+    background: #0d47a1;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+body.mirna-page #download-btn:hover {
+    background: #1565c0;
+    transform: translateY(-2px);
+}
+
+/* Footer (scoped) */
+body.mirna-page #main-footer {
+    background: #000 !important;
+    color: #ccc;
+}
+body.mirna-page #main-footer .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+}
+
+textarea.sequence-input {
+    height: 200px; /* adjust to taste */
+    resize: vertical; /* let user drag to resize if they want */
+}
+
+.gradient-scale-container {
+  margin-bottom: 20px;
+}
+.gradient-scale-bar {
+  height: 20px;
+  background: linear-gradient(to right,
+    #440154, /* dark purple */
+    #3b528b, /* blue */
+    #21908d, /* teal */
+    #5dc963, /* green */
+    #fde725  /* yellow */
+  );
+  border: 1px solid #ccc;
+}
+.gradient-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  margin-top: 4px;
+}
