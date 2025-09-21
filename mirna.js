@@ -15,7 +15,7 @@ let CONFIG = {
   mirna_max: 5000,
   mature_trim_enabled: true,
   mature_window: 22,
-  aa_convert_allowed: false,
+  aa_convert_allowed: true,
   use_nonce: false
 };
 
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span>Auto-trim miRNAs > 30nt to mature-like ${CONFIG.mature_window}nt</span>
         </label>
         <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-          <input type="checkbox" id="aa-convert-flag" ${CONFIG.aa_convert_allowed ? '' : 'disabled'} />
+          <input type="checkbox" id="aa-convert-flag" ${CONFIG.aa_convert_allowed ? '' : 'enabled'} />
           <span>Convert AA → NT (lossy; for target/competitor)</span>
         </label>
       </div>
