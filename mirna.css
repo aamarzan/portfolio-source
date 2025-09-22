@@ -316,23 +316,20 @@ textarea.sequence-input {
 }
 
 .btn-run-again {
-    background-color: #0a3d62; /* premium dark sky-blue */
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px; /* bigger padding for a larger button */
-    margin-left : 20px;   /* gap between download and run again */
-    margin-right: 20px;   /* gap between download and run again */
-    font-size: 1rem;    /* slightly larger text */
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    display: inline-block;
-    min-width: 160px;   /* ensures a decent width */
-    text-align: center;
+  background-color: #0a3d62; /* premium dark sky-blue */
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  font-size: 0.92rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-block;
+  min-width: 180px;
+  text-align: center;
 }
-
 .btn-run-again:hover {
-    background-color: #07456f; /* slightly lighter on hover */
-    transform: translateY(-1px);
+  background-color: #07456f;
+  transform: translateY(-1px);
 }
 

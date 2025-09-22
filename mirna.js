@@ -620,6 +620,14 @@ function displayResults(results) {
   const downloadId = 'download-btn';
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
+  // Run Again button (singleton)
+  const runAgainId = 'run-again-btn';
+  const runAgainButtonHTML = `
+    <div style="margin-top:14px;">
+      <button id="${runAgainId}" class="btn-run-again">Run Again</button>
+    </div>
+  `;
+
   // Build table
   let table = '<table style="margin-bottom:20px;"><thead><tr>' +
       '<th>Primary Molecule ID</th>' +
@@ -647,6 +655,7 @@ function displayResults(results) {
   // Render in strict order; since container is cleared first, no duplicates can occur
   appendHTML(container, legendHTML);
   appendHTML(container, downloadButtonHTML);
+  appendHTML(resultsContainer, runAgainButtonHTML);
   appendHTML(container, table);
 
   // Ensure only one click listener bound (button is recreated each render, so normal bind is fine)
