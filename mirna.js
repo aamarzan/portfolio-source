@@ -341,10 +341,10 @@ async function handleSubmit(event) {
   }
   predictionResults = [];
 
-  // Professional reload warning
-  prependHTML(resultsContainer, formatWarn(
-    'Please do not refresh or close this page while your prediction is running — this will cancel the analysis in progress.'
-  ));
+  // 🔹 Professional reload warning (pinned)
+  prependHTML(resultsContainer, `<div class="reload-warning">
+    Please do not refresh or close this page while your prediction is running — this will cancel the analysis in progress.
+  </div>`);
 
   // Enforce miRNA FASTA headers (as requested)
   if (!hasFastaHeaders(primarySeqs)) {
@@ -368,7 +368,6 @@ async function handleSubmit(event) {
   if (competitorSeq.trim() && (competitorSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_COMP_LEN) {
     appendHTML(resultsContainer, formatWarn(`Tip: Competitor should be at least ${MIN_COMP_LEN} nt or leave it blank.`));
   }
-
 
   // Limit check for miRNA count
   const mirnaCount = countFastaRecords(primarySeqs);
@@ -424,7 +423,6 @@ async function handleSubmit(event) {
   formData.append('convert_aa_to_nt', aaConvertFlag ? 'true' : 'false');
 
   // Optional PDB/CIF files
-  // miRNA: allow multiple if input is multiple; tolerate single
   const mirnaFileInput = $('mirna-file');
   if (mirnaFileInput && mirnaFileInput.files && mirnaFileInput.files.length > 0) {
     for (const f of mirnaFileInput.files) {
@@ -435,7 +433,6 @@ async function handleSubmit(event) {
       formData.append('mirna_3d_file', f);
     }
   }
-  // target single
   const targetFile = $('target-file')?.files?.[0];
   if (targetFile) {
     if (!validateFileSize(targetFile)) {
@@ -444,7 +441,6 @@ async function handleSubmit(event) {
     }
     formData.append('target_3d_file', targetFile);
   }
-  // competitor single
   const competitorFile = $('competitor-file')?.files?.[0];
   if (competitorFile) {
     if (!validateFileSize(competitorFile)) {
@@ -478,7 +474,7 @@ async function handleSubmit(event) {
     const { job_id } = await startRes.json();
     if (!job_id) throw new Error('No job ID returned from server.');
 
-    // 2) Poll progress until completed (tail recursion avoided; timer-based)
+    // 2) Poll progress until completed (timer-based)
     const poll = async () => {
       const res = await fetch(PROGRESS_URL(job_id), { method: 'GET' });
       if (!res.ok) throw new Error('Failed to check job progress.');
@@ -495,10 +491,17 @@ async function handleSubmit(event) {
       }
 
       if (data.status === 'error') {
+        // 🔹 Remove reload warning
+        const rw = resultsContainer.querySelector('.reload-warning');
+        if (rw) rw.remove();
         throw new Error(data.error || 'We encountered a technical issue while processing your request.');
       }
 
       if (data.status === 'completed') {
+        // 🔹 Remove reload warning
+        const rw = resultsContainer.querySelector('.reload-warning');
+        if (rw) rw.remove();
+
         if (loader) text(loader, "Fetching final results...");
         // 3) Download final results
         const dr = await fetch(DOWNLOAD_URL(job_id), { method: 'GET' });
@@ -518,6 +521,10 @@ async function handleSubmit(event) {
     await poll();
 
   } catch (error) {
+    // 🔹 Remove reload warning
+    const rw = resultsContainer.querySelector('.reload-warning');
+    if (rw) rw.remove();
+
     const friendlyMessage = error.message && !/server error/i.test(error.message)
       ? error.message
       : 'Something went wrong while processing your request. Please try again later.';
@@ -525,6 +532,7 @@ async function handleSubmit(event) {
     if (loader) hide(loader);
   }
 }
+
 
 // =====================================================
 // Display results (sorted by baseline; gradient by baseline)
