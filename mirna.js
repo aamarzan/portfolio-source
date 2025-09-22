@@ -532,9 +532,10 @@ async function handleSubmit(event) {
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = document.getElementById('tab-inputs'); // actual Inputs tab button
+            const inputsTabBtn = document.getElementById('tab-inputs'); // Inputs tab button
             if (inputsTabBtn) {
-              inputsTabBtn.click(); // simulate a real user click
+              // Switch tabs properly
+              openTab(inputsTabBtn, 'input-tab');
               document.getElementById('primary-seqs')?.focus(); // focus first input
               window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
             } else {
@@ -542,6 +543,7 @@ async function handleSubmit(event) {
             }
           });
         }
+
 
 
         if (loader) {

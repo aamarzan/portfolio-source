@@ -314,3 +314,22 @@ textarea.sequence-input {
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+.btn-run-again {
+  background-color: #0a3d62; /* premium dark sky-blue */
+  color: #ffffff;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-block;
+  min-width: 180px;
+  text-align: center;
+}
+.btn-run-again:hover {
+  background-color: #1a699e;
+  transform: translateY(-1px);
+}
+

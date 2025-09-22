@@ -508,22 +508,41 @@ async function handleSubmit(event) {
         if (!dr.ok) throw new Error('Failed to download results.');
         const finalData = await dr.json();
 
+        // After results are displayed
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Add Run Again button
-        appendHTML(resultsContainer, `
-          <div class="results-actions">
-            <button id="run-again-btn" class="btn-download">Run Again</button>
-          </div>
-        `);
+        // Insert Run Again directly below the download button
+        const downloadBtn = resultsContainer.querySelector('#download-btn');
+        if (downloadBtn) {
+          downloadBtn.insertAdjacentHTML('afterend', `
+            <div style="margin-top:14px;">
+              <button id="run-again-btn" class="btn-run-again">Run Again</button>
+            </div>
+          `);
+        } else {
+          appendHTML(resultsContainer, `
+            <div style="margin-top:14px;">
+              <button id="run-again-btn" class="btn-run-again">Run Again</button>
+            </div>
+          `);
+        }
 
-        // Attach event listener
-        byId('run-again-btn').addEventListener('click', () => {
-          document.getElementById('prediction-form').reset();
-          setHTML(resultsContainer, '');
-          openTab(byQS('button.tab-btn:nth-child(2)'), 'input-tab');
-        });
+        // Now bind the click listener immediately after inserting
+        const runAgainBtn = byId('run-again-btn');
+        if (runAgainBtn) {
+          runAgainBtn.addEventListener('click', () => {
+            const inputsTabBtn = document.getElementById('tab-inputs'); // actual Inputs tab button
+            if (inputsTabBtn) {
+              inputsTabBtn.click(); // simulate a real user click
+              document.getElementById('primary-seqs')?.focus(); // focus first input
+              window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
+            } else {
+              console.warn('Inputs tab button not found');
+            }
+          });
+        }
+
 
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
