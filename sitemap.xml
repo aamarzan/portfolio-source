@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+you are wrong this is the sitemap of my portfolio below: please update this with the aamarzan.com/mirna included in it. and change the about-me to aboutme<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.aamarzan.com/</loc>
     <priority>1.00</priority>
   </url>
   <url>
-    <loc>https://www.aamarzan.com/about-me/</loc>
+    <loc>https://www.aamarzan.com/aboutme/</loc>
   </url>
   <url>
     <loc>https://www.aamarzan.com/academics/</loc>
@@ -21,6 +21,9 @@
   </url>
   <url>
     <loc>https://www.aamarzan.com/previous-projects/</loc>
+  </url>
+  <url>
+    <loc>https://www.aamarzan.com/mirna/</loc>
   </url>
   <url>
     <loc>https://www.aamarzan.com/dissertation/</loc>
