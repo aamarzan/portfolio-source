@@ -12254,3 +12254,106 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-22 20:06:45,933 | INFO | 127.0.0.1 - - [22/Sep/2025 20:06:45] "GET /progress/13adedc7-5517-42ed-bfcd-b2655c035717 HTTP/1.1" 200 -
 2025-09-22 20:06:47,856 | INFO | 127.0.0.1 - - [22/Sep/2025 20:06:47] "GET /progress/13adedc7-5517-42ed-bfcd-b2655c035717 HTTP/1.1" 200 -
 2025-09-22 20:06:47,889 | INFO | 127.0.0.1 - - [22/Sep/2025 20:06:47] "GET /download/13adedc7-5517-42ed-bfcd-b2655c035717 HTTP/1.1" 200 -
+2025-09-22 20:14:47,565 | INFO | 127.0.0.1 - - [22/Sep/2025 20:14:47] "GET /config HTTP/1.1" 200 -
+2025-09-22 20:16:14,986 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:14] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-22 20:16:15,757 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:15] "POST /predict HTTP/1.1" 200 -
+2025-09-22 20:16:15,949 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:15] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:18,296 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:18] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:19,568 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:19] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:20,814 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:20] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:22,187 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:22] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:23,541 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:23] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:24,852 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:24] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:26,746 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:26] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:28,506 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:28] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:29,806 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:29] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:31,085 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:31] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:32,329 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:32] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:33,741 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:33] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:35,040 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:35] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:36,298 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:36] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:37,615 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:37] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:38,925 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:38] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:40,532 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:40] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:41,864 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:41] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:43,114 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:43] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:44,422 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:44] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:46,118 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:46] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:47,374 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:47] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:48,667 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:48] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:50,005 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:50] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:51,300 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:51] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:52,600 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:52] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:53,871 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:53] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:55,122 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:55] "GET /progress/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:16:55,190 | INFO | 127.0.0.1 - - [22/Sep/2025 20:16:55] "GET /download/95ad1db8-c66c-4d5d-a3d6-9aeccefd5bea HTTP/1.1" 200 -
+2025-09-22 20:17:50,368 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:50] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-22 20:17:51,494 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:51] "POST /predict HTTP/1.1" 200 -
+2025-09-22 20:17:51,538 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:51] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:53,104 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:53] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:54,413 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:54] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:55,834 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:55] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:57,152 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:57] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:58,503 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:58] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:17:59,795 | INFO | 127.0.0.1 - - [22/Sep/2025 20:17:59] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:01,267 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:01] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:02,582 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:02] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:03,856 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:03] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:05,285 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:05] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:06,592 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:06] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:08,156 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:08] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:09,473 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:09] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:10,873 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:10] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:12,211 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:12] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:13,585 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:13] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:15,532 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:15] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:16,840 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:16] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:18,103 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:18] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:19,350 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:19] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:20,740 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:20] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:22,003 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:22] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:23,259 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:23] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:24,566 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:24] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:25,822 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:25] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:27,081 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:27] "GET /progress/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:18:27,131 | INFO | 127.0.0.1 - - [22/Sep/2025 20:18:27] "GET /download/3f10bd3b-a226-4edc-b7bc-93c8c8c01b6b HTTP/1.1" 200 -
+2025-09-22 20:19:15,473 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:15] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-22 20:19:15,990 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:15] "POST /predict HTTP/1.1" 200 -
+2025-09-22 20:19:16,041 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:16] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:17,389 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:17] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:18,778 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:18] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:20,114 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:20] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:22,966 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:22] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:24,287 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:24] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:25,656 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:25] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:27,065 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:27] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:28,438 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:28] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:29,680 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:29] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:31,004 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:31] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:32,332 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:32] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:34,847 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:34] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:36,309 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:36] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:37,574 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:37] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:39,223 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:39] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:40,497 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:40] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:41,803 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:41] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:43,069 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:43] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:44,498 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:44] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:46,299 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:46] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:47,566 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:47] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:48,803 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:48] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:50,038 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:50] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:51,584 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:51] "GET /progress/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:19:51,671 | INFO | 127.0.0.1 - - [22/Sep/2025 20:19:51] "GET /download/e352e33f-4ffd-4523-ae8a-68535865e2f6 HTTP/1.1" 200 -
+2025-09-22 20:45:28,870 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-22 20:45:34,001 | INFO |  * Restarting with stat
+2025-09-22 20:45:48,710 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 20:45:49,167 | WARNING |  * Debugger is active!
+2025-09-22 20:45:49,171 | INFO |  * Debugger PIN: 819-598-734
+2025-09-22 21:04:41,006 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-22 21:04:43,909 | INFO |  * Restarting with stat
+2025-09-22 21:05:01,237 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 21:05:03,375 | WARNING |  * Debugger is active!
+2025-09-22 21:05:03,387 | INFO |  * Debugger PIN: 819-598-734

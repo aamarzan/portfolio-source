@@ -447,99 +447,107 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
 
 @app.route('/predict', methods=['POST'])
 def start_prediction():
-  # Inputs
-  fasta_string = request.form.get('primary_molecules', '')
-  target_seq_text = request.form.get('target_molecule', '')
-  competitor_seq_text = request.form.get('competitor_molecule', '')
+    # Inputs
+    fasta_string = request.form.get('primary_molecules', '')
+    target_seq_text = request.form.get('target_molecule', '')
+    competitor_seq_text = request.form.get('competitor_molecule', '')
 
-  # Flags (from frontend Advanced Options; default behaviors described above)
-  # convert_aa_to_nt applies to target/competitor only if AA detected
-  convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
-  mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
+    # Flags (from frontend Advanced Options; default behaviors described above)
+    convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
+    mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-  # Parse miRNA FASTA — require headers to identify each sequence
-  primary_records = parse_fasta_records(fasta_string)
-  if not primary_records:
-    return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
-  # Enforce presence of FASTA headers for miRNAs (to label results)
-  if not has_any_fasta_header(fasta_string):
-    return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p) so results can be labeled correctly."}), 400
-  if len(primary_records) > MIRNA_MAX:
-    return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences. Please reduce your input and try again."}), 400
+    # Parse miRNA FASTA — require headers to identify each sequence
+    primary_records = parse_fasta_records(fasta_string)
+    if not primary_records:
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
+    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p) so results can be labeled correctly."}), 400
+    if len(primary_records) > MIRNA_MAX:
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences. Please reduce your input and try again."}), 400
 
-  # Target: exactly one sequence (FASTA or raw)
-  target_parsed = parse_fasta_records(target_seq_text)
-  if len(target_parsed) == 0:
-    return jsonify({"error": "Please provide one target sequence (FASTA or raw)."}), 400
-  if len(target_parsed) > 1:
-    return jsonify({"error": "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."}), 400
-  target_id, target_seq = target_parsed[0]
+    # ✅ Enforce minimum miRNA length
+    MIN_MIRNA_LEN = 10
+    short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
+    if short_mirnas:
+        return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
-  # Competitor: at most one sequence
-  competitor_id, competitor_seq = ("competitor", "")
-  if competitor_seq_text.strip():
-    competitor_parsed = parse_fasta_records(competitor_seq_text)
-    if len(competitor_parsed) == 0:
-      competitor_id, competitor_seq = ("competitor", "")
-    elif len(competitor_parsed) > 1:
-      return jsonify({"error": "Your competitor input contains multiple sequences. Please provide exactly one competitor sequence to proceed."}), 400
-    else:
-      competitor_id, competitor_seq = competitor_parsed[0]
+    # Target: exactly one sequence (FASTA or raw)
+    target_parsed = parse_fasta_records(target_seq_text)
+    if len(target_parsed) == 0:
+        return jsonify({"error": "Please provide one target sequence (FASTA or raw)."}), 400
+    if len(target_parsed) > 1:
+        return jsonify({"error": "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."}), 400
+    target_id, target_seq = target_parsed[0]
 
-  # Optional AA detection and handling for target/competitor
-  # If AA and conversion is not allowed or flag is false -> reject with clear guidance
-  if is_aa_like(target_seq):
-    if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-      target_seq = back_translate(target_seq)
-    else:
-      return jsonify({"error": "Target appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
-  if competitor_seq and is_aa_like(competitor_seq):
-    if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-      competitor_seq = back_translate(competitor_seq)
-    else:
-      return jsonify({"error": "Competitor appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
+    # ✅ Enforce minimum target length
+    MIN_TARGET_LEN = 30
+    if len((target_seq or '').replace('\n', '').strip()) < MIN_TARGET_LEN:
+        return jsonify({"error": f"Target sequence must be at least {MIN_TARGET_LEN} nt long."}), 400
 
-  # Save uploaded 3D files to temp and index them
-  # Note: we must save them now; request context ends after this function returns
-  tmp_paths_to_cleanup: List[str] = []
-  def _save_optional(fs_key: str) -> Optional[str]:
-    f = request.files.get(fs_key)
-    if f and f.filename:
-      p = save_filestorage_to_temp(f)
-      tmp_paths_to_cleanup.append(p)
-      return p
-    return None
+    # Competitor: at most one sequence
+    competitor_id, competitor_seq = ("competitor", "")
+    if competitor_seq_text.strip():
+        competitor_parsed = parse_fasta_records(competitor_seq_text)
+        if len(competitor_parsed) == 0:
+            competitor_id, competitor_seq = ("competitor", "")
+        elif len(competitor_parsed) > 1:
+            return jsonify({"error": "Your competitor input contains multiple sequences. Please provide exactly one competitor sequence to proceed."}), 400
+        else:
+            competitor_id, competitor_seq = competitor_parsed[0]
 
-  target_3d_path = _save_optional('target_3d_file')
-  competitor_3d_path = _save_optional('competitor_3d_file')
+        # ✅ Enforce minimum competitor length
+        MIN_COMP_LEN = 15
+        if len((competitor_seq or '').replace('\n', '').strip()) < MIN_COMP_LEN:
+            return jsonify({"error": f"Competitor sequence must be at least {MIN_COMP_LEN} nt long."}), 400
 
-  # Multiple miRNA 3D files (filenames must match FASTA IDs, without extension)
-  mirna_3d_files = request.files.getlist('mirna_3d_file')
-  # Store (kind, seq, path) to both validate and extract features later
-  mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
-  for f in mirna_3d_files:
-    if f and f.filename:
-      p = save_filestorage_to_temp(f)
-      tmp_paths_to_cleanup.append(p)
-      stem = os.path.splitext(secure_filename(f.filename))[0]
-      kind, seq = extract_seq_from_structure(p)
-      mirna_3d_index[stem] = (kind, seq, p)
+    # Optional AA detection and handling for target/competitor
+    if is_aa_like(target_seq):
+        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
+            target_seq = back_translate(target_seq)
+        else:
+            return jsonify({"error": "Target appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
+    if competitor_seq and is_aa_like(competitor_seq):
+        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
+            competitor_seq = back_translate(competitor_seq)
+        else:
+            return jsonify({"error": "Competitor appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
 
-  # Create a job
-  job_id = str(uuid.uuid4())
-  jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(primary_records), "completed": 0}
-  send_ga_event("prediction_started", {"total": len(primary_records)})
+    # Save uploaded 3D files to temp and index them
+    tmp_paths_to_cleanup: List[str] = []
+    def _save_optional(fs_key: str) -> Optional[str]:
+        f = request.files.get(fs_key)
+        if f and f.filename:
+            p = save_filestorage_to_temp(f)
+            tmp_paths_to_cleanup.append(p)
+            return p
+        return None
 
-  # Start background job, passing all necessary immutable data
-  threading.Thread(
-    target=process_job,
-    args=(job_id, primary_records, (target_id, target_seq), (competitor_id, competitor_seq),
-          target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
-          convert_aa_to_nt_flag, mature_trim_flag),
-    daemon=True
-  ).start()
+    target_3d_path = _save_optional('target_3d_file')
+    competitor_3d_path = _save_optional('competitor_3d_file')
 
-  return jsonify({"job_id": job_id, "status": "started"})
+    mirna_3d_files = request.files.getlist('mirna_3d_file')
+    mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
+    for f in mirna_3d_files:
+        if f and f.filename:
+            p = save_filestorage_to_temp(f)
+            tmp_paths_to_cleanup.append(p)
+            stem = os.path.splitext(secure_filename(f.filename))[0]
+            kind, seq = extract_seq_from_structure(p)
+            mirna_3d_index[stem] = (kind, seq, p)
+
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(primary_records), "completed": 0}
+    send_ga_event("prediction_started", {"total": len(primary_records)})
+
+    threading.Thread(
+        target=process_job,
+        args=(job_id, primary_records, (target_id, target_seq), (competitor_id, competitor_seq),
+              target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
+              convert_aa_to_nt_flag, mature_trim_flag),
+        daemon=True
+    ).start()
+
+    return jsonify({"job_id": job_id, "status": "started"})
 
 def process_job(job_id: str,
                 primary_records: List[Tuple[str,str]],

@@ -352,6 +352,22 @@ async function handleSubmit(event) {
     return;
   }
 
+  // Quick client-side length hints (non-blocking; backend enforces)
+  const MIN_MIRNA_LEN = 10;
+  const MIN_TARGET_LEN = 30;
+  const MIN_COMP_LEN = 15;
+
+  // Approximate length check for target
+  if ((targetSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_TARGET_LEN) {
+    appendHTML(resultsContainer, formatWarn(`Tip: Target should be at least ${MIN_TARGET_LEN} nt. Your input looks shorter.`));
+  }
+
+  // Competitor (if present)
+  if (competitorSeq.trim() && (competitorSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_COMP_LEN) {
+    appendHTML(resultsContainer, formatWarn(`Tip: Competitor should be at least ${MIN_COMP_LEN} nt or leave it blank.`));
+  }
+
+
   // Limit check for miRNA count
   const mirnaCount = countFastaRecords(primarySeqs);
   if (mirnaCount > CONFIG.mirna_max) {
