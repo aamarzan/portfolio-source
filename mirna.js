@@ -522,9 +522,13 @@ async function handleSubmit(event) {
         }
 
         byId('run-again-btn').addEventListener('click', () => {
-            document.getElementById('prediction-form').reset();
-            setHTML(resultsContainer, '');
-            openTab(byQS('button.tab-btn:nth-child(2)'), 'input-tab');
+            // Trigger the form submission programmatically
+            const form = document.getElementById('prediction-form');
+            if (form) {
+                // Optional: scroll to top so user sees loader
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                handleSubmit(new Event('submit'));
+            }
         });
 
         if (loader) {
