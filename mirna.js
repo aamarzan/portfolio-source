@@ -404,7 +404,7 @@ async function handleSubmit(event) {
 
   // Show loader
   if (loader) {
-    loader.innerHTML = `<span class="loader-spinner"></span>Running prediction...`;
+    text(loader, "Running prediction...");
     show(loader);
   }
 
@@ -484,7 +484,8 @@ async function handleSubmit(event) {
         if (loader) {
           const total = Number.isFinite(data.total) ? data.total : '?';
           const completed = Number.isFinite(data.completed) ? data.completed : '?';
-          text(loader, `Processing... ${completed}/${total} completed`);
+          loader.innerHTML = `<span class="loader-spinner"></span>Processing... ${completed}/${total} completed`;
+          show(loader); // make sure it's visible
         }
         setTimeout(poll, 1200);
         return;
