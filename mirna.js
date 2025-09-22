@@ -512,41 +512,7 @@ async function handleSubmit(event) {
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Insert Run Again directly below the download button
-        const downloadBtn = resultsContainer.querySelector('#download-btn');
-        if (downloadBtn) {
-          downloadBtn.insertAdjacentHTML('afterend', `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        } else {
-          appendHTML(resultsContainer, `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        }
-
-        // Bind Run Again click after inserting the button
-        const runAgainBtn = byId('run-again-btn');
-        if (runAgainBtn) {
-          runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = document.getElementById('tab-inputs'); // Inputs tab button
-            if (inputsTabBtn) {
-              // Simulate a real click so your existing tab system runs
-              inputsTabBtn.click();
-
-              // Focus the first input field for convenience
-              document.getElementById('primary-seqs')?.focus();
-
-              // Scroll to top so the form is fully visible
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-              console.warn('Inputs tab button not found');
-            }
-          });
-        }
+        // ✅ Run Again button removed — no insertion, no click handler
 
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
@@ -568,7 +534,6 @@ async function handleSubmit(event) {
         setHTML(resultsContainer, formatError(friendlyMessage));
         if (loader) hide(loader);
       }
-
 }
 
 
