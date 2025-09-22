@@ -341,6 +341,11 @@ async function handleSubmit(event) {
   }
   predictionResults = [];
 
+  // Professional reload warning
+  prependHTML(resultsContainer, formatWarn(
+    'Please do not refresh or close this page while your prediction is running — this will cancel the analysis in progress.'
+  ));
+
   // Enforce miRNA FASTA headers (as requested)
   if (!hasFastaHeaders(primarySeqs)) {
     setHTML(resultsContainer, formatError(
