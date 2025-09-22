@@ -325,7 +325,7 @@ textarea.sequence-input {
   display: inline-block;
   vertical-align: middle;
   margin-right: 8px;
-  box-shadow: 0 0 6px var(--accent-color), 0 0 12px rgba(32, 119, 141, 0.5); /* glow effect */
+  box-shadow: 0 0 6px var(--accent-color), 0 0 12px rgb(32, 119, 141); /* glow effect */
   background: radial-gradient(circle at 30% 30%, var(--accent-color) 0%, transparent 70%);
 }
 
