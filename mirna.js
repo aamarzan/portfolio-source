@@ -532,9 +532,9 @@ async function handleSubmit(event) {
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = byId('tab-inputs'); // your Inputs tab button
+            const inputsTabBtn = document.getElementById('tab-inputs'); // actual Inputs tab button
             if (inputsTabBtn) {
-              openTab(inputsTabBtn, 'input-tab'); // switch to Inputs panel
+              openTab(inputsTabBtn, 'input-tab'); // switch to Inputs tab
               document.getElementById('primary-seqs')?.focus(); // focus first input
               window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
             } else {
@@ -542,6 +542,7 @@ async function handleSubmit(event) {
             }
           });
         }
+
 
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
