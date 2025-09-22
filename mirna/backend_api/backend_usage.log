@@ -11677,3 +11677,13 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-22 19:08:51,797 | INFO | 127.0.0.1 - - [22/Sep/2025 19:08:51] "GET /config HTTP/1.1" 200 -
 2025-09-22 19:08:58,047 | INFO | 127.0.0.1 - - [22/Sep/2025 19:08:58] "GET /config HTTP/1.1" 200 -
 2025-09-22 19:15:35,713 | INFO | 127.0.0.1 - - [22/Sep/2025 19:15:35] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:23:22,863 | INFO | 127.0.0.1 - - [22/Sep/2025 19:23:22] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:26:41,797 | INFO | 127.0.0.1 - - [22/Sep/2025 19:26:41] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:27:42,361 | INFO | 127.0.0.1 - - [22/Sep/2025 19:27:42] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:29:55,101 | INFO | 127.0.0.1 - - [22/Sep/2025 19:29:55] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:34:29,661 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-22 19:34:32,838 | INFO |  * Restarting with stat
+2025-09-22 19:34:50,681 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 19:34:51,476 | WARNING |  * Debugger is active!
+2025-09-22 19:34:51,486 | INFO |  * Debugger PIN: 819-598-734

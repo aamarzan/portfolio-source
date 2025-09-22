@@ -41,7 +41,7 @@ MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True           # default: enable auto-trim
 MATURE_TRIM_WINDOW = int(os.getenv("MATURE_TRIM_WINDOW", "22"))
-AA_CONVERT_ALLOWED = False           # default: reject AA unless frontend opts-in
+AA_CONVERT_ALLOWED = True           # default: reject AA unless frontend opts-in
 STRUCTURE_MISMATCH_TOL = 0.10        # 10% mismatch tolerance in alignment
 MAX_CONTENT_MB = 100
 
