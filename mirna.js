@@ -482,10 +482,17 @@ async function handleSubmit(event) {
 
       if (data.status === 'running') {
         if (loader) {
-          const total = Number.isFinite(data.total) ? data.total : '?';
-          const completed = Number.isFinite(data.completed) ? data.completed : '?';
-          loader.innerHTML = `<span class="loader-spinner"></span>Processing... ${completed}/${total} completed`;
-          show(loader); // make sure it's visible
+          // If spinner not already there, insert it once
+          if (!loader.querySelector('.loader-spinner')) {
+            loader.innerHTML = `<span class="loader-spinner"></span><span id="loader-text"></span>`;
+          }
+          const loaderText = loader.querySelector('#loader-text');
+          if (loaderText) {
+            const total = Number.isFinite(data.total) ? data.total : '?';
+            const completed = Number.isFinite(data.completed) ? data.completed : '?';
+            loaderText.textContent = `Processing... ${completed}/${total} completed`;
+          }
+          show(loader);
         }
         setTimeout(poll, 1200);
         return;
