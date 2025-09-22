@@ -528,29 +528,39 @@ async function handleSubmit(event) {
           `);
         }
 
-        // Now bind the click listener immediately after inserting
+        // ✅ Updated click handler: force-activate Inputs tab
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = document.getElementById('tab-inputs'); // Inputs tab button
+            // Remove active state from all tabs and cards
+            byQSA('.card').forEach(card => card.classList.remove('active'));
+            byQSA('.tab-btn').forEach(btn => {
+              btn.classList.remove('active');
+              btn.setAttribute('aria-selected', 'false');
+            });
+
+            // Activate Inputs tab and card
+            const inputsCard = document.getElementById('input-tab');
+            const inputsTabBtn = document.getElementById('tab-inputs');
+            if (inputsCard) inputsCard.classList.add('active');
             if (inputsTabBtn) {
-              // Switch tabs properly
-              openTab(inputsTabBtn, 'input-tab');
-              document.getElementById('primary-seqs')?.focus(); // focus first input
-              window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
-            } else {
-              console.warn('Inputs tab button not found');
+              inputsTabBtn.classList.add('active');
+              inputsTabBtn.setAttribute('aria-selected', 'true');
+              inputsTabBtn.focus();
             }
+
+            // Focus first input and scroll to top
+            document.getElementById('primary-seqs')?.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           });
         }
-
-
 
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
           setTimeout(() => hide(loader), 3000);
         }
       }
+
     };
 
     await poll();
