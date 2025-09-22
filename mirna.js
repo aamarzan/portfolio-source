@@ -522,12 +522,14 @@ async function handleSubmit(event) {
         }
 
         byId('run-again-btn').addEventListener('click', () => {
-            // Trigger the form submission programmatically
             const form = document.getElementById('prediction-form');
             if (form) {
-                // Optional: scroll to top so user sees loader
+                // Scroll to top so loader is visible
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                handleSubmit(new Event('submit'));
+
+                // Dispatch a real submit event so your existing listener runs
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(submitEvent);
             }
         });
 
