@@ -348,3 +348,17 @@ textarea.sequence-input {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+
+.legend-toggle {
+  margin-bottom: 12px;
+}
+.legend-toggle summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 0;
+}
+@media (max-width: 600px) {
+  .gradient-scale-container {
+    overflow-x: auto;
+  }
+}
