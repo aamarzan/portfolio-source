@@ -532,14 +532,11 @@ async function handleSubmit(event) {
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            // Find the Inputs tab button by text or position
-            const inputsTabBtn = Array.from(document.querySelectorAll('button.tab-btn'))
-              .find(btn => btn.textContent.trim().toLowerCase() === 'inputs');
-
+            const inputsTabBtn = byId('tab-inputs'); // your Inputs tab button
             if (inputsTabBtn) {
-              openTab(inputsTabBtn, 'input-tab');
-              document.getElementById('primary-seqs')?.focus();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              openTab(inputsTabBtn, 'input-tab'); // switch to Inputs panel
+              document.getElementById('primary-seqs')?.focus(); // focus first input
+              window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
             } else {
               console.warn('Inputs tab button not found');
             }
