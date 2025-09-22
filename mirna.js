@@ -511,14 +511,14 @@ async function handleSubmit(event) {
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Find the download button and insert Run Again right after it
+        // Find the download button and insert Run Again directly below it
         const downloadBtn = resultsContainer.querySelector('#download-btn');
         if (downloadBtn) {
             downloadBtn.insertAdjacentHTML('afterend', `
-                <button id="run-again-btn" class="btn-download">Run Again</button>
+                <button id="run-again-btn" class="btn-run-again">Run Again</button>
             `);
         } else {
-            appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-download">Run Again</button>`);
+            appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
         }
 
         // Attach event listener
