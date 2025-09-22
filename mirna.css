@@ -320,7 +320,7 @@ textarea.sequence-input {
     color: #ffffff;
     border: none;
     padding: 10px 20px; /* bigger padding for a larger button */
-    margin-top: 12px;   /* gap between download and run again */
+    margin-top: 20px;   /* gap between download and run again */
     font-size: 1rem;    /* slightly larger text */
     border-radius: 4px;
     cursor: pointer;
