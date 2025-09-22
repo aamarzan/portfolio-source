@@ -532,10 +532,17 @@ async function handleSubmit(event) {
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // Inputs tab
-            openTab(inputsTabBtn, 'input-tab');
-            $('primary-seqs')?.focus();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Find the Inputs tab button by text or position
+            const inputsTabBtn = Array.from(document.querySelectorAll('button.tab-btn'))
+              .find(btn => btn.textContent.trim().toLowerCase() === 'inputs');
+
+            if (inputsTabBtn) {
+              openTab(inputsTabBtn, 'input-tab');
+              document.getElementById('primary-seqs')?.focus();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              console.warn('Inputs tab button not found');
+            }
           });
         }
 
