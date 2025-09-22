@@ -11615,3 +11615,47 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-21 21:12:14,720 | INFO | 127.0.0.1 - - [21/Sep/2025 21:12:14] "GET /download/69db7e32-7ef3-4c65-bab8-a0ee4ae8ba82 HTTP/1.1" 200 -
 2025-09-21 21:50:14,306 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\a_conversion_to_txt.py', reloading
 2025-09-21 21:50:18,776 | INFO |  * Restarting with stat
+2025-09-22 18:06:08,018 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 18:06:08,870 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-09-22 18:06:08,871 | INFO | [33mPress CTRL+C to quit[0m
+2025-09-22 18:06:08,874 | INFO |  * Restarting with stat
+2025-09-22 18:06:23,177 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 18:06:25,328 | WARNING |  * Debugger is active!
+2025-09-22 18:06:25,338 | INFO |  * Debugger PIN: 819-598-734
+2025-09-22 18:08:35,416 | INFO | 127.0.0.1 - - [22/Sep/2025 18:08:35] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-22 18:08:36,124 | INFO | 127.0.0.1 - - [22/Sep/2025 18:08:36] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-09-22 18:08:57,729 | INFO | 127.0.0.1 - - [22/Sep/2025 18:08:57] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:09:18,293 | INFO | 127.0.0.1 - - [22/Sep/2025 18:09:18] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:17,456 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:17] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:17,671 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:17] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:18,127 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:18] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:18,565 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:18] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:18,953 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:18] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:19,364 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:19] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:19,762 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:19] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:27:20,323 | INFO | 127.0.0.1 - - [22/Sep/2025 18:27:20] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:28:27,189 | INFO | 127.0.0.1 - - [22/Sep/2025 18:28:27] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:28:27,736 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-22 18:28:29,819 | INFO |  * Restarting with stat
+2025-09-22 18:28:45,663 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 18:28:46,103 | WARNING |  * Debugger is active!
+2025-09-22 18:28:46,107 | INFO |  * Debugger PIN: 819-598-734
+2025-09-22 18:28:46,315 | INFO | 127.0.0.1 - - [22/Sep/2025 18:28:46] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:28:46,321 | INFO | 127.0.0.1 - - [22/Sep/2025 18:28:46] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:28:46,326 | INFO | 127.0.0.1 - - [22/Sep/2025 18:28:46] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:33:31,983 | INFO | 127.0.0.1 - - [22/Sep/2025 18:33:31] "GET /config HTTP/1.1" 200 -
+2025-09-22 18:34:26,460 | INFO | 127.0.0.1 - - [22/Sep/2025 18:34:26] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:03:28,261 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-22 19:03:30,668 | INFO |  * Restarting with stat
+2025-09-22 19:03:45,665 | WARNING | From E:\1. Github\3. portfolio-source\mirna\backend_api\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-22 19:03:46,184 | WARNING |  * Debugger is active!
+2025-09-22 19:03:46,189 | INFO |  * Debugger PIN: 819-598-734
+2025-09-22 19:03:58,454 | INFO | 127.0.0.1 - - [22/Sep/2025 19:03:58] "GET /config HTTP/1.1" 200 -
+2025-09-22 19:04:15,387 | INFO | 127.0.0.1 - - [22/Sep/2025 19:04:15] "GET /config HTTP/1.1" 200 -
