@@ -522,17 +522,6 @@ async function handleSubmit(event) {
           appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
         }
 
-        // Navigate to Inputs tab without clearing current values
-        const runAgainBtn = $('run-again-btn');
-        if (runAgainBtn) {
-          runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // "Inputs" tab button
-            openTab(inputsTabBtn, 'input-tab');
-            $('primary-seqs')?.focus();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          });
-        }
-
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
           setTimeout(() => hide(loader), 3000);
@@ -627,6 +616,12 @@ function displayResults(results) {
       <button id="${runAgainId}" class="btn-run-again">Run Again</button>
     </div>
   `;
+  byId(runAgainId).addEventListener('click', () => {
+    const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // Inputs tab
+    openTab(inputsTabBtn, 'input-tab');
+    $('primary-seqs')?.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // Build table
   let table = '<table style="margin-bottom:20px;"><thead><tr>' +

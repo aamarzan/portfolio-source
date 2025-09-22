@@ -320,7 +320,7 @@ textarea.sequence-input {
   color: #ffffff;
   border: none;
   padding: 12px 20px;
-  font-size: 0.92rem;
+  font-size: 1rem;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
