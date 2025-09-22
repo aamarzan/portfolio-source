@@ -1,268 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>miRNA-Affinity Predictor</title>
+  <!-- =========================================
+       Document metadata
+  ========================================== -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>miRNA-Affinity Predictor</title>
 
-    <meta name="description" content="miRNA-Affinity Predictor" />
-    <meta name="author" content="Abdullah Al Marzan" />
-    <link rel="canonical" href="https://aamarzan.com/mirna" />
-    <meta name="theme-color" content="#000000" />
+  <meta name="description" content="miRNA-Affinity Predictor" />
+  <meta name="author" content="Abdullah Al Marzan" />
+  <link rel="canonical" href="https://aamarzan.com/mirna" />
+  <meta name="theme-color" content="#000000" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg" />
-    <link rel="shortcut icon" href="../favicon/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png" />
-    <link rel="manifest" href="../favicon/site.webmanifest" />
+  <!-- =========================================
+       Favicons
+  ========================================== -->
+  <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg" />
+  <link rel="shortcut icon" href="../favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="../favicon/site.webmanifest" />
 
-    <!-- Global + Page Styles -->
-    <link rel="stylesheet" href="../style.css" />
-    <link rel="stylesheet" href="../mirna.css" />
+  <!-- =========================================
+       Global + Page Styles (hooks preserved)
+  ========================================== -->
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../mirna.css" />
 
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" />
+  <!-- =========================================
+       Icons
+  ========================================== -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2YNVQSMXTM"></script>
-    <script>
+  <!-- =========================================
+       Google tag (gtag.js)
+  ========================================== -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2YNVQSMXTM"></script>
+  <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-2YNVQSMXTM');
-    </script>
+    gtag("js", new Date());
+    gtag("config", "G-2YNVQSMXTM");
+  </script>
 </head>
 
 <body class="mirna-page">
-    <!-- Global Header -->
-    <header id="main-header">
-        <div class="container header-container">
-            <div class="logo">
-                <a href="../"><img src="../media/home/Logo.png" alt="Abdullah Al Marzan Logo" /></a>
+  <!-- =========================================
+       Global Header
+  ========================================== -->
+  <header id="main-header">
+    <div class="container header-container" role="navigation" aria-label="Site">
+      <div class="logo">
+        <a href="../" aria-label="Go to homepage">
+          <img src="../media/home/Logo.png" alt="Abdullah Al Marzan Logo" />
+        </a>
+      </div>
+      <nav class="main-nav" aria-label="Primary navigation">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li class="has-submenu">
+            <a aria-haspopup="true" aria-expanded="false">Biography</a>
+            <ul class="submenu" aria-label="Biography submenu">
+              <li><a href="../about-me/">About Me</a></li>
+              <li><a href="../academics/">Academics</a></li>
+            </ul>
+          </li>
+          <li class="has-submenu">
+            <a aria-haspopup="true" aria-expanded="false">Research</a>
+            <ul class="submenu" aria-label="Research submenu">
+              <li><a href="../interest/">Interests</a></li>
+              <li><a href="../goals/">Goal</a></li>
+            </ul>
+          </li>
+          <li class="has-submenu">
+            <a class="active" aria-current="page" aria-haspopup="true" aria-expanded="false">Projects</a>
+            <ul class="submenu" aria-label="Projects submenu">
+              <li><a href="../ongoing-projects/">Ongoing</a></li>
+              <li><a href="../previous-projects/">Previous</a></li>
+              <li><a href="../mirna/" class="active-submenu" aria-current="page">Affinity Predictor</a></li>
+            </ul>
+          </li>
+          <li><a href="../dissertation/">Thesis</a></li>
+          <li class="has-submenu">
+            <a aria-haspopup="true" aria-expanded="false">Publications</a>
+            <ul class="submenu" aria-label="Publications submenu">
+              <li><a href="../articles/">Article</a></li>
+              <li><a href="../grant/">Grant</a></li>
+            </ul>
+          </li>
+          <li><a href="../certification/">Certifications</a></li>
+          <li class="has-submenu">
+            <a aria-haspopup="true" aria-expanded="false">More</a>
+            <ul class="submenu" aria-label="More submenu">
+              <li><a href="../blog/">Blog</a></li>
+              <li><a href="../activity/">Extra Curricular</a></li>
+              <li><a href="../acknowledgment/">Acknowledgment</a></li>
+              <li><a href="../contacts/">Contact</a></li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <button id="hamburger-btn" aria-label="Toggle menu" aria-controls="main-header" aria-expanded="false">
+        <span class="bar" aria-hidden="true"></span>
+        <span class="bar" aria-hidden="true"></span>
+        <span class="bar" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================
+       Main Content
+  ========================================== -->
+  <main id="main-content" tabindex="-1">
+    <div class="mirna-container" role="region" aria-label="miRNA Affinity Predictor">
+      <header>
+        <h1>miRNA-Affinity Predictor</h1>
+        <p>A deep learning tool to predict miRNA binding affinity and competitive effects using sequence and 3D structural data.</p>
+      </header>
+
+      <!-- =========================================
+           Tabs
+      ========================================== -->
+      <div class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="input-tab" id="tab-input" onclick="openTab(this, 'input-tab')">
+          Inputs
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="advanced-tab" id="tab-advanced" onclick="openTab(this, 'advanced-tab')">
+          Advanced Options
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="results-tab" id="tab-results" onclick="openTab(this, 'results-tab')">
+          Results
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="about-tab" id="tab-about" onclick="openTab(this, 'about-tab')">
+          About
+        </button>
+      </div>
+
+      <!-- =========================================
+           Input Card
+      ========================================== -->
+      <div id="input-tab" class="card active" role="tabpanel" aria-labelledby="tab-input">
+        <form id="prediction-form" aria-describedby="input-help">
+          <!-- Primary miRNA -->
+          <label for="primary-seqs">Primary miRNA Sequence(s) (FASTA):</label>
+          <textarea
+            id="primary-seqs"
+            required
+            class="sequence-input"
+            placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..."
+            aria-required="true"
+            aria-label="Primary miRNA sequences in FASTA format"
+          ></textarea>
+          <small id="input-help">
+            Multiple sequences allowed; each must start with a FASTA header (e.g., <code>&gt;hsa-let-7a-5p</code>). You can upload or paste content.
+          </small>
+          <input type="file" id="mirna-seq-file" accept=".fasta,.fas,.fa,.txt" aria-label="Upload miRNA FASTA file" />
+
+          <!-- Formatting Tips -->
+          <section aria-label="FASTA formatting tips" style="margin-top:10px;">
+            <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
+              <div><strong>Formatting tips:</strong></div>
+              <ul style="margin:6px 0 0 18px;">
+                <li>miRNA accepts multiple sequences; each should start with a header line, e.g. <code>&gt;hsa-let-7a-5p</code></li>
+                <li>Target and Competitor accept exactly one sequence each</li>
+                <li>3D files (PDB/CIF) must match the corresponding sequence; mismatches will be rejected</li>
+                <li>If allowed by server, you can back-translate AA to NT for Target/Competitor in Advanced Options</li>
+              </ul>
             </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li class="has-submenu">
-                        <a>Biography</a>
-                        <ul class="submenu">
-                            <li><a href="../about-me/">About Me</a></li>
-                            <li><a href="../academics/">Academics</a></li>
-                        </ul>
-                    </li>
-                    <li class="has-submenu">
-                        <a>Research</a>
-                        <ul class="submenu">
-                            <li><a href="../interest/">Interests</a></li>
-                            <li><a href="../goals/">Goal</a></li>
-                        </ul>
-                    </li>
-                    <li class="has-submenu">
-                        <a class="active">Projects</a>
-                        <ul class="submenu">
-                            <li><a href="../ongoing-projects/">Ongoing</a></li>
-                            <li><a href="../previous-projects/">Previous</a></li>
-                            <li><a href="../mirna/" class="active-submenu">Affinity Predictor</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="../dissertation/">Thesis</a></li>
-                    <li class="has-submenu">
-                        <a>Publications</a>
-                        <ul class="submenu">
-                            <li><a href="../articles/">Article</a></li>
-                            <li><a href="../grant/">Grant</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="../certification/">Certifications</a></li>
-                    <li class="has-submenu">
-                        <a>More</a>
-                        <ul class="submenu">
-                            <li><a href="../blog/">Blog</a></li>
-                            <li><a href="../activity/">Extra Curricular</a></li>
-                            <li><a href="../acknowledgment/">Acknowledgment</a></li>
-                            <li><a href="../contacts/">Contact</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </nav>
-            <button id="hamburger-btn" aria-label="Toggle menu">
-                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-            </button>
+          </section>
+
+          <!-- Target -->
+          <label for="target-seq">Target Molecule Sequence (single FASTA or raw):</label>
+          <textarea
+            id="target-seq"
+            required
+            class="sequence-input"
+            placeholder="Enter the full RNA target sequence..."
+            aria-required="true"
+            aria-label="Target RNA sequence in FASTA or raw format"
+          ></textarea>
+          <small>Exactly one sequence. Include a FASTA header like <code>&gt;target1</code> for traceability.</small>
+          <input type="file" id="target-seq-file" accept=".fasta,.fas,.fa,.txt" aria-label="Upload target FASTA file" />
+
+          <!-- Competitor -->
+          <label for="competitor-seq">Competitor Molecule Sequence (Optional, single FASTA or raw):</label>
+          <textarea
+            id="competitor-seq"
+            class="sequence-input"
+            placeholder="Enter the competitor sequence..."
+            aria-label="Competitor sequence in FASTA or raw format (optional)"
+          ></textarea>
+          <small>At most one sequence. Include a FASTA header like <code>&gt;comp1</code> for traceability.</small>
+          <input type="file" id="competitor-seq-file" accept=".fasta,.fas,.fa,.txt" aria-label="Upload competitor FASTA file" />
+          <br />
+          <br />
+
+          <!-- Optional 3D uploads -->
+          <div class="file-uploads" role="group" aria-label="3D structure uploads">
+            <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
+            <br />
+            <label for="mirna-file">Upload miRNA Structure File(s):</label>
+            <input
+              type="file"
+              id="mirna-file"
+              accept=".pdb,.cif"
+              multiple
+              aria-label="Upload one or more miRNA PDB/CIF files"
+            />
+            <small>Filenames must match miRNA FASTA IDs (e.g., <code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code>).</small>
+            <br />
+            <label for="target-file">Upload Target Structure File:</label>
+            <input type="file" id="target-file" accept=".pdb,.cif" aria-label="Upload target PDB/CIF file" />
+            <br />
+            <label for="competitor-file">Upload Competitor Structure File:</label>
+            <input type="file" id="competitor-file" accept=".pdb,.cif" aria-label="Upload competitor PDB/CIF file" />
+            <div style="margin-top:6px; font-size:0.92em; color:#444;">
+              3D file sequences will be validated against provided FASTA; significant mismatches will be rejected.
+            </div>
+          </div>
+
+          <button type="submit" aria-label="Run prediction">Run Prediction</button>
+        </form>
+      </div>
+
+      <!-- =========================================
+           Advanced Options
+      ========================================== -->
+      <div id="advanced-tab" class="card" role="tabpanel" aria-labelledby="tab-advanced">
+        <!-- Server configuration snapshot (frontend syncs live values via mirna.js) -->
+        <section aria-label="Server configuration" style="margin-bottom:16px;">
+          <div style="margin: 8px 0; color:#333;">
+            <strong>Server configuration:</strong>
+            <ul style="margin:6px 0 0 16px;">
+              <li>Max miRNAs per request: <code id="cfg-mirna-max">5000</code></li>
+              <li>Mature trimming enabled: <code id="cfg-mature-enabled">yes</code> (window: <span id="cfg-mature-window">22</span>)</li>
+              <li>AA→NT conversion allowed: <code id="cfg-aa-convert">yes</code></li>
+              <li>Auth mode: <code id="cfg-auth-mode">api-key</code></li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Feature toggles -->
+        <section aria-label="Feature toggles">
+          <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+            <label for="mature-trim-flag" style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+              <input type="checkbox" id="mature-trim-flag" checked />
+              <span>Auto-trim miRNAs &gt; 30nt to mature-like <span id="mature-window-pill">22</span>nt</span>
+            </label>
+
+            <label for="aa-convert-flag" style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+              <input type="checkbox" id="aa-convert-flag" />
+              <span>Convert AA → NT (lossy; for target/competitor)</span>
+            </label>
+          </div>
+          <small style="color:#555; display:block; margin-top:6px;">
+            If conversion is disabled server-side, this checkbox has no effect.
+          </small>
+        </section>
+
+        <!-- Optional target region inputs -->
+        <section aria-label="Target region controls" style="margin-top:18px;">
+          <label for="target-start">Target Region Start:</label>
+          <input type="number" id="target-start" placeholder="e.g., 90" aria-label="Target region start (optional)" />
+
+          <label for="target-end">Target Region End:</label>
+          <input type="number" id="target-end" placeholder="e.g., 150" aria-label="Target region end (optional)" />
+        </section>
+
+        <!-- Notes -->
+        <section aria-label="Advanced notes" style="margin-top:16px;">
+          <div style="font-size:0.92em; color:#333; border-left:3px solid #888; padding:8px 12px;">
+            <ul style="margin:6px 0 0 18px;">
+              <li>AA→NT back-translation is heuristic and organism-agnostic; use only if nucleotide sequences are unavailable.</li>
+              <li>3D structure sequence must correspond to FASTA; validation allows a small mismatch tolerance (~10%).</li>
+              <li>Trimming miRNAs longer than 30nt attempts to select a balanced 22nt mature-like region.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- =========================================
+           Results
+      ========================================== -->
+      <div id="results-tab" class="card" role="tabpanel" aria-labelledby="tab-results">
+        <div id="loader" class="hidden" aria-live="polite">Running prediction...</div>
+        <br />
+
+        <div class="gradient-scale-container" aria-label="Color scale for affinity">
+          <div class="gradient-scale-bar"></div>
+          <div class="gradient-scale-labels" aria-hidden="true">
+            <span>0.0</span>
+            <span>0.1</span>
+            <span>0.2</span>
+            <span>0.3</span>
+            <span>0.4</span>
+            <span>0.5</span>
+            <span>0.6</span>
+            <span>0.7</span>
+            <span>0.8</span>
+            <span>0.9</span>
+            <span>1.0</span>
+          </div>
         </div>
-    </header>
+        <br />
+        <div id="results-container" role="region" aria-label="Prediction results table"></div>
+      </div>
 
-    <!-- Main Content -->
-    <main>
-        <div class="mirna-container">
-            <header>
-                <h1>miRNA-Affinity Predictor</h1>
-                <p>A deep learning tool to predict miRNA binding affinity and competitive effects using sequence and 3D structural data.</p>
-            </header>
+      <!-- =========================================
+           About
+      ========================================== -->
+      <div id="about-tab" class="card" role="tabpanel" aria-labelledby="tab-about">
+        <section aria-label="About this tool">
+          <h2 style="margin-bottom:8px;">About this tool</h2>
+          <p>
+            This web tool predicts miRNA binding affinity to RNA targets, with optional competitive effects,
+            using sequence and structural features. It supports multi-FASTA miRNA inputs, single target and competitor inputs,
+            and optional 3D structures (PDB/mmCIF). The model expects nucleotide sequences; amino acid inputs can be back-translated
+            if the server allows it.
+          </p>
+        </section>
 
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="openTab(this, 'input-tab')">Inputs</button>
-                <button class="tab-btn" onclick="openTab(this, 'advanced-tab')">Advanced Options</button>
-                <button class="tab-btn" onclick="openTab(this, 'results-tab')">Results</button>
-            </div>
+        <section aria-label="What’s new" style="margin-top:16px;">
+          <h3 style="margin-bottom:8px;">What’s new</h3>
+          <ul style="margin-left:18px;">
+            <li>Sorting and color gradient based on baseline predicted affinity (descending)</li>
+            <li>miRNA 3D file uploads support multiple files; filenames must match FASTA IDs</li>
+            <li>Server configuration panel reflects live settings (max miRNAs, mature trimming, AA→NT allowed, auth mode)</li>
+            <li>FASTA formatting tips in Inputs to improve labeling and traceability</li>
+            <li>Friendlier error messages, with clear guidance for AA inputs and 3D mismatches</li>
+          </ul>
+        </section>
 
-            <!-- Input Card -->
-            <div id="input-tab" class="card active">
-                <form id="prediction-form">
-                    <!-- Primary miRNA -->
-                    <label for="primary-seqs">Primary miRNA Sequence(s) (FASTA):</label>
-                    <textarea id="primary-seqs" required placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..." class="sequence-input"></textarea>
-                    <small>Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
-                    <input type="file" id="mirna-seq-file" accept=".fasta,.fas,.fa,.txt" />
-                    
+        <section aria-label="Usage notes" style="margin-top:16px;">
+          <h3 style="margin-bottom:8px;">Usage notes</h3>
+          <ul style="margin-left:18px;">
+            <li>Ensure each miRNA has a FASTA header (e.g., <code>&gt;hsa-let-7a-5p</code>) so results are labeled correctly.</li>
+            <li>Provide exactly one target sequence and at most one competitor sequence.</li>
+            <li>3D files are validated against sequences; mismatches greater than tolerance will be rejected.</li>
+            <li>If your miRNA is longer than 30nt, mature trimming selects a likely 22nt region unless you disable it.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
 
-                    <!-- Target -->
-                    <label for="target-seq">Target Molecule Sequence:</label>
-                    <textarea id="target-seq" required placeholder="Enter the full RNA target sequence..." class="sequence-input"></textarea>
-                    <small>Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
-                    <input type="file" id="target-seq-file" accept=".fasta,.fas,.fa,.txt" />
-                    
+  <!-- =========================================
+       Global Footer
+  ========================================== -->
+  <footer id="main-footer" role="contentinfo">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="../about-me/">About Me</a></li>
+          <li><a href="../interest/">Research Interests</a></li>
+          <li><a href="../ongoing-projects/">Projects</a></li>
+          <li><a href="../dissertation/">Thesis</a></li>
+          <li><a href="../articles/">Publications</a></li>
+          <li><a href="../certification/">Certifications</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <address>
+          Toxicology Society of Bangladesh,<br />
+          Department of Medicine,<br />
+          Academic Block,<br />
+          Dhaka Medical College Hospital.<br />
+          Dhaka-1000, Dhaka, Bangladesh
+        </address>
+        <p><a href="mailto:marzansust16@gmail.com">marzansust16@gmail.com</a></p>
+        <p><a href="tel:+8801843325135">+8801843325135</a></p>
+        <p><a href="tel:+8801749287028">+8801749287028</a></p>
+      </div>
+      <div class="footer-col">
+        <h4>Let's Collaborate</h4>
+        <p class="cta-text">I am always open to discussing new research projects, collaborations, or opportunities in molecular biology & bioinformatics research. If you have an idea you'd like to discuss, please get in touch.</p>
+        <a href="../contacts/" class="btn cta-btn">Contact Me</a>
 
-                    <!-- Competitor -->
-                    <label for="competitor-seq">Competitor Molecule Sequence (Optional):</label>
-                    <textarea id="competitor-seq" placeholder="Enter the competitor sequence..." class="sequence-input"></textarea>
-                    <small>Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
-                    <input type="file" id="competitor-seq-file" accept=".fasta,.fas,.fa,.txt" />
-                    <br>
-                    <br>
-
-                    <!-- Optional PDB uploads -->
-                    <div class="file-uploads">
-                        <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
-                        <br>
-                        <label for="mirna-seq-file">Upload miRNA Structure File:</label>
-                        <input type="file" id="mirna-file" accept=".pdb,.cif" />
-                        <br>
-                        <label for="target-file">Upload Target Structure File:</label>
-                        <input type="file" id="target-file" accept=".pdb,.cif" />
-                        <br>
-                        <label for="competitor-file">Upload Competitor Structure File:</label>
-                        <input type="file" id="competitor-file" accept=".pdb,.cif" />
-                    </div>
-
-                    <button type="submit">Run Prediction</button>
-                </form>
-            </div>
-
-            <!-- Advanced Options -->
-            <div id="advanced-tab" class="card">
-                <label for="target-start">Target Region Start:</label>
-                <input type="number" id="target-start" placeholder="e.g., 90" />
-
-                <label for="target-end">Target Region End:</label>
-                <input type="number" id="target-end" placeholder="e.g., 150" />
-            </div>
-
-            <!-- Results -->
-            <div id="results-tab" class="card">
-                <div id="loader" class="hidden">Running prediction...</div>
-                <br>
-
-                <div class="gradient-scale-container">
-                    <div class="gradient-scale-bar"></div>
-                    <div class="gradient-scale-labels">
-                        <span>0.0</span>
-                        <span>0.1</span>
-                        <span>0.2</span>
-                        <span>0.3</span>
-                        <span>0.4</span>
-                        <span>0.5</span>
-                        <span>0.6</span>
-                        <span>0.7</span>
-                        <span>0.8</span>
-                        <span>0.9</span>
-                        <span>1.0</span>
-                    </div>
-                </div>
-                <br>
-                <div id="results-container"></div>
-            </div>
+        <div class="footer-social-links" aria-label="Social links">
+          <a href="https://scholar.google.com/citations?hl=en&user=Xvc4eokAAAAJ" target="_blank" title="Google Scholar" aria-label="Google Scholar">
+            <i class="ai ai-google-scholar-square"></i>
+          </a>
+          <a href="https://www.researchgate.net/profile/Abdullah-Marzan" target="_blank" title="ResearchGate" aria-label="ResearchGate">
+            <i class="ai ai-researchgate-square"></i>
+          </a>
+          <a href="https://www.webofscience.com/wos/author/record/HNS-1384-2023" target="_blank" rel="noopener" title="Web of Science" aria-label="Web of Science">
+            <svg class="icon icon-wos-badge" role="img" aria-label="Web of Science Badge">
+              <use href="/assets/icons/icons.svg#icon-wos-badge" />
+            </svg>
+          </a>
+          <a href="https://www.scopus.com/authid/detail.uri?authorId=57267619000" target="_blank" title="Scopus" aria-label="Scopus">
+            <i class="ai ai-scopus"></i>
+          </a>
+          <a href="https://orcid.org/0000-0002-6235-2277" target="_blank" title="ORCID" aria-label="ORCID">
+            <i class="ai ai-orcid-square"></i>
+          </a>
+          <a href="https://researchid.co/marzan25" target="_blank" title="ResearcherID" aria-label="ResearcherID">
+            <i class="ai ai-researcherid-square"></i>
+          </a>
+          <a href="https://github.com/aamarzan" target="_blank" title="GitHub" aria-label="GitHub">
+            <i class="fab fa-github-square"></i>
+          </a>
+          <a href="https://www.linkedin.com/in/marzan25/" target="_blank" title="LinkedIn" aria-label="LinkedIn">
+            <i class="fab fa-linkedin"></i>
+          </a>
+          <a href="https://www.youtube.com/@abdullah-marzan" target="_blank" title="YouTube" aria-label="YouTube">
+            <i class="fab fa-youtube"></i>
+          </a>
+          <a href="https://www.kaggle.com/abdullahalmarzan" target="_blank" title="Kaggle" aria-label="Kaggle">
+            <i class="fab fa-kaggle"></i>
+          </a>
+          <a href="https://x.com/aamarzan" target="_blank" title="X (Twitter)" aria-label="Twitter">
+            <i class="fab fa-twitter-square"></i>
+          </a>
+          <a href="https://www.facebook.com/abdullah.al.marzan.25/" target="_blank" title="Facebook" aria-label="Facebook">
+            <i class="fab fa-facebook-square"></i>
+          </a>
         </div>
-    </main>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Abdullah Al Marzan. All Rights Reserved.</p>
+    </div>
+  </footer>
 
-    <!-- Global footer -->
-    <footer id="main-footer">
-        <div class="container footer-grid">
-            <div class="footer-col">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="../about-me/">About Me</a></li>
-                    <li><a href="../interest/">Research Interests</a></li>
-                    <li><a href="../ongoing-projects/">Projects</a></li>
-                    <li><a href="../dissertation/">Thesis</a></li>
-                    <li><a href="../articles/">Publications</a></li>
-                    <li><a href="../certification/">Certifications</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Contact</h4>
-                <address>
-                    Toxicology Society of Bangladesh,<br>
-                    Department of Medicine,<br>
-                    Academic Block,<br>
-                    Dhaka Medical College Hospital.<br>
-                    Dhaka-1000, Dhaka,Bangladesh
-                </address>
-                <p><a href="mailto:marzansust16@gmail.com">marzansust16@gmail.com</a></p>
-                <p><a href="tel:+8801843325135">+8801843325135</a></p>
-                <p><a href="tel:+8801749287028">+8801749287028</a></p>
-            </div>
-            <div class="footer-col">
-                <h4>Let's Collaborate</h4>
-                <p class="cta-text">I am always open to discussing new research projects, collaborations, or opportunities in molecular biology & bioinformatics research. If you have an idea you'd like to discuss, please get in touch.</p>
-                <a href="../contacts/" class="btn cta-btn">Contact Me</a>
-                
-                <div class="footer-social-links">
-                    <a href="https://scholar.google.com/citations?hl=en&user=Xvc4eokAAAAJ" target="_blank" title="Google Scholar"><i class="ai ai-google-scholar-square"></i></a>
-                    <a href="https://www.researchgate.net/profile/Abdullah-Marzan" target="_blank" title="ResearchGate"><i class="ai ai-researchgate-square"></i></a>
-                    <a href="https://www.webofscience.com/wos/author/record/HNS-1384-2023"
-                    target="_blank" rel="noopener" title="Web of Science" aria-label="Web of Science">
-                    <svg class="icon icon-wos-badge"><use href="/assets/icons/icons.svg#icon-wos-badge"/></svg></a>
+  <!-- =========================================
+       Fixed relative path from /mirna/
+  ========================================== -->
+  <audio id="click-sound" src="../media/sounds/click-sound.mp3" preload="auto" aria-hidden="true"></audio>
 
-                    <a href="https://www.scopus.com/authid/detail.uri?authorId=57267619000" target="_blank" title="Scopus"><i class="ai ai-scopus"></i></a>
-                    <a href="https://orcid.org/0000-0002-6235-2277" target="_blank" title="ORCID"><i class="ai ai-orcid-square"></i></a>
-                    <a href="https://researchid.co/marzan25" target="_blank" title="ResearcherID"><i class="ai ai-researcherid-square"></i></a>
-                    <a href="https://github.com/aamarzan" target="_blank" title="GitHub"><i class="fab fa-github-square"></i></a>
-
-                    <a href="https://www.linkedin.com/in/marzan25/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://www.youtube.com/@abdullah-marzan" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
-                    <a href="https://www.kaggle.com/abdullahalmarzan" target="_blank" title="Kaggle"><i class="fab fa-kaggle"></i></a>
-                    <a href="https://x.com/aamarzan" target="_blank" title="X (Twitter)"><i class="fab fa-twitter-square"></i></a>
-                    <a href="https://www.facebook.com/abdullah.al.marzan.25/" target="_blank" title="Facebook"><i class="fab fa-facebook-square"></i></a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2025 Abdullah Al Marzan. All Rights Reserved.</p>
-        </div>
-    </footer>
-
-    <!-- Fixed relative path from /mirna/ -->
-    <audio id="click-sound" src="../media/sounds/click-sound.mp3" preload="auto"></audio>
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const runBtn = document.querySelector('#prediction-form button[type="submit"]');
-        const clickSound = document.getElementById('click-sound');
-
-        if (runBtn && clickSound) {
-            runBtn.addEventListener('click', function () {
-                clickSound.currentTime = 0;
-                clickSound.play();
-            });
-        }
+  <!-- Small inline script for button click sound -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const runBtn = document.querySelector("#prediction-form button[type='submit']");
+      const clickSound = document.getElementById("click-sound");
+      if (runBtn && clickSound) {
+        runBtn.addEventListener("click", function () {
+          clickSound.currentTime = 0;
+          clickSound.play();
+        });
+      }
     });
-    </script>
-    <!-- Global/site scripts -->
-    <script src="../script.js"></script>
-    <!-- Page script -->
-    <script src="../mirna.js"></script>
+  </script>
+
+  <!-- =========================================
+       Global/site scripts
+  ========================================== -->
+  <script src="../script.js"></script>
+
+  <!-- =========================================
+       Page script (logic + config sync)
+  ========================================== -->
+  <script src="../mirna.js"></script>
+
+  <!-- Optional cosmetic sync: reflect live server config values from mirna.js CONFIG -->
+  <script>
+    (function syncConfigPills() {
+      function trySync() {
+        try {
+          // mirna.js sets window.CONFIG after fetching /config
+          if (window.CONFIG) {
+            const $ = (id) => document.getElementById(id);
+            const num = (v, d) => (typeof v === "number" ? v : d);
+
+            const mm = $("cfg-mirna-max");
+            const me = $("cfg-mature-enabled");
+            const mw = $("cfg-mature-window");
+            const ac = $("cfg-aa-convert");
+            const am = $("cfg-auth-mode");
+            const pill = $("mature-window-pill");
+
+            if (mm) mm.textContent = num(window.CONFIG.mirna_max, 5000);
+            if (me) me.textContent = window.CONFIG.mature_trim_enabled ? "yes" : "no";
+            if (mw) mw.textContent = num(window.CONFIG.mature_window, 22);
+            if (ac) ac.textContent = window.CONFIG.aa_convert_allowed ? "yes" : "no";
+            if (am) am.textContent = window.CONFIG.use_nonce ? "nonce" : "api-key";
+            if (pill) pill.textContent = num(window.CONFIG.mature_window, 22);
+          }
+        } catch (e) { /* no-op */ }
+      }
+      // Attempt multiple times to handle async loading order
+      setTimeout(trySync, 250);
+      setTimeout(trySync, 750);
+      setTimeout(trySync, 1500);
+      setTimeout(trySync, 3000);
+    })();
+  </script>
+
+  <!--
+    Accessibility notes:
+    - All interactive elements have accessible names (labels, aria-labels).
+    - Tabs are buttons with role="tab" and aria-controls to map to tabpanels.
+    - Results area uses aria-live via the loader element for progress updates.
+    - Form inputs are labeled and grouped; required fields marked via required.
+    - Color gradients are supplemental; table text remains readable for contrast.
+  -->
+
+  <!--
+    Integration notes:
+    - This file preserves styling hooks: ../style.css and ../mirna.css
+    - Behavior and backend integration via ../mirna.js
+    - Advanced Options includes two checkboxes:
+      * #mature-trim-flag (default checked)
+      * #aa-convert-flag (enabled; backend may enforce availability)
+    - miRNA 3D input supports multiple files; filenames must match FASTA IDs.
+    - FASTA tips clarify multiple vs single sequence and header requirements.
+  -->
 </body>
 </html>
