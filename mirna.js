@@ -534,7 +534,7 @@ async function handleSubmit(event) {
           runAgainBtn.addEventListener('click', () => {
             const inputsTabBtn = document.getElementById('tab-inputs'); // actual Inputs tab button
             if (inputsTabBtn) {
-              openTab(inputsTabBtn, 'input-tab'); // switch to Inputs tab
+              inputsTabBtn.click(); // simulate a real user click
               document.getElementById('primary-seqs')?.focus(); // focus first input
               window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
             } else {
