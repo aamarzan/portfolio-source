@@ -315,21 +315,19 @@ textarea.sequence-input {
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.btn-run-again {
-  background-color: #0a3d62; /* premium dark sky-blue */
-  color: #ffffff;
-  border: none;
-  padding: 12px 20px;
-  font-size: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+.loader-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
   display: inline-block;
-  min-width: 180px;
-  text-align: center;
-}
-.btn-run-again:hover {
-  background-color: #1a699e;
-  transform: translateY(-1px);
+  vertical-align: middle;
+  margin-right: 8px;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

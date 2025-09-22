@@ -404,7 +404,7 @@ async function handleSubmit(event) {
 
   // Show loader
   if (loader) {
-    text(loader, "Running prediction...");
+    loader.innerHTML = `<span class="loader-spinner"></span>Running prediction...`;
     show(loader);
   }
 
