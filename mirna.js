@@ -532,10 +532,15 @@ async function handleSubmit(event) {
         const runAgainBtn = byId('run-again-btn');
         if (runAgainBtn) {
           runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = document.getElementById('tab-inputs');
+            const inputsTabBtn = document.getElementById('tab-inputs'); // Inputs tab button
             if (inputsTabBtn) {
-              inputsTabBtn.click(); // triggers your existing onclick="openTab(this, 'input-tab')"
+              // Simulate a real click so your existing tab system runs
+              inputsTabBtn.click();
+
+              // Focus the first input field for convenience
               document.getElementById('primary-seqs')?.focus();
+
+              // Scroll to top so the form is fully visible
               window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               console.warn('Inputs tab button not found');
