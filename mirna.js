@@ -568,22 +568,6 @@ function displayResults(results) {
   </div>
   `;
 
-  // Gradient scale bar (singleton)
-  const scaleId = 'results-gradient-scale';
-  const gradientScaleHTML = `
-  <div id="${scaleId}" class="gradient-scale" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-    <span>0</span>
-    <div style="flex:1;height:20px;background:linear-gradient(to right,
-      #440154,
-      #3b528b,
-      #21908d,
-      #5dc963,
-      #fde725);
-      border:1px solid #ccc;"></div>
-    <span>1</span>
-  </div>
-  `;
-
   // Download button (singleton)
   const downloadId = 'download-btn';
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
@@ -614,7 +598,6 @@ function displayResults(results) {
 
   // Render in strict order; since container is cleared first, no duplicates can occur
   appendHTML(container, legendHTML);
-  appendHTML(container, gradientScaleHTML);
   appendHTML(container, downloadButtonHTML);
   appendHTML(container, table);
 
