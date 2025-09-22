@@ -521,7 +521,6 @@ async function handleSubmit(event) {
             appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
         }
 
-        // Attach event listener
         byId('run-again-btn').addEventListener('click', () => {
             document.getElementById('prediction-form').reset();
             setHTML(resultsContainer, '');
