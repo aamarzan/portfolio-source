@@ -333,3 +333,18 @@ textarea.sequence-input {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+#copy-results-btn {
+  background-color: var(--accent-color);
+  color: #fff;
+  padding: 10px 18px;       /* bigger click area */
+  font-size: 1rem;          /* larger text */
+  border-radius: 6px;       /* softer corners */
+  min-width: 140px;         /* ensures width even with short text */
+  font-weight: 600;         /* bolder text */
+}
+
+#copy-results-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
