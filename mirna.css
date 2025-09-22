@@ -64,7 +64,7 @@ body.mirna-page .tabs {
 /* Restored original tab button style */
 body.mirna-page .tab-btn {
     flex: 0 0 auto; /* don’t stretch */
-    min-width: 280px; /* adjust to taste */
+    min-width: 200px; /* adjust to taste */
     padding: 12px; /* slightly smaller padding */
     cursor: pointer;
     border-radius: 5px;
@@ -273,4 +273,30 @@ textarea.sequence-input {
   justify-content: space-between;
   font-size: 0.85em;
   margin-top: 4px;
+}
+
+/* === Fix: Prevent tab buttons from overflowing shaded container === */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;          /* allow wrapping instead of overflow */
+  justify-content: center;  /* center buttons horizontally */
+  max-width: 100%;          /* never exceed viewport width */
+  box-sizing: border-box;
+}
+
+.tab-btn {
+  flex: 1 1 auto;           /* flexible sizing */
+  min-width: 120px;         /* keep buttons readable */
+  max-width: 100%;          /* prevent overflow */
+  white-space: normal;      /* allow text to wrap if needed */
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* On smaller screens, stack buttons vertically */
+@media (max-width: 600px) {
+  .tab-btn {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 }
