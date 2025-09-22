@@ -508,34 +508,34 @@ async function handleSubmit(event) {
         if (!dr.ok) throw new Error('Failed to download results.');
         const finalData = await dr.json();
 
+        // After results are displayed
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Find the download button and insert Run Again directly below it
+        // Insert Run Again directly below the download button
         const downloadBtn = resultsContainer.querySelector('#download-btn');
         if (downloadBtn) {
-            downloadBtn.insertAdjacentHTML('afterend', `
-                <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            `);
+          downloadBtn.insertAdjacentHTML('afterend', `
+            <button id="run-again-btn" class="btn-run-again">Run Again</button>
+          `);
         } else {
-            appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
+          appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
         }
 
-        byId('run-again-btn').addEventListener('click', () => {
-            const form = document.getElementById('prediction-form');
-            if (form) {
-                // Scroll to top so loader is visible
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                // Dispatch a real submit event so your existing listener runs
-                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                form.dispatchEvent(submitEvent);
-            }
-        });
+        // Navigate to Inputs tab without clearing current values
+        const runAgainBtn = $('run-again-btn');
+        if (runAgainBtn) {
+          runAgainBtn.addEventListener('click', () => {
+            const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // "Inputs" tab button
+            openTab(inputsTabBtn, 'input-tab');
+            $('primary-seqs')?.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        }
 
         if (loader) {
-            text(loader, "✅ Prediction completed. Results are shown below.");
-            setTimeout(() => hide(loader), 3000);
+          text(loader, "✅ Prediction completed. Results are shown below.");
+          setTimeout(() => hide(loader), 3000);
         }
       }
     };
