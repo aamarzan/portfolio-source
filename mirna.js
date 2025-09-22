@@ -511,17 +511,26 @@ async function handleSubmit(event) {
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Add Run Again button
-        appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-accent">Run Again</button>`);
+        // Find the download button and insert Run Again right after it
+        const downloadBtn = resultsContainer.querySelector('#download-btn');
+        if (downloadBtn) {
+            downloadBtn.insertAdjacentHTML('afterend', `
+                <button id="run-again-btn" class="btn-download">Run Again</button>
+            `);
+        } else {
+            appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-download">Run Again</button>`);
+        }
+
+        // Attach event listener
         byId('run-again-btn').addEventListener('click', () => {
-          document.getElementById('prediction-form').reset();
-          setHTML(resultsContainer, '');
-          openTab(byQS('button.tab-btn:nth-child(2)'), 'input-tab');
+            document.getElementById('prediction-form').reset();
+            setHTML(resultsContainer, '');
+            openTab(byQS('button.tab-btn:nth-child(2)'), 'input-tab');
         });
 
         if (loader) {
-          text(loader, "✅ Prediction completed. Results are shown below.");
-          setTimeout(() => hide(loader), 3000);
+            text(loader, "✅ Prediction completed. Results are shown below.");
+            setTimeout(() => hide(loader), 3000);
         }
       }
     };
