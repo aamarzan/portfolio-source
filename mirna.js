@@ -610,7 +610,7 @@ function displayResults(results) {
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
   // Build table
-  let table = '<table style="margin-bottom:20px;"><thead><tr>' +
+  let table = '<table id="results-table" style="margin-bottom:20px;"><thead><tr>' +
       '<th>Primary Molecule ID</th>' +
       '<th>Predicted Affinity (Baseline)</th>' +
       '<th>Predicted Affinity (With Competitor)</th>' +
@@ -636,7 +636,14 @@ function displayResults(results) {
   // Render in strict order; since container is cleared first, no duplicates can occur
   appendHTML(container, legendHTML);
   appendHTML(container, downloadButtonHTML);
+  // Copy to Clipboard button
+  appendHTML(container, `<button id="copy-results-btn" class="btn-accent">Copy Results</button>`);
+  bindOnce($('copy-results-btn'), 'click', () => {
+    const text = predictionResults.map(r => Object.values(r).join('\t')).join('\n');
+    navigator.clipboard.writeText(text).then(() => alert('Results copied to clipboard.'));
+  }, 'copyResultsClick');
   appendHTML(container, table);
+  makeTableSortable('results-table');
 
   // Ensure only one click listener bound (button is recreated each render, so normal bind is fine)
   const dl = $(downloadId);
@@ -698,6 +705,24 @@ function openTab(element, tabId) {
   byQSA('.tab-btn').forEach(btn => btn.classList.remove('active'));
   targetCard.classList.add('active');
   if (element && element.classList) element.classList.add('active');
+}
+
+function makeTableSortable(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  table.querySelectorAll('th').forEach((header, idx) => {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      const asc = header.classList.toggle('asc');
+      rows.sort((a, b) => {
+        const aText = a.children[idx].textContent.trim();
+        const bText = b.children[idx].textContent.trim();
+        return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+      });
+      rows.forEach(row => table.querySelector('tbody').appendChild(row));
+    });
+  });
 }
 
 function wireTabButtonsOnce() {

@@ -482,9 +482,17 @@ async function handleSubmit(event) {
 
       if (data.status === 'running') {
         if (loader) {
-          const total = Number.isFinite(data.total) ? data.total : '?';
-          const completed = Number.isFinite(data.completed) ? data.completed : '?';
-          text(loader, `Processing... ${completed}/${total} completed`);
+          // If spinner not already there, insert it once
+          if (!loader.querySelector('.loader-spinner')) {
+            loader.innerHTML = `<span class="loader-spinner"></span><span id="loader-text"></span>`;
+          }
+          const loaderText = loader.querySelector('#loader-text');
+          if (loaderText) {
+            const total = Number.isFinite(data.total) ? data.total : '?';
+            const completed = Number.isFinite(data.completed) ? data.completed : '?';
+            loaderText.textContent = `Processing... ${completed}/${total} completed`;
+          }
+          show(loader);
         }
         setTimeout(poll, 1200);
         return;
@@ -512,58 +520,28 @@ async function handleSubmit(event) {
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
-        // Insert Run Again directly below the download button
-        const downloadBtn = resultsContainer.querySelector('#download-btn');
-        if (downloadBtn) {
-          downloadBtn.insertAdjacentHTML('afterend', `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        } else {
-          appendHTML(resultsContainer, `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        }
-
-        // Now bind the click listener immediately after inserting
-        const runAgainBtn = byId('run-again-btn');
-        if (runAgainBtn) {
-          runAgainBtn.addEventListener('click', () => {
-            const inputsTabBtn = document.getElementById('tab-inputs'); // actual Inputs tab button
-            if (inputsTabBtn) {
-              inputsTabBtn.click(); // simulate a real user click
-              document.getElementById('primary-seqs')?.focus(); // focus first input
-              window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll to top
-            } else {
-              console.warn('Inputs tab button not found');
-            }
-          });
-        }
-
+        // ✅ Run Again button removed — no insertion, no click handler
 
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
           setTimeout(() => hide(loader), 3000);
         }
       }
-    };
+      };
 
-    await poll();
+      await poll();
 
-  } catch (error) {
-    // 🔹 Remove reload warning
-    const rw = resultsContainer.querySelector('.reload-warning');
-    if (rw) rw.remove();
+      } catch (error) {
+        // 🔹 Remove reload warning
+        const rw = resultsContainer.querySelector('.reload-warning');
+        if (rw) rw.remove();
 
-    const friendlyMessage = error.message && !/server error/i.test(error.message)
-      ? error.message
-      : 'Something went wrong while processing your request. Please try again later.';
-    setHTML(resultsContainer, formatError(friendlyMessage));
-    if (loader) hide(loader);
-  }
+        const friendlyMessage = error.message && !/server error/i.test(error.message)
+          ? error.message
+          : 'Something went wrong while processing your request. Please try again later.';
+        setHTML(resultsContainer, formatError(friendlyMessage));
+        if (loader) hide(loader);
+      }
 }
 
 
