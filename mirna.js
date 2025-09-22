@@ -497,84 +497,73 @@ async function handleSubmit(event) {
         throw new Error(data.error || 'We encountered a technical issue while processing your request.');
       }
 
-      if (data.status === 'completed') {
-        // 🔹 Remove reload warning
-        const rw = resultsContainer.querySelector('.reload-warning');
-        if (rw) rw.remove();
+if (data.status === 'completed') {
+  // 🔹 Remove reload warning
+  const rw = resultsContainer.querySelector('.reload-warning');
+  if (rw) rw.remove();
 
-        if (loader) text(loader, "Fetching final results...");
-        const dr = await fetch(DOWNLOAD_URL(job_id), { method: 'GET' });
-        if (!dr.ok) throw new Error('Failed to download results.');
-        const finalData = await dr.json();
+  if (loader) text(loader, "Fetching final results...");
+  // 3) Download final results
+  const dr = await fetch(DOWNLOAD_URL(job_id), { method: 'GET' });
+  if (!dr.ok) throw new Error('Failed to download results.');
+  const finalData = await dr.json();
 
-        predictionResults = finalData.results || [];
-        displayResults(predictionResults);
+  // After results are displayed
+  predictionResults = finalData.results || [];
+  displayResults(predictionResults);
 
-        // Insert Run Again directly below the download button
-        const downloadBtn = resultsContainer.querySelector('#download-btn');
-        if (downloadBtn) {
-          downloadBtn.insertAdjacentHTML('afterend', `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        } else {
-          appendHTML(resultsContainer, `
-            <div style="margin-top:14px;">
-              <button id="run-again-btn" class="btn-run-again">Run Again</button>
-            </div>
-          `);
-        }
-
-        // Helper: force-activate Inputs tab
-        function activateInputsTabHard() {
-          byQSA('.card').forEach(card => card.classList.remove('active'));
-          byQSA('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-          });
-
-          const inputsCard = document.getElementById('input-tab');
-          const inputsBtn  = document.getElementById('tab-inputs');
-
-          if (inputsCard) inputsCard.classList.add('active');
-          if (inputsBtn) {
-            inputsBtn.classList.add('active');
-            inputsBtn.setAttribute('aria-selected', 'true');
-            inputsBtn.focus();
-          }
-
-          document.getElementById('primary-seqs')?.focus();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Bind Run Again click
-        const runAgainBtn = byId('run-again-btn');
-        if (runAgainBtn) {
-          runAgainBtn.addEventListener('click', activateInputsTabHard);
-        }
-
-        if (loader) {
-          text(loader, "✅ Prediction completed. Results are shown below.");
-          setTimeout(() => hide(loader), 3000);
-        }
-      }
-
-    };
-
-    await poll();
-
-  } catch (error) {
-    // 🔹 Remove reload warning
-    const rw = resultsContainer.querySelector('.reload-warning');
-    if (rw) rw.remove();
-
-    const friendlyMessage = error.message && !/server error/i.test(error.message)
-      ? error.message
-      : 'Something went wrong while processing your request. Please try again later.';
-    setHTML(resultsContainer, formatError(friendlyMessage));
-    if (loader) hide(loader);
+  // Insert Run Again directly below the download button
+  const downloadBtn = resultsContainer.querySelector('#download-btn');
+  if (downloadBtn) {
+    downloadBtn.insertAdjacentHTML('afterend', `
+      <div style="margin-top:14px;">
+        <button id="run-again-btn" class="btn-run-again">Run Again</button>
+      </div>
+    `);
+  } else {
+    appendHTML(resultsContainer, `
+      <div style="margin-top:14px;">
+        <button id="run-again-btn" class="btn-run-again">Run Again</button>
+      </div>
+    `);
   }
+
+  // Bind Run Again click after inserting the button
+  const runAgainBtn = byId('run-again-btn');
+  if (runAgainBtn) {
+    runAgainBtn.addEventListener('click', () => {
+      const inputsTabBtn = document.getElementById('tab-inputs');
+      if (inputsTabBtn) {
+        inputsTabBtn.click(); // triggers your existing onclick="openTab(this, 'input-tab')"
+        document.getElementById('primary-seqs')?.focus();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        console.warn('Inputs tab button not found');
+      }
+    });
+  }
+
+  if (loader) {
+    text(loader, "✅ Prediction completed. Results are shown below.");
+    setTimeout(() => hide(loader), 3000);
+  }
+}
+};
+
+await poll();
+
+} catch (error) {
+  // 🔹 Remove reload warning
+  const rw = resultsContainer.querySelector('.reload-warning');
+  if (rw) rw.remove();
+
+  const friendlyMessage = error.message && !/server error/i.test(error.message)
+    ? error.message
+    : 'Something went wrong while processing your request. Please try again later.';
+  setHTML(resultsContainer, formatError(friendlyMessage));
+  if (loader) hide(loader);
+}
+
 }
 
 
