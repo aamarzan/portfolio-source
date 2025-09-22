@@ -511,6 +511,14 @@ async function handleSubmit(event) {
         predictionResults = finalData.results || [];
         displayResults(predictionResults);
 
+        // Add Run Again button
+        appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-accent">Run Again</button>`);
+        byId('run-again-btn').addEventListener('click', () => {
+          document.getElementById('prediction-form').reset();
+          setHTML(resultsContainer, '');
+          openTab(byQS('button.tab-btn:nth-child(2)'), 'input-tab');
+        });
+
         if (loader) {
           text(loader, "✅ Prediction completed. Results are shown below.");
           setTimeout(() => hide(loader), 3000);
