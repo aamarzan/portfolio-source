@@ -255,9 +255,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inject Advanced Options dynamic bits once
   injectAdvancedOnce();
 
-  // Provide FASTA formatting tips once
-  injectFastaTipsOnce();
-
   // Wire tabs loader behavior once
   wireTabButtonsOnce();
 
@@ -677,38 +674,6 @@ function openTab(element, tabId) {
   byQSA('.tab-btn').forEach(btn => btn.classList.remove('active'));
   targetCard.classList.add('active');
   if (element && element.classList) element.classList.add('active');
-}
-
-// =====================================================
-// Extra: UX niceties (idempotent)
-// =====================================================
-function injectFastaTipsOnce() {
-  if (GUARDS.fastaTipsInjected) return;
-  const inputTab = $('input-tab');
-  if (!inputTab) return;
-
-  const tipsId = 'fasta-tips-box';
-  if ($(tipsId)) {
-    GUARDS.fastaTipsInjected = true;
-    return;
-  }
-
-  const tips = document.createElement('div');
-  tips.id = tipsId;
-  tips.style.marginTop = '10px';
-  tips.innerHTML = `
-    <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
-      <div><strong>Formatting tips:</strong></div>
-      <ul style="margin:6px 0 0 18px;">
-        <li>miRNA accepts multiple sequences; each should start with a header line, e.g. <code>&gt;hsa-let-7a-5p</code></li>
-        <li>Target and Competitor accept exactly one sequence each</li>
-        <li>3D files (PDB/CIF) must match the corresponding sequence; mismatches will be rejected</li>
-        <li>If allowed by server, you can opt to back-translate AA to NT for Target/Competitor in Advanced Options</li>
-      </ul>
-    </div>
-  `;
-  inputTab.appendChild(tips);
-  GUARDS.fastaTipsInjected = true;
 }
 
 function wireTabButtonsOnce() {
