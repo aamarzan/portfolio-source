@@ -516,10 +516,27 @@ async function handleSubmit(event) {
         const downloadBtn = resultsContainer.querySelector('#download-btn');
         if (downloadBtn) {
           downloadBtn.insertAdjacentHTML('afterend', `
-            <button id="run-again-btn" class="btn-run-again">Run Again</button>
+            <div style="margin-top:14px;">
+              <button id="run-again-btn" class="btn-run-again">Run Again</button>
+            </div>
           `);
         } else {
-          appendHTML(resultsContainer, `<button id="run-again-btn" class="btn-run-again">Run Again</button>`);
+          appendHTML(resultsContainer, `
+            <div style="margin-top:14px;">
+              <button id="run-again-btn" class="btn-run-again">Run Again</button>
+            </div>
+          `);
+        }
+
+        // Now bind the click listener immediately after inserting
+        const runAgainBtn = byId('run-again-btn');
+        if (runAgainBtn) {
+          runAgainBtn.addEventListener('click', () => {
+            const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // Inputs tab
+            openTab(inputsTabBtn, 'input-tab');
+            $('primary-seqs')?.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
         }
 
         if (loader) {
@@ -609,20 +626,6 @@ function displayResults(results) {
   const downloadId = 'download-btn';
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
-  // Run Again button (singleton)
-  const runAgainId = 'run-again-btn';
-  const runAgainButtonHTML = `
-    <div style="margin-top:14px;">
-      <button id="${runAgainId}" class="btn-run-again">Run Again</button>
-    </div>
-  `;
-  byId(runAgainId).addEventListener('click', () => {
-    const inputsTabBtn = byQS('button.tab-btn:nth-child(1)'); // Inputs tab
-    openTab(inputsTabBtn, 'input-tab');
-    $('primary-seqs')?.focus();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
   // Build table
   let table = '<table style="margin-bottom:20px;"><thead><tr>' +
       '<th>Primary Molecule ID</th>' +
@@ -650,7 +653,6 @@ function displayResults(results) {
   // Render in strict order; since container is cleared first, no duplicates can occur
   appendHTML(container, legendHTML);
   appendHTML(container, downloadButtonHTML);
-  appendHTML(resultsContainer, runAgainButtonHTML);
   appendHTML(container, table);
 
   // Ensure only one click listener bound (button is recreated each render, so normal bind is fine)
