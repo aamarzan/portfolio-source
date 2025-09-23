@@ -437,7 +437,7 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
 # Prediction endpoints
 # =========================
 limiter = Limiter(key_func=get_remote_address)
-limiter.init_app(app)
+limiter.init_app(app) 
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
