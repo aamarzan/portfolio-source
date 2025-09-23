@@ -15567,3 +15567,5 @@ ValueError: Functions from the __main__ module cannot be processed by workers
 2025-09-24 04:15:31,446 | INFO | 127.0.0.1 - - [24/Sep/2025 04:15:31] "GET /progress/7c0ef93b-bf4f-473f-abee-1569972d3e55 HTTP/1.1" 200 -
 2025-09-24 04:15:31,466 | INFO | 127.0.0.1 - - [24/Sep/2025 04:15:31] "GET /progress/cfb6b114-189c-4cc7-93d9-9f8c4ae5638c HTTP/1.1" 200 -
 2025-09-24 04:15:31,758 | INFO | 127.0.0.1 - - [24/Sep/2025 04:15:31] "GET /progress/64e2e92d-4f63-4528-8589-2808a97dca18 HTTP/1.1" 200 -
+2025-09-24 04:16:18,988 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 04:16:23,301 | INFO |  * Restarting with stat
