@@ -362,3 +362,19 @@ textarea.sequence-input {
     overflow-x: auto;
   }
 }
+
+.results-container {
+  background-image: url('/favicon/favicon.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 200px;
+}
+
+.btn-accent {
+  background-color: var(--accent-color);
+  color: white;
+}
+.btn-accent:hover {
+  background-color: #1e88e5; /* slightly darker on hover */
+  color: white;
+}
