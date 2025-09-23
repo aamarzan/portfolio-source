@@ -198,24 +198,33 @@ async function loadConfig() {
 // =====================================================
 // Nonce (optional)
 // =====================================================
+async function getNonceOrKeyHeaders() {
+  if (!('use_nonce' in CONFIG)) await loadConfig();
+  if (!CONFIG.use_nonce) throw new Error('Server is not in nonce mode.');
+  const res = await fetch(NONCE_URL, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to obtain auth token from server.');
+  const data = await res.json();
+  if (!data.nonce) throw new Error('Server did not return a valid auth token.');
+  return { 'X-Nonce': data.nonce };
+}
+
 async function getNonce() {
-  const res = await fetch("/nonce");
+  const res = await fetch(NONCE_URL, { method: 'GET' });
   const data = await res.json();
   return data.nonce;
 }
 
 async function submitPrediction(formData) {
-  const nonce = await getNonce();
-  const res = await fetch("/predict", {
+  const headers = await getNonceOrKeyHeaders();
+  const res = await fetch(API_URL, {
     method: "POST",
-    headers: {
-      "X-Nonce": nonce
-    },
+    headers,     // Do NOT set Content-Type; browser sets for FormData
     body: formData
   });
   const data = await res.json();
   console.log(data);
 }
+
 
 // =====================================================
 // Safe event binding (prevent duplicates)

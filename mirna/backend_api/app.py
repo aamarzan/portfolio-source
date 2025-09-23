@@ -38,10 +38,7 @@ from molecule_processors import process_molecule_universal
 # =========================
 # Configuration
 # =========================
-
-API_KEY = os.getenv("API_KEY", "supersecret123")  # legacy key (frontend-visible) — consider moving to nonce flow
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-nonce_store = {}
 USE_NONCE = True  # set True once frontend is updated to use /nonce
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
@@ -94,7 +91,7 @@ CORS(app, origins=[
   "https://mirna.aamarzan.com",
   "http://localhost",
   "http://127.0.0.1"
-], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-API-Key", "X-Nonce"])
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce"])
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):
@@ -103,40 +100,30 @@ def handle_large_file(e):
 # =========================
 # Security: Nonce (optional safer flow)
 # =========================
-NONCES: Dict[str, float] = {}  # token -> expiry_ts
+nonce_store: Dict[str, Dict[str, float]] = {}
 
-def get_nonce():
+@app.route('/nonce', methods=['GET'])
+def issue_nonce():
     client_ip = get_remote_address()
     token = secrets.token_urlsafe(32)
     expiry = time.time() + NONCE_EXPIRY_SECONDS
     nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
     return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
 
-def validate_and_consume_nonce(tok: Optional[str]) -> bool:
-  if not USE_NONCE:
-    return True  # not in use
-  if not tok:
-    return False
-  exp = NONCES.get(tok)
-  if not exp or exp < time.time():
-    return False
-  del NONCES[tok]
-  return True
-
 @app.before_request
-def require_auth():
-  if request.method == "OPTIONS":
-    return '', 200
-  # Only protect predict route
-  if request.endpoint == 'start_prediction':
-    # If nonce flow enabled, require valid nonce; else fallback to API key
-    if USE_NONCE:
-      if not validate_and_consume_nonce(request.headers.get("X-Nonce")):
-        return jsonify({"error": "Unauthorized (invalid or expired token)"}), 401
-    else:
-      key = request.headers.get("X-API-Key")
-      if key != API_KEY:
-        return jsonify({"error": "Unauthorized"}), 401
+def require_nonce_or_key():
+    if request.method == "OPTIONS":
+        return '', 200
+
+    if request.endpoint == 'start_prediction':
+        if USE_NONCE:
+            client_ip = get_remote_address()
+            provided_nonce = request.headers.get("X-Nonce")
+            stored = nonce_store.get(client_ip)
+            if not stored or stored["nonce"] != provided_nonce or time.time() > stored["expiry"]:
+                return jsonify({"error": "Invalid or expired nonce"}), 403
+            # Consume nonce after use
+            del nonce_store[client_ip]
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
@@ -446,11 +433,6 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
     out[:sv.shape[0], 0] = sv
   return out
 
-def valid_api_key(key):
-    # Replace with your actual key(s) or lookup logic
-    # Example: single hardcoded key
-    return key == "supersecret123"
-
 # =========================
 # Prediction endpoints
 # =========================
@@ -477,22 +459,8 @@ def handle_exception(e):
 def start_prediction():
   
     # 1. Strict Content-Type check
-    if request.content_type != 'multipart/form-data':
+    if request.mimetype != 'multipart/form-data':
         return jsonify({"error": "Bad request"}), 400
-
-    # 2. Nonce check
-    client_ip = get_remote_address()
-    provided_nonce = request.headers.get('X-Nonce')
-
-    if not provided_nonce:
-        return jsonify({"error": "Missing nonce"}), 403
-
-    stored = nonce_store.get(client_ip)
-    if not stored or stored["nonce"] != provided_nonce or time.time() > stored["expiry"]:
-        return jsonify({"error": "Invalid or expired nonce"}), 403
-
-    # Optional: consume nonce after use (one-time)
-    del nonce_store[client_ip]
       
     # Inputs
     fasta_string = request.form.get('primary_molecules', '')
