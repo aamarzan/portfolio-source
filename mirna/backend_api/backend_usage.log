@@ -14962,3 +14962,18 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-23 21:57:17,776 | INFO | 127.0.0.1 - - [23/Sep/2025 21:57:17] "[31m[1mPOST /predict HTTP/1.1[0m" 429 -
 2025-09-23 21:58:39,417 | WARNING | 5 out of the last 264 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x000001397F349620> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
 2025-09-23 21:58:39,428 | WARNING | 6 out of the last 265 calls to <function TensorFlowTrainer.make_predict_function.<locals>.one_step_on_data_distributed at 0x000001397F349620> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+2025-09-23 22:05:37,262 | INFO | 127.0.0.1 - - [23/Sep/2025 22:05:37] "GET /config HTTP/1.1" 200 -
+2025-09-23 22:05:59,067 | INFO | 127.0.0.1 - - [23/Sep/2025 22:05:59] "GET /nonce HTTP/1.1" 200 -
+2025-09-23 22:05:59,147 | INFO | 127.0.0.1 - - [23/Sep/2025 22:05:59] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-23 22:05:59,308 | INFO | ratelimit 10 per 15 minute (127.0.0.1) exceeded at endpoint: start_prediction
+2025-09-23 22:05:59,315 | INFO | 127.0.0.1 - - [23/Sep/2025 22:05:59] "[31m[1mPOST /predict HTTP/1.1[0m" 429 -
+2025-09-23 22:06:14,650 | INFO | 127.0.0.1 - - [23/Sep/2025 22:06:14] "GET /nonce HTTP/1.1" 200 -
+2025-09-23 22:06:14,718 | INFO | 127.0.0.1 - - [23/Sep/2025 22:06:14] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-23 22:06:14,772 | INFO | ratelimit 10 per 15 minute (127.0.0.1) exceeded at endpoint: start_prediction
+2025-09-23 22:06:14,779 | INFO | 127.0.0.1 - - [23/Sep/2025 22:06:14] "[31m[1mPOST /predict HTTP/1.1[0m" 429 -
+2025-09-23 22:06:34,365 | INFO | 127.0.0.1 - - [23/Sep/2025 22:06:34] "GET /config HTTP/1.1" 200 -
+2025-09-23 22:07:07,636 | INFO | 127.0.0.1 - - [23/Sep/2025 22:07:07] "GET /nonce HTTP/1.1" 200 -
+2025-09-23 22:07:07,684 | INFO | 127.0.0.1 - - [23/Sep/2025 22:07:07] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-23 22:07:07,735 | INFO | ratelimit 10 per 15 minute (127.0.0.1) exceeded at endpoint: start_prediction
+2025-09-23 22:07:07,737 | INFO | 127.0.0.1 - - [23/Sep/2025 22:07:07] "[31m[1mPOST /predict HTTP/1.1[0m" 429 -
+2025-09-24 00:11:27,174 | INFO | 127.0.0.1 - - [24/Sep/2025 00:11:27] "GET /config HTTP/1.1" 200 -
