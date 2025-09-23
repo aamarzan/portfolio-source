@@ -40,7 +40,9 @@ from molecule_processors import process_molecule_universal
 # =========================
 
 API_KEY = os.getenv("API_KEY", "supersecret123")  # legacy key (frontend-visible) — consider moving to nonce flow
-USE_NONCE = False  # set True once frontend is updated to use /nonce
+NONCE_EXPIRY_SECONDS = 300  # 5 minutes
+nonce_store = {}
+USE_NONCE = True  # set True once frontend is updated to use /nonce
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True           # default: enable auto-trim
@@ -103,13 +105,12 @@ def handle_large_file(e):
 # =========================
 NONCES: Dict[str, float] = {}  # token -> expiry_ts
 
-@app.route('/nonce', methods=['GET'])
 def get_nonce():
-  if not USE_NONCE:
-    return jsonify({"error": "Nonce flow disabled on server"}), 400
-  tok = secrets.token_urlsafe(16)
-  NONCES[tok] = time.time() + 600  # 10 minutes validity
-  return jsonify({"nonce": tok})
+    client_ip = get_remote_address()
+    token = secrets.token_urlsafe(32)
+    expiry = time.time() + NONCE_EXPIRY_SECONDS
+    nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
+    return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
 
 def validate_and_consume_nonce(tok: Optional[str]) -> bool:
   if not USE_NONCE:
@@ -445,6 +446,11 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
     out[:sv.shape[0], 0] = sv
   return out
 
+def valid_api_key(key):
+    # Replace with your actual key(s) or lookup logic
+    # Example: single hardcoded key
+    return key == "supersecret123"
+
 # =========================
 # Prediction endpoints
 # =========================
@@ -457,11 +463,37 @@ def ratelimit_handler(e):
         "error": "rate_limit_exceeded",
         "message": "We limit predictions to 10 every 15 minutes to keep the service fast for everyone. Please wait a few minutes before starting your next run."
     }), 429
-
+    
+@app.errorhandler(Exception)
+def handle_exception(e):
+    code = getattr(e, 'code', 500)
+    return jsonify({
+        "error": type(e).__name__,
+        "message": str(e) if app.debug else "An unexpected error occurred."
+    }), code
 
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
 def start_prediction():
+  
+    # 1. Strict Content-Type check
+    if request.content_type != 'multipart/form-data':
+        return jsonify({"error": "Bad request"}), 400
+
+    # 2. Nonce check
+    client_ip = get_remote_address()
+    provided_nonce = request.headers.get('X-Nonce')
+
+    if not provided_nonce:
+        return jsonify({"error": "Missing nonce"}), 403
+
+    stored = nonce_store.get(client_ip)
+    if not stored or stored["nonce"] != provided_nonce or time.time() > stored["expiry"]:
+        return jsonify({"error": "Invalid or expired nonce"}), 403
+
+    # Optional: consume nonce after use (one-time)
+    del nonce_store[client_ip]
+      
     # Inputs
     fasta_string = request.form.get('primary_molecules', '')
     target_seq_text = request.form.get('target_molecule', '')

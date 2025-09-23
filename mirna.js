@@ -198,22 +198,23 @@ async function loadConfig() {
 // =====================================================
 // Nonce (optional)
 // =====================================================
-async function getNonceOrKeyHeaders() {
-  // If server uses nonce, fetch and return X-Nonce
-  if (CONFIG.use_nonce) {
-    try {
-      const r = await fetch(NONCE_URL, { method: 'GET' });
-      if (!r.ok) throw new Error("nonce fetch failed");
-      const data = await r.json();
-      if (!data.nonce) throw new Error("no nonce");
-      return { "X-Nonce": data.nonce };
-    } catch (e) {
-      // fallback to no headers; server will reject if nonce required
-      return {};
-    }
-  } else {
-    return { "X-API-Key": API_KEY };
-  }
+async function getNonce() {
+  const res = await fetch("/nonce");
+  const data = await res.json();
+  return data.nonce;
+}
+
+async function submitPrediction(formData) {
+  const nonce = await getNonce();
+  const res = await fetch("/predict", {
+    method: "POST",
+    headers: {
+      "X-Nonce": nonce
+    },
+    body: formData
+  });
+  const data = await res.json();
+  console.log(data);
 }
 
 // =====================================================
