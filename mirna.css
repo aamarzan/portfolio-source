@@ -329,6 +329,7 @@ textarea.sequence-input {
   background: radial-gradient(circle at 30% 30%, var(--accent-color) 0%, transparent 70%);
 }
 
+
 @keyframes spin {
   0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

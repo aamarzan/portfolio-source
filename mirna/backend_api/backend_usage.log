@@ -15011,3 +15011,36 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-24 00:16:44,067 | WARNING |  * Debugger is active!
 2025-09-24 00:16:44,069 | INFO |  * Debugger PIN: 702-176-435
 2025-09-24 02:09:45,230 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 02:09:48,273 | INFO |  * Restarting with stat
+2025-09-24 02:10:05,139 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 02:10:05,758 | WARNING |  * Debugger is active!
+2025-09-24 02:10:05,762 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 02:10:22,603 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:22] "GET /nonce HTTP/1.1" 200 -
+2025-09-24 02:10:22,645 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:22] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-24 02:10:23,450 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:23] "POST /predict HTTP/1.1" 200 -
+2025-09-24 02:10:23,489 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:23] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:24,739 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:24] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:26,113 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:26] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:27,394 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:27] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:28,857 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:28] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:30,162 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:30] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:31,447 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:31] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:33,025 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:33] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:34,334 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:34] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:35,606 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:35] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:36,892 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:36] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:38,127 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:38] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:39,362 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:39] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:40,607 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:40] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:41,862 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:41] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:43,120 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:43] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:44,367 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:44] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:45,611 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:45] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:46,855 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:46] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:48,093 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:48] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:49,340 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:49] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:50,582 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:50] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:51,813 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:51] "GET /progress/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:10:51,861 | INFO | 127.0.0.1 - - [24/Sep/2025 02:10:51] "GET /download/fa700972-22ee-4ad8-bfcc-bbc8824cd677 HTTP/1.1" 200 -
+2025-09-24 02:11:02,520 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
