@@ -15184,3 +15184,5 @@ ValueError: Functions from the __main__ module cannot be processed by workers
 
 2025-09-24 03:30:41,779 | WARNING |  * Debugger is active!
 2025-09-24 03:30:41,783 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:31:00,040 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 03:31:01,252 | INFO |  * Restarting with stat
