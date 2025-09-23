@@ -476,7 +476,8 @@ async function handleSubmit(event) {
       let errorMsg;
       try {
         const errorData = await startRes.json();
-        errorMsg = errorData.error || null;
+        // Prefer message, fallback to error
+        errorMsg = errorData.message || errorData.error || null;
       } catch (_) {}
       throw new Error(errorMsg || 'Something went wrong while starting your job. Please try again later.');
     }
