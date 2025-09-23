@@ -10,6 +10,9 @@ import secrets
 import logging
 import tempfile
 import threading
+import redis
+from rq import Queue
+from rq.job import Job
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Tuple, List, Optional
@@ -50,6 +53,12 @@ MAX_CONTENT_MB = 100
 
 # Jobs registry: job_id -> {"status": "...", "results": [], "error": None, "total": 0, "completed": 0}
 jobs: Dict[str, Dict] = {}
+
+# =========================
+# RQ queue setup
+# =========================
+redis_conn = redis.Redis(host='localhost', port=6379, db=0)  # adjust for prod
+rq_queue = Queue('mirna', connection=redis_conn)
 
 # Google Analytics (GA4) Measurement Protocol (optional)
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
@@ -543,18 +552,33 @@ def start_prediction():
             mirna_3d_index[stem] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(primary_records), "completed": 0}
+    jobs[job_id] = {
+        "status": "queued",  # queued for worker
+        "results": [],
+        "error": None,
+        "total": len(primary_records),
+        "completed": 0
+    }
     send_ga_event("prediction_started", {"total": len(primary_records)})
 
-    threading.Thread(
-        target=process_job,
-        args=(job_id, primary_records, (target_id, target_seq), (competitor_id, competitor_seq),
-              target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
-              convert_aa_to_nt_flag, mature_trim_flag),
-        daemon=True
-    ).start()
+    # Enqueue the job in RQ
+    rq_job = rq_queue.enqueue(
+        process_job,
+        job_id,
+        primary_records,
+        (target_id, target_seq),
+        (competitor_id, competitor_seq),
+        target_3d_path,
+        competitor_3d_path,
+        mirna_3d_index,
+        tmp_paths_to_cleanup,
+        convert_aa_to_nt_flag,
+        mature_trim_flag,
+        job_id=job_id  # store same id in RQ for easy fetch
+    )
 
-    return jsonify({"job_id": job_id, "status": "started"})
+    return jsonify({"job_id": job_id, "status": "queued"})
+
 
 def process_job(job_id: str,
                 primary_records: List[Tuple[str,str]],
@@ -567,6 +591,10 @@ def process_job(job_id: str,
                 convert_aa_to_nt_flag: bool,
                 mature_trim_flag: bool):
   try:
+    # Mark job as running when worker picks it up
+    if job_id in jobs:
+      jobs[job_id]["status"] = "running"
+
     if model is None or scaler is None:
       jobs[job_id]["status"] = "error"
       jobs[job_id]["error"] = "Model or scaler not loaded on server."
@@ -764,6 +792,25 @@ def get_progress(job_id):
   job = jobs.get(job_id)
   if not job:
     return jsonify({"error": "Invalid job ID"}), 404
+
+  # Try to fetch RQ job to refine status
+  try:
+    rq_job = Job.fetch(job_id, connection=redis_conn)
+    rq_status = rq_job.get_status()  # 'queued', 'started', 'finished', 'failed'
+    if rq_status == 'queued':
+      job["status"] = "queued"
+    elif rq_status == 'started':
+      job["status"] = "running"
+    elif rq_status == 'finished':
+      # process_job sets status to 'completed' and fills results; we don't force here
+      pass
+    elif rq_status == 'failed':
+      job["status"] = "error"
+      job["error"] = str(getattr(rq_job, 'exc_info', 'Job failed'))
+  except Exception:
+    # If RQ metadata isn't available, fall back to in-memory jobs dict
+    pass
+
   return jsonify({
     "status": job["status"],
     "completed": job["completed"],

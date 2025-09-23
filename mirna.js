@@ -491,6 +491,20 @@ async function handleSubmit(event) {
       if (!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
+      if (data.status === 'queued') {
+        if (loader) {
+          // Show queued message while waiting for a worker
+          loader.innerHTML = `<span class="loader-spinner"></span><span id="loader-text"></span>`;
+          const loaderText = loader.querySelector('#loader-text');
+          if (loaderText) {
+            loaderText.textContent = `Job is queued. Waiting for an available worker...`;
+          }
+          show(loader);
+        }
+        setTimeout(poll, 1200);
+        return;
+      }
+
       if (data.status === 'running') {
         if (loader) {
           // If spinner not already there, insert it once
@@ -513,8 +527,10 @@ async function handleSubmit(event) {
         // 🔹 Remove reload warning
         const rw = resultsContainer.querySelector('.reload-warning');
         if (rw) rw.remove();
-        throw new Error(data.error || 'We encountered a technical issue while processing your request.');
+        // Prefer backend's friendly message if present
+        throw new Error(data.message || data.error || 'We encountered a technical issue while processing your request.');
       }
+
 
       if (data.status === 'completed') {
         // 🔹 Remove reload warning
