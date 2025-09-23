@@ -199,27 +199,13 @@ async function loadConfig() {
 // Nonce (optional)
 // =====================================================
 async function getNonceOrKeyHeaders() {
-  // Ensure config is loaded (if not yet)
-  if (!('use_nonce' in CONFIG)) {
-    await loadConfig();
-  }
-
-  if (CONFIG.use_nonce) {
-    // Request a nonce from the backend
-    const res = await fetch(NONCE_URL, { method: 'GET' });
-    if (!res.ok) {
-      throw new Error('Failed to obtain auth token from server.');
-    }
-    const data = await res.json();
-    if (!data.nonce) {
-      throw new Error('Server did not return a valid auth token.');
-    }
-    // For FormData, do NOT set Content-Type yourself
-    return { 'X-Nonce': data.nonce };
-  } else {
-    // Legacy static key mode
-    return { 'X-API-Key': API_KEY };
-  }
+  if (!('use_nonce' in CONFIG)) await loadConfig();
+  if (!CONFIG.use_nonce) throw new Error('Server is not in nonce mode.');
+  const res = await fetch(NONCE_URL, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to obtain auth token from server.');
+  const data = await res.json();
+  if (!data.nonce) throw new Error('Server did not return a valid auth token.');
+  return { 'X-Nonce': data.nonce };
 }
 
 async function getNonce() {
@@ -490,7 +476,8 @@ async function handleSubmit(event) {
       let errorMsg;
       try {
         const errorData = await startRes.json();
-        errorMsg = errorData.error || null;
+        // Prefer message, fallback to error
+        errorMsg = errorData.message || errorData.error || null;
       } catch (_) {}
       throw new Error(errorMsg || 'Something went wrong while starting your job. Please try again later.');
     }

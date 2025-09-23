@@ -110,17 +110,6 @@ def issue_nonce():
     nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
     return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
 
-def validate_and_consume_nonce(tok: Optional[str], client_ip: str) -> bool:
-    if not USE_NONCE:
-        return True  # not in use
-    if not tok:
-        return False
-    stored = nonce_store.get(client_ip)
-    if not stored or stored["nonce"] != tok or time.time() > stored["expiry"]:
-        return False
-    del nonce_store[client_ip]
-    return True
-
 @app.before_request
 def require_nonce_or_key():
     if request.method == "OPTIONS":
@@ -470,7 +459,7 @@ def handle_exception(e):
 def start_prediction():
   
     # 1. Strict Content-Type check
-    if request.content_type != 'multipart/form-data':
+    if request.mimetype != 'multipart/form-data':
         return jsonify({"error": "Bad request"}), 400
       
     # Inputs
