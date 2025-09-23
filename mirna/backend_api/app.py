@@ -57,7 +57,7 @@ jobs: Dict[str, Dict] = {}
 # =========================
 # RQ queue setup
 # =========================
-redis_conn = redis.Redis(host='localhost', port=6379, db=0)  # adjust for prod
+redis_conn = redis.Redis(host='172.28.158.122', port=6379, db=0)  # adjust for prod
 rq_queue = Queue('mirna', connection=redis_conn)
 
 # Google Analytics (GA4) Measurement Protocol (optional)
