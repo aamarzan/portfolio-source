@@ -22,7 +22,6 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
-from flask import jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -445,14 +444,6 @@ def ratelimit_handler(e):
         "error": "rate_limit_exceeded",
         "message": "We limit predictions to 10 every 15 minutes to keep the service fast for everyone. Please wait a few minutes before starting your next run."
     }), 429
-    
-@app.errorhandler(Exception)
-def handle_exception(e):
-    code = getattr(e, 'code', 500)
-    return jsonify({
-        "error": type(e).__name__,
-        "message": str(e) if app.debug else "An unexpected error occurred."
-    }), code
 
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")

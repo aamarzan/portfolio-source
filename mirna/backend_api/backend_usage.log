@@ -14998,3 +14998,16 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-24 00:14:06,601 | INFO | 127.0.0.1 - - [24/Sep/2025 00:14:06] "GET /progress/c675c257-c156-4cd0-9b2a-3247fa6ae801 HTTP/1.1" 200 -
 2025-09-24 00:14:07,970 | INFO | 127.0.0.1 - - [24/Sep/2025 00:14:07] "GET /progress/c675c257-c156-4cd0-9b2a-3247fa6ae801 HTTP/1.1" 200 -
 2025-09-24 00:14:09,161 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 00:14:12,720 | INFO |  * Restarting with stat
+2025-09-24 00:14:28,090 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 00:14:28,442 | WARNING |  * Debugger is active!
+2025-09-24 00:14:28,445 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 00:14:28,460 | INFO | 127.0.0.1 - - [24/Sep/2025 00:14:28] "[33mGET /progress/c675c257-c156-4cd0-9b2a-3247fa6ae801 HTTP/1.1[0m" 404 -
+2025-09-24 00:16:35,716 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 00:16:36,489 | INFO |  * Restarting with stat
+2025-09-24 00:16:43,664 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 00:16:44,067 | WARNING |  * Debugger is active!
+2025-09-24 00:16:44,069 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 02:09:45,230 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
