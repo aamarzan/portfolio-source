@@ -19,6 +19,10 @@ import pandas as pd
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_limiter.errors import RateLimitExceeded
+from flask import jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -444,8 +448,18 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
 # =========================
 # Prediction endpoints
 # =========================
+limiter = Limiter(app, key_func=get_remote_address)
+
+@app.errorhandler(RateLimitExceeded)
+def ratelimit_handler(e):
+    return jsonify({
+        "error": "rate_limit_exceeded",
+        "message": "We limit predictions to 10 every 15 minutes to keep the service fast for everyone. Please wait a few minutes before starting your next run."
+    }), 429
+
 
 @app.route('/predict', methods=['POST'])
+@limiter.limit("10 per 15 minutes")
 def start_prediction():
     # Inputs
     fasta_string = request.form.get('primary_molecules', '')
