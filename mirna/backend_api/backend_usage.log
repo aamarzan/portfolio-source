@@ -15101,3 +15101,86 @@ Traceback (most recent call last):
 ValueError: Functions from the __main__ module cannot be processed by workers
 2025-09-24 02:53:26,183 | INFO | 127.0.0.1 - - [24/Sep/2025 02:53:26] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
 2025-09-24 03:00:05,371 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 03:00:08,515 | INFO |  * Restarting with stat
+2025-09-24 03:00:59,855 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:01:00,239 | WARNING |  * Debugger is active!
+2025-09-24 03:01:00,243 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:02:30,190 | INFO | 127.0.0.1 - - [24/Sep/2025 03:02:30] "GET /config HTTP/1.1" 200 -
+2025-09-24 03:02:52,196 | INFO | 127.0.0.1 - - [24/Sep/2025 03:02:52] "GET /nonce HTTP/1.1" 200 -
+2025-09-24 03:02:52,275 | INFO | 127.0.0.1 - - [24/Sep/2025 03:02:52] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-24 03:02:54,214 | ERROR | CID e39fe36f | Unexpected error: Functions from the __main__ module cannot be processed by workers
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_limiter\limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 565, in start_prediction
+    rq_job = rq_queue.enqueue(
+             ^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\rq\queue.py", line 1009, in enqueue
+    ) = Queue.parse_args(f, *args, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\rq\queue.py", line 932, in parse_args
+    raise ValueError('Functions from the __main__ module cannot be processed by workers')
+ValueError: Functions from the __main__ module cannot be processed by workers
+2025-09-24 03:02:54,297 | INFO | 127.0.0.1 - - [24/Sep/2025 03:02:54] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-24 03:03:15,201 | INFO | 127.0.0.1 - - [24/Sep/2025 03:03:15] "GET /config HTTP/1.1" 200 -
+2025-09-24 03:03:34,764 | INFO | 127.0.0.1 - - [24/Sep/2025 03:03:34] "GET /nonce HTTP/1.1" 200 -
+2025-09-24 03:03:34,812 | INFO | 127.0.0.1 - - [24/Sep/2025 03:03:34] "OPTIONS /predict HTTP/1.1" 200 -
+2025-09-24 03:03:36,079 | ERROR | CID bac79974 | Unexpected error: Functions from the __main__ module cannot be processed by workers
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_limiter\limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 565, in start_prediction
+    rq_job = rq_queue.enqueue(
+             ^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\rq\queue.py", line 1009, in enqueue
+    ) = Queue.parse_args(f, *args, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\rq\queue.py", line 932, in parse_args
+    raise ValueError('Functions from the __main__ module cannot be processed by workers')
+ValueError: Functions from the __main__ module cannot be processed by workers
+2025-09-24 03:03:36,083 | INFO | 127.0.0.1 - - [24/Sep/2025 03:03:36] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-09-24 03:11:37,009 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\tasks.py', reloading
+2025-09-24 03:11:40,967 | INFO |  * Restarting with stat
+2025-09-24 03:11:52,826 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:11:53,794 | WARNING |  * Debugger is active!
+2025-09-24 03:11:53,805 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:18:40,365 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\tasks.py', reloading
+2025-09-24 03:18:41,693 | INFO |  * Restarting with stat
+2025-09-24 03:18:51,908 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:18:52,614 | WARNING |  * Debugger is active!
+2025-09-24 03:18:52,622 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:20:30,951 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\tasks.py', reloading
+2025-09-24 03:20:32,094 | INFO |  * Restarting with stat
+2025-09-24 03:20:39,388 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:20:39,710 | WARNING |  * Debugger is active!
+2025-09-24 03:20:39,712 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:26:20,184 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\tasks.py', reloading
+2025-09-24 03:26:21,666 | INFO |  * Restarting with stat
+2025-09-24 03:26:30,680 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:26:31,361 | WARNING |  * Debugger is active!
+2025-09-24 03:26:31,368 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 03:30:31,597 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\tasks.py', reloading
+2025-09-24 03:30:32,947 | INFO |  * Restarting with stat
+2025-09-24 03:30:41,458 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 03:30:41,779 | WARNING |  * Debugger is active!
+2025-09-24 03:30:41,783 | INFO |  * Debugger PIN: 702-176-435
