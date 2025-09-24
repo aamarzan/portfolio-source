@@ -499,26 +499,8 @@ def start_prediction():
     ts = _to_int_safe(target_start_raw)
     te = _to_int_safe(target_end_raw)
 
-    if ts is None or te is None:
-        # Optional: use server-side default region slice from config.json
-        try:
-            import json, os
-            cfg_path = os.path.join(os.path.dirname(__file__), 'config.json')
-            with open(cfg_path, 'r') as f:
-                cfg = json.load(f)
-            pred = cfg.get('prediction_parameters', {})
-            if pred.get('use_prediction_region_slice'):
-                r = pred.get('prediction_target_region_slice', [])
-                if isinstance(r, list) and len(r) == 2:
-                    ts, te = int(r[0]), int(r[1])
-                    # re-run the same slicing and validation
-                    s_idx = max(0, ts - 1)
-                    e_idx = min(len(target_seq), te)
-                    if s_idx < len(target_seq) and e_idx - s_idx >= 1:
-                        target_seq = target_seq[s_idx:e_idx]
-                        target_id = f"{target_id}:{ts}-{te}"
-        except Exception:
-            pass  # if config missing, just use the full sequence
+    if ts is None and te is None:
+        ts, te = 1, len(target_seq)
 
     # Normalize range to 1-based inclusive input, convert to 0-based slicing
     if ts is not None and te is not None:
