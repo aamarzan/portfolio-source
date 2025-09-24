@@ -16634,3 +16634,28 @@ ValueError: Functions from the __main__ module cannot be processed by workers
 2025-09-24 16:44:05,035 | INFO | 127.0.0.1 - - [24/Sep/2025 16:44:05] "GET /progress/eecd8378-bee3-4657-81e5-a84a3d9e5ba2 HTTP/1.1" 200 -
 2025-09-24 16:44:06,699 | INFO | 127.0.0.1 - - [24/Sep/2025 16:44:06] "GET /progress/eecd8378-bee3-4657-81e5-a84a3d9e5ba2 HTTP/1.1" 200 -
 2025-09-24 16:44:08,437 | INFO | 127.0.0.1 - - [24/Sep/2025 16:44:08] "GET /download/eecd8378-bee3-4657-81e5-a84a3d9e5ba2 HTTP/1.1" 200 -
+2025-09-24 17:05:33,540 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 17:05:40,622 | INFO |  * Restarting with stat
+2025-09-24 17:05:59,348 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 17:05:59,919 | WARNING |  * Debugger is active!
+2025-09-24 17:05:59,928 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 17:12:16,204 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 17:12:18,655 | INFO |  * Restarting with stat
+2025-09-24 17:12:35,250 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 17:12:35,664 | WARNING |  * Debugger is active!
+2025-09-24 17:12:35,669 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 17:14:21,467 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 17:14:22,493 | INFO |  * Restarting with stat
+2025-09-24 17:14:33,012 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 17:14:33,409 | WARNING |  * Debugger is active!
+2025-09-24 17:14:33,412 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 17:16:07,315 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-09-24 17:16:11,374 | INFO |  * Restarting with stat
+2025-09-24 17:16:26,123 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-09-24 17:16:26,643 | WARNING |  * Debugger is active!
+2025-09-24 17:16:26,649 | INFO |  * Debugger PIN: 702-176-435
+2025-09-24 17:21:15,352 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

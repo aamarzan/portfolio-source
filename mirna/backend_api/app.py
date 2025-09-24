@@ -486,10 +486,65 @@ def start_prediction():
         return jsonify({"error": "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."}), 400
     target_id, target_seq = target_parsed[0]
 
-    # ✅ Enforce minimum target length
+    # Optional target region from Advanced tab
+    target_start_raw = request.form.get('target_start', '').strip()
+    target_end_raw = request.form.get('target_end', '').strip()
+
+    def _to_int_safe(s):
+        try:
+            return int(s)
+        except Exception:
+            return None
+
+    ts = _to_int_safe(target_start_raw)
+    te = _to_int_safe(target_end_raw)
+
+    if ts is None or te is None:
+        # Optional: use server-side default region slice from config.json
+        try:
+            import json, os
+            cfg_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            with open(cfg_path, 'r') as f:
+                cfg = json.load(f)
+            pred = cfg.get('prediction_parameters', {})
+            if pred.get('use_prediction_region_slice'):
+                r = pred.get('prediction_target_region_slice', [])
+                if isinstance(r, list) and len(r) == 2:
+                    ts, te = int(r[0]), int(r[1])
+                    # re-run the same slicing and validation
+                    s_idx = max(0, ts - 1)
+                    e_idx = min(len(target_seq), te)
+                    if s_idx < len(target_seq) and e_idx - s_idx >= 1:
+                        target_seq = target_seq[s_idx:e_idx]
+                        target_id = f"{target_id}:{ts}-{te}"
+        except Exception:
+            pass  # if config missing, just use the full sequence
+
+    # Normalize range to 1-based inclusive input, convert to 0-based slicing
+    if ts is not None and te is not None:
+        if ts <= 0 or te <= 0:
+            return jsonify({"error": "Target range must be positive integers (1-based)."}), 400
+        if te < ts:
+            return jsonify({"error": "Target range end must be greater than or equal to start."}), 400
+
+        # Compute 0-based slice indices
+        s_idx = max(0, ts - 1)
+        e_idx = min(len(target_seq), te)  # Python slice end is exclusive
+        if s_idx >= len(target_seq):
+            return jsonify({"error": "Target range start exceeds the target sequence length."}), 400
+        if e_idx - s_idx < 1:
+            return jsonify({"error": "Selected target range is empty. Please adjust the indices."}), 400
+
+        # Slice the target sequence to the requested region
+        target_seq = target_seq[s_idx:e_idx]
+        # Augment the target ID so results are traceable
+        target_id = f"{target_id}:{ts}-{te}"
+
+
+    # ✅ Enforce minimum target length on final sequence (full or sliced)
     MIN_TARGET_LEN = 30
     if len((target_seq or '').replace('\n', '').strip()) < MIN_TARGET_LEN:
-        return jsonify({"error": f"Target sequence must be at least {MIN_TARGET_LEN} nt long."}), 400
+        return jsonify({"error": f"Target sequence must be at least {MIN_TARGET_LEN} nt long (after applying range if provided)."}), 400
 
     # Competitor: at most one sequence
     competitor_id, competitor_seq = ("competitor", "")
@@ -543,7 +598,16 @@ def start_prediction():
             mirna_3d_index[stem] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "running", "results": [], "error": None, "total": len(primary_records), "completed": 0}
+    jobs[job_id] = {
+    "status": "running",
+    "results": [],
+    "error": None,
+    "total": len(primary_records),
+    "completed": 0,
+    "target_id": target_id,   # includes :start-end if sliced
+    "target_len": len(target_seq)
+    }
+
     send_ga_event("prediction_started", {"total": len(primary_records)})
 
     threading.Thread(
