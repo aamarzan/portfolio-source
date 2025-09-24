@@ -22,9 +22,9 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
-from flask import jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
+
 
 # TensorFlow / Keras
 import tensorflow as tf
@@ -437,7 +437,7 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
 # Prediction endpoints
 # =========================
 limiter = Limiter(key_func=get_remote_address)
-limiter.init_app(app)
+limiter.init_app(app) 
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
@@ -445,14 +445,6 @@ def ratelimit_handler(e):
         "error": "rate_limit_exceeded",
         "message": "We limit predictions to 10 every 15 minutes to keep the service fast for everyone. Please wait a few minutes before starting your next run."
     }), 429
-    
-@app.errorhandler(Exception)
-def handle_exception(e):
-    code = getattr(e, 'code', 500)
-    return jsonify({
-        "error": type(e).__name__,
-        "message": str(e) if app.debug else "An unexpected error occurred."
-    }), code
 
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
@@ -806,3 +798,4 @@ def download_results(job_id):
 if __name__ == '__main__':
   port = int(os.environ.get("PORT", 8080))
   app.run(debug=True, host='0.0.0.0', port=port)
+  

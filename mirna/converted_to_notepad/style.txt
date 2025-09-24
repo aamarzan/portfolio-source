@@ -931,3 +931,8 @@ body.loaded #main-footer {
     color: #a8cfff !important; /* Sky blue highlight */
     font-weight: bold;
 }
+
+/* Hide the second gradient bar in Results */
+.results-container .gradient-bar:last-of-type {
+  display: none;
+}

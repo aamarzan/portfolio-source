@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>miRNA-Affinity Predictor</title>
+  <title>miRNA-Affinity Predictor | Abdullah Al Marzan</title>
 
   <meta name="description" content="miRNA-Affinity Predictor"/>
   <meta name="author" content="Abdullah Al Marzan"/>
@@ -294,6 +294,8 @@
         <br />
 
         <!-- Static gradient scale for context; dynamic legend/scale + table injected per run -->
+        <details class="legend-toggle">
+        <summary>Show/Hide Gradient Legend</summary>
         <div class="gradient-scale-container" aria-hidden="true">
           <div class="gradient-scale-bar"></div>
           <div class="gradient-scale-labels" aria-hidden="true">
@@ -310,6 +312,7 @@
             <span>1.0</span>
           </div>
         </div>
+        </details>
         <br />
 
         <!-- Results container: mirna.js clears and re-renders each time -->
@@ -342,9 +345,18 @@
           <li>Affinity with competitor: predicted binding strength considering the competitor.</li>
           <li>Competitive effect: difference between baseline and competitor conditions.</li>
         </ul>
-        <p>
+        <li>
           For best results, ensure that miRNA FASTA headers match any provided miRNA 3D filenames (e.g., <code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code>).
-        </p>
+        </li>
+        <br>
+        <h3>Points to be noted</h3>
+        <ul>
+          <li>Predictions are based on training data and may not generalize to all miRNA-target pairs.</li>
+          <li>3D structure files must correspond to the provided sequences; mismatches will be rejected.</li>
+          <li>Back-translation of amino acid sequences to nucleotide is lossy and may introduce inaccuracies.</li>
+          <li>Server resource limits may restrict input sizes and batch processing capabilities.</li>   
+        </ul>
+        <br>
       </div>
     </div>
   </main>
