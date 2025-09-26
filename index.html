@@ -16,7 +16,12 @@
     <link rel="manifest" href="favicon/site.webmanifest" />
     <meta name="theme-color" content="#000000"> </head>
 
-    <link rel="stylesheet" href="style.css">
+    <!-- Cache control for HTML -->
+    <meta http-equiv="Cache-Control" content="max-age=600, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <link rel="stylesheet" href="style.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
     <!-- Google tag (gtag.js) -->
@@ -294,7 +299,8 @@
     </footer>
     
     <audio id="click-sound" src="media/sounds/click-sound.mp3" preload="auto"></audio>
-    <script src="/script.js"></script>
+    <!-- Main JavaScript (with versioning for cache-busting) -->
+    <script src="/script.js?v=1" defer></script>
 </body>
     
 </html>
