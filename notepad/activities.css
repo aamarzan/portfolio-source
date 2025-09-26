@@ -1,0 +1,137 @@
+/* --- STYLES FOR EXTRA CURRICULAR PAGE --- */
+
+/* Cover Photo Section */
+.extra-curricular-cover {
+    height: 50vh;
+    background-image: url('media/activities/Group Photo (reduced).jpg');
+    background-size: cover;
+    background-position: absolute center;
+    background-attachment: fixed;
+}
+
+.text-container {
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    text-align: center;
+}
+.text-container h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    text-align:center
+}
+.text-container p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+/* Video Grid for Performing Arts */
+.video-grid {
+    display: flex; /* Changed to flexbox */
+    flex-direction: column; /* Stacks items vertically */
+    align-items: center; /* Centers the items horizontally */
+    gap: 30px;
+}
+
+.video-item {
+    width: 50%; /* CORRECTED: Changed from 40% to 50% of the screen width */
+}
+
+.video-item h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+
+/* CORRECTED #1 & #2: Main video container styles */
+.video-wrapper {
+    width: 50%; /* Set width to 60% of the container */
+    margin: 20px auto; /* Center the video */
+    aspect-ratio: 16 / 9; /* Automatically sets the height */
+}
+
+/* Visual Arts Section */
+.gallery-placeholder {
+    background-color: var(--gray-bg);
+    border: 2px dashed var(--border-color);
+    padding: 60px 20px;
+    text-align: center;
+    border-radius: 8px;
+    margin: 40px auto;
+    color: #888;
+    font-size: 1.2rem;
+}
+.video-showcase .video-wrapper {
+    width: 60%; /* Make this specific video larger */
+    max-width: 900px;
+}
+
+/* Education and Gaming Section */
+.two-column-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+.grid-item {
+    text-align: center;
+}
+.grid-item p {
+    text-align: justify;
+    margin-bottom: 20px;
+}
+.grid-item .video-wrapper {
+    width: 100%; /* Make videos in this section fill their column */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .two-column-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .video-wrapper {
+        width: 100%; /* Make videos full-width on mobile */
+    }
+    .video-showcase .video-wrapper {
+    width: 100%; /* Make this specific video larger */
+    max-width: 900px;
+    }
+    .extra-curricular-cover {
+        height:35vh;
+        background-image: url('media/activities/Group Photo (mobile).jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    .video-item {
+        width: 100%; /* Make video items full-width on mobile */
+    }
+    .text-container h1 {
+        font-size: 1.6rem; /* Adjust heading size for smaller screens */
+    }
+    .text-container p {
+        font-size: 1rem; /* Adjust paragraph size for smaller screens */
+    }   
+
+    .video-item h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    }
+    .video-item h3 {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+    .title-wrapper h2{
+        text-align: center; /* Center align titles on smaller screens */
+        font-size: 1.5rem; /* Smaller title size */
+        margin-bottom: 20px; /* Add some space below the title */
+        
+    }
+    .section-wrapper {
+        font-size: 1.5rem; /* Adjust section title size for smaller screens */
+        margin-bottom: 20px;
+        text-align: center; /* Center the section title */
+    }   
+}

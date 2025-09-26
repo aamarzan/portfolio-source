@@ -1,0 +1,213 @@
+/* --- STYLES FOR ACADEMICS PAGE --- */
+/* Section 1: Cover Photo */
+.academics-cover {
+    /* CORRECTED: This makes the height exactly 50% of the browser window's height */
+    height: 45vh;
+    width:auto; 
+    background-image: url('media/academics/cover (cropped).jpg'); /* Cover image path */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 50px;
+    color: var(--dark-color);
+}
+
+/* Timeline Container */
+.timeline {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* The vertical line */
+.timeline::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    background-color: #e0e0e0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    margin-left: -1.5px;
+}
+
+/* Timeline Item */
+.timeline-item {
+    padding: 10px 40px;
+    position: relative;
+    background-color: inherit;
+    width: 50%;
+}
+
+/* Left-side items */
+.timeline-item:nth-child(odd) {
+    left: 0;
+}
+
+/* Right-side items */
+.timeline-item:nth-child(even) {
+    left: 50%;
+}
+
+/* The circles on the timeline */
+.timeline-icon {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    right: -25px;
+    background-color: var(--button-default-blue);
+    color: white;
+    top: 15px;
+    border-radius: 50%;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+}
+
+.timeline-item:nth-child(even) .timeline-icon {
+    left: -25px;
+}
+
+/* Content Box */
+.timeline-content {
+    padding: 20px 30px;
+    background-color: var(--light-color);
+    position: relative;
+    border-radius: 6px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+.timeline-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: var(--dark-color);
+}
+
+.timeline-content p {
+    margin-bottom: 5px;
+    line-height: 1.6;
+}
+
+.timeline-content .btn {
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+    width: 250px; /* A fixed width that looks good in the timeline */
+    max-width: 100%;
+    /* New button style */
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 2px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.timeline-content .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+/* Buttons Section (reusing about.css styles) */
+.button-section {
+    text-align: center;
+}
+
+.button-group {
+    margin-bottom: 40px;
+}
+
+.button-group h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+}
+
+.button-group .btn {
+    display: block;
+    margin: 0 auto 15px auto;
+    text-align: center;
+    /* CORRECTED: Fixed width and new style */
+    width: 380px; /* Approximately 10cm */
+    max-width: 100%; /* Ensures it shrinks nicely on smaller screens */
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 1px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button-group .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+/* Style for the active submenu item */
+.submenu .active-submenu {
+    color: #a8cfff;
+}
+
+/* Responsive adjustments for the Academics page */
+@media (max-width: 768px) {
+    .timeline::after {
+        left: 31px;
+    }
+    .timeline-item {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 25px;
+    }
+    .timeline-item:nth-child(odd),
+    .timeline-item:nth-child(even) {
+        left: 0;
+    }
+    .timeline-icon {
+        left: 6px;
+    }
+
+    .academics-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/academics/cover.jpg');
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll;
+    }
+    
+    .academics-container {
+        max-width: 90%;
+    }
+
+    .academics-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .academics-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        text-align: center;
+        margin-bottom: 50px;
+        color: var(--dark-color);
+    }
+    .button-group h3 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        color: var(--dark-color);
+    }
+    .timeline-content h2 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: var(--dark-color);
+    }
+}

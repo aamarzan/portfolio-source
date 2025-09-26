@@ -1,0 +1,121 @@
+/* --- STYLES FOR GRANTS & ACHIEVEMENTS PAGE --- */
+
+.grants-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.grants-section h1, .achievements-section h1 {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.achievements-section {
+    margin-top: 60px;
+}
+
+/* Grant Item Styling */
+.grant-item {
+    background-color: var(--light-color);
+    border-left: 4px solid var(--button-default-blue);
+    padding: 20px 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    border-radius: 0 5px 5px 0;
+}
+
+.grant-item h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--dark-color);
+}
+
+.grant-item h3 span {
+    color: var(--button-default-blue);
+    margin-right: 10px;
+}
+
+.grant-item p {
+    margin-bottom: 8px;
+    font-size: 1.05rem;
+}
+
+/* Achievements Section Styling */
+.achievements-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    text-align: justify;
+    margin-bottom: 1.5em;
+}
+
+.achievements-section ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 30px 0;
+}
+
+.achievements-section ul li {
+    padding-left: 25px;
+    position: relative;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.achievements-section ul li::before {
+    content: '\f138'; /* Font Awesome arrow circle right icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 5px;
+    color: var(--button-default-blue);
+}
+
+/* Button Section */
+.button-section {
+    text-align: center;
+}
+.button-group h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+}
+.button-group .btn {
+    display: inline-block;
+    margin: 10px;
+}
+
+/* Active Menu Style */
+.submenu .active-submenu {
+    color: #a8cfff;
+}
+
+@media (max-width: 768px) {
+    .grants-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/goal/cover.jpg');
+        height: 50vh; /* Sets the height to 30% of the mobile screen */
+        background-attachment: scroll; /* Disables parallax for better mobile performance */
+    }
+    
+    .grants-container {
+        max-width: 90%;
+    }
+
+    .grants-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .grants-container h2 {
+        font-size: 1.5rem;
+    }
+    
+    .grant-item h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: var(--dark-color);
+    }
+}

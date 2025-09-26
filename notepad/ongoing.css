@@ -1,0 +1,307 @@
+/* Full-screen video section for desktop */
+
+.video-section {
+    position: relative;
+    width: 70vw; /* Fixed width to 70% of the viewport width */
+    height: 80vh; /* Fixed height to 80% of the viewport height */
+    overflow: hidden;
+    margin: 0 auto 20px auto; /* Centers the video horizontally */
+}
+
+.video-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centers the video element both horizontally and vertically */
+    width: 100%;
+    height: 100%;
+}
+
+.video-container iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* === Ongoing Page Specific Styles === */
+
+.ongoing-intro h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.ongoing-intro p {
+    text-align: justify;
+    max-width: 1000px;
+    margin: 0 auto 15px auto;
+}
+
+
+
+.project-section .animated-title a {
+    font-size: 2rem; /* Updated desktop font size */
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-top: 40px;
+    margin-bottom: 25px;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    padding-bottom: 5px;
+    transition: color 0.25s ease-out;
+}
+
+.project-section .animated-title a:hover {
+    color: var(--button-default-blue);
+}
+
+.project-section .animated-title a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    background-color: var(--button-default-blue);
+    bottom: 0;
+    left: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease-out;
+}
+
+.project-section .animated-title a:hover::after {
+    transform: scaleX(1);
+}
+
+.project-details {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.project-details p, .project-details ul {
+    margin-bottom: 15px;
+    text-align: justify;
+}
+
+.project-details ul {
+    display: inline-block;
+    text-align: left;
+    margin-left: 20px;
+    list-style-type: disc;
+}
+
+.project-details ul li {
+    margin-bottom: 5px;
+}
+
+.image-container {
+    position: relative;
+    width: 100%;
+    margin: 0 auto 25px auto;
+    overflow: hidden;
+    border-radius: 1px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgb(255, 255, 255);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.image-container:hover {
+    transform: scale(1.08);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.project-image {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+}
+
+/* Image Modal (Pop-up) Styles */
+.image-modal-open {
+    overflow: hidden;
+}
+
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.image-modal img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 5px;
+}
+
+.image-modal .modal-text {
+    margin-top: 15px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-bottom: 1px solid white;
+    padding-bottom: 2px;
+}
+
+.image-modal .modal-text:hover {
+    color: #ccc;
+    border-color: #ccc;
+}
+
+.image-modal .close-button {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.gray-bg {
+    background-color: #f9f9f9;
+}
+
+.active-submenu {
+    color: #a8cfff !important;
+}
+
+.button-section {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.button-group {
+    max-width: 500px; /* Adjust this value to make the box wider or narrower */
+    margin: 0 auto;   /* This centers the box on the page */
+}
+
+.button-group h3 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.button-group .btn {
+    display: block;
+    margin: 0 auto 15px auto;
+    text-align: center;
+    width: 380px; 
+    max-width: 100%;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 1px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button-group .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+/* === Mobile-specific styles using a Media Query === */
+@media (max-width: 768px) {
+    
+    /* Video sizing for mobile */
+    .video-section {
+        width: 100%; /* Take up full width of the screen */
+        height: 0; /* Reset height for padding trick */
+        padding-top: 56.25%; /* 16:9 aspect ratio (9 / 16 = 0.5625) */
+        margin: 0;
+    }
+
+    .video-container {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: none; /* Remove centering transform */
+    }
+
+    /* Images sizing for mobile */
+    .project-image {
+        width: 90%; /* Images take up 90% of screen width */
+        margin: 20px auto;
+    }
+
+    /* --- RESPONSIVE STYLES FOR INTERESTS PAGE --- */
+    .ongoing-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/interests/cover.jpg');
+        height: 30vh; /* Sets the height to 30% of the mobile screen */
+        background-attachment: scroll; /* Disables parallax for better mobile performance */
+    }
+    
+    .ongoing-container {
+        max-width: 90%;
+    }
+
+    .ongoing-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .ongoing-container h2 {
+        font-size: 1.5rem;
+    }
+    .ongoing-intro h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    }
+    .project-section .animated-title a {
+    font-size: 1.25rem; /* Optimized font size for mobile */
+    }
+    .button-group {
+        width: 90%; /* Makes the button group container 90% of the full width */
+    }
+    .button-group h3 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        color: #444;
+    }
+}
+
+/* --- NEW: Controller for Video Spacing --- */
+
+/* This rule specifically targets the title above your video on this page */
+.video-wrapper-container .section-title {
+    margin-bottom: 20px; /* The default is 50px. Adjust this value to increase or decrease the gap. */
+}
+
+/* --- NEW: Video Title Styling --- */
+
+/* This rule centers the title and makes it bold */
+.video-wrapper-container .section-title {
+    text-align: center;
+    font-weight: 700; /* This makes the font bold */
+    display: block; /* Ensures the text-align works correctly */
+    margin-bottom: 20px;
+}
+
+/* This keeps the underline animation centered */
+.video-wrapper-container .section-title a {
+    display: inline-block;
+}
+
+/* --- NEW: Fix for Double Underline on Video Title --- */
+
+/* This rule removes the unwanted, full-width underline */
+.video-wrapper-container .section-title::after {
+    display: none;
+}

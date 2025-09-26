@@ -1,0 +1,82 @@
+/* --- STYLES FOR THESIS PAGE --- */
+
+.thesis-container {
+    max-width: 900px; /* A good width for content */
+    text-align: center; /* Center all content */
+}
+
+.thesis-container h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.thesis-container h2 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #666;
+    margin-bottom: 40px;
+}
+
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    margin-bottom: 25px; /* Space between video and first button */
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Reusing the play button style from your main CSS */
+.video-play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: rgba(255, 0, 0, 1.00);
+    pointer-events: none;
+    transition: transform 0.3s ease, color 0.3s ease;
+    z-index: 10;
+}
+.video-wrapper:hover .video-play-button {
+    transform: translate(-50%, -50%) scale(1.1);
+    color: #000000;
+}
+
+/* Button Group Styling */
+.button-group, .button-group-secondary {
+    margin: 0 auto;
+    max-width: 500px; /* Controls the max width of the button area */
+}
+
+.button-group-secondary {
+    margin-top: 40px; /* Adds space between the two button groups */
+}
+
+
+
+@media (max-width: 768px) {
+
+    .thesis-container h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    .section-title h4 {
+        font-size: 1.2rem;
+        font-weight: 400;
+        color: #666;
+        margin-bottom: 20px;
+    }
+}

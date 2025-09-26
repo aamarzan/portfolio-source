@@ -1,0 +1,106 @@
+/* --- STYLES FOR CERTIFICATIONS PAGE --- */
+.certifications-cover {
+    height: 50vh;
+    width: auto; 
+    background-image: url('media/certification/image/cover (cropped).jpg'); /* You can change this image path later */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+.page-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 50px;
+}
+/* Skill Set Section */
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+.skill-card {
+    background-color: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.skill-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.skill-card i { font-size: 2.5rem; color: var(--button-default-blue); margin-bottom: 15px; }
+.skill-card h3 { font-size: 1.4rem; margin-bottom: 15px; }
+.skill-card ul { list-style: none; padding: 0; text-align: left; }
+.skill-card ul li { padding-left: 20px; position: relative; margin-bottom: 8px; font-size: 0.95rem; }
+.skill-card ul li::before { content: '\2022'; position: absolute; left: 0; color: var(--button-default-blue); font-weight: bold; }
+
+/* Certificate Grid Section */
+.certificate-grid {
+    display: grid;
+    /* This creates a responsive grid with 2 to 4 columns */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+.certificate-item a {
+    display: block;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.certificate-item a:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: scale(1.03);
+}
+.certificate-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Button Section */
+.button-group h3 {
+    font-size: 1.8rem;
+    margin-bottom: 30px; /* This adds space below the title */
+    color: var(--dark-color);
+}
+.button-section { text-align: center; }
+.button-group .btn { display: inline-block; margin: 10px; }
+.active-submenu { color: #a8cfff !important; }
+
+@media (max-width: 768px) {
+    .certifications-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/certification/image/cover.jpg');
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 14 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll;
+    }
+    
+    .certifications-container {
+        max-width: 90%;
+    }
+
+    .certifications-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .certifications-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+        text-align: center;
+        margin-bottom: 50px;
+    }
+    .button-group h3 {
+        font-size: 1.5rem;
+        margin-bottom: 30px; /* This adds space below the title */
+        color: var(--dark-color);
+    }
+}

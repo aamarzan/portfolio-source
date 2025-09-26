@@ -1,0 +1,238 @@
+/* === Previous Page Specific Styles === */
+.previous-cover {
+    height: 45vh;
+    width: auto; 
+    background-image: url('media/previous/cover (cropped).jpg'); /* You can change this image path later */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.previous-intro h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+
+.previous-intro p {
+    text-align: justify;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* CORRECTED #1: Title size reduced */
+.project-section .animated-title a {
+    font-size: 1.6rem; /* Updated desktop font size */
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-top: 40px;
+    margin-bottom: 25px;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    padding-bottom: 5px;
+    transition: color 0.25s ease-out;
+}
+
+.project-section .animated-title a:hover {
+    color: var(--button-default-blue);
+}
+
+.project-section .animated-title a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    background-color: var(--button-default-blue);
+    bottom: 0;
+    left: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease-out;
+}
+
+.project-section .animated-title a:hover::after {
+    transform: scaleX(1);
+}
+
+.project-details {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.project-details p, .project-details ul {
+    margin-bottom: 15px;
+    text-align: justify;
+}
+
+.project-details ul {
+    display: inline-block;
+    text-align: left;
+    margin-left: 20px;
+    list-style-type: disc;
+}
+
+.project-details ul li {
+    margin-bottom: 5px;
+}
+
+/* CORRECTED #2: Image size and hover effect */
+.image-container {
+    position: relative;
+    width: 85%; /* Updated from 60% */
+    margin: 0 auto 25px auto;
+    overflow: hidden;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.image-container:hover {
+    transform: scale(1.08);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.project-image {
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+}
+
+/* Image Modal (Pop-up) Styles */
+.image-modal-open {
+    overflow: hidden;
+}
+
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.image-modal img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 5px;
+}
+
+.image-modal .modal-text {
+    margin-top: 15px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-bottom: 1px solid white;
+    padding-bottom: 2px;
+}
+
+.image-modal .modal-text:hover {
+    color: #ccc;
+    border-color: #ccc;
+}
+
+.image-modal .close-button {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.gray-bg {
+    background-color: #f9f9f9;
+}
+
+.active-submenu {
+    color: #a8cfff !important;
+}
+
+/* Button section styles (as per your corrected CSS) */
+.button-section {
+    padding: 10px 0;
+    text-align: center;
+}
+
+.button-group {
+    max-width: 500px; /* Adjust this value to make the box wider or narrower */
+    margin: 0 auto;   /* This centers the box on the page */
+}
+
+.button-group h3 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.button-group .btn {
+    display: block;
+    margin: 0 auto 15px auto;
+    text-align: center;
+    width: 380px; 
+    max-width: 100%;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 1px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button-group .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+@media (max-width: 768px) {
+    .previous-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/previous/cover.jpg');
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll;
+    }
+    
+    .previous-container {
+        max-width: 90%;
+    }
+
+    .previous-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .previous-container h2 {
+        font-size: 1.5rem;
+    }
+    .ongoing-intro h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    }
+    .project-section .animated-title a {
+        font-size: 1.25rem; /* Optimized font size for mobile */
+    }
+    .button-group {
+    width: 90%; /* Makes the button group container use 90% of the width */
+    }
+    .button-group h3 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        color: #444;
+    }
+}
