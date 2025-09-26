@@ -1,7 +1,7 @@
 import os
 
 # === CONFIG ===
-source_folder = r"E:\1. Github\1. miRNA-RNA-Deep-Learning-Model\codes\Version 4"
+source_folder = r"E:\1. Github\3. portfolio-source\notepad\all"
 dest_folder = os.path.join(source_folder, "converted_to_notepad")
 
 # File extensions to convert
