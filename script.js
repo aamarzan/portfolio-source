@@ -258,13 +258,11 @@ animatedElements.forEach(element => {
     observer.observe(element);
 });
 
-// --- NEW: PWA Service Worker Registration ---
+// Service Worker Registration (runs once, covers all pages)
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, err => {
-            console.log('ServiceWorker registration failed: ', err);
-        });
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('ServiceWorker registered with scope:', reg.scope))
+      .catch(err => console.warn('ServiceWorker registration failed:', err));
+  });
 }
