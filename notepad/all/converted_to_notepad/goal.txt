@@ -1,0 +1,134 @@
+/* === Goal Page Specific Styles === */
+
+/* CORRECTED: Added the cover section from the interests page */
+.goal-cover {
+    height: 45vh;
+    width: auto; 
+    background-image: url('media/goal/cover (cropped).jpg'); /* You can change this image path later */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+/* Styles the active sub-page link in the dropdown menu */
+.submenu .active-submenu {
+    color: #a8cfff !important; /* Sky blue highlight */
+    font-weight: bold;
+}
+/* The main content container */
+.content-section {
+    padding: 40px 0;
+    line-height: 1.6;
+    color: #333; /* Dark gray for good readability */
+}
+
+/* Page titles */
+.page-title {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: black; /* Changed to black as requested */
+    margin-bottom: 20px;
+    margin-top: 40px; /* Added margin-top to move it down */
+    text-align: center;
+}
+
+.content-section h2 {
+    font-size: 2em;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #eee; /* Subtle separator */
+    padding-bottom: 10px;
+    text-align: center; /* Centered the Conclusion heading as requested */
+}
+
+/* Main paragraph text */
+.content-section p {
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+/* Bullet points for the list */
+.content-section ul {
+    list-style-type: disc; /* Use a standard disc for lists */
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.content-section li {
+    margin-bottom: 10px;
+}
+
+/* The buttons at the bottom */
+.button-section {
+    padding: 40px 0;
+    text-align: center;
+}
+
+.button-group {
+    max-width: 500px; /* Adjust this value to make the box wider or narrower */
+    margin: 0 auto;   /* This centers the box on the page */
+}
+
+.button-group h3 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+/* Reverted button styles to previous state */
+.button-group .btn {
+    display: block;
+    margin: 0 auto 15px auto;
+    text-align: center;
+    width: 380px; /* Approximately 10cm */
+    max-width: 100%; /* Ensures it shrinks nicely on smaller screens */
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 1px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button-group .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+@media (max-width: 768px) {
+    .goal-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/goal/cover.jpg');
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll;
+    }
+    
+    .goal-container {
+        max-width: 90%;
+    }
+
+    .goal-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .goal-container h2 {
+        font-size: 1.5rem;
+    }
+    .page-title {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: black; /* Changed to black as requested */
+        margin-bottom: 20px;
+        margin-top: 40px; /* Added margin-top to move it down */
+        text-align: center;
+    }
+
+    .content-section h2 {
+        font-size: 1.6em;
+    }
+    .button-group {
+        width: 90%; /* Makes the button group container use 90% of the width */
+    }
+}

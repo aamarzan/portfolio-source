@@ -1,0 +1,211 @@
+/* --- STYLES FOR ARTICLES PAGE --- */
+.articles-cover {
+    height: 46vh;
+    width: auto; 
+    background-image: url('media/articles/cover (cropped).jpg'); /* You can change this image path later */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.articles-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+
+.articles-container h1 {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+/* Individual Publication Entry Layout */
+.publication-entry {
+    display: flex;
+    gap: 50px;
+    padding: 55px 0;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.publication-image {
+    flex: 0 0 150px; /* Flex-grow, flex-shrink, flex-basis */
+}
+
+.publication-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    border: 5px solid var(--border-color);
+}
+
+.publication-details {
+    flex: 1;
+}
+
+.publication-details .citation {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.publication-details .citation a {
+    word-break: break-all; /* Helps long URLs wrap nicely */
+}
+
+.publication-details .metrics {
+    background-color: var(--gray-bg);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    border-left: 3px solid var(--button-default-blue);
+}
+
+.publication-details .contributions {
+    font-size: 1rem;
+    text-align: justify;
+}
+
+/* Submission & Poster Sections */
+.submission-section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.submission-section h2 {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.submission-section ol {
+    padding-left: 25px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.poster-entry {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.poster-image {
+    flex: 0 0 200px;
+}
+
+.poster-image img {
+    width: 100%;
+    border-radius: 5px;
+}
+
+.poster-details {
+    flex: 1;
+}
+
+/* Button Section */
+.button-section {
+    text-align: center;
+}
+.button-group h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+}
+.button-group .btn {
+    display: block;
+    margin: 0 auto 25px auto;
+    max-width: 500px;
+}
+
+/* Style for the active submenu item */
+.submenu .active-submenu {
+    color: #a8cfff; /* Light blue highlight */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .publication-entry, .poster-entry {
+        flex-direction: column;
+    }
+
+    .publication-image, .poster-image {
+        flex-basis: auto;
+        width: 100%; /* CORRECTED: Changed from 50% to 95% */
+        margin: 0 auto 20px auto; /* Adds a little space below the image */
+    }
+}
+
+.publication-image {
+    flex: 0 0 45%; /* Set a fixed basis of 45% of the width */
+}
+
+.publication-details {
+    flex: 1; /* Allow details to fill the remaining space */
+}
+
+.poster-image {
+    flex: 0 0 55%; /* Set a fixed basis of 45% of the width */
+}
+
+.publication-image {
+    flex: 0 0 45%;
+    border-radius: 5px; /* Apply border-radius to the container */
+    overflow: hidden; /* This is crucial to contain the zoomed image */
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.publication-image:hover {
+    transform: scale(1.05); /* Enlarge the container and image */
+    box-shadow: 0 px px rgba(0,0,0,0);
+}
+
+.publication-image img {
+    width: 100%;
+    height: auto; /* Make image fill the container */
+    object-fit: cover; /* Ensure image covers the area without distortion */
+    display: block; /* Removes any extra space below the image */
+}
+
+.poster-image {
+    flex: 0 0 55%;
+    border-radius: 5px; /* Apply border-radius to the container */
+    overflow: hidden; /* Contain the zoomed image */
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.poster-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.poster-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+    .articles-cover {
+        /* CORRECTED: This sets the new background image specifically for mobile */
+        background-image: url('media/articles/cover.jpg');
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll;
+    }
+    
+    .articles-container {
+        max-width: 90%;
+    }
+
+    .articles-container h1 {
+        font-size: 1.6rem;
+    }
+
+    .articles-container h2 {
+        font-size: 1.5rem;
+    }
+}

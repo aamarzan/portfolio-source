@@ -1,0 +1,103 @@
+/* --- STYLES FOR ABOUT ME PAGE --- */
+
+/* CORRECTED #1: Cover Photo */
+.about-cover {
+    height: calc(100vh - 2cm); /* Full screen height minus the header */
+    background-image: url('media/home/About Me.jpg');
+    background-size: cover;
+    background-position: center 30%; /* Adjust vertical position if needed */
+    background-attachment: fixed;
+}
+
+/* CORRECTED #2: Main Text Content Layout */
+.about-container {
+    max-width: 80%; /* Leaves 10% margin on each side */
+    margin-left: auto;
+    margin-right: auto;
+    text-align: justify;
+}
+
+.about-container h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.about-container p {
+    margin-bottom: 1.5em;
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+/* CORRECTED #4, #5, #6: Button Section */
+.button-section {
+    text-align: center;
+}
+
+.button-group {
+    margin-bottom: 40px;
+}
+
+.button-group h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+}
+
+.button-group .btn {
+    display: block;
+    margin: 0 auto 15px auto;
+    text-align: center;
+    /* CORRECTED: Fixed width and new style */
+    width: 380px; /* Approximately 10cm */
+    max-width: 100%; /* Ensures it shrinks nicely on smaller screens */
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    border: 1px solid var(--dark-color);
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button-group .btn:hover {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+}
+
+/* Style for the active submenu item */
+.submenu .active-submenu {
+    color: #a8cfff; /* Light blue highlight */
+}
+
+/* --- RESPONSIVE STYLES FOR ABOUT PAGE --- */
+@media (max-width: 768px) {
+    /* CORRECTED: This now applies to all mobile devices */
+    .about-cover {
+        height: auto; /* Let the aspect ratio control the height */
+        aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
+        background-attachment: scroll; /* Parallax is disabled on mobile for performance */
+    }
+
+    .about-me-content {
+        flex-direction: column;
+    }
+    
+    .about-image {
+        position: static;
+        margin-bottom: 30px;
+    }
+
+    
+    .about-container {
+        max-width: 90%;
+    }
+
+    .about-container h1 {
+        font-size: 1.6rem;
+    }
+    .button-group h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+    }
+}
