@@ -6,7 +6,7 @@ const CACHE_NAME = 'marzan-portfolio-' + CACHE_VERSION;
 
 // 2) Precache critical assets (include versioned URLs if you use ?v=)
 const PRECACHE_URLS = [
-  '/', '/index.html',
+  '/',
   '/style.css', '/style.css?v=1',
   '/script.js', '/script.js?v=1',
   '/media/home/Logo.png', '/media/home/Logo.png?v=1'
