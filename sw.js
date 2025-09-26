@@ -6,11 +6,10 @@ const CACHE_NAME = 'marzan-portfolio-' + CACHE_VERSION;
 
 // 2) Precache critical assets (include versioned URLs if you use ?v=)
 const PRECACHE_URLS = [
-  '/',
-  '/style.css', '/style.css?v=1',
-  '/script.js', '/script.js?v=1',
-  '/media/home/Logo.png', '/media/home/Logo.png?v=1'
+  '/', '/index.html',
+  '/style.css', '/script.js', '/media/home/Logo.png'
 ];
+
 
 
 // 3) Only handle same-origin GET requests
