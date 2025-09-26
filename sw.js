@@ -6,13 +6,12 @@ const CACHE_NAME = 'marzan-portfolio-' + CACHE_VERSION;
 
 // 2) Precache critical assets (include versioned URLs if you use ?v=)
 const PRECACHE_URLS = [
-  '/',                 // HTML entry
-  '/index.html',       // explicit index
-  '/style.css?v=1',    // versioned CSS
-  '/script.js?v=1',    // versioned JS
-  '/media/home/Logo.png?v=1' // key image
-  // Add other critical assets here, with ?v=... if you cache-bust them
+  '/', '/index.html',
+  '/style.css', '/style.css?v=1',
+  '/script.js', '/script.js?v=1',
+  '/media/home/Logo.png', '/media/home/Logo.png?v=1'
 ];
+
 
 // 3) Only handle same-origin GET requests
 function isSameOrigin(request) {
