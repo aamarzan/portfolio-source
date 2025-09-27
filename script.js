@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { image: 'media/home/slider/Bacterial Culture.jpg?v=1', caption: 'Bacterial Culture' },
         { image: 'media/home/slider/Antimicrobial Resistance.jpg?v=1', caption: 'Antimicrobial Resistance Analysis' }, 
         { image: 'media/home/slider/Elisa.jpg?v=1', caption: 'ELISA Assay' },
-        { image: 'media/home/slider/Poster Presentation of Abdullah Al Marzan.jpg?v=1', caption: 'Poster Presentation' },
+        { image: 'media/home/slider/Poster Presentation of Abdullah Al Marzan.jpg?v=2', caption: 'Poster Presentation' },
         /*{ image: 'media/home/slider/Wild Protein.jpg', caption: 'Wild Protein Analysis' },*/
         /*{ image: 'media/home/slider/Mutant Protein.jpg', caption: 'Mutant Protein Analysis' },*/
         /*{ image: 'media/home/slider/Python Plot.jpg', caption: 'Data Analysis with Python' },*/
