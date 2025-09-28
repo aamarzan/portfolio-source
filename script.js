@@ -234,7 +234,7 @@ window.addEventListener('load', () => {
             
             // Step 3: Set a flag to remember the animation has played
             sessionStorage.setItem('animationPlayed', 'true');
-        }, 8000); // 8000ms = 8 seconds
+        }, 4000); // 8000ms = 8 seconds
     } else {
         body.classList.add('loaded');
     }
