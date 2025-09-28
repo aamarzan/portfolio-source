@@ -3,26 +3,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- HERO IMAGE SLIDER (Your working code) ---
     const sliderData = [
         { image: 'media/home/slider/Research Activities.jpg?v=2', caption: 'Research Activities' },
-        { image: 'media/home/slider/Lab Activities of Abdullah Al Marzan.jpg?v=1', caption: 'Gel Electrophoresis' },
-        { image: 'media/home/slider/Research Activites of Marzan.jpg?v=1', caption: 'Blood Culture Media preparation' },
+        { image: 'media/home/slider/Lab Activities of Abdullah Al Marzan.jpg?v=2', caption: 'Gel Electrophoresis' },
+        { image: 'media/home/slider/Research Activites of Marzan.jpg?v=2', caption: 'Blood Culture Media preparation' },
         /*{ image: 'media/home/slider/Research Activities of Abdullah Al Marzan.jpg', caption: 'Bacterial Streaking' },*/
-        { image: 'media/home/slider/Bacterial growth in Blood Agar Media.jpg?v=1', caption: 'Bacterial Growth in Blood Agar Media' },
+        { image: 'media/home/slider/Bacterial growth in Blood Agar Media.jpg?v=2', caption: 'Bacterial Growth in Blood Agar Media' },
         /*{ image: 'media/home/slider/Bacterial Stain Under Microscope.jpg', caption: 'Bacterial Stain Under Microscope' },*/
-        { image: 'media/home/slider/Bacterial Stain 2.jpg?v=1', caption: 'Bacterial Staining' },
-        { image: 'media/home/slider/Bacterial Stain 3.jpg?v=1', caption: 'Bacterial Staining' },
+        { image: 'media/home/slider/Bacterial Stain 2.jpg?v=2', caption: 'Bacterial Staining' },
+        { image: 'media/home/slider/Bacterial Stain 3.jpg?v=2', caption: 'Bacterial Staining' },
         /*{ image: 'media/home/slider/Bacterial Stain 4.jpg', caption: 'Bacterial Staining' },*/
-        { image: 'media/home/slider/Bacterial Growth in Petri Dish.jpg?v=1', caption: 'Bacterial Growth in Petri Dish' },
+        { image: 'media/home/slider/Bacterial Growth in Petri Dish.jpg?v=2', caption: 'Bacterial Growth in Petri Dish' },
         /*{ image: 'media/home/slider/Anaerobic Culture.jpg', caption: 'Anaerobic Culture' },*/
-        { image: 'media/home/slider/Bacterial Culture.jpg?v=1', caption: 'Bacterial Culture' },
-        { image: 'media/home/slider/Antimicrobial Resistance.jpg?v=1', caption: 'Antimicrobial Resistance Analysis' }, 
-        { image: 'media/home/slider/Elisa.jpg?v=1', caption: 'ELISA Assay' },
+        { image: 'media/home/slider/Bacterial Culture.jpg?v=2', caption: 'Bacterial Culture' },
+        { image: 'media/home/slider/Antimicrobial Resistance.jpg?v=2', caption: 'Antimicrobial Resistance Analysis' }, 
+        { image: 'media/home/slider/Elisa.jpg?v=2', caption: 'ELISA Assay' },
         { image: 'media/home/slider/Poster Presentation of Abdullah Al Marzan.jpg?v=2', caption: 'Poster Presentation' },
         /*{ image: 'media/home/slider/Wild Protein.jpg', caption: 'Wild Protein Analysis' },*/
         /*{ image: 'media/home/slider/Mutant Protein.jpg', caption: 'Mutant Protein Analysis' },*/
         /*{ image: 'media/home/slider/Python Plot.jpg', caption: 'Data Analysis with Python' },*/
         /*{ image: 'media/home/slider/Leminar Airflow.jpg', caption: 'Laminar Airflow Hood' },*/
-        { image: 'media/home/slider/Biochemical Assay.jpg?v=1', caption: 'Biochemical Assay' }
-        /*{ image: 'media/home/slider/Research Activities of Abdullah Al Marzan..jpg?v=1', caption: 'Research Interests' },*/
+        { image: 'media/home/slider/Biochemical Assay.jpg?v=2', caption: 'Biochemical Assay' }
+        /*{ image: 'media/home/slider/Research Activities of Abdullah Al Marzan..jpg?v=2', caption: 'Research Interests' },*/
         /*{ image: 'media/home/slider/Weekly Meeting.jpg', caption: 'Research Webinar' },*/
         /*{ image: 'media/home/slider/Research Meeting with University team.jpg', caption: 'Research Meeting with University Team' }*/
     ];
