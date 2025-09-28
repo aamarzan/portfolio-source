@@ -2,7 +2,7 @@
 .previous-cover {
     height: 45vh;
     width: auto; 
-    background-image: url('media/previous/cover (cropped).jpg'); /* You can change this image path later */
+    background-image: url('media/previous/cover (cropped).jpg?v=2'); /* You can change this image path later */
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -201,7 +201,7 @@
 @media (max-width: 768px) {
     .previous-cover {
         /* CORRECTED: This sets the new background image specifically for mobile */
-        background-image: url('media/previous/cover.jpg');
+        background-image: url('media/previous/cover.jpg?v=2');
         height: auto; /* Let the aspect ratio control the height */
         aspect-ratio: 16 / 9; /* Sets the exact 16:9 ratio */
         background-attachment: scroll;
