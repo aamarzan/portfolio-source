@@ -771,7 +771,7 @@ body.is-resizing .main-nav {
 
 /* Specific styles for each item */
 #anim-welcome { font-size: 3.5rem; }
-#anim-favicon img { width: 200px; }
+#anim-favicon img { width: 500px; }
 #anim-name { font-size: 3.5rem; }
 /*#anim-explore { font-size: 3.2rem; letter-spacing: 3px; text-transform: uppercase; }*/
 
@@ -786,7 +786,7 @@ body.is-resizing .main-nav {
     } */
 
     #anim-welcome { font-size: 2rem; }
-    #anim-favicon img { width: 150px; }
+    #anim-favicon img { width: 300px; }
     #anim-name { font-size: 1.9rem; }
     #anim-explore { font-size: 1.8rem; letter-spacing: 2px; }
 }
