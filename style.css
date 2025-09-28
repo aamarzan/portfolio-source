@@ -796,7 +796,7 @@ body.is-resizing .main-nav {
     animation: fadeInOut 2.5s ease-in-out forwards;
 }
 #preloader.start-animation #anim-favicon {
-    animation: fadeInOut 2.5s ease-in-out 2.5s forwards; /* Starts after 2.5s */
+    animation: fadeInOut 2.5s ease-in-out 3s forwards; /* Starts after 2.5s */
 }
 /*#preloader.start-animation #anim-name {
     animation: fadeInOut 2.5s ease-in-out 5s forwards;
