@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         /*{ image: 'media/home/slider/Python Plot.jpg', caption: 'Data Analysis with Python' },*/
         /*{ image: 'media/home/slider/Leminar Airflow.jpg', caption: 'Laminar Airflow Hood' },*/
         { image: 'media/home/slider/Biochemical Assay.jpg?v=1', caption: 'Biochemical Assay' },
-        { image: 'media/home/slider/Research Activities.jpg?v=1', caption: 'Research Activities' }
+        { image: 'media/home/slider/Research Activities.jpg?v=2', caption: 'Research Activities' }
         /*{ image: 'media/home/slider/Research Activities of Abdullah Al Marzan..jpg?v=1', caption: 'Research Interests' },*/
         /*{ image: 'media/home/slider/Weekly Meeting.jpg', caption: 'Research Webinar' },*/
         /*{ image: 'media/home/slider/Research Meeting with University team.jpg', caption: 'Research Meeting with University Team' }*/
