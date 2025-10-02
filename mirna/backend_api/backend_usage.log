@@ -17564,3 +17564,16 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-09-29 19:35:15,970 | INFO | 127.0.0.1 - - [29/Sep/2025 19:35:15] "GET /config HTTP/1.1" 200 -
 2025-09-29 20:02:53,342 | INFO | 127.0.0.1 - - [29/Sep/2025 20:02:53] "GET /config HTTP/1.1" 200 -
 2025-09-30 05:22:35,167 | INFO | 127.0.0.1 - - [30/Sep/2025 05:22:35] "GET /config HTTP/1.1" 200 -
+2025-10-02 18:31:56,690 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-02 18:31:58,024 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-10-02 18:31:58,024 | INFO | [33mPress CTRL+C to quit[0m
+2025-10-02 18:31:58,031 | INFO |  * Restarting with stat
+2025-10-02 18:32:20,252 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-02 18:32:21,695 | WARNING |  * Debugger is active!
+2025-10-02 18:32:21,718 | INFO |  * Debugger PIN: 692-176-046
+2025-10-02 18:55:26,036 | INFO | 127.0.0.1 - - [02/Oct/2025 18:55:26] "GET /config HTTP/1.1" 200 -
