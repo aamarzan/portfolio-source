@@ -17672,3 +17672,4 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 
 2025-10-05 16:53:12,042 | WARNING |  * Debugger is active!
 2025-10-05 16:53:12,050 | INFO |  * Debugger PIN: 993-970-907
+2025-10-06 21:46:15,114 | INFO | 127.0.0.1 - - [06/Oct/2025 21:46:15] "GET /config HTTP/1.1" 200 -
