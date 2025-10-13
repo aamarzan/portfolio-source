@@ -17691,3 +17691,93 @@ Traceback (most recent call last):
 werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
 2025-10-07 14:41:22,362 | INFO | 127.0.0.1 - - [07/Oct/2025 14:41:22] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
 2025-10-07 14:41:23,104 | INFO | 127.0.0.1 - - [07/Oct/2025 14:41:23] "GET /config HTTP/1.1" 200 -
+2025-10-08 18:13:51,197 | INFO | 127.0.0.1 - - [08/Oct/2025 18:13:51] "GET /config HTTP/1.1" 200 -
+2025-10-08 22:18:02,478 | INFO | 127.0.0.1 - - [08/Oct/2025 22:18:02] "GET /config HTTP/1.1" 200 -
+2025-10-08 22:58:23,249 | INFO | 127.0.0.1 - - [08/Oct/2025 22:58:23] "GET /config HTTP/1.1" 200 -
+2025-10-09 03:04:58,158 | INFO | 127.0.0.1 - - [09/Oct/2025 03:04:58] "GET /config HTTP/1.1" 200 -
+2025-10-09 03:07:25,202 | INFO | 127.0.0.1 - - [09/Oct/2025 03:07:25] "GET /config HTTP/1.1" 200 -
+2025-10-09 16:48:03,993 | INFO | 127.0.0.1 - - [09/Oct/2025 16:48:03] "GET /config HTTP/1.1" 200 -
+2025-10-09 16:48:18,136 | INFO | 127.0.0.1 - - [09/Oct/2025 16:48:18] "GET /config HTTP/1.1" 200 -
+2025-10-09 22:53:53,830 | INFO | 127.0.0.1 - - [09/Oct/2025 22:53:53] "GET /config HTTP/1.1" 200 -
+2025-10-09 22:54:18,093 | INFO | 127.0.0.1 - - [09/Oct/2025 22:54:18] "GET /config HTTP/1.1" 200 -
+2025-10-10 16:12:36,529 | INFO | 127.0.0.1 - - [10/Oct/2025 16:12:36] "GET /config HTTP/1.1" 200 -
+2025-10-10 16:13:56,924 | INFO | 127.0.0.1 - - [10/Oct/2025 16:13:56] "GET /nonce HTTP/1.1" 200 -
+2025-10-10 16:13:57,404 | INFO | 127.0.0.1 - - [10/Oct/2025 16:13:57] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-10 16:14:00,758 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:00] "POST /predict HTTP/1.1" 200 -
+2025-10-10 16:14:01,212 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:01] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:04,606 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:04] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:05,093 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:05] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:05,494 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:05] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:06,499 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:06] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:07,710 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:07] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:09,453 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:09] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:10,385 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:10] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:11,295 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:11] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:12,796 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:12] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:13,767 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:13] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:14,988 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:14] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:16,190 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:16] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:17,412 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:17] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:18,557 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:18] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:19,823 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:19] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:21,006 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:21] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:22,204 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:22] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:23,434 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:23] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:24,636 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:24] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:25,875 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:25] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:27,618 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:27] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:28,252 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:28] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:29,583 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:29] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:30,662 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:30] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:31,944 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:31] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:33,155 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:33] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:34,360 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:34] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:35,524 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:35] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:36,738 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:36] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:37,951 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:37] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:39,160 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:39] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:40,386 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:40] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:41,904 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:41] "GET /progress/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:14:41,908 | INFO | 127.0.0.1 - - [10/Oct/2025 16:14:41] "GET /download/cd6ab9c0-a149-4c0e-86ab-61b22aa7b319 HTTP/1.1" 200 -
+2025-10-10 16:23:40,224 | INFO | 127.0.0.1 - - [10/Oct/2025 16:23:40] "GET /nonce HTTP/1.1" 200 -
+2025-10-10 16:23:40,252 | INFO | 127.0.0.1 - - [10/Oct/2025 16:23:40] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-10 16:23:40,648 | INFO | 127.0.0.1 - - [10/Oct/2025 16:23:40] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-10-10 16:25:39,603 | INFO | 127.0.0.1 - - [10/Oct/2025 16:25:39] "GET /config HTTP/1.1" 200 -
+2025-10-10 16:27:10,767 | INFO | 127.0.0.1 - - [10/Oct/2025 16:27:10] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-10 16:27:10,825 | INFO | 127.0.0.1 - - [10/Oct/2025 16:27:10] "GET /nonce HTTP/1.1" 200 -
+2025-10-10 16:27:11,099 | INFO | 127.0.0.1 - - [10/Oct/2025 16:27:11] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-10-10 21:05:54,500 | INFO | 127.0.0.1 - - [10/Oct/2025 21:05:54] "GET /config HTTP/1.1" 200 -
+2025-10-10 22:05:44,076 | INFO | 127.0.0.1 - - [10/Oct/2025 22:05:44] "GET /config HTTP/1.1" 200 -
+2025-10-11 01:30:10,381 | INFO | 127.0.0.1 - - [11/Oct/2025 01:30:10] "GET /config HTTP/1.1" 200 -
+2025-10-11 13:18:47,464 | INFO | 127.0.0.1 - - [11/Oct/2025 13:18:47] "GET /config HTTP/1.1" 200 -
+2025-10-11 15:45:56,465 | INFO | 127.0.0.1 - - [11/Oct/2025 15:45:56] "GET /config HTTP/1.1" 200 -
+2025-10-11 22:21:39,772 | ERROR | CID e8cae6ed | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-10-11 22:21:39,876 | INFO | 127.0.0.1 - - [11/Oct/2025 22:21:39] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
+2025-10-11 22:21:41,388 | INFO | 127.0.0.1 - - [11/Oct/2025 22:21:41] "GET /config HTTP/1.1" 200 -
+2025-10-12 16:27:08,675 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-12 16:27:09,447 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-10-12 16:27:09,447 | INFO | [33mPress CTRL+C to quit[0m
+2025-10-12 16:27:09,451 | INFO |  * Restarting with stat
+2025-10-12 16:27:19,578 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-12 16:27:20,190 | WARNING |  * Debugger is active!
+2025-10-12 16:27:20,202 | INFO |  * Debugger PIN: 993-970-907
