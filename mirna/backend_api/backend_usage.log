@@ -17809,3 +17809,45 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-10-21 23:52:40,876 | INFO | 127.0.0.1 - - [21/Oct/2025 23:52:40] "GET /config HTTP/1.1" 200 -
 2025-10-22 12:38:37,897 | INFO | 127.0.0.1 - - [22/Oct/2025 12:38:37] "GET /config HTTP/1.1" 200 -
 2025-10-22 12:39:47,777 | INFO | 127.0.0.1 - - [22/Oct/2025 12:39:47] "GET /config HTTP/1.1" 200 -
+2025-10-23 15:03:23,410 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-23 15:03:24,063 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.5.0.2:8080
+2025-10-23 15:03:24,063 | INFO | [33mPress CTRL+C to quit[0m
+2025-10-23 15:03:24,068 | INFO |  * Restarting with stat
+2025-10-23 15:03:32,193 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-10-23 15:03:32,511 | WARNING |  * Debugger is active!
+2025-10-23 15:03:32,517 | INFO |  * Debugger PIN: 832-483-939
+2025-10-23 18:15:36,471 | ERROR | CID a7966b58 | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-10-23 18:15:36,906 | INFO | 127.0.0.1 - - [23/Oct/2025 18:15:36] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
+2025-10-23 18:15:37,507 | INFO | 127.0.0.1 - - [23/Oct/2025 18:15:37] "GET /config HTTP/1.1" 200 -
+2025-10-23 21:18:26,371 | INFO | 127.0.0.1 - - [23/Oct/2025 21:18:26] "GET /config HTTP/1.1" 200 -
+2025-10-23 21:19:03,659 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:03] "GET /nonce HTTP/1.1" 200 -
+2025-10-23 21:19:04,449 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:04] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-23 21:19:06,654 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:06] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-10-23 21:19:18,359 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:18] "GET /nonce HTTP/1.1" 200 -
+2025-10-23 21:19:18,384 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:18] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-23 21:19:19,582 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:19] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-10-23 21:19:46,317 | INFO | 127.0.0.1 - - [23/Oct/2025 21:19:46] "GET /config HTTP/1.1" 200 -
+2025-10-23 21:20:08,604 | INFO | 127.0.0.1 - - [23/Oct/2025 21:20:08] "OPTIONS /predict HTTP/1.1" 200 -
+2025-10-23 21:20:08,806 | INFO | 127.0.0.1 - - [23/Oct/2025 21:20:08] "GET /nonce HTTP/1.1" 200 -
+2025-10-23 21:20:09,043 | INFO | 127.0.0.1 - - [23/Oct/2025 21:20:09] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-10-23 21:20:16,005 | INFO | 127.0.0.1 - - [23/Oct/2025 21:20:16] "GET /config HTTP/1.1" 200 -
