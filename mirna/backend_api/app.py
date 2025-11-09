@@ -91,7 +91,7 @@ CORS(app, origins=[
   "https://mirna.aamarzan.com",
   "http://localhost",
   "http://127.0.0.1"
-], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce"])
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce", "X-API-Key"])
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):

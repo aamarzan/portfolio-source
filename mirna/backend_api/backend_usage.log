@@ -27932,3 +27932,16 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-10 02:48:16,830 | INFO |  * Debugger PIN: 110-266-754
 2025-11-10 02:52:56,733 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
 2025-11-10 02:53:02,002 | INFO |  * Restarting with stat
+2025-11-10 02:53:28,924 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 02:53:29,717 | WARNING |  * Debugger is active!
+2025-11-10 02:53:29,725 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 02:55:05,824 | INFO | 127.0.0.1 - - [10/Nov/2025 02:55:05] "GET /config HTTP/1.1" 200 -
+2025-11-10 02:57:14,192 | INFO | 127.0.0.1 - - [10/Nov/2025 02:57:14] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:02:04,523 | INFO | 127.0.0.1 - - [10/Nov/2025 03:02:04] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:03:26,407 | INFO | 127.0.0.1 - - [10/Nov/2025 03:03:26] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:03:53,374 | INFO | 127.0.0.1 - - [10/Nov/2025 03:03:53] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:04:56,108 | INFO | 127.0.0.1 - - [10/Nov/2025 03:04:56] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:06:30,781 | INFO | 127.0.0.1 - - [10/Nov/2025 03:06:30] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:06:50,963 | INFO | 127.0.0.1 - - [10/Nov/2025 03:06:50] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:07:44,916 | INFO | 127.0.0.1 - - [10/Nov/2025 03:07:44] "GET /config HTTP/1.1" 200 -
