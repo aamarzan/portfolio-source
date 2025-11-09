@@ -693,56 +693,38 @@ function displayResults(results) {
 function downloadCSV() {
   if (predictionResults.length === 0) return;
 
-  const hasTargetCol = predictionResults.some(r =>
-    r.target_id || r.target || r.target_molecule_id || r.target_name
-  );
-  const hasCompCol = predictionResults.some(r =>
-    r.competitor_id || r.competitor || r.competitor_molecule_id || r.competitor_name
-  );
+  const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
+  const csvRows = [headers];
 
-  const baseHeaders = ['Primary_Molecule_ID'];
-  if (hasTargetCol) baseHeaders.push('Target_ID');
-  if (hasCompCol)   baseHeaders.push('Competitor_ID');
-  baseHeaders.push(
-    'Predicted_Affinity_Baseline',
-    'Predicted_Affinity_With_Competitor',
-    'Competitive_Effect'
-  );
-
-  const csvRows = [baseHeaders.join(',')];
-
+  // Sort by baseline before export to match UI
   const sorted = [...predictionResults].sort((a, b) =>
-    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) -
-    safeParseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0, 0)
+    safeParseFloat(b["predicted_affinity_baseline"] ?? b.baseline_score ?? 0, 0) -
+    safeParseFloat(a["predicted_affinity_baseline"] ?? a.baseline_score ?? 0, 0)
   );
-
-  const safeCSV = (s) => {
-    const str = String(s ?? '');
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-  };
 
   sorted.forEach(item => {
-    const id       = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const tgt      = item.target_id ?? item.target ?? item.target_molecule_id ?? item.target_name ?? '';
-    const comp     = item.competitor_id ?? item.competitor ?? item.competitor_molecule_id ?? item.competitor_name ?? '';
+    const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
     const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
     const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-    const compEff  = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+    const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
 
-    const cols = [safeCSV(id)];
-    if (hasTargetCol) cols.push(safeCSV(tgt));
-    if (hasCompCol)   cols.push(safeCSV(comp));
-    cols.push(safeCSV(baseline), safeCSV(withComp), safeCSV(compEff));
-
-    csvRows.push(cols.join(','));
+    // Escape commas and quotes
+    const safeCSV = (s) => {
+      const str = String(s ?? '');
+      if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    csvRows.push([safeCSV(id), safeCSV(baseline), safeCSV(withComp), safeCSV(compEffect)].join(','));
   });
 
   const csvString = csvRows.join('\n');
   const blob = new Blob([csvString], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'prediction_results.csv';
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'prediction_results.csv');
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
