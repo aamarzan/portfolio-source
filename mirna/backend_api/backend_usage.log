@@ -27946,3 +27946,23 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-10 03:06:50,963 | INFO | 127.0.0.1 - - [10/Nov/2025 03:06:50] "GET /config HTTP/1.1" 200 -
 2025-11-10 03:07:44,916 | INFO | 127.0.0.1 - - [10/Nov/2025 03:07:44] "GET /config HTTP/1.1" 200 -
 2025-11-10 03:44:22,942 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 03:44:31,388 | INFO |  * Restarting with stat
+2025-11-10 03:45:02,479 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 03:45:03,334 | WARNING |  * Debugger is active!
+2025-11-10 03:45:03,348 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 03:45:03,384 | INFO | 127.0.0.1 - - [10/Nov/2025 03:45:03] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:45:20,028 | INFO | 127.0.0.1 - - [10/Nov/2025 03:45:20] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:45:24,958 | INFO | 127.0.0.1 - - [10/Nov/2025 03:45:24] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:11,327 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:11] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:13,188 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:13] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:20,531 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:20] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:22,421 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:22] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:24,504 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:24] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:30,148 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:30] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:31,098 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:31] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:46:40,523 | INFO | 127.0.0.1 - - [10/Nov/2025 03:46:40] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:47:15,918 | INFO | 127.0.0.1 - - [10/Nov/2025 03:47:15] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:47:29,453 | INFO | 127.0.0.1 - - [10/Nov/2025 03:47:29] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:47:41,392 | INFO | 127.0.0.1 - - [10/Nov/2025 03:47:41] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:51:07,969 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading

@@ -26,7 +26,6 @@
   <!-- Global + Page Styles (versioned for cache-busting) -->
   <link rel="stylesheet" href="../style.css?v=1" />
   <link rel="stylesheet" href="../mirna.css?v=1" />
-  <script defer src="../mirna.js?v=1"></script>
 
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -157,122 +156,102 @@
         </button>
         </div>
 
+
       <!-- Input card -->
-      <div id="input-tab" class="card active" role="tabpanel" aria-labelledby="tab-input">
-        <div class="card-body">
+      <div
+        id="input-tab"
+        class="card active"
+        role="tabpanel"
+        aria-labelledby="tab-inputs"
+      >
+        <form id="prediction-form" aria-label="miRNA prediction form">
+          <!-- Primary miRNA -->
+          <label for="primary-seqs">Primary miRNA Sequence(s) (FASTA):</label>
+          <textarea
+            id="primary-seqs"
+            required
+            placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..."
+            class="sequence-input"
+            aria-describedby="primary-seqs-desc"
+          ></textarea>
+          <small id="primary-seqs-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <input
+            type="file"
+            id="mirna-seq-file"
+            accept=".fasta,.fas,.fa,.txt"
+            aria-label="Upload miRNA FASTA file"
+          />
 
-          <form id="predict-form" class="grid-2col" autocomplete="off">
+          <!-- Target -->
+          <label for="target-seq">Target Molecule Sequence:</label>
+          <textarea
+            id="target-seq"
+            required
+            placeholder="Enter the full RNA target sequence..."
+            class="sequence-input"
+            aria-describedby="target-seq-desc"
+          ></textarea>
+          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <input
+            type="file"
+            id="target-seq-file"
+            accept=".fasta,.fas,.fa,.txt"
+            aria-label="Upload target FASTA file"
+          />
 
-            <!-- miRNA -->
-            <label for="mirna-seq">miRNA Sequences (FASTA; one or many):</label>
-            <textarea
-              id="mirna-seq"
-              placeholder="Paste one or more FASTA records (e.g., &#10;>miR-1&#10;UGAGGUAGUAGGUUGUAUAGUU&#10;>miR-2&#10;...)"
-              class="sequence-input"
-              aria-describedby="mirna-seq-desc"
-            ></textarea>
-            <small id="mirna-seq-desc">You can paste multiple FASTA entries; IDs will be used in batch results.</small>
+          <!-- Competitor -->
+          <label for="competitor-seq">Competitor Molecule Sequence (Optional):</label>
+          <textarea
+            id="competitor-seq"
+            placeholder="Enter the competitor sequence..."
+            class="sequence-input"
+            aria-describedby="competitor-seq-desc"
+          ></textarea>
+          <small id="competitor-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <input
+            type="file"
+            id="competitor-seq-file"
+            accept=".fasta,.fas,.fa,.txt"
+            aria-label="Upload competitor FASTA file"
+          />
+          <br />
+          <br />
+
+          <!-- Optional PDB uploads -->
+          <div class="file-uploads" aria-label="Optional 3D structure files">
+            <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
+            <br />
+            <label for="mirna-file">Upload miRNA Structure File(s):</label>
+            <!-- multiple to match backend multi-file append; filenames must match FASTA IDs -->
             <input
               type="file"
-              id="mirna-seq-file"
-              accept=".fasta,.fas,.fa,.txt"
+              id="mirna-file"
+              accept=".pdb,.cif"
               multiple
-              aria-label="Upload one or more miRNA FASTA files"
+              aria-label="Upload miRNA structure files"
             />
-
-            <!-- Target -->
-            <label for="target-seq">Target Molecule Sequences (FASTA; one or many):</label>
-            <textarea
-              id="target-seq"
-              placeholder="Paste one or more FASTA records for targets"
-              class="sequence-input"
-              aria-describedby="target-seq-desc"
-            ></textarea>
-            <small id="target-seq-desc">Upload/enter multiple targets; we’ll support 1–to–1 or all-vs-all mapping below.</small>
+            <br />
+            <label for="target-file">Upload Target Structure File:</label>
             <input
               type="file"
-              id="target-seq-file"
-              accept=".fasta,.fas,.fa,.txt"
-              multiple
-              aria-label="Upload one or more target FASTA files"
+              id="target-file"
+              accept=".pdb,.cif"
+              aria-label="Upload target structure file"
             />
-
-            <!-- Competitor -->
-            <label for="competitor-seq">Competitor Molecule Sequences (Optional; FASTA; one or many):</label>
-            <textarea
-              id="competitor-seq"
-              placeholder="Paste one or more FASTA records for competitors (optional)"
-              class="sequence-input"
-              aria-describedby="competitor-seq-desc"
-            ></textarea>
-            <small id="competitor-seq-desc">Upload/enter zero, one, or many competitors; blank means no competitor.</small>
+            <br />
+            <label for="competitor-file">Upload Competitor Structure File:</label>
             <input
               type="file"
-              id="competitor-seq-file"
-              accept=".fasta,.fas,.fa,.txt"
-              multiple
-              aria-label="Upload one or more competitor FASTA files"
+              id="competitor-file"
+              accept=".pdb,.cif"
+              aria-label="Upload competitor structure file"
             />
+          </div>
 
-            <!-- Mapping mode -->
-            <fieldset class="mapping-mode" aria-label="Batch mapping mode">
-              <legend>Batch mapping mode</legend>
+          <button type="submit" aria-label="Run prediction">Run Prediction</button>
+        </form>
 
-              <label class="radio-inline">
-                <input type="radio" name="map-mode" id="map-mode-cartesian" value="cartesian" checked />
-                All-vs-All (N miRNAs × M targets × K competitors)
-              </label>
-
-              <label class="radio-inline">
-                <input type="radio" name="map-mode" id="map-mode-paired" value="paired" />
-                1-to-1 by order (pair rows: miRNA[i] → target[i] → competitor[i])
-              </label>
-
-              <small id="combination-preview" class="muted">
-                (Counts preview will appear here after parsing.)
-              </small>
-            </fieldset>
-
-            <!-- Optional 3D uploads -->
-            <div class="file-uploads" aria-label="Optional 3D structure files">
-              <label>Upload 3D Structure Files (Optional, PDB/CIF; filenames should match FASTA IDs)</label>
-              <br />
-
-              <label for="mirna-file">Upload miRNA Structure File(s):</label>
-              <input
-                type="file"
-                id="mirna-file"
-                accept=".pdb,.cif"
-                multiple
-                aria-label="Upload one or more miRNA structure files"
-              />
-              <br />
-
-              <label for="target-file">Upload Target Structure File(s):</label>
-              <input
-                type="file"
-                id="target-file"
-                accept=".pdb,.cif"
-                multiple
-                aria-label="Upload one or more target structure files"
-              />
-              <br />
-
-              <label for="competitor-file">Upload Competitor Structure File(s):</label>
-              <input
-                type="file"
-                id="competitor-file"
-                accept=".pdb,.cif"
-                multiple
-                aria-label="Upload one or more competitor structure files"
-              />
-            </div>
-
-            <button type="submit" aria-label="Run prediction">Run Prediction</button>
-          </form>
-
-          <!-- FASTA tips container: mirna.js injects singleton #fasta-tips-box here -->
-        </div>
+        <!-- FASTA tips container: mirna.js injects singleton #fasta-tips-box here -->
       </div>
 
       <!-- Advanced options -->

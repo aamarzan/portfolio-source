@@ -388,28 +388,24 @@ async function handleSubmit(event) {
     return;
   }
 
-  // Validate target/competitor counts  ▶ multi allowed
+  // Validate target/competitor counts
   const tgtCount = countFastaRecords(targetSeq);
   const compCount = countFastaRecords(competitorSeq);
-
-  // Require at least one target; competitor is optional (0+ allowed)
-  if (tgtCount === 0) {
-    setHTML(resultsContainer, formatError('Please provide at least one target sequence in FASTA format.'));
+  if (tgtCount > 1) {
+    setHTML(resultsContainer, formatError('Your target input contains multiple sequences. Please provide exactly one target sequence to proceed.'));
+    return;
+  }
+  if (compCount > 1) {
+    setHTML(resultsContainer, formatError('Please enter only one competitor sequence.'));
     return;
   }
 
-  // Friendly tips about headers so pairings are traceable
-  if (!hasFastaHeaders(targetSeq)) {
-    prependHTML(
-      resultsContainer,
-      formatWarn('Tip: Add FASTA headers to your targets (e.g., >target1). With multiple targets these headers are used to label results.')
-    );
+  // Advice (not strict) for target/competitor header presence
+  if (tgtCount === 1 && !hasFastaHeaders(targetSeq)) {
+    prependHTML(resultsContainer, formatWarn('Tip: Add a FASTA header to the target (e.g., >target1) so it’s traceable in results.'));
   }
-  if (compCount > 0 && !hasFastaHeaders(competitorSeq)) {
-    prependHTML(
-      resultsContainer,
-      formatWarn('Tip: Add FASTA headers to your competitors (e.g., >comp1) so they are labeled in results.')
-    );
+  if (competitorSeq && compCount === 1 && !hasFastaHeaders(competitorSeq)) {
+    prependHTML(resultsContainer, formatWarn('Tip: Add a FASTA header to the competitor (e.g., >comp1) so it’s traceable in results.'));
   }
 
   // Switch to results tab (defensive)
@@ -624,51 +620,29 @@ function displayResults(results) {
   const downloadId = 'download-btn';
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
-  // Build table (auto-includes Target/Competitor columns if backend returns them)
-  const hasTargetCol = results.some(r =>
-    r.target_id || r.target || r.target_molecule_id || r.target_name
-  );
-  const hasCompCol = results.some(r =>
-    r.competitor_id || r.competitor || r.competitor_molecule_id || r.competitor_name
-  );
+  // Build table
+  let table = '<table id="results-table" style="margin-bottom:20px;"><thead><tr>' +
+      '<th>Primary Molecule ID</th>' +
+      '<th>Predicted Affinity (Baseline)</th>' +
+      '<th>Predicted Affinity (With Competitor)</th>' +
+      '<th>Competitive Effect (higher is better)</th>' +
+      '</tr></thead><tbody>';
 
-  let headerCells = ['Primary Molecule ID'];
-  if (hasTargetCol) headerCells.push('Target ID');
-  if (hasCompCol) headerCells.push('Competitor ID');
-  headerCells = headerCells.concat([
-    'Predicted Affinity (Baseline)',
-    'Predicted Affinity (With Competitor)',
-    'Competitive Effect (higher is better)'
-  ]);
-
-  let table = `<table id="results-table" style="margin-bottom:20px;">
-    <thead><tr>${headerCells.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-
-  // rows
   results.forEach(item => {
-    const id       = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const tgt      = item.target_id ?? item.target ?? item.target_molecule_id ?? item.target_name ?? '';
-    const comp     = item.competitor_id ?? item.competitor ?? item.competitor_molecule_id ?? item.competitor_name ?? '';
+    const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
     const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
     const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-    const compEff  = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-
+    const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor = getGradientColor(baseline);
 
-    let cells = [`<td>${escapeHTML(id)}</td>`];
-    if (hasTargetCol) cells.push(`<td>${escapeHTML(tgt)}</td>`);
-    if (hasCompCol)   cells.push(`<td>${escapeHTML(comp)}</td>`);
-    cells = cells.concat([
-      `<td>${escapeHTML(baseline)}</td>`,
-      `<td>${escapeHTML(withComp)}</td>`,
-      `<td>${escapeHTML(compEff)}</td>`
-    ]);
-
-    table += `<tr style="background-color:${bgColor}">${cells.join('')}</tr>`;
+    table += `<tr style="background-color:${bgColor}">
+        <td>${escapeHTML(id)}</td>
+        <td>${escapeHTML(baseline)}</td>
+        <td>${escapeHTML(withComp)}</td>
+        <td>${escapeHTML(compEffect)}</td>
+    </tr>`;
   });
-
   table += '</tbody></table>';
-
 
   // Render in strict order; since container is cleared first, no duplicates can occur
   appendHTML(container, legendHTML);
@@ -693,56 +667,38 @@ function displayResults(results) {
 function downloadCSV() {
   if (predictionResults.length === 0) return;
 
-  const hasTargetCol = predictionResults.some(r =>
-    r.target_id || r.target || r.target_molecule_id || r.target_name
-  );
-  const hasCompCol = predictionResults.some(r =>
-    r.competitor_id || r.competitor || r.competitor_molecule_id || r.competitor_name
-  );
+  const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
+  const csvRows = [headers];
 
-  const baseHeaders = ['Primary_Molecule_ID'];
-  if (hasTargetCol) baseHeaders.push('Target_ID');
-  if (hasCompCol)   baseHeaders.push('Competitor_ID');
-  baseHeaders.push(
-    'Predicted_Affinity_Baseline',
-    'Predicted_Affinity_With_Competitor',
-    'Competitive_Effect'
-  );
-
-  const csvRows = [baseHeaders.join(',')];
-
+  // Sort by baseline before export to match UI
   const sorted = [...predictionResults].sort((a, b) =>
-    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) -
-    safeParseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0, 0)
+    safeParseFloat(b["predicted_affinity_baseline"] ?? b.baseline_score ?? 0, 0) -
+    safeParseFloat(a["predicted_affinity_baseline"] ?? a.baseline_score ?? 0, 0)
   );
-
-  const safeCSV = (s) => {
-    const str = String(s ?? '');
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
-  };
 
   sorted.forEach(item => {
-    const id       = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const tgt      = item.target_id ?? item.target ?? item.target_molecule_id ?? item.target_name ?? '';
-    const comp     = item.competitor_id ?? item.competitor ?? item.competitor_molecule_id ?? item.competitor_name ?? '';
+    const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
     const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
     const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-    const compEff  = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+    const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
 
-    const cols = [safeCSV(id)];
-    if (hasTargetCol) cols.push(safeCSV(tgt));
-    if (hasCompCol)   cols.push(safeCSV(comp));
-    cols.push(safeCSV(baseline), safeCSV(withComp), safeCSV(compEff));
-
-    csvRows.push(cols.join(','));
+    // Escape commas and quotes
+    const safeCSV = (s) => {
+      const str = String(s ?? '');
+      if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    csvRows.push([safeCSV(id), safeCSV(baseline), safeCSV(withComp), safeCSV(compEffect)].join(','));
   });
 
   const csvString = csvRows.join('\n');
   const blob = new Blob([csvString], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'prediction_results.csv';
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'prediction_results.csv');
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
