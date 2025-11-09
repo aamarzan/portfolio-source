@@ -27971,3 +27971,45 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 
 2025-11-10 03:52:01,889 | WARNING |  * Debugger is active!
 2025-11-10 03:52:01,907 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 03:52:41,020 | INFO | 127.0.0.1 - - [10/Nov/2025 03:52:41] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:52:47,397 | INFO | 127.0.0.1 - - [10/Nov/2025 03:52:47] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:52:52,275 | INFO | 127.0.0.1 - - [10/Nov/2025 03:52:52] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:52:56,002 | INFO | 127.0.0.1 - - [10/Nov/2025 03:52:56] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:52:59,728 | INFO | 127.0.0.1 - - [10/Nov/2025 03:52:59] "GET /config HTTP/1.1" 200 -
+2025-11-10 03:54:37,962 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:37] "GET /nonce HTTP/1.1" 200 -
+2025-11-10 03:54:38,135 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:38] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-10 03:54:41,776 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:41] "POST /predict HTTP/1.1" 200 -
+2025-11-10 03:54:41,923 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:41] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:43,573 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:43] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:45,018 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:45] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:48,794 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:48] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:50,274 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:50] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:51,738 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:51] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:53,215 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:53] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:54,770 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:54] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:56,194 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:56] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:58,045 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:58] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:54:59,492 | INFO | 127.0.0.1 - - [10/Nov/2025 03:54:59] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:00,927 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:00] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:02,583 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:02] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:03,994 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:03] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:05,411 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:05] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:06,847 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:06] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:09,449 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:09] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:11,213 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:11] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:13,533 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:13] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:15,387 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:15] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 03:55:16,583 | ERROR | Prediction error: name 'trim_mature' is not defined
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 660, in process_job
+    return
+           
+NameError: name 'trim_mature' is not defined
+2025-11-10 03:55:18,690 | INFO | 127.0.0.1 - - [10/Nov/2025 03:55:18] "GET /progress/08ff103f-dd74-437e-8ed4-3162ae150da7 HTTP/1.1" 200 -
+2025-11-10 04:31:24,716 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 04:31:30,120 | INFO |  * Restarting with stat
+2025-11-10 04:32:26,095 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 04:32:26,928 | WARNING |  * Debugger is active!
+2025-11-10 04:32:26,938 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 04:33:34,765 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
