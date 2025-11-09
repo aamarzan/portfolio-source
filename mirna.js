@@ -423,9 +423,6 @@ async function handleSubmit(event) {
   formData.append('primary_molecules', primarySeqs);
   formData.append('target_molecule', targetSeq);
   formData.append('competitor_molecule', competitorSeq);
-  // ALSO send explicit multi-fields for maximum compatibility with multi-target/competitor servers
-  formData.append('targets_fasta',      targetSeq);
-  formData.append('competitors_fasta',  competitorSeq);
   formData.append('target_start', $('target-start')?.value ?? '');
   formData.append('target_end', $('target-end')?.value ?? '');
 

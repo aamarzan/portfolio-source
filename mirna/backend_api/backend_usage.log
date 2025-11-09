@@ -28013,3 +28013,19 @@ NameError: name 'trim_mature' is not defined
 2025-11-10 04:32:26,928 | WARNING |  * Debugger is active!
 2025-11-10 04:32:26,938 | INFO |  * Debugger PIN: 110-266-754
 2025-11-10 04:33:34,765 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 04:33:35,882 | INFO |  * Restarting with stat
+2025-11-10 04:33:53,513 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 04:33:54,290 | WARNING |  * Debugger is active!
+2025-11-10 04:33:54,298 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 04:36:14,444 | INFO | 127.0.0.1 - - [10/Nov/2025 04:36:14] "GET /config HTTP/1.1" 200 -
+2025-11-10 04:36:18,503 | INFO | 127.0.0.1 - - [10/Nov/2025 04:36:18] "GET /config HTTP/1.1" 200 -
+2025-11-10 04:57:48,168 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 04:57:54,079 | INFO |  * Restarting with stat
+2025-11-10 04:58:20,465 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 04:58:21,183 | WARNING |  * Debugger is active!
+2025-11-10 04:58:21,190 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 04:58:21,228 | INFO | 127.0.0.1 - - [10/Nov/2025 04:58:21] "GET /config HTTP/1.1" 200 -
+2025-11-10 04:58:23,052 | INFO | 127.0.0.1 - - [10/Nov/2025 04:58:23] "GET /config HTTP/1.1" 200 -
+2025-11-10 04:59:57,593 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
