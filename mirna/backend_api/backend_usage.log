@@ -27931,3 +27931,4 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-10 02:48:16,819 | WARNING |  * Debugger is active!
 2025-11-10 02:48:16,830 | INFO |  * Debugger PIN: 110-266-754
 2025-11-10 02:52:56,733 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 02:53:02,002 | INFO |  * Restarting with stat
