@@ -111,10 +111,10 @@
         <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
           <div><strong>Formatting tips:</strong></div>
           <ul style="margin:6px 0 0 18px;">
-            <li>miRNA accepts multiple sequences; each should start with a header line, e.g. <code>&gt;hsa-let-7a-5p</code></li>
-            <li>Target and Competitor accept exactly one sequence each</li>
-            <li>3D files (PDB/CIF) must match the corresponding sequence; mismatches will be rejected</li>
-            <li>If allowed by server, you can opt to back-translate AA to NT for Target/Competitor in Advanced Options</li>
+            <li><strong>miRNA</strong> accepts multiple sequences (multi-FASTA). Each sequence should start with a header line, e.g. <code>&gt;hsa-let-7a-5p</code>.</li>
+            <li><strong>Target</strong> and <strong>Competitor</strong> also accept multiple sequences (multi-FASTA). Results are produced for all (miRNA × target × competitor) combinations; if no competitor is supplied, baseline is returned.</li>
+            <li>3D files (PDB/CIF) must match the corresponding sequence; mismatches will be rejected.</li>
+            <li>If allowed by server, you can opt to back-translate AA → NT for Target/Competitor in Advanced Options.</li>
           </ul>
         </div>
 
