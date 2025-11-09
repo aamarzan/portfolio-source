@@ -454,12 +454,17 @@ def start_prediction():
     if request.mimetype != 'multipart/form-data':
         return jsonify({"error": "Bad request"}), 400
       
-    # Inputs
+    # Inputs  — multi-target / multi-competitor aware (backward compatible)
     fasta_string = request.form.get('primary_molecules', '')
-    target_seq_text = request.form.get('target_molecule', '')
-    competitor_seq_text = request.form.get('competitor_molecule', '')
 
-    # Flags (from frontend Advanced Options; default behaviors described above)
+    # NEW (multi): prefer multi-field if provided, else fall back to legacy single fields
+    targets_fasta = (request.form.get('targets_fasta', '') or '').strip()
+    target_seq_text = (request.form.get('target_molecule', '') or '').strip()
+
+    competitors_fasta = (request.form.get('competitors_fasta', '') or '').strip()
+    competitor_seq_text = (request.form.get('competitor_molecule', '') or '').strip()
+
+    # Flags
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
@@ -478,88 +483,48 @@ def start_prediction():
     if short_mirnas:
         return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
-    # Target: exactly one sequence (FASTA or raw)
-    target_parsed = parse_fasta_records(target_seq_text)
-    if len(target_parsed) == 0:
-        return jsonify({"error": "Please provide one target sequence (FASTA or raw)."}), 400
-    if len(target_parsed) > 1:
-        return jsonify({"error": "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."}), 400
-    target_id, target_seq = target_parsed[0]
+    # -------- Targets (multi) --------
+    if targets_fasta:
+        target_records = parse_fasta_records(targets_fasta)
+    else:
+        # backward-compatible: allow single target field
+        tparsed = parse_fasta_records(target_seq_text)
+        if len(tparsed) == 0:
+            return jsonify({"error": "Please provide at least one target sequence (FASTA or raw)."}), 400
+        target_records = tparsed
 
-    # Optional target region from Advanced tab
+    # Optional range (applies only when there is exactly one target)
     target_start_raw = request.form.get('target_start', '').strip()
     target_end_raw = request.form.get('target_end', '').strip()
-
     def _to_int_safe(s):
-        try:
-            return int(s)
-        except Exception:
-            return None
+        try: return int(s)
+        except Exception: return None
+    ts = _to_int_safe(target_start_raw); te = _to_int_safe(target_end_raw)
+    if len(target_records) == 1 and (ts is not None or te is not None):
+        tid, tseq = target_records[0]
+        if ts is None or te is None or ts <= 0 or te <= 0 or ts > te or te > len(tseq):
+            return jsonify({"error": "Invalid target range. Use 1-based inclusive indices within the target length."}), 400
+        # slice (convert to 0-based)
+        target_records = [(f"{tid}:{ts}-{te}", tseq[ts-1:te])]
 
-    ts = _to_int_safe(target_start_raw)
-    te = _to_int_safe(target_end_raw)
+    # -------- Competitors (multi; optional) --------
+    if competitors_fasta:
+        competitor_records = parse_fasta_records(competitors_fasta)
+    else:
+        # backward-compatible: allow single competitor field (may be empty)
+        cparsed = parse_fasta_records(competitor_seq_text) if competitor_seq_text else []
+        competitor_records = cparsed
 
-    if ts is None and te is None:
-        ts, te = 1, len(target_seq)
+    # If no competitors supplied at all, we’ll still return baseline-only rows
+    comp_nonempty = [(cid, cseq) for (cid, cseq) in competitor_records if (cseq or '').strip()]
+    has_any_competitor = len(comp_nonempty) > 0
 
-    # Normalize range to 1-based inclusive input, convert to 0-based slicing
-    if ts is not None and te is not None:
-        if ts <= 0 or te <= 0:
-            return jsonify({"error": "Target range must be positive integers (1-based)."}), 400
-        if te < ts:
-            return jsonify({"error": "Target range end must be greater than or equal to start."}), 400
-
-        # Compute 0-based slice indices
-        s_idx = max(0, ts - 1)
-        e_idx = min(len(target_seq), te)  # Python slice end is exclusive
-        if s_idx >= len(target_seq):
-            return jsonify({"error": "Target range start exceeds the target sequence length."}), 400
-        if e_idx - s_idx < 1:
-            return jsonify({"error": "Selected target range is empty. Please adjust the indices."}), 400
-
-        # Slice the target sequence to the requested region
-        target_seq = target_seq[s_idx:e_idx]
-        # Augment the target ID so results are traceable
-        target_id = f"{target_id}:{ts}-{te}"
-
-
-    # ✅ Enforce minimum target length on final sequence (full or sliced)
-    MIN_TARGET_LEN = 30
-    if len((target_seq or '').replace('\n', '').strip()) < MIN_TARGET_LEN:
-        return jsonify({"error": f"Target sequence must be at least {MIN_TARGET_LEN} nt long (after applying range if provided)."}), 400
-
-    # Competitor: at most one sequence
-    competitor_id, competitor_seq = ("competitor", "")
-    if competitor_seq_text.strip():
-        competitor_parsed = parse_fasta_records(competitor_seq_text)
-        if len(competitor_parsed) == 0:
-            competitor_id, competitor_seq = ("competitor", "")
-        elif len(competitor_parsed) > 1:
-            return jsonify({"error": "Your competitor input contains multiple sequences. Please provide exactly one competitor sequence to proceed."}), 400
-        else:
-            competitor_id, competitor_seq = competitor_parsed[0]
-
-        # ✅ Enforce minimum competitor length
-        MIN_COMP_LEN = 15
-        if len((competitor_seq or '').replace('\n', '').strip()) < MIN_COMP_LEN:
-            return jsonify({"error": f"Competitor sequence must be at least {MIN_COMP_LEN} nt long."}), 400
-
-    # Optional AA detection and handling for target/competitor
-    if is_aa_like(target_seq):
-        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-            target_seq = back_translate(target_seq)
-        else:
-            return jsonify({"error": "Target appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
-    if competitor_seq and is_aa_like(competitor_seq):
-        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-            competitor_seq = back_translate(competitor_seq)
-        else:
-            return jsonify({"error": "Competitor appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
-
-    # Save uploaded 3D files to temp and index them
+    # ---- Optional 3D uploads (same as before)
     tmp_paths_to_cleanup: List[str] = []
+    files = request.files
+
     def _save_optional(fs_key: str) -> Optional[str]:
-        f = request.files.get(fs_key)
+        f = files.get(fs_key)
         if f and f.filename:
             p = save_filestorage_to_temp(f)
             tmp_paths_to_cleanup.append(p)
@@ -579,24 +544,30 @@ def start_prediction():
             kind, seq = extract_seq_from_structure(p)
             mirna_3d_index[stem] = (kind, seq, p)
 
+    # Job bookkeeping
     job_id = str(uuid.uuid4())
+    total_pairs = len(primary_records) * len(target_records) * (len(comp_nonempty) if has_any_competitor else 1)
     jobs[job_id] = {
-    "status": "running",
-    "results": [],
-    "error": None,
-    "total": len(primary_records),
-    "completed": 0,
-    "target_id": target_id,   # includes :start-end if sliced
-    "target_len": len(target_seq)
+        "status": "running",
+        "results": [],
+        "error": None,
+        "total": total_pairs,
+        "completed": 0,
+        # store a quick summary for UI if you want
+        "target_count": len(target_records),
+        "competitor_count": len(comp_nonempty)
     }
 
-    send_ga_event("prediction_started", {"total": len(primary_records)})
+    send_ga_event("prediction_started", {"mirnas": len(primary_records), "targets": len(target_records), "competitors": len(comp_nonempty)})
 
     threading.Thread(
         target=process_job,
-        args=(job_id, primary_records, (target_id, target_seq), (competitor_id, competitor_seq),
-              target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
-              convert_aa_to_nt_flag, mature_trim_flag),
+        args=(
+            job_id, primary_records, target_records, comp_nonempty,
+            target_3d_path, competitor_3d_path,
+            mirna_3d_index, tmp_paths_to_cleanup,
+            convert_aa_to_nt_flag, mature_trim_flag
+        ),
         daemon=True
     ).start()
 
