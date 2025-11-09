@@ -625,49 +625,49 @@ function displayResults(results) {
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
   // Build table (auto-includes Target/Competitor columns if backend returns them)
-const hasTargetCol = results.some(r =>
-  r.target_id || r.target || r.target_molecule_id || r.target_name
-);
-const hasCompCol = results.some(r =>
-  r.competitor_id || r.competitor || r.competitor_molecule_id || r.competitor_name
-);
+  const hasTargetCol = results.some(r =>
+    r.target_id || r.target || r.target_molecule_id || r.target_name
+  );
+  const hasCompCol = results.some(r =>
+    r.competitor_id || r.competitor || r.competitor_molecule_id || r.competitor_name
+  );
 
-let headerCells = ['Primary Molecule ID'];
-if (hasTargetCol) headerCells.push('Target ID');
-if (hasCompCol) headerCells.push('Competitor ID');
-headerCells = headerCells.concat([
-  'Predicted Affinity (Baseline)',
-  'Predicted Affinity (With Competitor)',
-  'Competitive Effect (higher is better)'
-]);
-
-let table = `<table id="results-table" style="margin-bottom:20px;">
-  <thead><tr>${headerCells.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-
-// rows
-results.forEach(item => {
-  const id       = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-  const tgt      = item.target_id ?? item.target ?? item.target_molecule_id ?? item.target_name ?? '';
-  const comp     = item.competitor_id ?? item.competitor ?? item.competitor_molecule_id ?? item.competitor_name ?? '';
-  const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
-  const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-  const compEff  = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-
-  const bgColor = getGradientColor(baseline);
-
-  let cells = [`<td>${escapeHTML(id)}</td>`];
-  if (hasTargetCol) cells.push(`<td>${escapeHTML(tgt)}</td>`);
-  if (hasCompCol)   cells.push(`<td>${escapeHTML(comp)}</td>`);
-  cells = cells.concat([
-    `<td>${escapeHTML(baseline)}</td>`,
-    `<td>${escapeHTML(withComp)}</td>`,
-    `<td>${escapeHTML(compEff)}</td>`
+  let headerCells = ['Primary Molecule ID'];
+  if (hasTargetCol) headerCells.push('Target ID');
+  if (hasCompCol) headerCells.push('Competitor ID');
+  headerCells = headerCells.concat([
+    'Predicted Affinity (Baseline)',
+    'Predicted Affinity (With Competitor)',
+    'Competitive Effect (higher is better)'
   ]);
 
-  table += `<tr style="background-color:${bgColor}">${cells.join('')}</tr>`;
-});
+  let table = `<table id="results-table" style="margin-bottom:20px;">
+    <thead><tr>${headerCells.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
 
-table += '</tbody></table>';
+  // rows
+  results.forEach(item => {
+    const id       = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
+    const tgt      = item.target_id ?? item.target ?? item.target_molecule_id ?? item.target_name ?? '';
+    const comp     = item.competitor_id ?? item.competitor ?? item.competitor_molecule_id ?? item.competitor_name ?? '';
+    const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
+    const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
+    const compEff  = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+
+    const bgColor = getGradientColor(baseline);
+
+    let cells = [`<td>${escapeHTML(id)}</td>`];
+    if (hasTargetCol) cells.push(`<td>${escapeHTML(tgt)}</td>`);
+    if (hasCompCol)   cells.push(`<td>${escapeHTML(comp)}</td>`);
+    cells = cells.concat([
+      `<td>${escapeHTML(baseline)}</td>`,
+      `<td>${escapeHTML(withComp)}</td>`,
+      `<td>${escapeHTML(compEff)}</td>`
+    ]);
+
+    table += `<tr style="background-color:${bgColor}">${cells.join('')}</tr>`;
+  });
+
+  table += '</tbody></table>';
 
 
   // Render in strict order; since container is cleared first, no duplicates can occur
