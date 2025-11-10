@@ -28,6 +28,7 @@ from flask_limiter.errors import RateLimitExceeded
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
+
 # Optional gzip compression for large JSON/CSV
 try:
     from flask_compress import Compress
