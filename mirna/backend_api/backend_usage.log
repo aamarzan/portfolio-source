@@ -31279,3 +31279,259 @@ Arguments received by LSTM.call():
   • initial_state=None
   • mask=None
   • training=False
+2025-11-11 01:43:54,374 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-11 01:43:58,002 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-11-11 01:43:58,002 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-11 01:43:58,087 | INFO |  * Restarting with stat
+2025-11-11 01:44:44,742 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-11 01:44:46,687 | WARNING |  * Debugger is active!
+2025-11-11 01:44:46,696 | INFO |  * Debugger PIN: 110-266-754
+2025-11-11 01:46:10,609 | INFO | 127.0.0.1 - - [11/Nov/2025 01:46:10] "GET /config HTTP/1.1" 200 -
+2025-11-11 01:48:47,658 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:47] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:48:47,925 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:47] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-11 01:48:49,927 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:49] "POST /predict HTTP/1.1" 200 -
+2025-11-11 01:48:50,120 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:50] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:51,812 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:51] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:53,362 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:53] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:54,841 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:54] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:56,284 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:56] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:57,718 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:57] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:48:59,478 | INFO | 127.0.0.1 - - [11/Nov/2025 01:48:59] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:01,556 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:01] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:02,958 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:02] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:04,563 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:04] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:05,971 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:05] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:07,641 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:07] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:09,070 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:09] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:10,849 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:10] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:12,257 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:12] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:14,062 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:14] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:15,436 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:15] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:16,832 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:16] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:18,495 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:18] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:19,970 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:19] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:21,793 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:21] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:23,244 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:23] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:24,661 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:24] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:26,066 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:26] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:27,527 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:27] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:29,725 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:29] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:31,251 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:31] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:32,979 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:32] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:34,501 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:34] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:36,691 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:36] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:38,150 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:38] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:39,580 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:39] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:41,058 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:41] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:42,506 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:42] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:43,918 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:43] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:45,409 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:45] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:47,144 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:47] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:48,610 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:48] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:50,107 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:50] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:51,764 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:51] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:53,131 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:53] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:54,809 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:54] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:56,274 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:56] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:58,535 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:58] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:49:59,995 | INFO | 127.0.0.1 - - [11/Nov/2025 01:49:59] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:01,790 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:01] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:03,230 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:03] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:04,725 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:04] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:06,260 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:06] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:08,203 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:08] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:09,630 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:09] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:11,993 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:11] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:13,439 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:13] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:15,207 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:15] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:16,674 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:16] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:18,424 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:18] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:19,918 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:19] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:21,973 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:21] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:23,414 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:23] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:25,270 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:25] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:26,718 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:26] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:28,902 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:28] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:30,358 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:30] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:32,242 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:32] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:33,630 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:33] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:35,019 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:35] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:36,431 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:36] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:37,813 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:37] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:39,193 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:39] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:40,562 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:40] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:41,934 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:41] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:43,310 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:43] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:44,708 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:44] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:46,084 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:46] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:47,435 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:47] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:48,797 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:48] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:50,160 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:50] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:51,540 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:51] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:52,918 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:52] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:54,312 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:54] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:55,712 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:55] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:57,124 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:57] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:50:58,732 | INFO | 127.0.0.1 - - [11/Nov/2025 01:50:58] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:00,140 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:00] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:01,544 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:01] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:02,969 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:02] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:04,368 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:04] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:05,768 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:05] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:07,210 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:07] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:08,639 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:08] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:10,030 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:10] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:11,419 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:11] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:12,797 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:12] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:14,159 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:14] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:15,556 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:15] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:16,930 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:16] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:18,330 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:18] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:19,709 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:19] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:21,757 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:21] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:23,153 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:23] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:24,568 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:24] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:25,960 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:25] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:27,354 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:27] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:28,737 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:28] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:30,179 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:30] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:31,631 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:31] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:33,070 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:33] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:34,739 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:34] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:36,447 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:36] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:38,403 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:38] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:39,820 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:39] "GET /progress/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:51:40,417 | INFO | 127.0.0.1 - - [11/Nov/2025 01:51:40] "GET /download/6730fde2-46d0-47d7-b615-ec8e713edaed HTTP/1.1" 200 -
+2025-11-11 01:52:00,809 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:00] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:52:00,960 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:00] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/all.csv HTTP/1.1" 200 -
+2025-11-11 01:52:02,556 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:02] "GET /download/6730fde2-46d0-47d7-b615-ec8e713edaed/all.csv HTTP/1.1" 200 -
+2025-11-11 01:52:09,806 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:09] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:52:09,948 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:09] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:52:10,096 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:10] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:52:34,969 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:34] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:52:35,150 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:35] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:52:35,348 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:35] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:52:45,722 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:45] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:52:45,893 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:45] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000152/heatmap.png?mode=ig_target&steps=50 HTTP/1.1" 200 -
+2025-11-11 01:52:57,813 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:57] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:52:58,026 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:58] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:52:58,261 | INFO | 127.0.0.1 - - [11/Nov/2025 01:52:58] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:53:03,495 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:03] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:03,644 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:03] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:53:03,795 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:03] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:53:05,926 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:05] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:06,137 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:06] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000197/heatmap.png?mode=ig_target&steps=50 HTTP/1.1" 200 -
+2025-11-11 01:53:10,314 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:10] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:10,565 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:10] "OPTIONS /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/target HTTP/1.1" 200 -
+2025-11-11 01:53:10,897 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:10] "[33mGET /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/target HTTP/1.1[0m" 404 -
+2025-11-11 01:53:15,196 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:15] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:15,421 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:15] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000197.csv HTTP/1.1" 200 -
+2025-11-11 01:53:16,590 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:16] "GET /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000197.csv HTTP/1.1" 200 -
+2025-11-11 01:53:23,732 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:23] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:23,913 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:23] "OPTIONS /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/competitor HTTP/1.1" 200 -
+2025-11-11 01:53:24,073 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:24] "[33mGET /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/competitor HTTP/1.1[0m" 404 -
+2025-11-11 01:53:32,152 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:32] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:53:32,309 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:32] "OPTIONS /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/target HTTP/1.1" 200 -
+2025-11-11 01:53:32,467 | INFO | 127.0.0.1 - - [11/Nov/2025 01:53:32] "[33mGET /structure/6730fde2-46d0-47d7-b615-ec8e713edaed/target HTTP/1.1[0m" 404 -
+2025-11-11 01:54:51,459 | INFO | 127.0.0.1 - - [11/Nov/2025 01:54:51] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:54:51,604 | INFO | 127.0.0.1 - - [11/Nov/2025 01:54:51] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:55:12,492 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:12] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:55:12,697 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:12] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:55:39,601 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:39] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:55:39,800 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:39] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000036/heatmap.png?mode=ig_target&steps=50 HTTP/1.1" 200 -
+2025-11-11 01:55:51,178 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:51] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:55:51,471 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:51] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:55:51,702 | INFO | 127.0.0.1 - - [11/Nov/2025 01:55:51] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:57:45,188 | INFO | 127.0.0.1 - - [11/Nov/2025 01:57:45] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:57:45,492 | INFO | 127.0.0.1 - - [11/Nov/2025 01:57:45] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 02:07:17,589 | INFO | 127.0.0.1 - - [11/Nov/2025 02:07:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 02:07:17,657 | INFO | 127.0.0.1 - - [11/Nov/2025 02:07:17] "OPTIONS /download/6730fde2-46d0-47d7-b615-ec8e713edaed/I0000152/heatmap.png?mode=ig_target&steps=50 HTTP/1.1" 200 -
+2025-11-11 02:09:22,902 | INFO | 127.0.0.1 - - [11/Nov/2025 02:09:22] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 02:09:23,054 | INFO | 127.0.0.1 - - [11/Nov/2025 02:09:23] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 02:15:42,910 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-11 02:15:43,030 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[301, (<tf.Tensor: shape=(), dtype=int32, numpy=301>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x000001C9D875B170>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.3640537 , -0.06704105,  0.15713584, -0.18902779, -0.10572603,
+         0.6822967 , -0.02711192,  0.11638498,  0.08941545,  0.05021844,
+         0.57545894,  0.09897253, -0.18634403,  0.0167001 , -0.11961365,
+         0.02439168]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.762945  , -0.2523587 ,  0.7374394 , -0.59243095, -0.15724593,
+         1.7510583 , -0.12551327,  0.16980119,  0.235122  ,  0.15609413,
+         2.1193812 ,  0.2418443 , -0.5829446 ,  0.04624838, -0.49297327,
+         0.07280115]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.3640537 , -0.06704105,  0.15713584, -0.18902779, -0.10572603,
+         0.6822967 , -0.02711192,  0.11638498,  0.08941545,  0.05021844,
+         0.57545894,  0.09897253, -0.18634403,  0.0167001 , -0.11961365,
+         0.02439168]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.762945  , -0.2523587 ,  0.7374394 , -0.59243095, -0.15724593,
+         1.7510583 , -0.12551327,  0.16980119,  0.235122  ,  0.15609413,
+         2.1193812 ,  0.2418443 , -0.5829446 ,  0.04624838, -0.49297327,
+         0.07280115]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 500, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1765, in explain
+    feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 605, in integrated_gradients
+    feed = {k2: (tf.convert_to_tensor(v) if not isinstance(v, tf.Tensor) else v)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\tensorflow\python\util\nest_util.py", line 535, in _tf_core_assert_same_structure
+    raise type(e)(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[301, (<tf.Tensor: shape=(), dtype=int32, numpy=301>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x000001C9D875B170>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.3640537 , -0.06704105,  0.15713584, -0.18902779, -0.10572603,
+         0.6822967 , -0.02711192,  0.11638498,  0.08941545,  0.05021844,
+         0.57545894,  0.09897253, -0.18634403,  0.0167001 , -0.11961365,
+         0.02439168]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.762945  , -0.2523587 ,  0.7374394 , -0.59243095, -0.15724593,
+         1.7510583 , -0.12551327,  0.16980119,  0.235122  ,  0.15609413,
+         2.1193812 ,  0.2418443 , -0.5829446 ,  0.04624838, -0.49297327,
+         0.07280115]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.3640537 , -0.06704105,  0.15713584, -0.18902779, -0.10572603,
+         0.6822967 , -0.02711192,  0.11638498,  0.08941545,  0.05021844,
+         0.57545894,  0.09897253, -0.18634403,  0.0167001 , -0.11961365,
+         0.02439168]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.762945  , -0.2523587 ,  0.7374394 , -0.59243095, -0.15724593,
+         1.7510583 , -0.12551327,  0.16980119,  0.235122  ,  0.15609413,
+         2.1193812 ,  0.2418443 , -0.5829446 ,  0.04624838, -0.49297327,
+         0.07280115]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 500, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False

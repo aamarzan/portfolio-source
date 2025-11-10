@@ -26,6 +26,9 @@ from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
+from datetime import datetime, timezone
+datetime.now(timezone.utc).isoformat(timespec='seconds')
+
 
 # use non-interactive backend for server PNG export
 import matplotlib

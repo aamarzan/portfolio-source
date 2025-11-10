@@ -172,6 +172,22 @@ function injectPremiumStyles(){
   GUARDS.styleInjected = true;
 }
 
+// Small spinner HTML for modal bodies
+function smallSpinner(text='Working...'){
+  return `<div style="text-align:center;padding:10px 0;">
+    <span class="loader-spinner"></span>
+    <span style="vertical-align:middle;">${escapeHTML(text)}</span>
+  </div>`;
+}
+
+// --- fetch with AbortController timeout (works for GET/POST) ---
+function fetchWithTimeout(url, options={}, ms=30000){
+  const ac = new AbortController();
+  const timer = setTimeout(()=>ac.abort(), ms);
+  return fetch(url, { ...options, signal: ac.signal })
+    .finally(()=>clearTimeout(timer));
+}
+
 // Simple FASTA parser → { id: seq, ... } (if no headers: {"<prefix>_1": raw})
 // Preserves FULL header text after ">"
 function parseFastaToMap(text, defaultPrefix='seq'){
@@ -306,6 +322,7 @@ function bindOnce(el, event, handler, key){
 document.addEventListener('DOMContentLoaded', async () => {
   injectPremiumStyles();
   await loadConfig();
+  ensureModal(); // make sure modal exists early
 
   const loader = $('loader');
   if(loader){
@@ -751,9 +768,9 @@ function displayResults(results){
       }else if(t.classList.contains('rowcsv-btn')){
         await handleRowCsvClick(item);
       }else if(t.classList.contains('t3d-btn')){
-        await open3DViewer('target');
+        await open3DOrExplain(item.target_id || '', 'target');
       }else if(t.classList.contains('c3d-btn')){
-        await open3DViewer('competitor');
+        await open3DOrExplain(item.competitor_id || '', 'competitor');
       }
     }, 'resultsActions');
   }
@@ -857,26 +874,34 @@ async function handleHeatmapClick(item){
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
   const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '50', 10) || 50));
 
+  // Always show a modal immediately so users get feedback
+  openModal('Heatmap', smallSpinner('Generating heatmap...'));
+
   if(!CURRENT_JOB_ID){
     // Fallback to client IG when job context missing
-    return clientExplainHeatmapFallback(item);
+    return clientExplainHeatmapFallback(item, mode);
   }
 
   const interactionId = item.interaction_id || null;
   if(!interactionId){
     // Fallback to client IG when interaction id missing
-    return clientExplainHeatmapFallback(item);
+    return clientExplainHeatmapFallback(item, mode);
   }
 
   // If competitor IG requested but none present, hint and switch to target
   if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
-    openModal('Heatmap', formatWarn('This row has no competitor. Showing IG for target instead.'));
+    setHTML($('modal-content'), formatWarn('This row has no competitor. Showing IG for target instead.') + smallSpinner());
     return clientExplainHeatmapFallback(item, 'ig_target');
   }
 
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(HEATMAP_PNG_URL(CURRENT_JOB_ID, interactionId, mode, steps), { method:'GET', headers });
+    const res = await fetchWithTimeout(
+      HEATMAP_PNG_URL(CURRENT_JOB_ID, interactionId, mode, steps),
+      { method:'GET', headers },
+      30000
+    );
+
     if(!res.ok){ throw new Error('PNG fetch failed'); }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -918,12 +943,14 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
 
     if(!mirnaSeq || !targetSeq){
-      openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
+      setHTML($('modal-content'), formatError('Could not resolve miRNA and/or target sequences for this row.'));
       return;
     }
 
+    setHTML($('modal-content'), smallSpinner('Computing attributions...'));
+
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(EXPLAIN_URL, {
+    const res = await fetchWithTimeout(EXPLAIN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
@@ -931,12 +958,12 @@ async function clientExplainHeatmapFallback(item, forcedMode){
         target_seq: targetSeq,
         competitor_seq: compSeq || undefined
       })
-    });
+    }, 30000);
 
     if(!res.ok){
       let msg = 'Explanation failed.';
       try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
-      openModal('Heatmap', formatError(msg));
+      setHTML($('modal-content'), formatError(msg));
       return;
     }
 
@@ -958,10 +985,10 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
     }
 
-    openModal('Heatmap (Integrated Gradients)', html);
+    setHTML($('modal-content'), html);
 
   }catch(err){
-    openModal('Heatmap', formatError(err?.message || 'Unexpected error during explanation.'));
+    setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
   }
 }
 
@@ -1164,7 +1191,7 @@ function downloadSeedCSV(){
 }
 
 // =====================================================
-// 3D Viewer (target/competitor) using NGL — snapshot capable
+// 3D Viewer — friendly message if missing; viewer if present
 // =====================================================
 async function ensureNGL(){
   if(GUARDS.nglLoaded) return true;
@@ -1182,6 +1209,93 @@ async function ensureNGL(){
   }catch(_){ return false; }
 }
 
+// Main entry for table buttons — exactly as requested
+async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
+  if(!CURRENT_JOB_ID){
+    openModal('3D Viewer', formatWarn('You need to run a prediction first.'));
+    return;
+  }
+  const pool = kind === 'target' ? CURRENT_INPUTS.targets : CURRENT_INPUTS.competitors;
+  const seq  = tolerantGetAnySeqForId(anyId, pool); // might be empty, still okay for message
+  const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
+
+  // Try to fetch the structure associated with this job + kind
+  let res;
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 15000);
+  }catch(_){ /* network/timeout */ }
+
+  if(!res || !res.ok){
+    // Friendly guidance with exact naming tip
+    openModal('3D Viewer', formatInfo(
+      `No 3D structure found for <b>${escapeHTML(anyId || '(unknown)')}</b>.<br>
+       Upload a PDB/mmCIF named exactly after the FASTA header (e.g., <code>${escapeHTML(baseId || 'TARGET')}.pdb</code> or <code>.cif</code>), then re-run the prediction.`
+    ));
+    return;
+  }
+
+  // If we do have a file, open the NGL viewer
+  const ok = await ensureNGL();
+  if(!ok){
+    openModal('3D Viewer', formatError('Could not load 3D engine. Check your network.'));
+    return;
+  }
+
+  try{
+    const blob = await res.blob();
+    await open3DStageFromBlob(kind, blob, anyId, seq);
+  }catch(err){
+    openModal('3D Viewer', formatError(err?.message || '3D viewer error.'));
+  }
+}
+
+// Helper to actually mount NGL stage and wire toolbar
+async function open3DStageFromBlob(kind, blob, anyId, seq){
+  const url  = URL.createObjectURL(blob);
+  const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'} ${anyId ? '• ' + escapeHTML(anyId) : ''}`;
+  const toolbar = `
+    <button id="ngl-center" class="toolbar-btn">Center on site</button>
+    <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
+    <button id="ngl-open" class="toolbar-btn">Open File</button>
+  `;
+  const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
+  openModal(title, html, toolbar);
+
+  const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
+  window.addEventListener('resize', () => stage.handleResize(), { passive:true });
+
+  const comp = await stage.loadFile(url); // PDB/mmCIF auto-detected
+  comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
+  comp.addRepresentation('ball+stick', { multipleBond: true });
+  stage.autoView();
+
+  // Toolbar actions
+  const centerBtn = $('ngl-center');
+  const snapBtn   = $('ngl-snap');
+  const openBtn   = $('ngl-open');
+
+  if(centerBtn) bindOnce(centerBtn, 'click', () => {
+    // If ID has :start-end, we could attempt a selection; without residue mapping we autoView as a safe default
+    // TODO: when residue numbering map is available, replace with a precise selection focus.
+    stage.autoView();
+  }, 'centerOnce');
+
+  if(snapBtn) bindOnce(snapBtn, 'click', async () => {
+    const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+    const a = document.createElement('a');
+    a.href = img.toDataURL('image/png');
+    a.download = `structure_${kind}.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }, 'snapOnce');
+
+  if(openBtn) bindOnce(openBtn, 'click', () => {
+    const w = window.open(url, '_blank');
+    if(w) w.opener = null;
+  }, 'openOnce');
+}
+
+// (legacy helper kept for compatibility if used elsewhere)
 async function open3DViewer(kind){
   if(!CURRENT_JOB_ID){ openModal('3D Viewer', formatWarn('You need to run a prediction first.')); return; }
   if(!['target','competitor'].includes(kind)){ openModal('3D Viewer', formatError('Invalid molecule kind.')); return; }
@@ -1198,41 +1312,7 @@ async function open3DViewer(kind){
       return;
     }
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-
-    const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}`;
-    const toolbar = `
-      <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
-      <button id="ngl-open" class="toolbar-btn">Open File</button>
-    `;
-    const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
-    openModal(title, html, toolbar);
-
-    // NGL stage
-    const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
-    window.addEventListener('resize', () => stage.handleResize(), { passive:true });
-
-    const comp = await stage.loadFile(url); // PDB/mmCIF auto-detected
-    comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
-    comp.addRepresentation('ball+stick', { multipleBond: true });
-    stage.autoView();
-
-    const snapBtn = $('ngl-snap');
-    const openBtn = $('ngl-open');
-
-    if(snapBtn) bindOnce(snapBtn, 'click', async () => {
-      const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
-      const a = document.createElement('a');
-      a.href = img.toDataURL('image/png');
-      a.download = `structure_${kind}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }, 'snapOnce');
-
-    if(openBtn) bindOnce(openBtn, 'click', () => {
-      const w = window.open(url, '_blank');
-      if(w) w.opener = null;
-    }, 'openOnce');
-
+    await open3DStageFromBlob(kind, blob, '', '');
   }catch(err){
     openModal('3D Viewer', formatError(err?.message || '3D viewer error.'));
   }

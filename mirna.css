@@ -6,6 +6,10 @@
 :root{
   --button-default-blue: #0d47a1;
   --accent-color: #20a4b9;
+
+  /* NEW: sticky offsets for tables */
+  --sticky-offset-main: 96px; /* main page results */
+  --sticky-offset-modal: 0px; /* tables inside modal */
 }
 
 /* Background animation for miRNA page only */
@@ -148,7 +152,6 @@ textarea.sequence-input {
 /* ============================
    Premium Action Button Sizing
    ============================ */
-/* Generic premium + action (used across UI) */
 .btn-premium{
   padding: 12px 18px;
   min-height: 46px;
@@ -168,6 +171,8 @@ textarea.sequence-input {
   box-shadow: 0 10px 24px rgba(17,24,39,.09);
   background: #eef3fb;
 }
+
+/* Base per-row buttons */
 .btn-action{
   min-width: 120px;
   min-height: 40px;
@@ -176,6 +181,27 @@ textarea.sequence-input {
   font-weight: 600;
   border: 1px solid #d8dee9;
   background: linear-gradient(180deg,#fff,#f8fafc);
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+}
+
+/* STRONGER hover/press for Row CSV + 3D buttons (no HTML edit required) */
+.row-csv-btn:hover,
+.view3d-btn:hover,
+.btn-action:hover,
+.row-csv-btn:focus-visible,
+.view3d-btn:focus-visible,
+.btn-action:focus-visible{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(17,24,39,.08);
+  background: #eef3fb;
+  border-color: #cbd5e1;
+  outline: none;
+}
+.row-csv-btn:active,
+.view3d-btn:active,
+.btn-action:active{
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(17,24,39,.10) inset;
 }
 
 /* Primary run button */
@@ -260,7 +286,7 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Generic accent button utility (for future actions) */
+/* Generic accent button utility */
 .btn-accent{
   margin-left:8px;
   border:1px solid #1e5a9c;
@@ -272,7 +298,7 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
 }
 .btn-accent:hover{ filter:brightness(0.95); }
 
-/* Pill/Chip (used to indicate tolerant match / range-aware) */
+/* Chips (badges) */
 .chip{
   display:inline-block;
   padding:2px 8px;
@@ -282,6 +308,19 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   color:#334155;
   font-size:12px;
   margin-left:6px;
+}
+
+/* === NEW: Chips as tiny toggles (no HTML changes needed)
+   Just give chips a class .chip-toggle and set aria-pressed in JS.
+   Optional table-level classes activate CSS filtering (see below). === */
+.chip-toggle{
+  cursor:pointer;
+  user-select:none;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .15s ease;
+}
+.chip-toggle:hover{ transform: translateY(-1px); }
+.chip-toggle[aria-pressed="true"]{
+  background:#163b66; color:#fff; border-color:#163b66;
 }
 
 /* Loader */
@@ -349,7 +388,7 @@ body.mirna-page #loader {
 /* Sticky analysis controls bar (injected by JS) */
 #analysis-controls{
   position: sticky;
-  top: 40px;  /* sits just below reload banner; adjust if header height changes */
+  top: 40px;
   z-index: 19;
   background:#ffffffcc;
   backdrop-filter: blur(6px);
@@ -379,14 +418,24 @@ body.mirna-page table {
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 
-/* Note: inline styles in index.html set sticky top=0 for thead.
-   These rules apply when no inline override is present. */
+/* Sticky header for MAIN results table */
 body.mirna-page table thead th {
   position: sticky;
-  top: 96px;
+  top: var(--sticky-offset-main);
   z-index: 18;
   background: #e9f2ff;
   border-bottom: 1px solid #d6e6ff;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06) inset;
+}
+
+/* FIX: Sticky header inside MODAL (Seed table, etc.) — no overlap */
+#analysis-modal table thead th{
+  position: sticky;
+  top: var(--sticky-offset-modal); /* 0 by default */
+  z-index: 30;
+  background: #ffffff;            /* solid so rows don’t show through */
+  border-bottom: 1px solid #e5e9f2;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06) inset;
 }
 
 body.mirna-page th, body.mirna-page td {
@@ -471,19 +520,17 @@ body.mirna-page #download-btn:hover {
   border-radius:6px;
   background:#f8fbff;
 }
-/* Client-rendered canvas */
 .heatmap-canvas{
   width:100%;
   height:90px;
   display:block;
   image-rendering: crisp-edges;
 }
-/* Server PNG fallback */
 .heatmap-img{
   width:100%;
   height:auto;
   display:block;
-  image-rendering: crisp-edges; /* keeps saliency squares sharp */
+  image-rendering: crisp-edges;
 }
 
 /* Legend + table styling for the dynamic affinity legend */
@@ -526,9 +573,7 @@ details.legend-toggle summary{
 }
 #modal-close:hover{ background:#eef3fb; }
 
-/* ========== 3D Viewer (optional future proof)
-   Keeps NGL/WebGL canvas tidy if/when enabled
-   ========== */
+/* ========== 3D Viewer (future proof) */
 .viewer3d-wrap{ border:1px solid #e5e9f2; border-radius:8px; overflow:hidden; }
 .viewer3d-wrap canvas{ width:100% !important; height:420px !important; display:block; }
 
@@ -548,4 +593,23 @@ body.mirna-page #main-footer .container {
   backdrop-filter: none !important;
   box-shadow: none !important;
   border-radius: 0;
+}
+
+/* ==========================
+   OPTIONAL: Filter mechanics
+   ==========================
+   When JS toggles table classes or row data-attributes,
+   these selectors “do the hiding” with no HTML change.
+*/
+
+/* Only show rows that come from a sliced ID (e.g., TP53:90-150) */
+#results-table.filter-range-only tbody tr[data-has-range="false"]{ display:none; }
+
+/* Mark/keep only tolerant or exact header matches */
+#results-table.filter-match-tolerant tbody tr[data-match="exact"]{ display:none; }
+#results-table.filter-match-exact tbody tr[data-match="tolerant"]{ display:none; }
+
+/* Optional highlight for tolerant matches */
+#results-table tbody tr[data-match="tolerant"] td{
+  box-shadow: inset 0 0 0 2px rgba(30,90,156,0.08);
 }
