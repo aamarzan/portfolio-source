@@ -476,9 +476,7 @@ body.mirna-page #download-btn:hover {
 /* =================
    Modal (Analysis)
    ================= */
-#analysis-modal{
-  /* created by JS; default hidden via inline style */
-}
+
 #analysis-modal [data-overlay]{
   background: rgba(0,0,0,0.45);
 }
