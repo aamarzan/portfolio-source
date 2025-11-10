@@ -27,6 +27,42 @@
   <link rel="stylesheet" href="../style.css?v=1" />
   <link rel="stylesheet" href="../mirna.css?v=1" />
 
+  <!-- Premium button + analysis button sizing (non-breaking overrides) -->
+  <style>
+    /* Action buttons (Load Sample, Clear Inputs) */
+    #load-sample-btn,
+    #clear-inputs-btn {
+      padding: 10px 16px !important;
+      border-radius: 10px !important;
+      font-size: 0.95rem !important;
+      font-weight: 600 !important;
+      line-height: 1.15 !important;
+      min-height: 42px !important;
+      border: 1px solid #d0d7de !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+      letter-spacing: .2px !important;
+    }
+    /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
+    .seed-btn,
+    .heatmap-btn {
+      padding: 8px 14px !important;
+      border-radius: 10px !important;
+      font-size: 0.92rem !important;
+      font-weight: 600 !important;
+      line-height: 1.1 !important;
+      min-height: 38px !important;
+      border: 1px solid #d0d7de !important;
+      background: #f7f9fc !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+      margin: 2px 4px !important;
+      letter-spacing: .2px !important;
+      cursor: pointer;
+    }
+    .seed-btn:hover, .heatmap-btn:hover {
+      background: #eef3fb !important;
+    }
+  </style>
+
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" />
@@ -123,13 +159,14 @@
         </ol>
       </section>
 
-      <!-- Formatting tips: now aligned with multi-target/competitor -->
+      <!-- Formatting tips + header matching notes -->
       <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
         <div><strong>Formatting tips</strong></div>
         <ul style="margin:6px 0 0 18px;">
-          <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>).</li>
+          <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved in results.</li>
           <li><b>Targets & Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
-          <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence; mismatches are rejected.</li>
+          <li><b>Range-aware IDs:</b> For subregions, reference as <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites will display both local (slice) and global coordinates.</li>
+          <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence. <u>Use the base FASTA header</u> for filenames (e.g., <code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.pdb</code>) even if results show a slice like <code>TP53_3UTR:90-150</code>.</li>
           <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
         </ul>
       </div>
@@ -203,11 +240,11 @@
           <textarea
             id="target-seq"
             required
-            placeholder=">target1&#10;AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC"
+            placeholder=">TP53_3UTR&#10;AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC"
             class="sequence-input"
             aria-describedby="target-seq-desc"
           ></textarea>
-          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above.</small>
+          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above. Use <code>Header:Start-End</code> in IDs at analysis time to focus subregions.</small>
           <input
             type="file"
             id="target-seq-file"
@@ -299,7 +336,10 @@
           <b>What you’ll see here:</b> a sortable table with miRNA ID, Target ID, Competitor ID (if any),
           baseline affinity, affinity with competitor, and the competitive effect (baseline − competitor).
           Rows are color-graded by baseline score for quick scanning.<br/>
-          <span style="color:#1e5a9c;"><b>Tip:</b> after results render, use the <em>Seed Sites</em> and <em>Heatmap</em> buttons (shown above the table) to see base-level coordinates and model saliency.</span>
+          <span style="color:#1e5a9c;">
+            <b>Tip:</b> after results render, use the <em>Seed Sites</em> and <em>Heatmap</em> buttons to view base-level coordinates and model saliency.
+            If you used a range like <code>Header:Start-End</code>, Seed Sites will show both <u>local</u> and <u>global</u> coordinates.
+          </span>
         </p>
 
         <div id="loader" class="hidden" role="status" aria-live="polite">
@@ -347,7 +387,11 @@
           <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
         </ul>
         <li>
-          For best results, ensure miRNA FASTA headers match any provided miRNA 3D filenames (e.g., <code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code>).
+          For best results, ensure FASTA headers match any provided 3D filenames exactly:
+          <ul>
+            <li><code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code></li>
+            <li><code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.cif</code> (even if analysis uses <code>TP53_3UTR:90-150</code>)</li>
+          </ul>
         </li>
         <br>
         <h3>Notes</h3>
@@ -492,6 +536,6 @@ AUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
   <!-- Global/site scripts -->
   <script src="../script.js?v=1" defer></script>
   <!-- Page script (guard-safe, duplication-proof) -->
-  <script src="../mirna.js?v=2" defer></script>
+  <script src="../mirna.js?v=3" defer></script>
 </body>
 </html>

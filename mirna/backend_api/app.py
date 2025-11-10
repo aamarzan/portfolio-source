@@ -264,16 +264,28 @@ def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
     cons= float(pdata.get('conservation', 0.0))
     return [gc, dg, cons]
 
-# FASTA parsing helpers
+# =========================
+# FASTA parsing helpers (PATCH: preserve FULL header)
+# =========================
 def parse_fasta_records(text: str):
-    """Return list of (id, seq) from FASTA or raw (single) text."""
+    """Return list of (full_header, seq) from FASTA or raw (single) text.
+
+    FULL header = everything after '>' up to newline (spaces/punctuation preserved).
+    """
     try:
         from Bio import SeqIO
     except Exception:
         return _parse_fasta_naive(text)
     records = list(SeqIO.parse(io.StringIO(text or ""), "fasta"))
     if records:
-        return [(r.id, str(r.seq)) for r in records]
+        out = []
+        for r in records:
+            # r.description keeps the full header (not truncated to the first token)
+            hdr = (getattr(r, "description", None) or r.id or "").strip()
+            if not hdr:
+                hdr = f"seq_{len(out)+1}"
+            out.append((hdr, str(r.seq)))
+        return out
     raw = (text or "").strip()
     if raw:
         return [("primary_1", raw)]
@@ -288,7 +300,10 @@ def _parse_fasta_naive(text: str):
         if ln.startswith(">"):
             if cur_id is not None:
                 out.append((cur_id, "".join(cur_seq)))
-            cur_id = ln[1:].strip() or f"seq_{len(out)+1}"
+            # keep entire header after '>'
+            cur_id = ln[1:].rstrip("\r\n")
+            if not cur_id:
+                cur_id = f"seq_{len(out)+1}"
             cur_seq = []
         else:
             cur_seq.append(ln.strip())
@@ -512,6 +527,33 @@ def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: s
     return ig_pos
 
 # =========================
+# PATCH: tolerant ID variants for 3D-file ↔ FASTA header matching
+# =========================
+def _id_variants(s: str) -> List[str]:
+    """Generate tolerant keys to match filename stems against full FASTA headers."""
+    if not s:
+        return []
+    t = s.strip()
+    cand = {
+        t,
+        t.replace(" ", "_"),
+        t.replace(" ", ""),
+        secure_filename(t),
+        secure_filename(t).replace("_", " "),
+        t.lower(),
+        secure_filename(t).lower(),
+        t.replace(" ", "_").lower(),
+        t.replace(" ", "").lower(),
+    }
+    return list(cand)
+
+def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
+    for k in _id_variants(key):
+        if k in idx:
+            return idx[k]
+    return None
+
+# =========================
 # Prediction & analysis endpoints
 # =========================
 limiter = Limiter(key_func=get_remote_address)
@@ -645,6 +687,7 @@ def start_prediction():
     target_3d_path = _save_optional('target_3d_file')
     competitor_3d_path = _save_optional('competitor_3d_file')
 
+    # PATCH: index miRNA 3D files under multiple tolerant keys
     mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
     for f in mirna_3d_files:
@@ -653,7 +696,8 @@ def start_prediction():
             tmp_paths_to_cleanup.append(p)
             stem = os.path.splitext(secure_filename(f.filename))[0]
             kind, seq = extract_seq_from_structure(p)
-            mirna_3d_index[stem] = (kind, seq, p)
+            for k in _id_variants(stem):
+                mirna_3d_index[k] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
     # Derive total = miRNAs × targets × competitors
@@ -792,9 +836,10 @@ def process_job(job_id: str,
                             sp = structure_vector_from_processed_json(pdata.get('structure_vector','[]'), max_primary_len)
                             prim_struct_list.append(sp)
 
-                        # If a 3D file for this miRNA exists, validate match
-                        if pri_id in mirna_3d_index:
-                            kind, seq3d, path3d = mirna_3d_index[pri_id]
+                        # PATCH: tolerant lookup for miRNA 3D matching
+                        val = _lookup_3d(mirna_3d_index, pri_id)
+                        if val is not None:
+                            kind, seq3d, path3d = val
                             ok, msg = validate_structure_matches_sequence(kind, seq3d, pdata.get('sequence',''), f"miRNA {pri_id}")
                             if not ok:
                                 jobs[job_id]["status"] = "error"

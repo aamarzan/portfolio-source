@@ -140,6 +140,7 @@ function ensureSingleton(id, html, parent){
 }
 
 // Simple FASTA parser → { id: seq, ... } (if no headers: {"<prefix>_1": raw})
+// Preserves FULL header text after ">"
 function parseFastaToMap(text, defaultPrefix='seq'){
   const map = {};
   if(!text || !text.trim()){
@@ -158,6 +159,7 @@ function parseFastaToMap(text, defaultPrefix='seq'){
       if(curId){
         map[curId] = (curSeq.join('')).toUpperCase();
       }
+      // keep entire header after '>'
       curId = ln.replace(/^>/,'').trim() || `${defaultPrefix}_${Object.keys(map).length+1}`;
       curSeq = [];
     }else{
@@ -189,6 +191,27 @@ function getTargetSeqForId(targetId){
   const sIdx = Math.max(0, r.start - 1);
   const eIdx = Math.min(base.length, r.end);
   return base.slice(sIdx, eIdx);
+}
+
+// NEW: general slice helper for any pool (targets/competitors)
+function getAnySeqForId(anyId, pool){
+  const r = parseIdRange(anyId);
+  if(!r){
+    return pool[anyId] || '';
+  }
+  const base = pool[r.baseId] || '';
+  if(!base) return '';
+  const sIdx = Math.max(0, r.start - 1);
+  const eIdx = Math.min(base.length, r.end);
+  return base.slice(sIdx, eIdx);
+}
+
+// For displaying global coords when a :start-end slice is used
+function globalCoordForId(anyId, localStart, localEnd){
+  const r = parseIdRange(anyId);
+  if(!r) return null; // no global translation needed
+  const offset = (r.start || 1) - 1; // 0-based offset
+  return { globalStart: offset + localStart, globalEnd: offset + localEnd };
 }
 
 // =====================================================
@@ -332,9 +355,9 @@ async function handleSubmit(event){
   const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
 
   // Snapshot FASTA → maps for downstream analysis
-  CURRENT_INPUTS.mirnas     = parseFastaToMap(primarySeqs, 'miRNA');
-  CURRENT_INPUTS.targets    = parseFastaToMap(targetSeq, 'target');
-  CURRENT_INPUTS.competitors= parseFastaToMap(competitorSeq, 'competitor');
+  CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
+  CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
+  CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
 
   // Clear results view
   if(resultsContainer) setHTML(resultsContainer, '');
@@ -850,7 +873,7 @@ function closeModal(){
 }
 
 // =====================================================
-// Seed Sites (exact base-level coordinates)
+// Seed Sites (exact base-level coordinates) — RANGE-AWARE
 // =====================================================
 async function handleSeedSitesClick(item){
   try{
@@ -862,8 +885,9 @@ async function handleSeedSitesClick(item){
     const compId  = item.competitor_id ?? '';
 
     const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
-    const targetSeq= getTargetSeqForId(targetId);
-    const compSeq  = compId ? (CURRENT_INPUTS.competitors[compId] || '') : '';
+    // Use general helper so both targets and (if ever ranged) competitors are sliced consistently
+    const targetSeq= getAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const compSeq  = compId ? getAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
 
     if(!mirnaSeq || !targetSeq){
       openModal('Seed Sites', formatError('Could not resolve miRNA and/or target sequences for this row. Please ensure IDs match your FASTA headers.'));
@@ -893,19 +917,38 @@ async function handleSeedSitesClick(item){
     }
 
     const data = await res.json();
-    const hits = Array.isArray(data.hits) ? data.hits : [];
+    let hits = Array.isArray(data.hits) ? data.hits : [];
 
     if(hits.length === 0){
       openModal('Seed Sites', `<p>No canonical seed matches found under current settings (GU=${allowGU ? 'on':'off'}, max mismatch=${maxMM}).</p>`);
       return;
     }
 
-    // Build table
-    let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence.</div>`;
+    // If target/competitor IDs have :start-end, compute global (unsliced) coordinates
+    const tRange = parseIdRange(targetId);
+    const cRange = compId ? parseIdRange(compId) : null;
+
+    // Enrich hits with global coords when applicable
+    hits = hits.map(h => {
+      if(h.molecule === 'target' && tRange){
+        const g = globalCoordForId(targetId, h.start, h.end);
+        return { ...h, global_start: g.globalStart, global_end: g.globalEnd };
+      }
+      if(h.molecule === 'competitor' && cRange){
+        const g = globalCoordForId(compId, h.start, h.end);
+        return { ...h, global_start: g.globalStart, global_end: g.globalEnd };
+      }
+      return h;
+    });
+
+    // Build table (shows global columns only if any range existed)
+    const showGlobalCols = !!(tRange || cRange);
+
+    let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence${showGlobalCols ? ' and global positions are shown when a :start-end range was applied' : ''}.</div>`;
     html += `<table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="text-align:left;border-bottom:1px solid #ddd;">
-          <th>Molecule</th><th>ID</th><th>Start</th><th>End</th><th>Seed</th><th>Type</th><th>Wobble</th><th>Mismatches</th><th>Upstream</th>
+          <th>Molecule</th><th>ID</th><th>Start</th><th>End</th>${showGlobalCols ? '<th>Global Start</th><th>Global End</th>' : ''}<th>Seed</th><th>Type</th><th>Wobble</th><th>Mismatches</th><th>Upstream</th>
         </tr>
       </thead>
       <tbody>`;
@@ -915,6 +958,7 @@ async function handleSeedSitesClick(item){
         <td>${escapeHTML(h.id)}</td>
         <td>${h.start}</td>
         <td>${h.end}</td>
+        ${showGlobalCols ? `<td>${h.global_start ?? ''}</td><td>${h.global_end ?? ''}</td>` : ''}
         <td>${h.seed_len}</td>
         <td>${escapeHTML(h.seed_type || '')}</td>
         <td>${h.wobble ?? 0}</td>
@@ -932,7 +976,7 @@ async function handleSeedSitesClick(item){
 }
 
 // =====================================================
-// Heatmap (Integrated Gradients saliency)
+// Heatmap (Integrated Gradients saliency) — RANGE-AWARE inputs
 // =====================================================
 async function handleHeatmapClick(item){
   try{
@@ -941,8 +985,8 @@ async function handleHeatmapClick(item){
     const compId  = item.competitor_id ?? '';
 
     const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
-    const targetSeq= getTargetSeqForId(targetId);
-    const compSeq  = compId ? (CURRENT_INPUTS.competitors[compId] || '') : '';
+    const targetSeq= getAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const compSeq  = compId ? getAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
 
     if(!mirnaSeq || !targetSeq){
       openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
