@@ -363,3 +363,102 @@ textarea.sequence-input {
     overflow-x: auto;
   }
 }
+
+/* ================================================
+   NEW: Seed/Heatmap & utility styles (non-breaking)
+   ================================================ */
+
+/* Generic accent button used by “Copy Results” or future actions */
+.btn-accent{
+  margin-left:8px;
+  border:1px solid #1e5a9c;
+  background:#1e5a9c;
+  color:#fff;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.btn-accent:hover{ filter:brightness(0.95); }
+
+/* Seed sites panel injected by mirna.js */
+#seed-sites-panel{
+  margin:10px 0;
+  padding:10px;
+  border:1px solid #e5e9f2;
+  border-radius:6px;
+  background:#fafcff;
+}
+.seed-chip{
+  display:inline-block;
+  margin:3px 6px 3px 0;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#eef5ff;
+  border:1px solid #cfe0ff;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:.88em;
+  color:#163b66;
+}
+
+/* Heatmap wrapper + canvas */
+.heatmap-wrap{
+  margin:10px 0;
+  padding:10px;
+  border:1px dashed #cfe0ff;
+  border-radius:6px;
+  background:#f8fbff;
+}
+.heatmap-canvas{
+  width:100%;
+  height:90px;
+  display:block;
+  image-rendering: crisp-edges;
+}
+
+/* Legend + table styling for the dynamic affinity legend */
+#affinity-legend,
+.affinity-legend{
+  margin-bottom:10px;
+}
+#affinity-legend h4,
+.affinity-legend h4{
+  margin:0 0 6px 0;
+  color:#163b66;
+}
+#affinity-legend table,
+.affinity-legend table{
+  border-collapse:collapse;
+  width:100%;
+  max-width:560px;
+  background:#fff;
+}
+#affinity-legend th,#affinity-legend td,
+.affinity-legend th,.affinity-legend td{
+  border:1px solid #e5e9f2;
+  padding:6px 8px;
+  text-align:left;
+  font-size:.94em;
+}
+
+/* Small utility for JS toggles */
+.hidden{ display:none !important; }
+
+/* Sortable table column indicator (optional polish) */
+table#results-table th{
+  position:relative;
+  user-select:none;
+}
+table#results-table th.asc::after{
+  content:"▲";
+  position:absolute;
+  right:8px;
+  font-size:.75em;
+  color:#777;
+}
+table#results-table th:not(.asc)::after{
+  content:"▼";
+  position:absolute;
+  right:8px;
+  font-size:.75em;
+  color:#bbb;
+}
