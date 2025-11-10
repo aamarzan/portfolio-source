@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-11: synced with upgraded app.py & mirna.js (multi-target/competitor + seed-scan + IG heatmap) -->
+  <!-- v2025-11-11 r2: synced with upgraded app.py & mirna.js (multi-target/competitor + seed-scan + IG heatmap; header-match notes; enlarged action/analysis buttons; heatmap viewer hooks; nonce helper) -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -58,7 +58,8 @@
     .btn-premium:hover, #load-sample-btn:hover, #clear-inputs-btn:hover{ background: var(--btn-bg-hover) !important; }
 
     /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
-    .seed-btn, .heatmap-btn{
+    .seed-btn, .heatmap-btn,
+    .btn-seed, .btn-heatmap{ /* aliases for backward compat */
       padding: 10px 16px !important;
       border-radius: 10px !important;
       font-size: 0.95rem !important;
@@ -72,13 +73,21 @@
       margin: 2px 4px !important;
       letter-spacing: .2px !important;
       cursor: pointer;
+      white-space: nowrap;
     }
-    .seed-btn:hover, .heatmap-btn:hover{ background: var(--btn-bg-hover) !important; }
+    .seed-btn:hover, .heatmap-btn:hover,
+    .btn-seed:hover, .btn-heatmap:hover{ background: var(--btn-bg-hover) !important; }
 
     /* Sticky analysis controls (injected by JS above the results table) */
     #analysis-controls{
       position: sticky; top: 8px; z-index: 6; background: #fbfdff; border: 1px solid #e0e8f5; border-left: 4px solid #1e5a9c;
       padding: 10px 12px; border-radius: 9px; box-shadow: 0 3px 8px rgba(0,0,0,0.03);
+    }
+    #analysis-controls .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    #analysis-controls label{ font-size:.9rem; color:#0b1426; }
+    #analysis-controls select, #analysis-controls input[type="number"]{
+      padding:6px 8px; border:1px solid #d0d7de; border-radius:8px; min-height:36px; font-size:.95rem;
+      background:#fff; color:#0b1426;
     }
 
     /* Results table polish */
@@ -98,6 +107,14 @@
 
     /* Inputs spacing */
     .sequence-input{ min-height: 130px; }
+
+    /* Simple modal for Heatmap preview */
+    dialog#heatmap-dialog{ border:none; border-radius:12px; padding:0; box-shadow:var(--panel-shadow); width:min(96vw,1100px); }
+    #heatmap-shell{ background:#fff; border:1px solid var(--panel-br); border-radius:12px; overflow:hidden; }
+    #heatmap-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #eef2f7; }
+    #heatmap-body{ padding:12px; overflow:auto; max-height:80vh; }
+    #heatmap-body img{ max-width:100%; height:auto; display:block; margin:auto; }
+    #heatmap-foot{ display:flex; gap:10px; justify-content:flex-end; padding:10px 12px; border-top:1px solid #eef2f7; }
   </style>
 
   <!-- Icons -->
@@ -381,8 +398,23 @@
           </span>
         </p>
 
+        <!-- Sticky analysis controls (mirna.js will populate & read values) -->
+        <div id="analysis-controls" class="hidden" aria-live="polite">
+          <div class="row">
+            <label for="heatmap-mode"><strong>Heatmap Mode</strong></label>
+            <select id="heatmap-mode" aria-label="Select heatmap mode">
+              <option value="ig_target" selected>IG — Target</option>
+              <option value="ig_competitor">IG — Competitor</option>
+              <option value="seed_density">Seed-hit density</option>
+            </select>
+            <label for="heatmap-steps"><strong>IG Steps</strong></label>
+            <input id="heatmap-steps" type="number" min="10" max="300" step="5" value="50" aria-label="Integrated Gradients steps"/>
+            <span aria-hidden="true" style="color:#64748b;">(applies when IG mode selected)</span>
+          </div>
+        </div>
+
         <div id="loader" class="hidden" role="status" aria-live="polite">
-          Running prediction...
+          <span class="loader-spinner" aria-hidden="true"></span>Running prediction...
         </div>
         <br />
 
@@ -504,6 +536,31 @@
   <!-- Fixed relative path from /mirna/ -->
   <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
   <script>
+    // Lightweight nonce helper for gated endpoints (/predict, /seed_scan, /explain, /download/...)
+    // mirna.js will call window.acquireNonce() before heavy requests.
+    (function(){
+      const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
+      async function fetchNonce(){
+        try{
+          const r = await fetch('/nonce');
+          if(!r.ok) return null;
+          const j = await r.json();
+          return j && j.nonce ? j.nonce : null;
+        }catch(_){ return null; }
+      }
+      window.acquireNonce = async function(){
+        // Always fetch a fresh nonce; server consumes it once.
+        const token = await fetchNonce();
+        if(token){
+          window.__MIRNA_NONCE__ = token;
+          document.dispatchEvent(new CustomEvent('nonce-ready',{detail:{nonce:token}}));
+        }
+        return token;
+      };
+    })();
+  </script>
+
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
       const runBtn = document.querySelector('#prediction-form button[type="submit"]');
       const clickSound = document.getElementById('click-sound');
@@ -521,9 +578,7 @@
       // miRNA: hsa-miR-1-3p (seed = positions 2–8 = GGAAUGU)
       // Target below contains reverse-complement "ACAUUCC" so Seed Sites will show a hit immediately.
       const SAMPLE_MIRNA = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
-
-      const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
-
+      const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
       const SAMPLE_COMP   = `>comp1\nAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
 
       if (btnSample) {
@@ -565,12 +620,41 @@
           if (e) e.value = '';
         });
       }
+
+      // Heatmap modal hooks (mirna.js can dispatch 'open-heatmap' with {src,title})
+      const dlg = document.getElementById('heatmap-dialog');
+      const img = document.getElementById('heatmap-img');
+      const titleEl = document.getElementById('heatmap-title');
+      document.addEventListener('open-heatmap', (ev)=>{
+        const { src, title } = (ev && ev.detail) || {};
+        if(!src) return;
+        if(titleEl) titleEl.textContent = title || 'Heatmap';
+        if(img){ img.src = src; img.alt = title || 'Heatmap'; }
+        if(dlg && typeof dlg.showModal === 'function') dlg.showModal();
+      });
     });
   </script>
+
+  <!-- Simple Heatmap modal viewer (optional; JS opens via CustomEvent) -->
+  <dialog id="heatmap-dialog">
+    <div id="heatmap-shell">
+      <div id="heatmap-head">
+        <strong id="heatmap-title">Heatmap</strong>
+        <button class="btn-premium" onclick="document.getElementById('heatmap-dialog').close()">Close</button>
+      </div>
+      <div id="heatmap-body">
+        <img id="heatmap-img" src="" alt="Heatmap" />
+      </div>
+      <div id="heatmap-foot">
+        <button class="btn-premium" onclick="(function(){ const img=document.getElementById('heatmap-img'); if(img&&img.src) window.open(img.src,'_blank'); })()">Open in New Tab</button>
+        <button class="btn-premium" onclick="(function(){ const img=document.getElementById('heatmap-img'); if(!img||!img.src) return; const a=document.createElement('a'); a.href=img.src; a.download='heatmap.png'; document.body.appendChild(a); a.click(); a.remove(); })()">Download PNG</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Global/site scripts -->
   <script src="../script.js?v=2" defer></script>
   <!-- Page script (guard-safe, duplication-proof) -->
-  <script src="../mirna.js?v=4" defer></script>
+  <script src="../mirna.js?v=5" defer></script>
 </body>
 </html>

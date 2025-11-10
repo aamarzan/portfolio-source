@@ -30671,3 +30671,611 @@ Arguments received by LSTM.call():
 2025-11-11 00:00:14,220 | INFO | 127.0.0.1 - - [11/Nov/2025 00:00:14] "OPTIONS /seed_scan HTTP/1.1" 200 -
 2025-11-11 00:00:14,470 | INFO | 127.0.0.1 - - [11/Nov/2025 00:00:14] "POST /seed_scan HTTP/1.1" 200 -
 2025-11-11 00:46:14,644 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\molecule_processors.py', reloading
+2025-11-11 00:46:20,238 | INFO |  * Restarting with stat
+2025-11-11 00:46:47,457 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-11 00:46:48,268 | WARNING |  * Debugger is active!
+2025-11-11 00:46:48,275 | INFO |  * Debugger PIN: 110-266-754
+2025-11-11 00:47:00,276 | INFO | 127.0.0.1 - - [11/Nov/2025 00:47:00] "GET /config HTTP/1.1" 200 -
+2025-11-11 00:48:05,706 | INFO | 127.0.0.1 - - [11/Nov/2025 00:48:05] "GET /config HTTP/1.1" 200 -
+2025-11-11 00:49:11,954 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:11] "GET /config HTTP/1.1" 200 -
+2025-11-11 00:49:21,252 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 00:49:21,287 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-11 00:49:22,749 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:22] "POST /predict HTTP/1.1" 200 -
+2025-11-11 00:49:22,806 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:22] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:24,829 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:24] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:26,127 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:26] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:27,645 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:27] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:29,114 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:29] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:31,328 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:31] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:32,915 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:32] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:34,330 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:34] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:35,759 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:35] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:37,179 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:37] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:38,596 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:38] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:40,272 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:40] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:41,618 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:41] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:43,602 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:43] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:44,922 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:44] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:46,754 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:46] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:48,099 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:48] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:50,010 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:50] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:51,424 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:51] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:53,368 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:53] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:54,781 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:54] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:56,817 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:56] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:49:58,816 | INFO | 127.0.0.1 - - [11/Nov/2025 00:49:58] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:00,796 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:00] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:02,863 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:02] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:04,880 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:04] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:06,838 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:06] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:08,837 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:08] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:10,765 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:10] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:12,754 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:12] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:14,847 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:14] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:16,844 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:16] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:19,329 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:19] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:21,246 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:21] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:22,856 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:22] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:24,887 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:24] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:26,856 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:26] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:28,894 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:28] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:30,856 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:30] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:32,931 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:32] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:34,931 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:34] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:36,858 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:36] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:38,987 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:38] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:40,794 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:40] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:42,784 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:42] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:44,776 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:44] "GET /progress/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:50:44,817 | INFO | 127.0.0.1 - - [11/Nov/2025 00:50:44] "GET /download/0370cbb9-7d88-4b7f-9f8c-7924181e0fd6 HTTP/1.1" 200 -
+2025-11-11 00:51:16,077 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:16] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 00:51:16,295 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:16] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 00:51:16,445 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:16] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 00:51:27,180 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:27] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 00:51:27,327 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:27] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 00:51:49,509 | INFO | 127.0.0.1 - - [11/Nov/2025 00:51:49] "GET /config HTTP/1.1" 200 -
+2025-11-11 00:53:41,230 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:41] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 00:53:41,515 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:41] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-11 00:53:43,206 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:43] "POST /predict HTTP/1.1" 200 -
+2025-11-11 00:53:43,390 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:43] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:44,824 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:44] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:47,021 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:47] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:48,518 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:48] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:49,958 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:49] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:51,879 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:51] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:53,395 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:53] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:55,157 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:55] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:56,631 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:56] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:53:59,231 | INFO | 127.0.0.1 - - [11/Nov/2025 00:53:59] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:00,786 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:00] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:03,100 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:03] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:04,728 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:04] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:07,785 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:07] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:09,206 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:09] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:10,770 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:10] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:12,454 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:12] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:13,898 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:13] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:15,559 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:15] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:17,214 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:17] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:18,662 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:18] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:20,086 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:20] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:21,980 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:21] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:23,477 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:23] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:24,979 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:24] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:26,664 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:26] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:28,084 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:28] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:29,529 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:29] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:31,615 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:31] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:33,132 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:33] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:34,581 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:34] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:36,915 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:36] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:38,374 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:38] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:39,783 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:39] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:41,327 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:41] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:42,813 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:42] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:44,291 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:44] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:46,721 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:46] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:48,126 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:48] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:49,575 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:49] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:51,764 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:51] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:53,250 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:53] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:54,747 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:54] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:56,690 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:56] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:58,350 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:58] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:54:59,899 | INFO | 127.0.0.1 - - [11/Nov/2025 00:54:59] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:01,454 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:01] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:02,939 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:02] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:04,464 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:04] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:07,354 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:07] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:08,805 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:08] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:10,431 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:10] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:11,931 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:11] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:13,392 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:13] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:15,199 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:15] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:16,680 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:16] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:18,130 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:18] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:19,639 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:19] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:21,119 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:21] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:22,591 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:22] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:24,964 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:24] "GET /progress/8eee807d-7d72-4f25-8ee1-e426b4ca3756 HTTP/1.1" 200 -
+2025-11-11 00:55:57,265 | INFO | 127.0.0.1 - - [11/Nov/2025 00:55:57] "GET /config HTTP/1.1" 200 -
+2025-11-11 00:58:20,742 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 00:58:21,351 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-11 00:58:22,498 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:22] "POST /predict HTTP/1.1" 200 -
+2025-11-11 00:58:23,461 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:23] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:24,905 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:24] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:28,380 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:28] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:29,900 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:29] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:34,410 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:34] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:36,271 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:36] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:37,767 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:37] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:39,279 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:39] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:41,019 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:41] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:42,434 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:42] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:44,117 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:44] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:45,654 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:45] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:47,101 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:47] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:48,627 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:48] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:50,062 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:50] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:51,968 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:51] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:53,918 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:53] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:55,862 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:55] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:57,893 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:57] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:58:59,849 | INFO | 127.0.0.1 - - [11/Nov/2025 00:58:59] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:02,170 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:02] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:03,844 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:03] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:07,890 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:07] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:11,082 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:11] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:13,860 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:13] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:15,916 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:15] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:18,907 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:18] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:21,241 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:21] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:22,826 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:22] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:24,914 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:24] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:26,873 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:26] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:29,308 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:29] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:30,884 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:30] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:32,858 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:32] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:35,001 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:35] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:36,832 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:36] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:38,817 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:38] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:40,860 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:40] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:42,834 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:42] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:44,852 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:44] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:46,823 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:46] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:48,833 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:48] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:50,823 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:50] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:52,830 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:52] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:54,837 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:54] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:56,855 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:56] "GET /progress/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 00:59:57,474 | INFO | 127.0.0.1 - - [11/Nov/2025 00:59:57] "GET /download/88a7ed05-9c0d-4622-935b-0cdc6a630ed2 HTTP/1.1" 200 -
+2025-11-11 01:03:14,850 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:14] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:14,888 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:14] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:14,926 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:14] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:16,809 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:16] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:16,849 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:16] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:19,765 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:19] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:19,827 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:19] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:29,585 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:29] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:29,618 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:29] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:29,651 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:29] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:40,821 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:40] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:41,098 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:41] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:41,127 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:41] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:42,909 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:42] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:43,355 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:43] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:45,974 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:45] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:46,023 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:46] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:47,854 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:47] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:47,936 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:47] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:47,985 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:47] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:50,100 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:50] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:50,566 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:50] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:52,767 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:52] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:52,806 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:52] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:55,002 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:55,090 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:55] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:55,185 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:55] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:03:57,662 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:57] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:03:57,711 | INFO | 127.0.0.1 - - [11/Nov/2025 01:03:57] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:00,452 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:00] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:00,521 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:00] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:00,556 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:00] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:02,129 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:02] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:02,196 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:02] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:04,485 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:04] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:04,565 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:04] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:06,985 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:07,129 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:07] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:07,269 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:07] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:08,629 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:08] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:08,782 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:08] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:10,304 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:10] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:10,445 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:10] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:15,154 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:15] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:15,312 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:15] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:15,474 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:15] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:16,909 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:16] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:17,056 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:17] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:04:20,165 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:20,207 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:20] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:04:55,585 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:04:57,515 | INFO | 127.0.0.1 - - [11/Nov/2025 01:04:57] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:05:00,422 | INFO | 127.0.0.1 - - [11/Nov/2025 01:05:00] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:05:01,897 | INFO | 127.0.0.1 - - [11/Nov/2025 01:05:01] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:05:03,530 | INFO | 127.0.0.1 - - [11/Nov/2025 01:05:03] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:05:05,386 | INFO | 127.0.0.1 - - [11/Nov/2025 01:05:05] "[31m[1mPOST /seed_scan HTTP/1.1[0m" 403 -
+2025-11-11 01:05:05,498 | INFO | 127.0.0.1 - - [11/Nov/2025 01:05:05] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:06:15,398 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:15] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:06:15,514 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:15] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:06:15,669 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:15] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:06:23,275 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:23] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:06:24,839 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:24] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:06:25,319 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:25] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:06:35,568 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:35] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:06:36,096 | INFO | 127.0.0.1 - - [11/Nov/2025 01:06:36] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:07:13,765 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:13] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:07:13,947 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:13] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:07:14,274 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:14] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-11 01:07:16,917 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:16] "[31m[1mPOST /explain HTTP/1.1[0m" 403 -
+2025-11-11 01:07:17,167 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:07:17,511 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:17] "OPTIONS /explain HTTP/1.1" 200 -
+2025-11-11 01:07:20,716 | INFO | 127.0.0.1 - - [11/Nov/2025 01:07:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 01:08:08,297 | INFO | 127.0.0.1 - - [11/Nov/2025 01:08:08] "[31m[1mPOST /explain HTTP/1.1[0m" 403 -
+2025-11-11 01:22:27,607 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-11 01:22:27,705 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mOnly input tensors may be passed as positional arguments. The following argument value should be passed as a keyword argument: (<tf.Tensor: shape=(1, 32), dtype=float32, numpy=
+array([[-0.8500056 , -0.4288982 , -0.24833415, -0.29367617,  1.5235953 ,
+        -0.49391538,  2.05914   , -0.48560187, -0.5745744 ,  1.7311367 ,
+         1.0056994 ,  0.47560167, -0.4393292 , -0.14160173, -0.28708458,
+         1.0989506 ,  0.36526883, -0.38916966, -0.4425501 ,  0.50822884,
+        -0.37084693,  1.029353  ,  0.30695677, -0.14616185, -0.48660222,
+        -0.5135912 , -0.57504344, -0.73662984, -0.5523072 ,  1.5633177 ,
+        -0.37756467, -0.5984371 ]], dtype=float32)>, (<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.02151484,  0.13228673, -0.19302751,  0.0204399 ,  0.30260882,
+        -0.13164066,  0.40327892, -0.4149355 ,  0.01599427,  0.01006965,
+        -0.03376357, -0.03419924,  0.10828709,  0.34846064, -0.1454477 ,
+         0.03822754]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.06228267,  0.31901494, -0.8009157 ,  0.0715795 ,  1.8007432 ,
+        -0.5143443 ,  0.9569493 , -1.1952281 ,  0.050424  ,  0.0545192 ,
+        -0.07458773, -0.08675401,  0.5044558 ,  1.3061488 , -0.81446564,
+         0.10418594]], dtype=float32)>)) (of type <class 'tuple'>)[0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1513, in explain
+    with=target|competitor (default=target)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 596, in integrated_gradients
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\layers\layer.py", line 846, in __call__
+    raise ValueError(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mOnly input tensors may be passed as positional arguments. The following argument value should be passed as a keyword argument: (<tf.Tensor: shape=(1, 32), dtype=float32, numpy=
+array([[-0.8500056 , -0.4288982 , -0.24833415, -0.29367617,  1.5235953 ,
+        -0.49391538,  2.05914   , -0.48560187, -0.5745744 ,  1.7311367 ,
+         1.0056994 ,  0.47560167, -0.4393292 , -0.14160173, -0.28708458,
+         1.0989506 ,  0.36526883, -0.38916966, -0.4425501 ,  0.50822884,
+        -0.37084693,  1.029353  ,  0.30695677, -0.14616185, -0.48660222,
+        -0.5135912 , -0.57504344, -0.73662984, -0.5523072 ,  1.5633177 ,
+        -0.37756467, -0.5984371 ]], dtype=float32)>, (<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.02151484,  0.13228673, -0.19302751,  0.0204399 ,  0.30260882,
+        -0.13164066,  0.40327892, -0.4149355 ,  0.01599427,  0.01006965,
+        -0.03376357, -0.03419924,  0.10828709,  0.34846064, -0.1454477 ,
+         0.03822754]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.06228267,  0.31901494, -0.8009157 ,  0.0715795 ,  1.8007432 ,
+        -0.5143443 ,  0.9569493 , -1.1952281 ,  0.050424  ,  0.0545192 ,
+        -0.07458773, -0.08675401,  0.5044558 ,  1.3061488 , -0.81446564,
+         0.10418594]], dtype=float32)>)) (of type <class 'tuple'>)[0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+2025-11-11 01:22:27,727 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[491, (<tf.Tensor: shape=(), dtype=int32, numpy=491>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E4A61CFE0>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.09989591, -0.02019791,  0.09970396,  0.21768129, -0.04126573,
+         0.01579594,  0.43036228, -0.01602411,  0.05531876,  0.02855377,
+         0.00901937,  0.08139066, -0.14296828,  0.09460665,  0.05411389,
+         0.498511  ]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.34437138, -0.08364065,  0.3485389 ,  0.6074524 , -0.22424266,
+         0.10631353,  2.7163515 , -0.08987593,  0.12885945,  0.25241923,
+         0.04461609,  0.19130814, -0.40683487,  0.4297511 ,  0.21224861,
+         3.2277596 ]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.09989591, -0.02019791,  0.09970396,  0.21768129, -0.04126573,
+         0.01579594,  0.43036228, -0.01602411,  0.05531876,  0.02855377,
+         0.00901937,  0.08139066, -0.14296828,  0.09460665,  0.05411389,
+         0.498511  ]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.34437138, -0.08364065,  0.3485389 ,  0.6074524 , -0.22424266,
+         0.10631353,  2.7163515 , -0.08987593,  0.12885945,  0.25241923,
+         0.04461609,  0.19130814, -0.40683487,  0.4297511 ,  0.21224861,
+         3.2277596 ]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1513, in explain
+    with=target|competitor (default=target)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 596, in integrated_gradients
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\tensorflow\python\util\nest_util.py", line 535, in _tf_core_assert_same_structure
+    raise type(e)(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[491, (<tf.Tensor: shape=(), dtype=int32, numpy=491>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E4A61CFE0>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.09989591, -0.02019791,  0.09970396,  0.21768129, -0.04126573,
+         0.01579594,  0.43036228, -0.01602411,  0.05531876,  0.02855377,
+         0.00901937,  0.08139066, -0.14296828,  0.09460665,  0.05411389,
+         0.498511  ]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.34437138, -0.08364065,  0.3485389 ,  0.6074524 , -0.22424266,
+         0.10631353,  2.7163515 , -0.08987593,  0.12885945,  0.25241923,
+         0.04461609,  0.19130814, -0.40683487,  0.4297511 ,  0.21224861,
+         3.2277596 ]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.09989591, -0.02019791,  0.09970396,  0.21768129, -0.04126573,
+         0.01579594,  0.43036228, -0.01602411,  0.05531876,  0.02855377,
+         0.00901937,  0.08139066, -0.14296828,  0.09460665,  0.05411389,
+         0.498511  ]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.34437138, -0.08364065,  0.3485389 ,  0.6074524 , -0.22424266,
+         0.10631353,  2.7163515 , -0.08987593,  0.12885945,  0.25241923,
+         0.04461609,  0.19130814, -0.40683487,  0.4297511 ,  0.21224861,
+         3.2277596 ]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+2025-11-11 01:22:27,731 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mOnly input tensors may be passed as positional arguments. The following argument value should be passed as a keyword argument: (<tf.Tensor: shape=(1, 32), dtype=float32, numpy=
+array([[ 0.9130852 , -0.4288982 , -0.24833415,  0.79833984,  1.2807357 ,
+        -0.49391538, -0.739028  ,  2.248955  , -0.5745744 ,  0.04351413,
+        -0.83655286, -0.52490485, -0.4393292 , -0.14160173, -0.7259376 ,
+        -0.3044458 , -1.0389729 , -0.51566845, -0.32972127, -0.90488964,
+        -0.37084693, -0.5552523 ,  1.7539605 ,  1.1720117 ,  0.70481074,
+        -0.5135912 , -0.57504344,  1.3975528 ,  0.10308117, -0.822883  ,
+        -0.37756467, -0.5984371 ]], dtype=float32)>, (<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.02044258,  0.36569956, -0.5386222 ,  0.07359599, -0.17154923,
+        -0.63787293, -0.07235116,  0.12635973, -0.18485211, -0.06683078,
+         0.11675815, -0.54718953,  0.50222987, -0.14033993, -0.36171967,
+         0.15409671]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.04668862,  5.559835  , -2.5634074 ,  0.08466085, -0.40158796,
+        -5.6183014 , -0.173049  ,  0.2603145 , -0.49846438, -0.13097794,
+         0.2671817 , -5.795197  ,  5.325742  , -0.28056377, -1.7499142 ,
+         0.4919404 ]], dtype=float32)>)) (of type <class 'tuple'>)[0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1513, in explain
+    with=target|competitor (default=target)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 596, in integrated_gradients
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\layers\layer.py", line 846, in __call__
+    raise ValueError(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mOnly input tensors may be passed as positional arguments. The following argument value should be passed as a keyword argument: (<tf.Tensor: shape=(1, 32), dtype=float32, numpy=
+array([[ 0.9130852 , -0.4288982 , -0.24833415,  0.79833984,  1.2807357 ,
+        -0.49391538, -0.739028  ,  2.248955  , -0.5745744 ,  0.04351413,
+        -0.83655286, -0.52490485, -0.4393292 , -0.14160173, -0.7259376 ,
+        -0.3044458 , -1.0389729 , -0.51566845, -0.32972127, -0.90488964,
+        -0.37084693, -0.5552523 ,  1.7539605 ,  1.1720117 ,  0.70481074,
+        -0.5135912 , -0.57504344,  1.3975528 ,  0.10308117, -0.822883  ,
+        -0.37756467, -0.5984371 ]], dtype=float32)>, (<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.02044258,  0.36569956, -0.5386222 ,  0.07359599, -0.17154923,
+        -0.63787293, -0.07235116,  0.12635973, -0.18485211, -0.06683078,
+         0.11675815, -0.54718953,  0.50222987, -0.14033993, -0.36171967,
+         0.15409671]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.04668862,  5.559835  , -2.5634074 ,  0.08466085, -0.40158796,
+        -5.6183014 , -0.173049  ,  0.2603145 , -0.49846438, -0.13097794,
+         0.2671817 , -5.795197  ,  5.325742  , -0.28056377, -1.7499142 ,
+         0.4919404 ]], dtype=float32)>)) (of type <class 'tuple'>)[0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+2025-11-11 01:22:27,739 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[266, (<tf.Tensor: shape=(), dtype=int32, numpy=266>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E661C8590>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.6850165 ,  0.0874102 , -0.4812356 ,  0.5287781 ,  0.53114337,
+        -0.30801186,  0.63495994, -0.717687  ,  0.71589065,  0.5905045 ,
+         0.40470505, -0.31245595,  0.6762777 ,  0.6852592 , -0.699223  ,
+         0.04708802]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.3962104 ,  0.20130174, -1.3727084 ,  2.0740907 ,  1.4334188 ,
+        -0.66743696,  4.4662976 , -2.166775  ,  3.7766523 ,  1.3274925 ,
+         0.51423055, -0.5710953 ,  1.4358788 ,  3.4195366 , -1.6500883 ,
+         0.6744096 ]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.6850165 ,  0.0874102 , -0.4812356 ,  0.5287781 ,  0.53114337,
+        -0.30801186,  0.63495994, -0.717687  ,  0.71589065,  0.5905045 ,
+         0.40470505, -0.31245595,  0.6762777 ,  0.6852592 , -0.699223  ,
+         0.04708802]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.3962104 ,  0.20130174, -1.3727084 ,  2.0740907 ,  1.4334188 ,
+        -0.66743696,  4.4662976 , -2.166775  ,  3.7766523 ,  1.3274925 ,
+         0.51423055, -0.5710953 ,  1.4358788 ,  3.4195366 , -1.6500883 ,
+         0.6744096 ]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1513, in explain
+    with=target|competitor (default=target)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 596, in integrated_gradients
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\tensorflow\python\util\nest_util.py", line 535, in _tf_core_assert_same_structure
+    raise type(e)(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[266, (<tf.Tensor: shape=(), dtype=int32, numpy=266>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E661C8590>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.6850165 ,  0.0874102 , -0.4812356 ,  0.5287781 ,  0.53114337,
+        -0.30801186,  0.63495994, -0.717687  ,  0.71589065,  0.5905045 ,
+         0.40470505, -0.31245595,  0.6762777 ,  0.6852592 , -0.699223  ,
+         0.04708802]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.3962104 ,  0.20130174, -1.3727084 ,  2.0740907 ,  1.4334188 ,
+        -0.66743696,  4.4662976 , -2.166775  ,  3.7766523 ,  1.3274925 ,
+         0.51423055, -0.5710953 ,  1.4358788 ,  3.4195366 , -1.6500883 ,
+         0.6744096 ]], dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.6850165 ,  0.0874102 , -0.4812356 ,  0.5287781 ,  0.53114337,
+        -0.30801186,  0.63495994, -0.717687  ,  0.71589065,  0.5905045 ,
+         0.40470505, -0.31245595,  0.6762777 ,  0.6852592 , -0.699223  ,
+         0.04708802]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-1.3962104 ,  0.20130174, -1.3727084 ,  2.0740907 ,  1.4334188 ,
+        -0.66743696,  4.4662976 , -2.166775  ,  3.7766523 ,  1.3274925 ,
+         0.51423055, -0.5710953 ,  1.4358788 ,  3.4195366 , -1.6500883 ,
+         0.6744096 ]], dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+2025-11-11 01:22:27,745 | ERROR | /explain error: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[348, (<tf.Tensor: shape=(), dtype=int32, numpy=348>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E4AF79850>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.7904265 ,  0.84570134, -0.7184765 ,  0.1433918 ,  0.7822667 ,
+        -0.7636253 ,  0.04030974, -0.78628194, -0.73277795,  0.6661777 ,
+         0.756958  , -0.5797547 ,  0.67944247,  0.8063964 , -0.71661544,
+         0.03755979]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[ -2.7272363 ,   5.6691494 , -10.052912  ,   0.2319251 ,
+          5.5713444 ,  -5.9491887 ,   0.07504998,  -1.938195  ,
+         -1.305421  ,   1.481746  ,   1.1756357 ,  -5.5025396 ,
+          9.449547  ,   2.0926495 ,  -9.002231  ,   0.13880412]],
+      dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.7904265 ,  0.84570134, -0.7184765 ,  0.1433918 ,  0.7822667 ,
+        -0.7636253 ,  0.04030974, -0.78628194, -0.73277795,  0.6661777 ,
+         0.756958  , -0.5797547 ,  0.67944247,  0.8063964 , -0.71661544,
+         0.03755979]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[ -2.7272363 ,   5.6691494 , -10.052912  ,   0.2319251 ,
+          5.5713444 ,  -5.9491887 ,   0.07504998,  -1.938195  ,
+         -1.305421  ,   1.481746  ,   1.1756357 ,  -5.5025396 ,
+          9.449547  ,   2.0926495 ,  -9.002231  ,   0.13880412]],
+      dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1513, in explain
+    with=target|competitor (default=target)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 596, in integrated_gradients
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\utils\traceback_utils.py", line 122, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\tensorflow\python\util\nest_util.py", line 535, in _tf_core_assert_same_structure
+    raise type(e)(
+ValueError: Exception encountered when calling LSTM.call().
+
+[1mThe two structures don't have the same nested structure.
+
+First structure: type=list str=[TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorSpec(shape=(), dtype=tf.int32, name=None), (TensorArraySpec(TensorShape([1, 16]), tf.float32, False, True),), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None), TensorSpec(shape=(1, 16), dtype=tf.float32, name=None))]
+
+Second structure: type=list str=[348, (<tf.Tensor: shape=(), dtype=int32, numpy=348>, (<tensorflow.python.util.tf_should_use.ShouldUseWrapper object at 0x0000019E4AF79850>,), [<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.7904265 ,  0.84570134, -0.7184765 ,  0.1433918 ,  0.7822667 ,
+        -0.7636253 ,  0.04030974, -0.78628194, -0.73277795,  0.6661777 ,
+         0.756958  , -0.5797547 ,  0.67944247,  0.8063964 , -0.71661544,
+         0.03755979]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[ -2.7272363 ,   5.6691494 , -10.052912  ,   0.2319251 ,
+          5.5713444 ,  -5.9491887 ,   0.07504998,  -1.938195  ,
+         -1.305421  ,   1.481746  ,   1.1756357 ,  -5.5025396 ,
+          9.449547  ,   2.0926495 ,  -9.002231  ,   0.13880412]],
+      dtype=float32)>])]
+
+More specifically: Substructure "type=list str=[<tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[-0.7904265 ,  0.84570134, -0.7184765 ,  0.1433918 ,  0.7822667 ,
+        -0.7636253 ,  0.04030974, -0.78628194, -0.73277795,  0.6661777 ,
+         0.756958  , -0.5797547 ,  0.67944247,  0.8063964 , -0.71661544,
+         0.03755979]], dtype=float32)>, <tf.Tensor: shape=(1, 16), dtype=float32, numpy=
+array([[ -2.7272363 ,   5.6691494 , -10.052912  ,   0.2319251 ,
+          5.5713444 ,  -5.9491887 ,   0.07504998,  -1.938195  ,
+         -1.305421  ,   1.481746  ,   1.1756357 ,  -5.5025396 ,
+          9.449547  ,   2.0926495 ,  -9.002231  ,   0.13880412]],
+      dtype=float32)>]" is a sequence, while substructure "type=TensorSpec str=TensorSpec(shape=(1, 16), dtype=tf.float32, name=None)" is not
+Entire first structure:
+[., (., (.,), ., .)]
+Entire second structure:
+[., (., (.,), [., .])][0m
+
+Arguments received by LSTM.call():
+  • sequences=tf.Tensor(shape=(1, 850, 32), dtype=float32)
+  • initial_state=None
+  • mask=None
+  • training=False

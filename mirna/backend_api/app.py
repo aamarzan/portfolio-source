@@ -1,4 +1,4 @@
-# app.py — multi-target & multi-competitor + seed-scan + IG explain + CSV & heatmap exports
+# app.py — multi-target & multi-competitor + seed-scan + IG explain + CSV & heatmap exports + 3D contacts
 # (premium, future-proof, and strictly provenance-grounded)
 
 import os
@@ -128,13 +128,22 @@ def issue_nonce():
     nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
     return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
 
+def _nonce_protected(endpoint_name: Optional[str]) -> bool:
+    protected = {
+        'start_prediction', 'seed_scan', 'explain',
+        'download_all_csv', 'download_single_csv',
+        'download_heatmap_png',
+        'download_seeds_all', 'download_seeds_one',
+        'get_structure_artifact', 'get_structure_mirna',
+        'get_contacts'
+    }
+    return endpoint_name in protected
+
 @app.before_request
 def require_nonce_or_key():
     if request.method == "OPTIONS":
         return '', 200
-    # ✅ protect heavy endpoints
-    if request.endpoint in ('start_prediction', 'seed_scan', 'explain',
-                            'download_all_csv', 'download_single_csv', 'download_heatmap_png'):
+    if _nonce_protected(request.endpoint):
         if USE_NONCE:
             client_ip = get_remote_address()
             provided_nonce = request.headers.get("X-Nonce")
@@ -1082,14 +1091,13 @@ def download_results(job_id):
 
 
 # =========================
-# NEW: CSV + Heatmap Download Endpoints
+# CSV + Heatmap Download Endpoints
 # =========================
 def _results_df(job_id: str) -> pd.DataFrame:
     job = jobs.get(job_id)
     if not job or job["status"] != "completed":
         return pd.DataFrame()
     df = pd.DataFrame(job["results"])
-    # Keep a stable order of columns for CSV readability
     preferred = [
         'interaction_id', 'timestamp_utc',
         'mirna_id', 'primary_molecule_id', 'target_id', 'competitor_id',
@@ -1101,7 +1109,6 @@ def _results_df(job_id: str) -> pd.DataFrame:
         'prov_model_path','prov_model_sha256','prov_scaler_path','prov_scaler_sha256',
         'prov_explain_method','prov_explain_steps','prov_seed_rules'
     ]
-    # add any missing columns at the end in natural order
     rest = [c for c in df.columns if c not in preferred]
     return df[preferred + rest]
 
@@ -1150,6 +1157,82 @@ def download_single_csv(job_id, interaction_id):
         headers={"Content-Disposition": f"attachment; filename=interaction_{interaction_id}.csv"}
     )
 
+# ---- NEW: seed-hits exploded CSVs (per-row and all-rows) ----
+def _explode_seed_hits(row: Dict) -> List[Dict]:
+    out = []
+    hits = []
+    try:
+        hits = json.loads(row.get('seed_hits_json') or "[]")
+    except Exception:
+        hits = []
+    for h in hits:
+        out.append({
+            "interaction_id": row.get("interaction_id"),
+            "mirna_id": row.get("mirna_id"),
+            "target_id": row.get("target_id"),
+            "competitor_id": row.get("competitor_id",""),
+            "seed_type": h.get("seed_type",""),
+            "start": h.get("start",""),
+            "end": h.get("end",""),
+            "seed_len": h.get("seed_len",""),
+            "mismatches": h.get("mismatches",""),
+            "wobble": h.get("wobble",""),
+            "upstream_base": h.get("upstream_base","")
+        })
+    return out
+
+@app.route('/download/<job_id>/seeds_all.csv', methods=['GET'])
+def download_seeds_all(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    if job["status"] != "completed":
+        return jsonify({"error": "Job not completed yet"}), 400
+
+    rows = []
+    for r in job["results"]:
+        rows.extend(_explode_seed_hits(r))
+    if not rows:
+        return jsonify({"error": "No seed hits available"}), 400
+
+    df = pd.DataFrame(rows)
+    buf = io.StringIO()
+    df.to_csv(buf, index=False)
+    buf.seek(0)
+    send_ga_event("download_seeds_all", {"job_id": job_id, "rows": len(df)})
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=seed_hits_{job_id}.csv"}
+    )
+
+@app.route('/download/<job_id>/<interaction_id>/seeds.csv', methods=['GET'])
+def download_seeds_one(job_id, interaction_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    if job["status"] != "completed":
+        return jsonify({"error": "Job not completed yet"}), 400
+
+    row = next((r for r in job["results"] if r.get('interaction_id') == interaction_id), None)
+    if not row:
+        return jsonify({"error": "Invalid interaction_id"}), 404
+
+    rows = _explode_seed_hits(row)
+    if not rows:
+        return jsonify({"error": "No seed hits for this interaction"}), 400
+
+    df = pd.DataFrame(rows)
+    buf = io.StringIO()
+    df.to_csv(buf, index=False)
+    buf.seek(0)
+    send_ga_event("download_seeds_one", {"job_id": job_id, "interaction_id": interaction_id})
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=seed_hits_{interaction_id}.csv"}
+    )
+
 def _build_ig_feed(pseq: str, tseq: str, cseq: str,
                    Lp: int, Lt: int, Lc: int, include_struct: Dict[str, bool]) -> Dict[str, np.ndarray]:
     # sequences
@@ -1157,11 +1240,8 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
     tgt_enc = one_hot_encode_sequence(tseq, Lt)[None, ...]
     cmp_enc = one_hot_encode_sequence(cseq or '', Lc)[None, ...]
 
-    # minimal features (using primary)
-    # Here we make a tiny placeholder processor for numeric features (consistent with training scaler)
-    # We cannot reconstruct GC/dG exactly without full processor context for this single pair -> use zeros if scaler expects.
+    # numeric features (safe baseline)
     if hasattr(scaler, 'feature_names_in_'):
-        # try to use zeros with same feature names (safe baseline)
         z = np.zeros((1, len(scaler.feature_names_in_)), dtype=np.float32)
         scaled_num = scaler.transform(z)
     else:
@@ -1270,13 +1350,12 @@ def download_heatmap_png(job_id, interaction_id):
 
 
 # =========================
-# NEW: Public structure artifact getters (optional; used later by 3D viewer)
+# Public structure artifact getters (for 3D viewer)
 # =========================
 @app.route('/structure/<job_id>/<kind>', methods=['GET'])
 def get_structure_artifact(job_id, kind):
     """
     kind: target | competitor
-    (miRNA 3D per-id will be served later via a separate route if needed)
     """
     job = jobs.get(job_id)
     if not job:
@@ -1296,8 +1375,181 @@ def get_structure_artifact(job_id, kind):
     if not path or not os.path.exists(path):
         return jsonify({"error": "No artifact available"}), 404
 
-    # stream as-is with a basic filename
     return send_file(path, as_attachment=True, download_name=os.path.basename(path))
+
+@app.route('/structure/<job_id>/miRNA/<mirna_id>', methods=['GET'])
+def get_structure_mirna(job_id, mirna_id):
+    """Serve the uploaded miRNA structure file that best matches the given ID."""
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    art = job.get("artifacts") or {}
+    if time.time() > float(art.get("expiry", 0)):
+        return jsonify({"error": "Artifacts expired"}), 410
+    idx = art.get('mirna_3d_index') or {}
+    val = _lookup_3d(idx, mirna_id)
+    if not val:
+        return jsonify({"error": "No miRNA 3D file for this ID"}), 404
+    _, __, p = val
+    if not p or not os.path.exists(p):
+        return jsonify({"error": "Artifact not found"}), 404
+    return send_file(p, as_attachment=True, download_name=os.path.basename(p))
+
+
+# =========================
+# Contacts (miRNA↔Target / miRNA↔Competitor) for 3D overlay
+# =========================
+def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
+    """
+    Fast contact heuristics using Bio.PDB NeighborSearch.
+    Returns atoms pairs with distance and coarse type labels:
+      - close (<= cutoff)
+      - hbond_like (N/O pairs <= 3.5 Å)
+      - salt_bridge_like (basic N vs phosphate O/P <= 4.0 Å)
+      - pi_stacking_like (nucleobase centroid distance <= 4.5 Å)
+    """
+    try:
+        from Bio.PDB import PDBParser, MMCIFParser, NeighborSearch, Selection
+    except Exception as e:
+        return {"error": "Biopython with Bio.PDB is required on the server", "detail": str(e)}
+
+    def _load_atoms(p):
+        parser = PDBParser(QUIET=True) if p.lower().endswith(".pdb") else MMCIFParser(QUIET=True)
+        struct = parser.get_structure("s", p)
+        atoms = [a for a in Selection.unfold_entities(struct, 'A') if a.element.strip()]
+        return struct, atoms
+
+    def _is_base_atom(atom):
+        name = atom.get_name().upper()
+        return name in {"C2","C4","C5","C6","C8","N1","N3","N7","N9","C5M"}
+
+    def _res_serial(atom):
+        res = atom.get_parent()
+        ch = res.get_parent()
+        r = res.get_id()[1] if isinstance(res.get_id(), tuple) else str(res.get_id())
+        return {"chain": getattr(ch, "id", "?"), "resname": res.get_resname(), "resid": int(r) if isinstance(r, int) else r}
+
+    struct_a, atoms_a = _load_atoms(path_a)
+    struct_b, atoms_b = _load_atoms(path_b)
+
+    ns = NeighborSearch(atoms_a + atoms_b)
+    pairs = ns.search_all(cutoff)
+
+    out = []
+    hbonds = 0
+    salts = 0
+    for x, y in pairs:
+        # ensure x from A, y from B (order)
+        in_a = x in atoms_a
+        in_b = y in atoms_b
+        if not (in_a and in_b) and not (y in atoms_a and x in atoms_b):
+            continue
+        a1, a2 = (x, y) if (in_a and in_b) else (y, x)
+        d = (a1.coord - a2.coord)
+        dist = float(np.sqrt(np.dot(d, d)))
+
+        # type inference
+        n1 = a1.element.upper()
+        n2 = a2.element.upper()
+        nm1 = a1.get_name().upper()
+        nm2 = a2.get_name().upper()
+        rn1 = a1.get_parent().get_resname().upper()
+        rn2 = a2.get_parent().get_resname().upper()
+
+        ctype = "close"
+        # H-bond like: N/O within 3.5 Å
+        if (n1 in {"N","O"} and n2 in {"N","O"} and dist <= 3.5):
+            ctype = "hbond_like"; hbonds += 1
+        # Salt-bridge like: basic N (LYS/ARG/HIS) vs phosphate O/P in nucleic acid
+        basic = (rn1 in {"LYS","ARG","HIS"} and n1 == "N") or (rn2 in {"LYS","ARG","HIS"} and n2 == "N")
+        phosphate = (rn1 in {"A","U","G","C","T"} and (nm1.startswith("OP") or nm1 in {"O1P","O2P","O3*","P"})) or \
+                    (rn2 in {"A","U","G","C","T"} and (nm2.startswith("OP") or nm2 in {"O1P","O2P","O3*","P"}))
+        if basic and phosphate and dist <= 4.0:
+            ctype = "salt_bridge_like"; salts += 1
+
+        out.append({
+            "a": {**_res_serial(a1), "atom": nm1, "element": n1},
+            "b": {**_res_serial(a2), "atom": nm2, "element": n2},
+            "distance": round(dist, 3),
+            "type": ctype
+        })
+
+    # very coarse π-stacking heuristic (centroid distance of base heavy atoms)
+    def _base_centroids(struct):
+        cents = []
+        for model in struct:
+            for chain in model:
+                for res in chain:
+                    pts = [atom.coord for atom in res if _is_base_atom(atom)]
+                    if len(pts) >= 4:
+                        pts = np.array(pts, dtype=np.float32)
+                        cents.append(pts.mean(axis=0))
+        return cents
+
+    cents_a = _base_centroids(struct_a)
+    cents_b = _base_centroids(struct_b)
+    pi_pairs = 0
+    for ca in cents_a:
+        for cb in cents_b:
+            dist = float(np.linalg.norm(ca - cb))
+            if dist <= 4.5:
+                pi_pairs += 1
+
+    return {
+        "contacts": out,
+        "summary": {
+            "total": len(out),
+            "hbond_like": hbonds,
+            "salt_bridge_like": salts,
+            "pi_stacking_like_pairs": pi_pairs
+        }
+    }
+
+@app.route('/contacts/<job_id>/<mirna_id>', methods=['GET'])
+def get_contacts(job_id, mirna_id):
+    """
+    Return contact map between miRNA structure and target/competitor.
+    query:
+      with=target|competitor (default=target)
+      cutoff=4.0
+    """
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    art = job.get("artifacts") or {}
+    if time.time() > float(art.get("expiry", 0)):
+        return jsonify({"error": "Artifacts expired"}), 410
+
+    idx = art.get('mirna_3d_index') or {}
+    mval = _lookup_3d(idx, mirna_id)
+    if not mval:
+        return jsonify({"error": "No miRNA 3D available for this ID"}), 404
+    _, __, mpath = mval
+    if not mpath or not os.path.exists(mpath):
+        return jsonify({"error": "miRNA artifact not found"}), 404
+
+    target_kind = (request.args.get('with') or 'target').strip().lower()
+    if target_kind not in {'target','competitor'}:
+        return jsonify({"error": "Parameter 'with' must be target or competitor"}), 400
+
+    if target_kind == 'target':
+        tpath = art.get('target_3d_path')
+    else:
+        tpath = art.get('competitor_3d_path')
+
+    if not tpath or not os.path.exists(tpath):
+        return jsonify({"error": f"No {target_kind} 3D artifact available"}), 404
+
+    try:
+        cutoff = float(request.args.get('cutoff') or 4.0)
+    except Exception:
+        cutoff = 4.0
+
+    result = _compute_contacts(mpath, tpath, cutoff=cutoff)
+    if isinstance(result, dict) and result.get("error"):
+        return jsonify(result), 500
+
+    return jsonify(result)
 
 
 # =========================
@@ -1343,7 +1595,7 @@ def start_janitor():
 
 
 # =========================
-# NEW: Seed-scan endpoint (unchanged public API)
+# Seed-scan endpoint (unchanged public API)
 # =========================
 @app.route('/seed_scan', methods=['POST'])
 @limiter.limit("30 per 15 minutes")
@@ -1417,7 +1669,7 @@ def seed_scan():
 
 
 # =========================
-# NEW: Explain (Integrated Gradients) endpoint (unchanged public API)
+# Explain (Integrated Gradients) endpoint (unchanged public API)
 # =========================
 @app.route('/explain', methods=['POST'])
 @limiter.limit("20 per 15 minutes")

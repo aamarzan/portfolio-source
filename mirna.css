@@ -66,7 +66,7 @@ body.mirna-page .tabs {
   gap: 12px;
   margin-bottom: 20px;
   border-bottom: 2px solid #ddd;
-  flex-wrap: wrap;          /* allow wrapping instead of overflow */
+  flex-wrap: wrap;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -141,14 +141,44 @@ body.mirna-page input:focus {
   border-color: #2196f3;
 }
 textarea.sequence-input {
-  height: 200px;       /* adjust to taste */
-  resize: vertical;    /* let user drag to resize if they want */
+  height: 200px;
+  resize: vertical;
 }
 
 /* ============================
    Premium Action Button Sizing
    ============================ */
-/* Primary run button (unchanged gradient) */
+/* Generic premium + action (used across UI) */
+.btn-premium{
+  padding: 12px 18px;
+  min-height: 46px;
+  min-width: 140px;
+  border-radius: 12px;
+  border: 1px solid #d9d9e3;
+  background: linear-gradient(180deg,#ffffff,#f6f7fb);
+  font-weight: 700;
+  letter-spacing: .2px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);
+  transition: .15s transform ease, .2s box-shadow ease, background .2s ease;
+  color:#0b1426;
+  line-height: 1.2;
+}
+.btn-premium:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(17,24,39,.09);
+  background: #eef3fb;
+}
+.btn-action{
+  min-width: 120px;
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid #d8dee9;
+  background: linear-gradient(180deg,#fff,#f8fafc);
+}
+
+/* Primary run button */
 body.mirna-page main .mirna-container button[type="submit"] {
   display: block;
   width: 100%;
@@ -177,12 +207,12 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
 /* Load Sample / Clear Inputs → bigger, premium look */
 #load-sample-btn,
 #clear-inputs-btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.15;
-  min-height: 42px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  min-height: 46px;
   border: 1px solid #d0d7de;
   background: #f9fbfe;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -195,15 +225,15 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   background: #eef3fb;
 }
 
-/* Per-row analysis buttons (Seed Sites / Heatmap) */
+/* Per-row analysis buttons (Seed Sites / Heatmap) — bigger boxes */
 .seed-btn,
 .heatmap-btn {
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 10px;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.1;
-  min-height: 38px;
+  min-height: 40px;
   border: 1px solid #d0d7de;
   background: #f7f9fc;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -211,9 +241,7 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   letter-spacing: .2px;
   cursor: pointer;
 }
-.seed-btn:hover, .heatmap-btn:hover {
-  background: #eef3fb;
-}
+.seed-btn:hover, .heatmap-btn:hover { background: #eef3fb; }
 
 /* Copy Results accent button */
 #copy-results-btn {
@@ -243,6 +271,18 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   cursor:pointer;
 }
 .btn-accent:hover{ filter:brightness(0.95); }
+
+/* Pill/Chip (used to indicate tolerant match / range-aware) */
+.chip{
+  display:inline-block;
+  padding:2px 8px;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:12px;
+  margin-left:6px;
+}
 
 /* Loader */
 body.mirna-page #loader {
@@ -275,40 +315,28 @@ body.mirna-page #loader {
   padding: 10px;
   background: #fafafa;
 }
-.affinity-guide table {
-  width: 100%;
-  border-collapse: collapse;
-}
+.affinity-guide table { width: 100%; border-collapse: collapse; }
 .affinity-guide th, .affinity-guide td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: left;
+  border: 1px solid #ddd; padding: 6px; text-align: left;
 }
 .affinity-guide th { background: #f0f0f0; }
 
 .gradient-scale-container { margin-bottom: 20px; }
 .gradient-scale-bar {
   height: 20px;
-  background: linear-gradient(to right,
-    #440154, #3b528b, #21908d, #5dc963, #fde725
-  );
+  background: linear-gradient(to right,#440154,#3b528b,#21908d,#5dc963,#fde725);
   border: 1px solid #ccc;
 }
 .gradient-scale-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85em;
-  margin-top: 4px;
+  display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 4px;
 }
-@media (max-width: 600px) {
-  .gradient-scale-container { overflow-x: auto; }
-}
+@media (max-width: 600px) { .gradient-scale-container { overflow-x: auto; } }
 
 /* Pinned reload warning banner */
 .reload-warning {
   position: sticky;
-  top: 0;                 /* stick to the top of the Results tab */
-  z-index: 20;            /* above analysis bar & table header */
+  top: 0;
+  z-index: 20;
   background: #fff8e5;
   border: 1px solid #e0b200;
   color: #5a4a00;
@@ -321,7 +349,7 @@ body.mirna-page #loader {
 /* Sticky analysis controls bar (injected by JS) */
 #analysis-controls{
   position: sticky;
-  top: 40px;             /* just below the reload banner */
+  top: 40px;  /* sits just below reload banner; adjust if header height changes */
   z-index: 19;
   background:#ffffffcc;
   backdrop-filter: blur(6px);
@@ -331,6 +359,9 @@ body.mirna-page #loader {
   border-radius:8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
+
+/* Results container quick polish */
+#results-container{ overflow:auto; }
 
 /* =================
    Results Table
@@ -348,9 +379,8 @@ body.mirna-page table {
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 
-/* Sticky header for long lists:
-   header sits below reload banner (40px) + analysis bar (~56px) → ~96px.
-   Adjust if you tweak heights. */
+/* Note: inline styles in index.html set sticky top=0 for thead.
+   These rules apply when no inline override is present. */
 body.mirna-page table thead th {
   position: sticky;
   top: 96px;
@@ -441,53 +471,49 @@ body.mirna-page #download-btn:hover {
   border-radius:6px;
   background:#f8fbff;
 }
+/* Client-rendered canvas */
 .heatmap-canvas{
   width:100%;
   height:90px;
   display:block;
   image-rendering: crisp-edges;
 }
+/* Server PNG fallback */
+.heatmap-img{
+  width:100%;
+  height:auto;
+  display:block;
+  image-rendering: crisp-edges; /* keeps saliency squares sharp */
+}
 
 /* Legend + table styling for the dynamic affinity legend */
 #affinity-legend,
-.affinity-legend{
-  margin-bottom:10px;
-}
+.affinity-legend{ margin-bottom:10px; }
 #affinity-legend h4,
-.affinity-legend h4{
-  margin:0 0 6px 0;
-  color:#163b66;
-}
+.affinity-legend h4{ margin:0 0 6px 0; color:#163b66; }
 #affinity-legend table,
 .affinity-legend table{
-  border-collapse:collapse;
-  width:100%;
-  max-width:560px;
-  background:#fff;
+  border-collapse:collapse; width:100%; max-width:560px; background:#fff;
 }
 #affinity-legend th,#affinity-legend td,
 .affinity-legend th,.affinity-legend td{
-  border:1px solid #e5e9f2;
-  padding:6px 8px;
-  text-align:left;
-  font-size:.94em;
+  border:1px solid #e5e9f2; padding:6px 8px; text-align:left; font-size:.94em;
+}
+
+/* Collapsible legend toggle (matches <details class="legend-toggle"> in HTML) */
+details.legend-toggle summary{
+  cursor:pointer;
+  font-weight:600;
+  color:#163b66;
 }
 
 /* =================
    Modal (Analysis)
    ================= */
-
-#analysis-modal [data-overlay]{
-  background: rgba(0,0,0,0.45);
-}
+#analysis-modal [data-overlay]{ background: rgba(0,0,0,0.45); }
 #analysis-modal [data-panel]{
-  max-width:980px;
-  width:96%;
-  max-height:86vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:12px;
-  padding:16px;
+  max-width:980px; width:96%; max-height:86vh; overflow:auto;
+  background:#fff; border-radius:12px; padding:16px;
   box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
 #modal-close{
@@ -498,13 +524,15 @@ body.mirna-page #download-btn:hover {
   border-radius:8px;
   cursor:pointer;
 }
-#modal-close:hover{
-  background:#eef3fb;
-}
+#modal-close:hover{ background:#eef3fb; }
 
-/* ==========
-   Utilities
+/* ========== 3D Viewer (optional future proof)
+   Keeps NGL/WebGL canvas tidy if/when enabled
    ========== */
+.viewer3d-wrap{ border:1px solid #e5e9f2; border-radius:8px; overflow:hidden; }
+.viewer3d-wrap canvas{ width:100% !important; height:420px !important; display:block; }
+
+/* ========== Utilities ========== */
 .hidden{ display:none !important; }
 
 /* Footer (scoped) */

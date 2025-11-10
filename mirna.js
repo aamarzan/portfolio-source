@@ -1,11 +1,13 @@
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
-// persistent analysis controls, sortable table, safe bindings, and graceful fallbacks.
+// persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
+// and an interactive 3D viewer (target/competitor) with snapshots.
 
 // =====================================================
 // Global state
 // =====================================================
 let predictionResults = [];
+let CURRENT_JOB_ID = null; // track backend job for server CSV & heatmap & structures
 let CONFIG = {
   mirna_max: 5000,
   mature_trim_enabled: true,
@@ -33,7 +35,9 @@ const GUARDS = {
   formBindingDone: false,
   analysisControlsInjected: false,
   modalInjected: false,
-  styleInjected: false
+  styleInjected: false,
+  nglLoaded: false,
+  threeDToolbarInjected: false
 };
 
 // =====================================================
@@ -48,7 +52,12 @@ const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
 const API_URL        = `${BASE_URL}/predict`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
-const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;
+const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON
+const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
+const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
+const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
+const STRUCTURE_URL   = (jobId, kind) => `${BASE_URL}/structure/${jobId}/${kind}`; // kind: target|competitor
+
 const NONCE_URL      = `${BASE_URL}/nonce`;
 const CONFIG_URL     = `${BASE_URL}/config`;
 const SEED_SCAN_URL  = `${BASE_URL}/seed_scan`;
@@ -154,6 +163,7 @@ function injectPremiumStyles(){
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
+    .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
   `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
@@ -404,7 +414,7 @@ async function handleSubmit(event){
   // Clear results view
   if(resultsContainer) setHTML(resultsContainer, '');
   predictionResults = [];
-  LAST_SEED_HITS = null; LAST_SEED_META = null;
+  LAST_SEED_HITS = null; LAST_SEED_META = null; CURRENT_JOB_ID = null;
 
   // Anti-refresh note
   prependHTML(resultsContainer, `<div class="reload-warning">
@@ -507,12 +517,13 @@ async function handleSubmit(event){
       try{
         const errorData = await startRes.json();
         errorMsg = errorData.message || errorData.error || null;
-      }catch(_){}
+      }catch(_){ }
       throw new Error(errorMsg || 'Something went wrong while starting your job.');
     }
 
     const { job_id } = await startRes.json();
     if(!job_id) throw new Error('No job ID returned from server.');
+    CURRENT_JOB_ID = job_id;
 
     // 2) Poll progress
     const poll = async () => {
@@ -635,11 +646,29 @@ function displayResults(results){
   `;
 
   // Download + Copy buttons
-  const downloadId = 'download-btn';
-  const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}" class="btn-premium">Download Results as CSV</button> <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results</button></div>`;
+  const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="download-all-server-csv" class="btn-premium">Download Results (server CSV)</button>
+    <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results (TSV)</button>
+  </div>`;
 
   appendHTML(container, legendHTML);
-  appendHTML(container, downloadButtonHTML);
+  appendHTML(container, buttonsHTML);
+
+  bindOnce($('download-all-server-csv'), 'click', async () => {
+    if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
+    try{
+      const headers = await getNonceOrKeyHeaders();
+      const res = await fetch(DOWNLOAD_ALL_CSV_URL(CURRENT_JOB_ID), { method:'GET', headers });
+      if(!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `mirna_results_${CURRENT_JOB_ID}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(err){ alert('Could not download CSV.'); }
+  }, 'dlAllCsvOnce');
+
   bindOnce($('copy-results-btn'), 'click', () => {
     // Copy TSV (stable columns as printed in table rendering)
     const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
@@ -684,8 +713,11 @@ function displayResults(results){
     const compEff   = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor   = getGradientColor(baseline);
 
-    const seedBtn = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
-    const heatBtn = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
+    const seedBtn   = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
+    const heatBtn   = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
+    const csvBtn    = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
+    const t3dBtn    = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
+    const c3dBtn    = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
 
     table += `<tr style="background-color:${bgColor}">
       <td>${escapeHTML(id)}</td>` +
@@ -694,17 +726,13 @@ function displayResults(results){
       `<td>${escapeHTML(baseline)}</td>
        <td>${escapeHTML(withComp)}</td>
        <td>${escapeHTML(compEff)}</td>
-       <td>${seedBtn} ${heatBtn}</td>
+       <td>${seedBtn} ${heatBtn} ${csvBtn} ${t3dBtn} ${c3dBtn}</td>
     </tr>`;
   });
 
   table += '</tbody></table>';
   appendHTML(container, table);
   makeTableSortable('results-table');
-
-  // Bind CSV download
-  const dl = $(downloadId);
-  if(dl) bindOnce(dl, 'click', downloadCSV, 'clickOnce');
 
   // Delegate click handlers for action buttons
   const resultsTable = $('results-table');
@@ -720,17 +748,26 @@ function displayResults(results){
         await handleSeedSitesClick(item);
       }else if(t.classList.contains('heatmap-btn')){
         await handleHeatmapClick(item);
+      }else if(t.classList.contains('rowcsv-btn')){
+        await handleRowCsvClick(item);
+      }else if(t.classList.contains('t3d-btn')){
+        await open3DViewer('target');
+      }else if(t.classList.contains('c3d-btn')){
+        await open3DViewer('competitor');
       }
     }, 'resultsActions');
   }
 }
 
 // Inject analysis controls (GU wobble + mismatch cap) with persistence
+// + Heatmap mode & steps controls (persisted)
 function injectAnalysisControls(parent){
   if(GUARDS.analysisControlsInjected) return;
 
   const savedAllowGU = localStorage.getItem('mi_allowGU');
   const savedMaxMM   = localStorage.getItem('mi_maxMM');
+  const savedHM      = localStorage.getItem('mi_heatmap_mode') || 'ig_target';
+  const savedSteps   = localStorage.getItem('mi_heatmap_steps') || '50';
 
   const controlsId = 'analysis-controls';
   ensureSingleton(
@@ -748,6 +785,18 @@ function injectAnalysisControls(parent){
           <option value="1">1</option>
         </select>
       </label>
+      <label style="display:flex;gap:6px;align-items:center;">
+        <span>Heatmap:</span>
+        <select id="heatmap-mode">
+          <option value="ig_target">IG – Target</option>
+          <option value="ig_competitor">IG – Competitor</option>
+          <option value="seed_density">Seed density</option>
+        </select>
+      </label>
+      <label style="display:flex;gap:6px;align-items:center;">
+        <span>IG steps:</span>
+        <input id="heatmap-steps" type="number" min="10" max="200" value="50" style="width:72px;"/>
+      </label>
       <small style="color:#555;">Seed scanning matches canonical 6/7/8mer rules; coordinates are 1-based on the (possibly sliced) target sequence.</small>
     </div>
     `,
@@ -764,171 +813,203 @@ function injectAnalysisControls(parent){
     bindOnce(guChk,'change',()=> localStorage.setItem('mi_allowGU', guChk.checked ? 'true' : 'false'),'guPersist');
   }
 
+  const hmSel = byQS('#heatmap-mode');
+  if(hmSel){
+    hmSel.value = savedHM;
+    bindOnce(hmSel,'change',()=> localStorage.setItem('mi_heatmap_mode', hmSel.value),'hmPersist');
+  }
+  const stepsInp = byQS('#heatmap-steps');
+  if(stepsInp){
+    stepsInp.value = savedSteps;
+    bindOnce(stepsInp,'change',()=> localStorage.setItem('mi_heatmap_steps', stepsInp.value),'stepsPersist');
+  }
+
   GUARDS.analysisControlsInjected = true;
 }
 
 // =====================================================
-// CSV download (sorted by baseline for consistency)
+// CSV download helpers (server-backed for full seed details)
 // =====================================================
-function downloadCSV(){
-  if(predictionResults.length === 0) return;
+async function handleRowCsvClick(item){
+  if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
+  const interactionId = item.interaction_id || null;
+  if(!interactionId){ alert('Row is missing interaction_id.'); return; }
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(DOWNLOAD_ROW_CSV_URL(CURRENT_JOB_ID, interactionId), { method:'GET', headers });
+    if(!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `interaction_${interactionId}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(err){ alert('Could not download row CSV.'); }
+}
 
-  const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
-  const hasCompCol   = (predictionResults || []).some(r => (r.competitor_id ?? '') !== '');
+// =====================================================
+// Heatmap (server PNG first; fallback to client IG rendering)
+// =====================================================
+async function handleHeatmapClick(item){
+  // Prefer server PNG so users can also download it directly
+  const modeSel  = byQS('#heatmap-mode');
+  const stepsInp = byQS('#heatmap-steps');
+  const mode  = (modeSel?.value || 'ig_target').toLowerCase();
+  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '50', 10) || 50));
 
-  const headers = [
-    "Primary_Molecule_ID",
-    ...(hasTargetCol ? ["Target_ID"] : []),
-    ...(hasCompCol   ? ["Competitor_ID"] : []),
-    "Predicted_Affinity_Baseline",
-    "Predicted_Affinity_With_Competitor",
-    "Competitive_Effect"
-  ].join(',');
+  if(!CURRENT_JOB_ID){
+    // Fallback to client IG when job context missing
+    return clientExplainHeatmapFallback(item);
+  }
 
-  const csvRows = [headers];
+  const interactionId = item.interaction_id || null;
+  if(!interactionId){
+    // Fallback to client IG when interaction id missing
+    return clientExplainHeatmapFallback(item);
+  }
 
-  const sorted = [...predictionResults].sort((a,b) =>
-    safeParseFloat(b["predicted_affinity_baseline"] ?? b.baseline_score ?? 0, 0) -
-    safeParseFloat(a["predicted_affinity_baseline"] ?? a.baseline_score ?? 0, 0)
-  );
+  // If competitor IG requested but none present, hint and switch to target
+  if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
+    openModal('Heatmap', formatWarn('This row has no competitor. Showing IG for target instead.'));
+    return clientExplainHeatmapFallback(item, 'ig_target');
+  }
 
-  sorted.forEach(item => {
-    const id  = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const tid = item.target_id ?? '';
-    const cid = item.competitor_id ?? '';
-    const baseline   = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
-    const withComp   = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-    const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(HEATMAP_PNG_URL(CURRENT_JOB_ID, interactionId, mode, steps), { method:'GET', headers });
+    if(!res.ok){ throw new Error('PNG fetch failed'); }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
 
-    const cells = [
-      id,
-      ...(hasTargetCol ? [tid] : []),
-      ...(hasCompCol   ? [cid] : []),
-      baseline, withComp, compEffect
-    ].map(s => {
-      const str = String(s ?? '');
-      return /[",\n]/.test(str) ? `"${str.replace(/"/g,'""')}"` : str;
+    const title = `Heatmap (${mode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
+    const toolbar = `
+      <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
+      <button id="hm-save"  class="toolbar-btn">Download PNG</button>
+    `;
+    const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+    openModal(title, html, toolbar);
+
+    const openBtn = $('hm-open');
+    const saveBtn = $('hm-save');
+    if(openBtn) bindOnce(openBtn, 'click', () => {
+      const w = window.open(url, '_blank');
+      if(w) w.opener = null;
+    }, 'hmOpenOnce');
+    if(saveBtn) bindOnce(saveBtn, 'click', () => {
+      const a = document.createElement('a');
+      a.href = url; a.download = `${interactionId}_${mode}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, 'hmSaveOnce');
+
+  }catch(_){
+    // Fall back to client rendering using /explain
+    await clientExplainHeatmapFallback(item, mode);
+  }
+}
+
+async function clientExplainHeatmapFallback(item, forcedMode){
+  try{
+    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+    const targetId= item.target_id ?? '';
+    const compId  = item.competitor_id ?? '';
+
+    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
+    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
+
+    if(!mirnaSeq || !targetSeq){
+      openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
+      return;
+    }
+
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(EXPLAIN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({
+        mirna_seq: mirnaSeq,
+        target_seq: targetSeq,
+        competitor_seq: compSeq || undefined
+      })
     });
 
-    csvRows.push(cells.join(','));
-  });
+    if(!res.ok){
+      let msg = 'Explanation failed.';
+      try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
+      openModal('Heatmap', formatError(msg));
+      return;
+    }
 
-  const csvString = csvRows.join('\n');
-  const blob = new Blob([csvString], { type:'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'prediction_results.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    const data = await res.json();
+    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : [];
+    const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+
+    const targAttrTrim = targAttr.slice(0, targetSeq.length);
+    const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
+
+    let html = '';
+    const mode = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
+
+    if(mode === 'ig_target' || mode === 'seed_density'){
+      html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
+    }
+    if((mode === 'ig_competitor') && compSeq){
+      html += `<div style="height:12px;"></div>`;
+      html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
+    }
+
+    openModal('Heatmap (Integrated Gradients)', html);
+
+  }catch(err){
+    openModal('Heatmap', formatError(err?.message || 'Unexpected error during explanation.'));
+  }
 }
 
-// =====================================================
-// Tabs / helpers
-// =====================================================
-function openTab(element, tabId){
-  const targetCard = $(tabId);
-  if(!targetCard) return;
-  byQSA('.card').forEach(card => card.classList.remove('active'));
-  byQSA('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  targetCard.classList.add('active');
-  if(element && element.classList) element.classList.add('active');
-}
+// Render one attribution panel (mini heat-strip + top peaks)
+function renderAttributionPanel(label, seq, attrib){
+  if(!Array.isArray(attrib) || attrib.length === 0){
+    return `<div><h4 style="margin:6px 0;">${escapeHTML(label)}</h4><p>No attribution available.</p></div>`;
+  }
+  const max = Math.max(1e-12, ...attrib.map(v => Math.abs(v)));
+  const norm = attrib.map(v => Math.abs(v) / max);
 
-function makeTableSortable(tableId){
-  const table = document.getElementById(tableId);
-  if(!table) return;
-  table.querySelectorAll('th').forEach((header, idx) => {
-    header.style.cursor = 'pointer';
-    header.addEventListener('click', () => {
-      const rows = Array.from(table.querySelectorAll('tbody tr'));
-      const asc  = header.classList.toggle('asc');
-      rows.sort((a,b) => {
-        const aText = a.children[idx].textContent.trim();
-        const bText = b.children[idx].textContent.trim();
-        // numeric-aware compare
-        const na = parseFloat(aText), nb = parseFloat(bText);
-        if(!Number.isNaN(na) && !Number.isNaN(nb)){
-          return asc ? na - nb : nb - na;
-        }
-        return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
-      });
-      const tbody = table.querySelector('tbody');
-      rows.forEach(row => tbody.appendChild(row));
-    });
-  });
-}
+  // Build heat strip (monospace cells)
+  let strip = `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
+  strip += `<div style="white-space:nowrap;">`;
+  for(let i=0;i<seq.length;i++){
+    const v = norm[i] || 0;
+    const color = viridisColor(v, 0.85);
+    strip += `<span title="pos ${i+1} • ${seq[i]} • ${v.toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(seq[i] || '')}</span>`;
+  }
+  strip += `</div></div>`;
 
-function wireTabButtonsOnce(){
-  if(GUARDS.tabWiringDone) return;
-  const tabs = byQSA('.tab-btn');
-  const loader = $('loader');
+  // Top-5 peaks
+  const idxs = norm.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,5);
+  const peaks = idxs.map(o => `pos ${o.i+1} (${escapeHTML(seq[o.i]||'')}) → ${o.v.toFixed(3)}`).join(', ');
 
-  tabs.forEach(btn => {
-    bindOnce(btn, 'click', () => {
-      const name = (btn.textContent || '').toLowerCase();
-      if(name.includes('inputs')){
-        if(loader){
-          text(loader, "Please input your sequences to start a prediction.");
-          show(loader);
-        }
-      }
-      if(name.includes('results')){
-        const rc = $('results-container');
-        if(rc && !rc.innerHTML.trim()){
-          setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
-        }
-      }
-    }, 'tabClick');
-  });
-
-  GUARDS.tabWiringDone = true;
-}
-
-// =====================================================
-// Modal (singleton)
-// =====================================================
-function ensureModal(){
-  if(GUARDS.modalInjected) return;
-  const body = document.body;
-  ensureSingleton(
-    'analysis-modal',
-    `
-    <div id="analysis-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;">
-      <div data-overlay style="position:absolute;inset:0;background:rgba(0,0,0,0.45);"></div>
-      <div data-panel style="position:relative;max-width:980px;width:96%;max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-          <h3 id="modal-title" style="margin:0;">Analysis</h3>
-          <div id="modal-tools" style="display:flex;gap:8px;align-items:center;"></div>
-          <button id="modal-close" aria-label="Close">✕</button>
-        </div>
-        <div id="modal-content"></div>
-      </div>
+  return `
+    <div>
+      <h4 style="margin:6px 0;">${escapeHTML(label)}</h4>
+      ${strip}
+      <div style="margin-top:6px;color:#333;"><strong>Top positions:</strong> ${peaks}</div>
+      <small style="color:#666;">Color scale is relative within each sequence (min→max saliency, Viridis).</small>
     </div>
-    `,
-    body
-  );
-  const modal = $('analysis-modal');
-  const closeBtn = $('modal-close');
-  const overlay = modal?.querySelector('[data-overlay]');
-  if(closeBtn) bindOnce(closeBtn,'click',closeModal,'mclose');
-  if(overlay)  bindOnce(overlay,'click',closeModal,'moverlay');
-  GUARDS.modalInjected = true;
+  `;
 }
-function openModal(title, html, toolbarHTML=''){
-  ensureModal();
-  const modal = $('analysis-modal');
-  if(!modal) return;
-  text($('modal-title'), title || 'Analysis');
-  setHTML($('modal-content'), html || '');
-  setHTML($('modal-tools'), toolbarHTML || '');
-  modal.style.display = 'flex';
-}
-function closeModal(){
-  const modal = $('analysis-modal');
-  if(modal) modal.style.display = 'none';
+
+// Viridis color helper for heatmaps (0..1 → rgba)
+function viridisColor(t, alpha=1.0){
+  const lut = [
+    [68,1,84],[71,44,122],[59,82,139],[44,113,142],[33,144,141],[39,173,129],[92,200,99],[170,220,50],[253,231,37]
+  ];
+  const x = Math.max(0, Math.min(1, t)) * (lut.length-1);
+  const i = Math.floor(x);
+  const j = Math.min(i+1, lut.length-1);
+  const f = x - i;
+  const r = Math.round(lut[i][0] + f*(lut[j][0]-lut[i][0]));
+  const g = Math.round(lut[i][1] + f*(lut[j][1]-lut[i][1]));
+  const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // =====================================================
@@ -1083,109 +1164,184 @@ function downloadSeedCSV(){
 }
 
 // =====================================================
-// Heatmap (Integrated Gradients saliency) — RANGE-AWARE + tolerant lookup
+// 3D Viewer (target/competitor) using NGL — snapshot capable
 // =====================================================
-async function handleHeatmapClick(item){
+async function ensureNGL(){
+  if(GUARDS.nglLoaded) return true;
   try{
-    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
-    const targetId= item.target_id ?? '';
-    const compId  = item.competitor_id ?? '';
-
-    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
-
-    if(!mirnaSeq || !targetSeq){
-      openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
-      return;
-    }
-
-    const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(EXPLAIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({
-        mirna_seq: mirnaSeq,
-        target_seq: targetSeq,
-        competitor_seq: compSeq || undefined
-      })
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/ngl@latest/dist/ngl.min.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('Failed to load NGL viewer.'));
+      document.head.appendChild(s);
     });
+    GUARDS.nglLoaded = true;
+    return true;
+  }catch(_){ return false; }
+}
 
+async function open3DViewer(kind){
+  if(!CURRENT_JOB_ID){ openModal('3D Viewer', formatWarn('You need to run a prediction first.')); return; }
+  if(!['target','competitor'].includes(kind)){ openModal('3D Viewer', formatError('Invalid molecule kind.')); return; }
+  const ok = await ensureNGL();
+  if(!ok){ openModal('3D Viewer', formatError('Could not load 3D engine. Check your network.')); return; }
+
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
     if(!res.ok){
-      let msg = 'Explanation failed.';
+      let msg = 'No 3D structure available (maybe not uploaded or expired).';
       try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
-      openModal('Heatmap', formatError(msg));
+      openModal('3D Viewer', formatWarn(msg));
       return;
     }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
 
-    const data = await res.json();
-    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : [];
-    const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+    const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}`;
+    const toolbar = `
+      <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
+      <button id="ngl-open" class="toolbar-btn">Open File</button>
+    `;
+    const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
+    openModal(title, html, toolbar);
 
-    // Trim to actual seq lengths (model returns fixed-length arrays)
-    const targAttrTrim = targAttr.slice(0, targetSeq.length);
-    const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
+    // NGL stage
+    const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
+    window.addEventListener('resize', () => stage.handleResize(), { passive:true });
 
-    // Build content
-    let html = '';
-    html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
-    if(compSeq){
-      html += `<div style="height:12px;"></div>`;
-      html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
-    }
+    const comp = await stage.loadFile(url); // PDB/mmCIF auto-detected
+    comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
+    comp.addRepresentation('ball+stick', { multipleBond: true });
+    stage.autoView();
 
-    openModal('Heatmap (Integrated Gradients)', html);
+    const snapBtn = $('ngl-snap');
+    const openBtn = $('ngl-open');
+
+    if(snapBtn) bindOnce(snapBtn, 'click', async () => {
+      const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const a = document.createElement('a');
+      a.href = img.toDataURL('image/png');
+      a.download = `structure_${kind}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }, 'snapOnce');
+
+    if(openBtn) bindOnce(openBtn, 'click', () => {
+      const w = window.open(url, '_blank');
+      if(w) w.opener = null;
+    }, 'openOnce');
 
   }catch(err){
-    openModal('Heatmap', formatError(err?.message || 'Unexpected error during explanation.'));
+    openModal('3D Viewer', formatError(err?.message || '3D viewer error.'));
   }
 }
 
-// Render one attribution panel (mini heat-strip + top peaks)
-function renderAttributionPanel(label, seq, attrib){
-  if(!Array.isArray(attrib) || attrib.length === 0){
-    return `<div><h4 style="margin:6px 0;">${escapeHTML(label)}</h4><p>No attribution available.</p></div>`;
-  }
-  const max = Math.max(1e-12, ...attrib.map(v => Math.abs(v)));
-  const norm = attrib.map(v => Math.abs(v) / max);
+// =====================================================
+// Tabs / helpers
+// =====================================================
+function openTab(element, tabId){
+  const targetCard = $(tabId);
+  if(!targetCard) return;
+  byQSA('.card').forEach(card => card.classList.remove('active'));
+  byQSA('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  targetCard.classList.add('active');
+  if(element && element.classList) element.classList.add('active');
+}
 
-  // Build heat strip (monospace cells)
-  let strip = `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
-  strip += `<div style="white-space:nowrap;">`;
-  for(let i=0;i<seq.length;i++){
-    const v = norm[i] || 0;
-    const color = viridisColor(v, 0.85);
-    strip += `<span title="pos ${i+1} • ${seq[i]} • ${v.toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(seq[i] || '')}</span>`;
-  }
-  strip += `</div></div>`;
+function makeTableSortable(tableId){
+  const table = document.getElementById(tableId);
+  if(!table) return;
+  table.querySelectorAll('th').forEach((header, idx) => {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      const asc  = header.classList.toggle('asc');
+      rows.sort((a,b) => {
+        const aText = a.children[idx].textContent.trim();
+        const bText = b.children[idx].textContent.trim();
+        // numeric-aware compare
+        const na = parseFloat(aText), nb = parseFloat(bText);
+        if(!Number.isNaN(na) && !Number.isNaN(nb)){
+          return asc ? na - nb : nb - na;
+        }
+        return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+      });
+      const tbody = table.querySelector('tbody');
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
+}
 
-  // Top-5 peaks
-  const idxs = norm.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,5);
-  const peaks = idxs.map(o => `pos ${o.i+1} (${escapeHTML(seq[o.i]||'')}) → ${o.v.toFixed(3)}`).join(', ');
+function wireTabButtonsOnce(){
+  if(GUARDS.tabWiringDone) return;
+  const tabs = byQSA('.tab-btn');
+  const loader = $('loader');
 
-  return `
-    <div>
-      <h4 style="margin:6px 0;">${escapeHTML(label)}</h4>
-      ${strip}
-      <div style="margin-top:6px;color:#333;"><strong>Top positions:</strong> ${peaks}</div>
-      <small style="color:#666;">Color scale is relative within each sequence (min→max saliency, Viridis).</small>
+  tabs.forEach(btn => {
+    bindOnce(btn, 'click', () => {
+      const name = (btn.textContent || '').toLowerCase();
+      if(name.includes('inputs')){
+        if(loader){
+          text(loader, "Please input your sequences to start a prediction.");
+          show(loader);
+        }
+      }
+      if(name.includes('results')){
+        const rc = $('results-container');
+        if(rc && !rc.innerHTML.trim()){
+          setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
+        }
+      }
+    }, 'tabClick');
+  });
+
+  GUARDS.tabWiringDone = true;
+}
+
+// =====================================================
+// Modal (singleton)
+// =====================================================
+function ensureModal(){
+  if(GUARDS.modalInjected) return;
+  const body = document.body;
+  ensureSingleton(
+    'analysis-modal',
+    `
+    <div id="analysis-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;">
+      <div data-overlay style="position:absolute;inset:0;background:rgba(0,0,0,0.45);"></div>
+      <div data-panel style="position:relative;max-width:980px;width:96%;max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <h3 id="modal-title" style="margin:0;">Analysis</h3>
+          <div id="modal-tools" style="display:flex;gap:8px;align-items:center;"></div>
+          <button id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div id="modal-content"></div>
+      </div>
     </div>
-  `;
+    `,
+    body
+  );
+  const modal = $('analysis-modal');
+  const closeBtn = $('modal-close');
+  const overlay = modal?.querySelector('[data-overlay]');
+  if(closeBtn) bindOnce(closeBtn,'click',closeModal,'mclose');
+  if(overlay)  bindOnce(overlay,'click',closeModal,'moverlay');
+  GUARDS.modalInjected = true;
 }
-
-// Viridis color helper for heatmaps (0..1 → rgba)
-function viridisColor(t, alpha=1.0){
-  const lut = [
-    [68,1,84],[71,44,122],[59,82,139],[44,113,142],[33,144,141],[39,173,129],[92,200,99],[170,220,50],[253,231,37]
-  ];
-  const x = Math.max(0, Math.min(1, t)) * (lut.length-1);
-  const i = Math.floor(x);
-  const j = Math.min(i+1, lut.length-1);
-  const f = x - i;
-  const r = Math.round(lut[i][0] + f*(lut[j][0]-lut[i][0]));
-  const g = Math.round(lut[i][1] + f*(lut[j][1]-lut[i][1]));
-  const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
-  return `rgba(${r},${g},${b},${alpha})`;
+function openModal(title, html, toolbarHTML=''){
+  ensureModal();
+  const modal = $('analysis-modal');
+  if(!modal) return;
+  text($('modal-title'), title || 'Analysis');
+  setHTML($('modal-content'), html || '');
+  setHTML($('modal-tools'), toolbarHTML || '');
+  modal.style.display = 'flex';
+}
+function closeModal(){
+  const modal = $('analysis-modal');
+  if(modal) modal.style.display = 'none';
 }
 
 // =====================================================
