@@ -12,7 +12,7 @@ import logging
 import tempfile
 import threading
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple, List, Optional
 
@@ -20,15 +20,19 @@ import numpy as np
 import pandas as pd
 import requests
 from flask import Flask, request, jsonify, send_file, Response
+
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
-from datetime import datetime, timezone
-datetime.now(timezone.utc).isoformat(timespec='seconds')
 
+# Optional gzip compression for large JSON/CSV
+try:
+    from flask_compress import Compress
+except Exception:  # graceful fallback if not installed
+    Compress = None  # type: ignore
 
 # use non-interactive backend for server PNG export
 import matplotlib
@@ -46,8 +50,30 @@ from molecule_processors import process_molecule_universal
 
 
 # =========================
-# Configuration
+# Small JSON-safe serializer
 # =========================
+
+def _to_py(o):
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return float(o)
+    if isinstance(o, (np.ndarray,)):
+        return o.tolist()
+    if isinstance(o, (pd.Series, pd.Index)):
+        return o.tolist()
+    if isinstance(o, (pd.DataFrame,)):
+        return o.to_dict(orient="records")
+    return o
+
+
+# =========================
+# Paths & Configuration
+# =========================
+ROOT_DIR = Path(__file__).resolve().parent
+JOBS_DIR = ROOT_DIR / "job_cache"
+JOBS_DIR.mkdir(parents=True, exist_ok=True)
+
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
 USE_NONCE = True            # If your frontend isn't sending X-Nonce yet, set False temporarily
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
@@ -67,6 +93,8 @@ ARTIFACT_TTL_SECONDS = int(os.getenv("ARTIFACT_TTL_SECONDS", "7200"))  # 2h
 #   target_id, target_len,
 #   artifacts: { 'target_3d_path':..., 'competitor_3d_path':..., 'mirna_3d_index':... , 'expiry': float },
 #   results: [ row, ... ],
+#   job_dir: str,
+#   results_json_path: str | None,
 #   model_input_shapes: {Lp, Lt, Lc},
 # }
 jobs: Dict[str, Dict] = {}
@@ -75,6 +103,7 @@ jobs: Dict[str, Dict] = {}
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-XXXXXXX")
 GA_API_SECRET = os.getenv("GA_API_SECRET", "your_secret")
 GA_URL = f"https://www.google-analytics.com/mp/collect?measurement_id={GA_MEASUREMENT_ID}&api_secret={GA_API_SECRET}"
+
 
 def send_ga_event(event_name: str, params: Dict):
     try:
@@ -104,6 +133,12 @@ logging.basicConfig(
 # =========================
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_MB * 1024 * 1024  # MB → bytes
+app.config['JSON_SORT_KEYS'] = False  # faster dumps, keep original order
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+if Compress:
+    Compress(app)  # gzip large JSON/CSV responses
 
 CORS(app, origins=[
     "https://aamarzan.com",
@@ -112,6 +147,14 @@ CORS(app, origins=[
     "http://localhost",
     "http://127.0.0.1"
 ], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce"])
+
+
+@app.after_request
+def _nocache(resp):
+    # Keep things fresh during development / Cloudflared
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_large_file(e):
@@ -123,6 +166,7 @@ def handle_large_file(e):
 # =========================
 nonce_store: Dict[str, Dict[str, float]] = {}
 
+
 @app.route('/nonce', methods=['GET'])
 def issue_nonce():
     client_ip = get_remote_address()
@@ -130,6 +174,7 @@ def issue_nonce():
     expiry = time.time() + NONCE_EXPIRY_SECONDS
     nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
     return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
+
 
 def _nonce_protected(endpoint_name: Optional[str]) -> bool:
     protected = {
@@ -141,6 +186,7 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
         'get_contacts'
     }
     return endpoint_name in protected
+
 
 @app.before_request
 def require_nonce_or_key():
@@ -155,6 +201,7 @@ def require_nonce_or_key():
                 return jsonify({"error": "Invalid or expired nonce"}), 403
             # Consume nonce after use
             del nonce_store[client_ip]
+
 
 @app.errorhandler(Exception)
 def handle_unexpected_error(e):
@@ -203,6 +250,7 @@ class PositionalEncoding(Layer):
         seq_len = tf.shape(x)[1]
         return x + self.pos_encoding[:, :seq_len, :]
 
+
 def create_weighted_mse(pos_weight=5.0, threshold=0.1):
     def weighted_mse(y_true, y_pred):
         mse_loss = tf.keras.losses.MeanSquaredError()
@@ -219,6 +267,7 @@ MODELS_DIR = 'model_files'
 model = None
 scaler = None
 
+
 def _sha256_file(path: str) -> Optional[str]:
     try:
         h = hashlib.sha256()
@@ -228,6 +277,7 @@ def _sha256_file(path: str) -> Optional[str]:
         return h.hexdigest()
     except Exception:
         return None
+
 
 PROVENANCE = {
     "model_name": "supreme_model.keras",
@@ -262,6 +312,7 @@ except Exception as e:
 # =========================
 # Helpers: Encoding & Validation
 # =========================
+
 def one_hot_encode_sequence(sequence: str, max_len: int):
     sequence = (sequence or "").upper().replace('T', 'U')
     nucleotide_map = {'A': 0, 'U': 1, 'G': 2, 'C': 3, 'N': 4}
@@ -269,6 +320,7 @@ def one_hot_encode_sequence(sequence: str, max_len: int):
     for i, char in enumerate(sequence[:max_len]):
         encoded_seq[i, nucleotide_map.get(char, 4)] = 1
     return encoded_seq
+
 
 # AA vs NT detection and optional back-translation
 AA_SET = set(list("ACDEFGHIKLMNPQRSTVWYBXZ"))  # includes ambiguous X,Z,B
@@ -280,6 +332,7 @@ CODON_MAP = {
     'W':'UGG', 'Y':'UAU'
 }
 
+
 def is_aa_like(seq: str) -> bool:
     s = ''.join([c for c in (seq or "").upper() if c.isalpha()])
     if not s:
@@ -287,6 +340,7 @@ def is_aa_like(seq: str) -> bool:
     aa_frac = sum(c in AA_SET for c in s) / len(s)
     nt_frac = sum(c in NT_SET for c in s) / len(s)
     return aa_frac > 0.8 and nt_frac < 0.6
+
 
 def back_translate(aa_seq: str) -> str:
     # very simple, organism-agnostic choice
@@ -299,6 +353,7 @@ def back_translate(aa_seq: str) -> str:
         else:
             nt.append('NNN')
     return ''.join(nt)
+
 
 def choose_mature_window(seq: str, window: int = 22) -> str:
     s = (seq or "").upper().replace("T","U")
@@ -319,7 +374,9 @@ def choose_mature_window(seq: str, window: int = 22) -> str:
             best = (sc, sub)
     return best[1] if best else s
 
+
 # Numeric features helper (kept minimal & consistent with your scaler)
+
 def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
     gc  = float(pdata.get('gc_content', 0.5))
     dg  = float(pdata.get('dg', 0.0))
@@ -330,6 +387,7 @@ def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
 # =========================
 # FASTA parsing helpers (PATCH: preserve FULL header)
 # =========================
+
 def parse_fasta_records(text: str):
     """Return list of (full_header, seq) from FASTA or raw (single) text.
 
@@ -353,6 +411,7 @@ def parse_fasta_records(text: str):
         return [("primary_1", raw)]
     return []
 
+
 def _parse_fasta_naive(text: str):
     lines = (text or "").splitlines()
     out = []
@@ -374,6 +433,7 @@ def _parse_fasta_naive(text: str):
         out.append(("primary_1", "".join(cur_seq).strip()))
     return out
 
+
 def has_any_fasta_header(text: str) -> bool:
     return any(ln.strip().startswith(">") for ln in (text or "").splitlines())
 
@@ -381,6 +441,7 @@ def has_any_fasta_header(text: str) -> bool:
 # =========================
 # 3D structure parsing and validation
 # =========================
+
 def extract_seq_from_structure(file_path: str) -> Tuple[Optional[str], str]:
     """Return (kind, seq) where kind in {'AA','NT',None}."""
     try:
@@ -425,6 +486,7 @@ def extract_seq_from_structure(file_path: str) -> Tuple[Optional[str], str]:
         logging.warning(f"Nucleic parse failed: {e}")
     return (None, "")
 
+
 def validate_structure_matches_sequence(struct_kind: Optional[str], struct_seq: str,
                                         fasta_seq: str, molecule_label: str,
                                         allow_mismatch_ratio: float = STRUCTURE_MISMATCH_TOL) -> Tuple[bool, str]:
@@ -459,6 +521,7 @@ def validate_structure_matches_sequence(struct_kind: Optional[str], struct_seq: 
         return (True, "OK")
     return (False, f"Unknown structure polymer kind for {molecule_label}.")
 
+
 def save_filestorage_to_temp(fs) -> str:
     suffix = os.path.splitext(secure_filename(fs.filename))[1]
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
@@ -471,6 +534,7 @@ def save_filestorage_to_temp(fs) -> str:
 # =========================
 # Structural feature extraction and fallback helpers
 # =========================
+
 def _seq_to_struct_column(seq: str, max_len: int) -> np.ndarray:
     """
     Convert a nucleotide sequence into a simple numeric column vector (max_len, 1).
@@ -483,6 +547,7 @@ def _seq_to_struct_column(seq: str, max_len: int) -> np.ndarray:
         v[i, 0] = mapping.get(ch, 1.0)
     return v
 
+
 def extract_structure_vector_from_file(file_path: str, max_len: int) -> Optional[np.ndarray]:
     try:
         kind, seq = extract_seq_from_structure(file_path)
@@ -491,6 +556,7 @@ def extract_structure_vector_from_file(file_path: str, max_len: int) -> Optional
         return _seq_to_struct_column(seq, max_len)
     except Exception:
         return None
+
 
 def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.ndarray:
     try:
@@ -510,15 +576,19 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
 # =========================
 # Seed-scan helpers (deterministic, rule-based)
 # =========================
+
 def revcomp_rna(seq: str) -> str:
     comp = str.maketrans({'A':'U','U':'A','G':'C','C':'G','T':'A','N':'N'})
     return (seq or '').upper().translate(comp)[::-1].replace('T','U')
 
+
 def is_wc(a: str, b: str) -> bool:   # Watson–Crick
     return (a=='A' and b=='U') or (a=='U' and b=='A') or (a=='C' and b=='G') or (a=='G' and b=='C')
 
+
 def is_gu(a: str, b: str) -> bool:   # GU wobble
     return (a=='G' and b=='U') or (a=='U' and b=='G')
+
 
 def match_seed(seed_rc: str, window: str, allow_gu: bool = True, max_mismatch: int = 0):
     mism = wob = 0
@@ -532,6 +602,7 @@ def match_seed(seed_rc: str, window: str, allow_gu: bool = True, max_mismatch: i
             if mism > max_mismatch:
                 return None
     return {'mismatches': mism, 'wobble': wob}
+
 
 def classify_seed(miRNA_seq: str, target_seq: str, i: int, L: int) -> str:
     """
@@ -552,6 +623,7 @@ def classify_seed(miRNA_seq: str, target_seq: str, i: int, L: int) -> str:
     elif L == 6:
         label = '7mer-A1' if upstream_A else '6mer'
     return label
+
 
 def _scan_seeds_for_pair(mirna_seq: str, target_seq: str,
                          allow_gu: bool = True, max_mismatch: int = 0) -> List[Dict]:
@@ -588,6 +660,7 @@ def _scan_seeds_for_pair(mirna_seq: str, target_seq: str,
 # =========================
 # IG explain helper
 # =========================
+
 def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: str, steps: int = 50) -> List[float]:
     """
     Compute Integrated Gradients on a single input tensor of shape (1, L, C).
@@ -618,6 +691,7 @@ def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: s
 # =========================
 # PATCH: tolerant ID variants for 3D-file ↔ FASTA header matching
 # =========================
+
 def _id_variants(s: str) -> List[str]:
     """Generate tolerant keys to match filename stems against full FASTA headers."""
     if not s:
@@ -636,6 +710,7 @@ def _id_variants(s: str) -> List[str]:
     }
     return list(cand)
 
+
 def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
     for k in _id_variants(key):
         if k in idx:
@@ -648,6 +723,7 @@ def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
 # =========================
 limiter = Limiter(key_func=get_remote_address)
 limiter.init_app(app)
+
 
 @app.errorhandler(RateLimitExceeded)
 def ratelimit_handler(e):
@@ -767,6 +843,7 @@ def start_prediction():
 
     # Save uploaded 3D files to temp and index them
     tmp_paths_to_cleanup: List[str] = []
+
     def _save_optional(fs_key: str) -> Optional[str]:
         f = request.files.get(fs_key)
         if f and f.filename:
@@ -791,6 +868,9 @@ def start_prediction():
                 mirna_3d_index[k] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
+    job_dir = JOBS_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
     _total = len(primary_records) * max(1, len(targets_list)) * max(1, len(competitors_list))
 
     jobs[job_id] = {
@@ -807,6 +887,8 @@ def start_prediction():
             "mirna_3d_index": mirna_3d_index,
             "expiry": time.time() + ARTIFACT_TTL_SECONDS
         },
+        "job_dir": str(job_dir),
+        "results_json_path": None,
         "model_input_shapes": {}  # filled in process_job
     }
 
@@ -821,6 +903,7 @@ def start_prediction():
     ).start()
 
     return jsonify({"job_id": job_id, "status": "started"})
+
 
 
 def process_job(job_id: str,
@@ -1010,7 +1093,7 @@ def process_job(job_id: str,
 
                         row = {
                             'interaction_id': f"I{interaction_counter:07d}",
-                            'timestamp_utc': datetime.utcnow().isoformat(timespec='seconds'),
+                            'timestamp_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),  # timezone-aware
                             'mirna_id': pri_id,
                             'primary_molecule_id': pri_id,
                             'target_id': target_id,
@@ -1047,6 +1130,25 @@ def process_job(job_id: str,
                         jobs[job_id]["results"].append(row)
                         jobs[job_id]["completed"] += 1
 
+        # Job completed — write compact sorted JSON to disk for fast /download
+        try:
+            # sort by baseline affinity descending (best at top)
+            def _safe_float(x):
+                try:
+                    return float(x)
+                except Exception:
+                    return -math.inf
+            jobs[job_id]["results"].sort(key=lambda r: _safe_float(r.get('predicted_affinity_baseline', -1)), reverse=True)
+
+            job_dir = Path(jobs[job_id]["job_dir"])  # type: ignore
+            results_path = job_dir / "results.json"
+            payload = {"results": jobs[job_id]["results"]}
+            with results_path.open('w', encoding='utf-8') as f:
+                json.dump(payload, f, default=_to_py, ensure_ascii=False, separators=(',', ':'))
+            jobs[job_id]["results_json_path"] = str(results_path)
+        except Exception as werr:
+            logging.warning(f"Failed to prewrite results.json: {werr}")
+
         jobs[job_id]["status"] = "completed"
         send_ga_event("prediction_completed", {"total": jobs[job_id]["total"]})
     except Exception as e:
@@ -1075,12 +1177,19 @@ def get_progress(job_id):
 
 @app.route('/download/<job_id>', methods=['GET'])
 def download_results(job_id):
-    # Legacy JSON endpoint (kept for backward compatibility)
+    """Fast JSON download: stream prewritten results.json when available."""
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
+
+    # Prefer prewritten file for speed (avoids heavy in-request serialization)
+    results_path = job.get("results_json_path")
+    if results_path and os.path.exists(results_path):
+        return send_file(results_path, mimetype="application/json", as_attachment=False, max_age=0)
+
+    # Fallback: serialize on the fly (still efficient via _to_py and gzip)
     try:
         def _safe_float(x):
             try:
@@ -1090,12 +1199,15 @@ def download_results(job_id):
         job["results"].sort(key=lambda r: _safe_float(r.get('predicted_affinity_baseline', -1)), reverse=True)
     except Exception:
         pass
-    return jsonify({"results": job["results"]})
+
+    payload = {"results": job["results"]}
+    return Response(json.dumps(payload, default=_to_py, ensure_ascii=False, separators=(',', ':')), mimetype="application/json")
 
 
 # =========================
 # CSV + Heatmap Download Endpoints
 # =========================
+
 def _results_df(job_id: str) -> pd.DataFrame:
     job = jobs.get(job_id)
     if not job or job["status"] != "completed":
@@ -1114,6 +1226,7 @@ def _results_df(job_id: str) -> pd.DataFrame:
     ]
     rest = [c for c in df.columns if c not in preferred]
     return df[preferred + rest]
+
 
 @app.route('/download/<job_id>/all.csv', methods=['GET'])
 def download_all_csv(job_id):
@@ -1136,6 +1249,7 @@ def download_all_csv(job_id):
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename=mirna_results_{job_id}.csv"}
     )
+
 
 @app.route('/download/<job_id>/<interaction_id>.csv', methods=['GET'])
 def download_single_csv(job_id, interaction_id):
@@ -1160,14 +1274,25 @@ def download_single_csv(job_id, interaction_id):
         headers={"Content-Disposition": f"attachment; filename=interaction_{interaction_id}.csv"}
     )
 
-# ---- NEW: seed-hits exploded CSVs (per-row and all-rows) ----
-def _explode_seed_hits(row: Dict) -> List[Dict]:
+
+# ---- NEW: seed-hits exploded CSVs (per-row and all-rows) with optional flags ----
+
+def _explode_seed_hits(row: Dict, allow_gu: Optional[bool] = None, max_mm: Optional[int] = None) -> List[Dict]:
+    """Return exploded seed hits. If allow_gu/max_mm provided, recompute from sequences using those flags."""
     out = []
     hits = []
-    try:
-        hits = json.loads(row.get('seed_hits_json') or "[]")
-    except Exception:
-        hits = []
+    if allow_gu is None and max_mm is None:
+        # use stored hits
+        try:
+            hits = json.loads(row.get('seed_hits_json') or "[]")
+        except Exception:
+            hits = []
+    else:
+        # recompute to align with UI settings
+        mseq = row.get('primary_seq_used') or ''
+        tseq = row.get('target_seq_used') or ''
+        hits = _scan_seeds_for_pair(mseq, tseq, allow_gu=bool(allow_gu), max_mismatch=int(max_mm or 0))
+
     for h in hits:
         out.append({
             "interaction_id": row.get("interaction_id"),
@@ -1184,6 +1309,7 @@ def _explode_seed_hits(row: Dict) -> List[Dict]:
         })
     return out
 
+
 @app.route('/download/<job_id>/seeds_all.csv', methods=['GET'])
 def download_seeds_all(job_id):
     job = jobs.get(job_id)
@@ -1192,9 +1318,15 @@ def download_seeds_all(job_id):
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
 
+    # Optional query flags to force recompute to match UI settings
+    allow_gu_q = request.args.get('allow_gu')
+    max_mm_q = request.args.get('max_mm')
+    allow_gu = None if allow_gu_q is None else (allow_gu_q.lower() == 'true')
+    max_mm = None if max_mm_q is None else int(max_mm_q)
+
     rows = []
     for r in job["results"]:
-        rows.extend(_explode_seed_hits(r))
+        rows.extend(_explode_seed_hits(r, allow_gu, max_mm))
     if not rows:
         return jsonify({"error": "No seed hits available"}), 400
 
@@ -1209,6 +1341,7 @@ def download_seeds_all(job_id):
         headers={"Content-Disposition": f"attachment; filename=seed_hits_{job_id}.csv"}
     )
 
+
 @app.route('/download/<job_id>/<interaction_id>/seeds.csv', methods=['GET'])
 def download_seeds_one(job_id, interaction_id):
     job = jobs.get(job_id)
@@ -1221,7 +1354,13 @@ def download_seeds_one(job_id, interaction_id):
     if not row:
         return jsonify({"error": "Invalid interaction_id"}), 404
 
-    rows = _explode_seed_hits(row)
+    # Optional query flags to match UI
+    allow_gu_q = request.args.get('allow_gu')
+    max_mm_q = request.args.get('max_mm')
+    allow_gu = None if allow_gu_q is None else (allow_gu_q.lower() == 'true')
+    max_mm = None if max_mm_q is None else int(max_mm_q)
+
+    rows = _explode_seed_hits(row, allow_gu, max_mm)
     if not rows:
         return jsonify({"error": "No seed hits for this interaction"}), 400
 
@@ -1235,6 +1374,7 @@ def download_seeds_one(job_id, interaction_id):
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename=seed_hits_{interaction_id}.csv"}
     )
+
 
 def _build_ig_feed(pseq: str, tseq: str, cseq: str,
                    Lp: int, Lt: int, Lc: int, include_struct: Dict[str, bool]) -> Dict[str, np.ndarray]:
@@ -1265,6 +1405,7 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
         feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
 
     return feed
+
 
 @app.route('/download/<job_id>/<interaction_id>/heatmap.png', methods=['GET'])
 def download_heatmap_png(job_id, interaction_id):
@@ -1380,6 +1521,7 @@ def get_structure_artifact(job_id, kind):
 
     return send_file(path, as_attachment=True, download_name=os.path.basename(path))
 
+
 @app.route('/structure/<job_id>/miRNA/<mirna_id>', methods=['GET'])
 def get_structure_mirna(job_id, mirna_id):
     """Serve the uploaded miRNA structure file that best matches the given ID."""
@@ -1402,6 +1544,7 @@ def get_structure_mirna(job_id, mirna_id):
 # =========================
 # Contacts (miRNA↔Target / miRNA↔Competitor) for 3D overlay
 # =========================
+
 def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
     """
     Fast contact heuristics using Bio.PDB NeighborSearch.
@@ -1508,6 +1651,7 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
         }
     }
 
+
 @app.route('/contacts/<job_id>/<mirna_id>', methods=['GET'])
 def get_contacts(job_id, mirna_id):
     """
@@ -1556,9 +1700,10 @@ def get_contacts(job_id, mirna_id):
 
 
 # =========================
-# Janitor: clean expired artifacts
+# Janitor: clean expired artifacts & old job files
 # =========================
 _janitor_started = False
+
 def start_janitor():
     global _janitor_started
     if _janitor_started:
@@ -1588,6 +1733,20 @@ def start_janitor():
                                     os.unlink(p)
                                 except Exception:
                                     pass
+                        # results.json (keep for a bit longer if needed)
+                        rjp = job.get("results_json_path")
+                        if rjp and os.path.exists(rjp):
+                            try:
+                                os.unlink(rjp)
+                            except Exception:
+                                pass
+                        # remove job dir if empty
+                        jdir = job.get("job_dir")
+                        try:
+                            if jdir and os.path.isdir(jdir) and not os.listdir(jdir):
+                                os.rmdir(jdir)
+                        except Exception:
+                            pass
                         # prevent re-clean
                         job["artifacts"]["expiry"] = 0
                 time.sleep(120)
@@ -1598,7 +1757,7 @@ def start_janitor():
 
 
 # =========================
-# Seed-scan endpoint (unchanged public API)
+# Seed-scan endpoint (public API)
 # =========================
 @app.route('/seed_scan', methods=['POST'])
 @limiter.limit("30 per 15 minutes")
@@ -1672,7 +1831,7 @@ def seed_scan():
 
 
 # =========================
-# Explain (Integrated Gradients) endpoint (unchanged public API)
+# Explain (Integrated Gradients) endpoint (public API)
 # =========================
 @app.route('/explain', methods=['POST'])
 @limiter.limit("20 per 15 minutes")
@@ -1780,6 +1939,7 @@ def explain():
 # =========================
 # Startup
 # =========================
+
 def main():
     port = int(os.environ.get("PORT", 8080))
     # ensure janitor alive for artifact cleanup (don’t crash if it can’t start)
@@ -1793,6 +1953,6 @@ def main():
     # - threaded=True allows /progress and /heatmap to run concurrently
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=True)
 
+
 if __name__ == '__main__':
     main()
-

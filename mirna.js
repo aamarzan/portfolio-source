@@ -170,7 +170,7 @@ function injectPremiumStyles(){
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
     .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);} 
-    .btn-action{min-width:112px;min-height:36px;padding:8px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);} 
+    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);} 
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
@@ -822,7 +822,7 @@ function displayResults(results){
   }
 }
 
-// Inject range/tolerant filter chips (toggle behavior)
+// === Inject range/tolerant filter chips (toggle behavior) ===
 function injectResultFilters(){
   if($('result-filters')) return;
   const box = document.createElement('div');
@@ -860,6 +860,68 @@ function injectResultFilters(){
     const r=$('filter-range'), t=$('filter-tolerant');
     if(r) r.checked=false; if(t) t.checked=false; apply();
   },'cFilter');
+}
+
+// =====================================================
+// Analysis controls (singleton) — adds allowGU/maxMM + heatmap mode/steps + global buttons
+// =====================================================
+function injectAnalysisControls(container){
+  if(GUARDS.analysisControlsInjected) return;
+
+  const html = `
+  <div id="analysis-controls" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:8px 0 12px;">
+    <label style="display:flex;gap:8px;align-items:center;">
+      <input type="checkbox" id="allow-gu" checked />
+      <span>Allow G:U wobble</span>
+    </label>
+
+    <label style="display:flex;gap:6px;align-items:center;">
+      <span>Max mismatches</span>
+      <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="width:70px;padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
+    </label>
+
+    <label style="display:flex;gap:6px;align-items:center;">
+      <span>Heatmap</span>
+      <select id="heatmap-mode" style="padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
+        <option value="ig_target" selected>IG → Target</option>
+        <option value="ig_competitor">IG → Competitor</option>
+        <option value="seed_density">Seed density (fast)</option>
+      </select>
+    </label>
+
+    <label style="display:flex;gap:6px;align-items:center;">
+      <span>Steps</span>
+      <input id="heatmap-steps" type="number" value="50" min="10" max="200" step="5" style="width:80px;padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
+    </label>
+
+    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
+    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
+  </div>
+  `;
+
+  prependHTML(container, html);
+
+  // Global buttons: operate on the top-ranked row (simple, deterministic)
+  const seedBtn = $('seed-scan-global-btn');
+  const hmBtn   = $('explain-global-btn');
+
+  bindOnce(seedBtn, 'click', async ()=>{
+    if(!predictionResults.length){
+      openModal('Seed Sites', formatInfo('Run a prediction first so we can use the top-ranked row.'));
+      return;
+    }
+    await handleSeedSitesClick(predictionResults[0]);
+  }, 'seedGlobalOnce');
+
+  bindOnce(hmBtn, 'click', async ()=>{
+    if(!predictionResults.length){
+      openModal('Heatmap', formatInfo('Run a prediction first so we can use the top-ranked row.'));
+      return;
+    }
+    await handleHeatmapClick(predictionResults[0]); // uses current #heatmap-mode/#heatmap-steps
+  }, 'hmGlobalOnce');
+
+  GUARDS.analysisControlsInjected = true;
 }
 
 // =====================================================
@@ -1018,12 +1080,10 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const targetId= item.target_id ?? '';
     const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
     const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    if(mirnaSeq && targetSeq){
-      const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${html}</div>`);
-    }else{
-      setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
-    }
+    const html = (mirnaSeq && targetSeq)
+      ? `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq)}</div>`
+      : formatError(err?.message || 'Unexpected error during explanation.');
+    setHTML($('modal-content'), html);
   }
 }
 
@@ -1032,9 +1092,11 @@ function renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq){
   const L = targetSeq.length;
   const density = new Array(L).fill(0);
   if(Array.isArray(LAST_SEED_HITS)){
-    LAST_SEED_HITS.filter(h => h.molecule === 'target' && h.id === targetId).forEach(h=>{
-      for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
-    });
+    LAST_SEED_HITS
+      .filter(h => h.molecule === 'target' && h.id === targetId)
+      .forEach(h=>{
+        for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
+      });
   }
   const max = Math.max(1, ...density);
   const norm = density.map(v => v / max);
@@ -1046,7 +1108,8 @@ function renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq){
     strip += `<span title="pos ${i+1} • ${(targetSeq[i]||'')} • ${(norm[i]||0).toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(targetSeq[i] || '')}</span>`;
   }
   strip += `</div></div>`;
-  return `<div><h4 style="margin:6px 0;">Seed density (client fallback)</h4>${strip}<small style="color:#666;">Derived from current Seed Sites; no long server request needed.</small></div>`;
+  const note = Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length ? '' : '<br/><small style="color:#666;">Tip: run Seed Sites first for a more informative density.</small>';
+  return `<div><h4 style="margin:6px 0;">Seed density (client fallback)</h4>${strip}${note}</div>`;
 }
 
 // Render one attribution panel (mini heat-strip + top peaks)
@@ -1358,7 +1421,7 @@ async function open3DViewer(kind){
       return;
     }
     const blob = await res.blob();
-    await open3DStageFromBlob(kind, blob, '', '');
+    await open3DStageFromBlob(kind, blob, '');
   }catch(err){
     openModalText('3D Viewer', err?.message || '3D viewer error.');
   }
