@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- v2025-11-11: synced with upgraded app.py & mirna.js (multi-target/competitor + seed-scan + IG heatmap) -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -11,12 +12,12 @@
   <meta name="theme-color" content="#000000" />
 
   <!-- Favicons (versioned for cache-busting) -->
-  <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png?v=1" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg?v=1" />
-  <link rel="shortcut icon" href="../favicon/favicon.ico?v=1" />
-  <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png?v=1" />
+  <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png?v=2" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg?v=2" />
+  <link rel="shortcut icon" href="../favicon/favicon.ico?v=2" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png?v=2" />
   <meta name="apple-mobile-web-app-title" content="Marzan" />
-  <link rel="manifest" href="../favicon/site.webmanifest?v=1" />
+  <link rel="manifest" href="../favicon/site.webmanifest?v=2" />
 
   <!-- Cache control for HTML -->
   <meta http-equiv="Cache-Control" content="max-age=600, must-revalidate" />
@@ -24,43 +25,79 @@
   <meta http-equiv="Expires" content="0" />
 
   <!-- Global + Page Styles (versioned for cache-busting) -->
-  <link rel="stylesheet" href="../style.css?v=1" />
-  <link rel="stylesheet" href="../mirna.css?v=1" />
+  <link rel="stylesheet" href="../style.css?v=2" />
+  <link rel="stylesheet" href="../mirna.css?v=2" />
 
-  <!-- Premium button + analysis button sizing (non-breaking overrides) -->
+  <!-- Premium buttons, sticky toolbars, analysis controls (non-breaking overrides) -->
   <style>
-    /* Action buttons (Load Sample, Clear Inputs) */
+    :root{
+      --btn-bg:#f7f9fc; --btn-bg-hover:#eef3fb; --btn-br:#d0d7de; --btn-fg:#0b1426;
+      --panel-bg:#ffffff; --panel-br:#e5eaf0; --panel-shadow:0 10px 30px rgba(0,0,0,0.08);
+    }
+    /* Global improvements */
+    .tabs{ position: sticky; top: 64px; z-index: 7; background: var(--panel-bg); padding-top: 6px; border-bottom: 1px solid var(--panel-br); }
+    .card{ background: var(--panel-bg); box-shadow: var(--panel-shadow); border: 1px solid var(--panel-br); }
+
+    /* Action buttons (Load Sample, Clear Inputs, Submit) */
+    .btn-premium,
     #load-sample-btn,
-    #clear-inputs-btn {
+    #clear-inputs-btn{
+      padding: 12px 18px !important;
+      border-radius: 12px !important;
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      line-height: 1.2 !important;
+      min-height: 46px !important;
+      border: 1px solid var(--btn-br) !important;
+      background: var(--btn-bg) !important;
+      color: var(--btn-fg) !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+      letter-spacing: .2px !important;
+      cursor: pointer;
+    }
+    .btn-premium:hover, #load-sample-btn:hover, #clear-inputs-btn:hover{ background: var(--btn-bg-hover) !important; }
+
+    /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
+    .seed-btn, .heatmap-btn{
       padding: 10px 16px !important;
       border-radius: 10px !important;
       font-size: 0.95rem !important;
-      font-weight: 600 !important;
-      line-height: 1.15 !important;
-      min-height: 42px !important;
-      border: 1px solid #d0d7de !important;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
-      letter-spacing: .2px !important;
-    }
-    /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
-    .seed-btn,
-    .heatmap-btn {
-      padding: 8px 14px !important;
-      border-radius: 10px !important;
-      font-size: 0.92rem !important;
-      font-weight: 600 !important;
+      font-weight: 700 !important;
       line-height: 1.1 !important;
-      min-height: 38px !important;
-      border: 1px solid #d0d7de !important;
-      background: #f7f9fc !important;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+      min-height: 40px !important;
+      border: 1px solid var(--btn-br) !important;
+      background: var(--btn-bg) !important;
+      color: var(--btn-fg) !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
       margin: 2px 4px !important;
       letter-spacing: .2px !important;
       cursor: pointer;
     }
-    .seed-btn:hover, .heatmap-btn:hover {
-      background: #eef3fb !important;
+    .seed-btn:hover, .heatmap-btn:hover{ background: var(--btn-bg-hover) !important; }
+
+    /* Sticky analysis controls (injected by JS above the results table) */
+    #analysis-controls{
+      position: sticky; top: 8px; z-index: 6; background: #fbfdff; border: 1px solid #e0e8f5; border-left: 4px solid #1e5a9c;
+      padding: 10px 12px; border-radius: 9px; box-shadow: 0 3px 8px rgba(0,0,0,0.03);
     }
+
+    /* Results table polish */
+    #results-container{ overflow:auto; }
+    #results-container table{ width:100%; border-collapse: collapse; }
+    #results-container th, #results-container td{ padding: 8px 10px; border-bottom: 1px solid #eef2f7; }
+    #results-container thead th{ position: sticky; top: 0; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,0.04); }
+
+    /* Loader spinner used by JS */
+    .loader-spinner{ width:16px; height:16px; border:2px solid #c9d6ea; border-top-color:#1e5a9c; border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite; margin-right:8px; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Gradient scale */
+    .gradient-scale-container{ border:1px solid #e7ecf3; border-radius:10px; padding:10px; }
+    .gradient-scale-bar{ height:14px; border-radius:8px; background: linear-gradient(90deg,#440154,#3b528b,#21908d,#5dc963,#fde725); }
+    .gradient-scale-labels{ display:flex; justify-content:space-between; font-size:12px; color:#475569; margin-top:6px; }
+
+    /* Inputs spacing */
+    .sequence-input{ min-height: 130px; }
   </style>
 
   <!-- Icons -->
@@ -78,6 +115,8 @@
 </head>
 
 <body class="mirna-page">
+  <noscript><div style="padding:10px;margin:16px;border:1px solid #e0b4b4;background:#fff5f5;color:#7a1f1f;border-radius:8px;">This tool requires JavaScript to run predictions, show seed sites and heatmaps.</div></noscript>
+
   <!-- Global header -->
   <header id="main-header" role="banner">
     <div class="container header-container">
@@ -164,7 +203,7 @@
         <div><strong>Formatting tips</strong></div>
         <ul style="margin:6px 0 0 18px;">
           <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved in results.</li>
-          <li><b>Targets & Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
+          <li><b>Targets &amp; Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
           <li><b>Range-aware IDs:</b> For subregions, reference as <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites will display both local (slice) and global coordinates.</li>
           <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence. <u>Use the base FASTA header</u> for filenames (e.g., <code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.pdb</code>) even if results show a slice like <code>TP53_3UTR:90-150</code>.</li>
           <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
@@ -214,8 +253,8 @@
         <form id="prediction-form" aria-label="miRNA prediction form">
           <!-- Quick actions -->
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-            <button type="button" id="load-sample-btn" aria-label="Load example sequences">Load Sample</button>
-            <button type="button" id="clear-inputs-btn" aria-label="Clear all inputs">Clear Inputs</button>
+            <button type="button" id="load-sample-btn" class="btn-premium" aria-label="Load example sequences">Load Sample</button>
+            <button type="button" id="clear-inputs-btn" class="btn-premium" aria-label="Clear all inputs">Clear Inputs</button>
           </div>
 
           <!-- Primary miRNA -->
@@ -301,7 +340,7 @@
             />
           </div>
 
-          <button type="submit" aria-label="Run prediction">Run Prediction</button>
+          <button type="submit" class="btn-premium" aria-label="Run prediction">Run Prediction</button>
         </form>
 
         <!-- FASTA tips container: mirna.js injects singleton #fasta-tips-box here -->
@@ -463,15 +502,14 @@
   </footer>
 
   <!-- Fixed relative path from /mirna/ -->
-  <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=1" preload="auto"></audio>
+  <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const runBtn = document.querySelector('#prediction-form button[type="submit"]');
       const clickSound = document.getElementById('click-sound');
       if (runBtn && clickSound) {
         runBtn.addEventListener('click', function () {
-          clickSound.currentTime = 0;
-          clickSound.play();
+          try { clickSound.currentTime = 0; clickSound.play(); } catch(_){}
         });
       }
 
@@ -482,14 +520,11 @@
       // Sample set:
       // miRNA: hsa-miR-1-3p (seed = positions 2–8 = GGAAUGU)
       // Target below contains reverse-complement "ACAUUCC" so Seed Sites will show a hit immediately.
-      const SAMPLE_MIRNA = `>hsa-miR-1-3p
-UGGAAUGUAAAGAAGUAUGUAU`;
+      const SAMPLE_MIRNA = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
 
-      const SAMPLE_TARGET = `>target1
-GGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
+      const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
 
-      const SAMPLE_COMP   = `>comp1
-AUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
+      const SAMPLE_COMP   = `>comp1\nAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
 
       if (btnSample) {
         btnSample.addEventListener('click', () => {
@@ -534,8 +569,8 @@ AUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
   </script>
 
   <!-- Global/site scripts -->
-  <script src="../script.js?v=1" defer></script>
+  <script src="../script.js?v=2" defer></script>
   <!-- Page script (guard-safe, duplication-proof) -->
-  <script src="../mirna.js?v=3" defer></script>
+  <script src="../mirna.js?v=4" defer></script>
 </body>
 </html>

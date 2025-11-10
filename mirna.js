@@ -1,8 +1,6 @@
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
-// - Keeps your existing UX: nonce, batching, progress, CSV/copy, gradient table, tabs
-// - Adds per-row "Seed Sites" (exact coordinates) and "Heatmap" (IG saliency) actions
-// - Adds analysis controls (Allow GU wobble, Max mismatches) above results
-// - Range-aware (e.g., target IDs like "TP53_3UTR:90-150") to align coordinates properly
+// Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
+// persistent analysis controls, sortable table, safe bindings, and graceful fallbacks.
 
 // =====================================================
 // Global state
@@ -23,6 +21,10 @@ const CURRENT_INPUTS = {
   competitors: {}  // id -> sequence
 };
 
+// Last analysis cache (for exports)
+let LAST_SEED_HITS = null;   // Array of hits
+let LAST_SEED_META = null;   // { mirnaId, targetId, compId }
+
 // Guards to prevent duplicate injections/bindings
 const GUARDS = {
   advancedInjected: false,
@@ -30,7 +32,8 @@ const GUARDS = {
   tabWiringDone: false,
   formBindingDone: false,
   analysisControlsInjected: false,
-  modalInjected: false
+  modalInjected: false,
+  styleInjected: false
 };
 
 // =====================================================
@@ -139,6 +142,26 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
+// Inject premium styles for bigger, nicer buttons (Load Sample, Clear Inputs, Seed Sites, Heatmap)
+function injectPremiumStyles(){
+  if(GUARDS.styleInjected) return;
+  const css = `
+    .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
+      font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
+    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);} 
+    .btn-action{min-width:112px;min-height:36px;padding:8px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);} 
+    .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
+    .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
+    table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
+    table#results-table tbody tr:hover{filter:brightness(0.98)}
+  `;
+  const style = document.createElement('style');
+  style.id = 'mirna-js-style';
+  style.textContent = css;
+  document.head.appendChild(style);
+  GUARDS.styleInjected = true;
+}
+
 // Simple FASTA parser → { id: seq, ... } (if no headers: {"<prefix>_1": raw})
 // Preserves FULL header text after ">"
 function parseFastaToMap(text, defaultPrefix='seq'){
@@ -172,6 +195,33 @@ function parseFastaToMap(text, defaultPrefix='seq'){
   return map;
 }
 
+// ===== Tolerant ID helpers (mirror backend tolerant matching) =====
+function idVariants(s){
+  if(!s) return [];
+  const t = String(s).trim();
+  const slug = t.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-\.]/g,'');
+  const set = new Set([
+    t,
+    t.replace(/\s+/g,'_'),
+    t.replace(/\s+/g,''),
+    slug,
+    slug.replace(/_/g,' '),
+    t.toLowerCase(),
+    t.replace(/\s+/g,'_').toLowerCase(),
+    t.replace(/\s+/g,'').toLowerCase()
+  ]);
+  return Array.from(set);
+}
+
+function lookupTolerant(pool, key){
+  if(!pool || !key) return undefined;
+  if(Object.prototype.hasOwnProperty.call(pool, key)) return pool[key];
+  for(const v of idVariants(key)){
+    if(Object.prototype.hasOwnProperty.call(pool, v)) return pool[v];
+  }
+  return undefined;
+}
+
 // Parse an ID like "TP53:90-150" → {baseId, start, end} (1-based)
 function parseIdRange(id){
   const m = String(id||'').match(/^(.+):(\d+)-(\d+)$/);
@@ -179,27 +229,14 @@ function parseIdRange(id){
   return { baseId: m[1], start: parseInt(m[2],10), end: parseInt(m[3],10) };
 }
 
-// Get (possibly sliced) target sequence for a target_id possibly carrying :start-end
-function getTargetSeqForId(targetId){
-  const r = parseIdRange(targetId);
-  if(!r){
-    const s = CURRENT_INPUTS.targets[targetId];
-    return typeof s === 'string' ? s : '';
-  }
-  const base = CURRENT_INPUTS.targets[r.baseId] || '';
-  if(!base) return '';
-  const sIdx = Math.max(0, r.start - 1);
-  const eIdx = Math.min(base.length, r.end);
-  return base.slice(sIdx, eIdx);
-}
-
-// NEW: general slice helper for any pool (targets/competitors)
-function getAnySeqForId(anyId, pool){
+// Get (possibly sliced) sequence for ID with tolerant baseId lookup
+function tolerantGetAnySeqForId(anyId, pool){
   const r = parseIdRange(anyId);
   if(!r){
-    return pool[anyId] || '';
+    const exact = lookupTolerant(pool, anyId);
+    return typeof exact === 'string' ? exact : '';
   }
-  const base = pool[r.baseId] || '';
+  const base = lookupTolerant(pool, r.baseId) || '';
   if(!base) return '';
   const sIdx = Math.max(0, r.start - 1);
   const eIdx = Math.min(base.length, r.end);
@@ -224,9 +261,7 @@ async function loadConfig(){
       const cfg = await res.json();
       CONFIG = { ...CONFIG, ...cfg };
     }
-  }catch(_){
-    // keep defaults
-  }
+  }catch(_){ /* keep defaults */ }
 }
 
 // =====================================================
@@ -259,6 +294,7 @@ function bindOnce(el, event, handler, key){
 // Initialization
 // =====================================================
 document.addEventListener('DOMContentLoaded', async () => {
+  injectPremiumStyles();
   await loadConfig();
 
   const loader = $('loader');
@@ -278,6 +314,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindOnce(form, 'submit', handleSubmit, 'submitGuard');
     GUARDS.formBindingDone = true;
   }
+
+  // Make primary action buttons look premium if present
+  ['load-sample-btn','clear-btn','seed-scan-global-btn','explain-global-btn'].forEach(id=>{
+    const el = $(id);
+    if(el) el.classList.add('btn-premium');
+  });
 
   // Advanced options + tabs
   injectAdvancedOnce();
@@ -362,6 +404,7 @@ async function handleSubmit(event){
   // Clear results view
   if(resultsContainer) setHTML(resultsContainer, '');
   predictionResults = [];
+  LAST_SEED_HITS = null; LAST_SEED_META = null;
 
   // Anti-refresh note
   prependHTML(resultsContainer, `<div class="reload-warning">
@@ -578,7 +621,7 @@ function displayResults(results){
   const legendId = 'affinity-legend';
   const legendHTML = `
   <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;">
-    <h4>Affinity Classification Guide</h4>
+    <h4>Affinity Classification Guide <span class="chip">range-aware</span> <span class="chip" title="Tolerant header matching on">tolerant match</span></h4>
     <table>
       <thead><tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr></thead>
       <tbody>
@@ -593,7 +636,7 @@ function displayResults(results){
 
   // Download + Copy buttons
   const downloadId = 'download-btn';
-  const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button> <button id="copy-results-btn" class="btn-accent">Copy Results</button></div>`;
+  const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}" class="btn-premium">Download Results as CSV</button> <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results</button></div>`;
 
   appendHTML(container, legendHTML);
   appendHTML(container, downloadButtonHTML);
@@ -622,7 +665,7 @@ function displayResults(results){
   const hasTargetCol = (results || []).some(r => typeof r.target_id !== 'undefined');
   const hasCompCol   = (results || []).some(r => (r.competitor_id ?? '') !== '');
 
-  let table = '<table id="results-table" style="margin-bottom:20px;"><thead><tr>' +
+  let table = '<table id="results-table" style="margin-bottom:20px;width:100%;border-collapse:collapse;"><thead><tr>' +
     '<th>Primary Molecule ID</th>' +
     (hasTargetCol ? '<th>Target ID</th>' : '') +
     (hasCompCol   ? '<th>Competitor ID</th>' : '') +
@@ -641,8 +684,8 @@ function displayResults(results){
     const compEff   = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor   = getGradientColor(baseline);
 
-    const seedBtn = `<button class="seed-btn" data-row="${idx}">Seed Sites</button>`;
-    const heatBtn = `<button class="heatmap-btn" data-row="${idx}">Heatmap</button>`;
+    const seedBtn = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
+    const heatBtn = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
 
     table += `<tr style="background-color:${bgColor}">
       <td>${escapeHTML(id)}</td>` +
@@ -682,9 +725,12 @@ function displayResults(results){
   }
 }
 
-// Inject analysis controls (GU wobble + mismatch cap)
+// Inject analysis controls (GU wobble + mismatch cap) with persistence
 function injectAnalysisControls(parent){
   if(GUARDS.analysisControlsInjected) return;
+
+  const savedAllowGU = localStorage.getItem('mi_allowGU');
+  const savedMaxMM   = localStorage.getItem('mi_maxMM');
 
   const controlsId = 'analysis-controls';
   ensureSingleton(
@@ -692,13 +738,13 @@ function injectAnalysisControls(parent){
     `
     <div id="${controlsId}" style="display:flex;gap:16px;align-items:center;margin:8px 0 14px 0;flex-wrap:wrap;">
       <label style="display:flex;gap:6px;align-items:center;">
-        <input type="checkbox" id="allow-gu" checked />
+        <input type="checkbox" id="allow-gu" ${savedAllowGU === null ? 'checked' : (savedAllowGU === 'true' ? 'checked' : '')}/>
         <span>Allow GU wobble</span>
       </label>
       <label style="display:flex;gap:6px;align-items:center;">
         <span>Max mismatches:</span>
         <select id="max-mm">
-          <option value="0" selected>0</option>
+          <option value="0">0</option>
           <option value="1">1</option>
         </select>
       </label>
@@ -707,6 +753,17 @@ function injectAnalysisControls(parent){
     `,
     parent
   );
+
+  const mmSel = byQS('#max-mm');
+  if(mmSel){
+    mmSel.value = (savedMaxMM === null ? '0' : savedMaxMM);
+    bindOnce(mmSel,'change',()=> localStorage.setItem('mi_maxMM', mmSel.value),'mmPersist');
+  }
+  const guChk = byQS('#allow-gu');
+  if(guChk){
+    bindOnce(guChk,'change',()=> localStorage.setItem('mi_allowGU', guChk.checked ? 'true' : 'false'),'guPersist');
+  }
+
   GUARDS.analysisControlsInjected = true;
 }
 
@@ -844,6 +901,7 @@ function ensureModal(){
       <div data-panel style="position:relative;max-width:980px;width:96%;max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
           <h3 id="modal-title" style="margin:0;">Analysis</h3>
+          <div id="modal-tools" style="display:flex;gap:8px;align-items:center;"></div>
           <button id="modal-close" aria-label="Close">✕</button>
         </div>
         <div id="modal-content"></div>
@@ -859,12 +917,13 @@ function ensureModal(){
   if(overlay)  bindOnce(overlay,'click',closeModal,'moverlay');
   GUARDS.modalInjected = true;
 }
-function openModal(title, html){
+function openModal(title, html, toolbarHTML=''){
   ensureModal();
   const modal = $('analysis-modal');
   if(!modal) return;
   text($('modal-title'), title || 'Analysis');
   setHTML($('modal-content'), html || '');
+  setHTML($('modal-tools'), toolbarHTML || '');
   modal.style.display = 'flex';
 }
 function closeModal(){
@@ -873,7 +932,7 @@ function closeModal(){
 }
 
 // =====================================================
-// Seed Sites (exact base-level coordinates) — RANGE-AWARE
+// Seed Sites (exact base-level coordinates) — RANGE-AWARE + tolerant lookup + CSV export
 // =====================================================
 async function handleSeedSitesClick(item){
   try{
@@ -884,10 +943,9 @@ async function handleSeedSitesClick(item){
     const targetId= item.target_id ?? '';
     const compId  = item.competitor_id ?? '';
 
-    const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
-    // Use general helper so both targets and (if ever ranged) competitors are sliced consistently
-    const targetSeq= getAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    const compSeq  = compId ? getAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
+    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
+    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
 
     if(!mirnaSeq || !targetSeq){
       openModal('Seed Sites', formatError('Could not resolve miRNA and/or target sequences for this row. Please ensure IDs match your FASTA headers.'));
@@ -911,7 +969,7 @@ async function handleSeedSitesClick(item){
 
     if(!res.ok){
       let msg = 'Seed scanning failed.';
-      try{ const j = await res.json(); msg = j.error || msg; }catch(_){}
+      try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
       openModal('Seed Sites', formatError(msg));
       return;
     }
@@ -941,6 +999,9 @@ async function handleSeedSitesClick(item){
       return h;
     });
 
+    LAST_SEED_HITS = hits;
+    LAST_SEED_META = { mirnaId, targetId, compId };
+
     // Build table (shows global columns only if any range existed)
     const showGlobalCols = !!(tRange || cRange);
 
@@ -968,15 +1029,61 @@ async function handleSeedSitesClick(item){
     });
     html += `</tbody></table>`;
 
-    openModal('Seed Sites', html);
+    const toolbar = `<button id="download-seed-csv" class="btn-action">Download CSV</button>`;
+    openModal('Seed Sites', html, toolbar);
+
+    const dlBtn = $('download-seed-csv');
+    if(dlBtn){
+      bindOnce(dlBtn,'click',downloadSeedCSV,'seedCsvOnce');
+    }
 
   }catch(err){
     openModal('Seed Sites', formatError(err?.message || 'Unexpected error during seed scan.'));
   }
 }
 
+function downloadSeedCSV(){
+  if(!Array.isArray(LAST_SEED_HITS) || LAST_SEED_HITS.length === 0) return;
+  const showGlobal = LAST_SEED_HITS.some(h => typeof h.global_start !== 'undefined');
+  const headers = [
+    'Molecule','ID','Start','End',
+    ...(showGlobal ? ['Global_Start','Global_End'] : []),
+    'Seed_Len','Seed_Type','Wobble','Mismatches','Upstream_Base'
+  ];
+  const rows = [headers.join(',')];
+  LAST_SEED_HITS.forEach(h => {
+    const cells = [
+      h.molecule,
+      h.id,
+      h.start,
+      h.end,
+      ...(showGlobal ? [h.global_start ?? '', h.global_end ?? ''] : []),
+      h.seed_len,
+      h.seed_type || '',
+      h.wobble ?? 0,
+      h.mismatches ?? 0,
+      h.upstream_base ?? ''
+    ].map(v=>{
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+    });
+    rows.push(cells.join(','));
+  });
+  const nameBits = [];
+  if(LAST_SEED_META?.mirnaId) nameBits.push(String(LAST_SEED_META.mirnaId).replace(/[^a-z0-9_\-]+/gi,'_'));
+  if(LAST_SEED_META?.targetId) nameBits.push(String(LAST_SEED_META.targetId).replace(/[^a-z0-9_\-]+/gi,'_'));
+  const fname = `seed_hits_${nameBits.join('__') || 'results'}.csv`;
+
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // =====================================================
-// Heatmap (Integrated Gradients saliency) — RANGE-AWARE inputs
+// Heatmap (Integrated Gradients saliency) — RANGE-AWARE + tolerant lookup
 // =====================================================
 async function handleHeatmapClick(item){
   try{
@@ -984,9 +1091,9 @@ async function handleHeatmapClick(item){
     const targetId= item.target_id ?? '';
     const compId  = item.competitor_id ?? '';
 
-    const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
-    const targetSeq= getAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    const compSeq  = compId ? getAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
+    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
+    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
 
     if(!mirnaSeq || !targetSeq){
       openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
@@ -1006,7 +1113,7 @@ async function handleHeatmapClick(item){
 
     if(!res.ok){
       let msg = 'Explanation failed.';
-      try{ const j = await res.json(); msg = j.error || msg; }catch(_){}
+      try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
       openModal('Heatmap', formatError(msg));
       return;
     }
