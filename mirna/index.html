@@ -339,8 +339,8 @@
         <br>
         <h3>How it works</h3>
         <ul>
-          <li>Input your miRNA(s) as multi‑FASTA, plus a single target sequence (FASTA or raw).</li>
-          <li>Optionally provide a competitor sequence (FASTA or raw) and 3D structure files (PDB/mmCIF).</li>
+          <li>Input your miRNA(s) as multi-FASTA. You may also provide <b>one or more targets</b> (multi-FASTA) and <b>zero or more competitors</b> (multi-FASTA).</li>
+          <li>Analysis order: competitor1 → all targets, then competitor2 → all targets; 3D structure files (PDB/mmCIF) remain optional.</li>
           <li>Advanced options include auto‑trimming long miRNAs to a mature‑like window and lossy AA→NT back‑translation where allowed.</li>
           <li>The backend validates inputs, encodes sequences and structures, and performs RAM‑safe batch model inference.</li>
         </ul>

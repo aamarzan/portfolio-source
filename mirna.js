@@ -389,24 +389,23 @@ async function handleSubmit(event) {
   }
 
   // Validate target/competitor counts
-  const tgtCount = countFastaRecords(targetSeq);
-  const compCount = countFastaRecords(competitorSeq);
-  if (tgtCount > 1) {
-    setHTML(resultsContainer, formatError('Your target input contains multiple sequences. Please provide exactly one target sequence to proceed.'));
-    return;
+  // Count multi-FASTA (if no “>”, treat non-empty as 1)
+  let tgtCount  = countFastaRecords(targetSeq);  if (!tgtCount && targetSeq)  tgtCount  = 1;
+  let compCount = countFastaRecords(competitorSeq); if (!compCount && competitorSeq) compCount = 1;
+
+  // Friendly info: how many will be iterated
+  prependHTML(resultsContainer, formatInfo(
+    `Detected ${tgtCount || 0} target(s) and ${compCount || 0} competitor(s). Analysis order: competitor1 → all targets, then competitor2 → all targets, and so on.`
+  ));
+
+  // Optional tips about headers (helps labeling)
+  if (tgtCount >= 1 && !hasFastaHeaders(targetSeq)) {
+    prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to targets (e.g., >target1) so they label cleanly in results.'));
   }
-  if (compCount > 1) {
-    setHTML(resultsContainer, formatError('Please enter only one competitor sequence.'));
-    return;
+  if (competitorSeq && !hasFastaHeaders(competitorSeq)) {
+    prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) so they label cleanly in results.'));
   }
 
-  // Advice (not strict) for target/competitor header presence
-  if (tgtCount === 1 && !hasFastaHeaders(targetSeq)) {
-    prependHTML(resultsContainer, formatWarn('Tip: Add a FASTA header to the target (e.g., >target1) so it’s traceable in results.'));
-  }
-  if (competitorSeq && compCount === 1 && !hasFastaHeaders(competitorSeq)) {
-    prependHTML(resultsContainer, formatWarn('Tip: Add a FASTA header to the competitor (e.g., >comp1) so it’s traceable in results.'));
-  }
 
   // Switch to results tab (defensive)
   const resultsTabButton = byQS('button.tab-btn:nth-child(3)');
@@ -621,26 +620,35 @@ function displayResults(results) {
   const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
 
   // Build table
+  const hasTargetCol = (results || []).some(r => typeof r.target_id !== 'undefined');
+  const hasCompCol   = (results || []).some(r => (r.competitor_id ?? '') !== '');
+
   let table = '<table id="results-table" style="margin-bottom:20px;"><thead><tr>' +
       '<th>Primary Molecule ID</th>' +
+      (hasTargetCol ? '<th>Target ID</th>' : '') +
+      (hasCompCol   ? '<th>Competitor ID</th>' : '') +
       '<th>Predicted Affinity (Baseline)</th>' +
       '<th>Predicted Affinity (With Competitor)</th>' +
       '<th>Competitive Effect (higher is better)</th>' +
       '</tr></thead><tbody>';
 
   results.forEach(item => {
-    const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
-    const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
-    const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
-    const bgColor = getGradientColor(baseline);
+    const id        = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
+    const tid       = item.target_id ?? '';
+    const cid       = item.competitor_id ?? '';
+    const baseline  = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
+    const withComp  = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
+    const compEffect= (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
+    const bgColor   = getGradientColor(baseline);
 
     table += `<tr style="background-color:${bgColor}">
-        <td>${escapeHTML(id)}</td>
-        <td>${escapeHTML(baseline)}</td>
+        <td>${escapeHTML(id)}</td>` +
+        (hasTargetCol ? `<td>${escapeHTML(tid)}</td>` : '') +
+        (hasCompCol   ? `<td>${escapeHTML(cid)}</td>` : '') +
+        `<td>${escapeHTML(baseline)}</td>
         <td>${escapeHTML(withComp)}</td>
         <td>${escapeHTML(compEffect)}</td>
-    </tr>`;
+      </tr>`;
   });
   table += '</tbody></table>';
 
@@ -667,31 +675,46 @@ function displayResults(results) {
 function downloadCSV() {
   if (predictionResults.length === 0) return;
 
-  const headers = "Primary_Molecule_ID,Predicted_Affinity_Baseline,Predicted_Affinity_With_Competitor,Competitive_Effect";
+  const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
+  const hasCompCol   = (predictionResults || []).some(r => (r.competitor_id ?? '') !== '');
+
+  const headers = [
+    "Primary_Molecule_ID",
+    ...(hasTargetCol ? ["Target_ID"] : []),
+    ...(hasCompCol   ? ["Competitor_ID"] : []),
+    "Predicted_Affinity_Baseline",
+    "Predicted_Affinity_With_Competitor",
+    "Competitive_Effect"
+  ].join(',');
+
   const csvRows = [headers];
 
-  // Sort by baseline before export to match UI
   const sorted = [...predictionResults].sort((a, b) =>
     safeParseFloat(b["predicted_affinity_baseline"] ?? b.baseline_score ?? 0, 0) -
     safeParseFloat(a["predicted_affinity_baseline"] ?? a.baseline_score ?? 0, 0)
   );
 
   sorted.forEach(item => {
-    const id = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
-    const baseline = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
-    const withComp = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
+    const id  = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
+    const tid = item.target_id ?? '';
+    const cid = item.competitor_id ?? '';
+    const baseline   = (item.predicted_affinity_baseline ?? item.baseline_score ?? '').toString();
+    const withComp   = (item.predicted_affinity_with_competitor ?? item.score_with_competitor ?? '').toString();
     const compEffect = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
 
-    // Escape commas and quotes
-    const safeCSV = (s) => {
+    const cells = [
+      id,
+      ...(hasTargetCol ? [tid] : []),
+      ...(hasCompCol   ? [cid] : []),
+      baseline, withComp, compEffect
+    ].map(s => {
       const str = String(s ?? '');
-      if (/[",\n]/.test(str)) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-    csvRows.push([safeCSV(id), safeCSV(baseline), safeCSV(withComp), safeCSV(compEffect)].join(','));
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    });
+
+    csvRows.push(cells.join(','));
   });
+
 
   const csvString = csvRows.join('\n');
   const blob = new Blob([csvString], { type: 'text/csv' });

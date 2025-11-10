@@ -28111,3 +28111,10 @@ NameError: name 'trim_mature' is not defined
 2025-11-10 12:48:00,423 | INFO | 127.0.0.1 - - [10/Nov/2025 12:48:00] "GET /download/a0c19d84-07b3-400c-a846-3ecfe84c36f9 HTTP/1.1" 200 -
 2025-11-10 13:15:15,169 | INFO | 127.0.0.1 - - [10/Nov/2025 13:15:15] "GET /config HTTP/1.1" 200 -
 2025-11-10 16:56:17,231 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 16:56:22,678 | INFO |  * Restarting with stat
+2025-11-10 16:57:17,315 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-10 16:57:18,126 | WARNING |  * Debugger is active!
+2025-11-10 16:57:18,133 | INFO |  * Debugger PIN: 110-266-754
+2025-11-10 16:58:24,186 | INFO |  * Detected change in 'E:\\1. Github\\3. portfolio-source\\mirna\\backend_api\\app.py', reloading
+2025-11-10 16:58:25,538 | INFO |  * Restarting with stat

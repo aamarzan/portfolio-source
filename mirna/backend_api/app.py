@@ -478,17 +478,14 @@ def start_prediction():
     if short_mirnas:
         return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
-    # Target: exactly one sequence (FASTA or raw)
-    target_parsed = parse_fasta_records(target_seq_text)
-    if len(target_parsed) == 0:
-        return jsonify({"error": "Please provide one target sequence (FASTA or raw)."}), 400
-    if len(target_parsed) > 1:
-        return jsonify({"error": "Your target input contains multiple sequences. Please provide exactly one target sequence to proceed."}), 400
-    target_id, target_seq = target_parsed[0]
+    # Targets: one or more sequences (FASTA or raw)
+    targets_list = parse_fasta_records(target_seq_text)
+    if len(targets_list) == 0:
+        return jsonify({"error": "Please provide at least one target sequence (FASTA or raw)."}), 400
 
-    # Optional target region from Advanced tab
+    # Optional target region from Advanced tab (applies to every target)
     target_start_raw = request.form.get('target_start', '').strip()
-    target_end_raw = request.form.get('target_end', '').strip()
+    target_end_raw   = request.form.get('target_end', '').strip()
 
     def _to_int_safe(s):
         try:
@@ -499,62 +496,67 @@ def start_prediction():
     ts = _to_int_safe(target_start_raw)
     te = _to_int_safe(target_end_raw)
 
-    if ts is None and te is None:
-        ts, te = 1, len(target_seq)
+    # Normalize range once; if both None → for each target, full length is used
+    def _slice_target(tid: str, tseq: str) -> Tuple[str, str]:
+        if ts is None and te is None:
+            return (tid, tseq)
+        if ts is not None and te is not None:
+            if ts <= 0 or te <= 0:
+                raise ValueError("Target range must be positive integers (1-based).")
+            if te < ts:
+                raise ValueError("Target range end must be greater than or equal to start.")
+            s_idx = max(0, ts - 1)
+            e_idx = min(len(tseq), te)
+            if s_idx >= len(tseq):
+                raise ValueError("Target range start exceeds the target sequence length.")
+            if e_idx - s_idx < 1:
+                raise ValueError("Selected target range is empty. Please adjust the indices.")
+            return (f"{tid}:{ts}-{te}", tseq[s_idx:e_idx])
+        return (tid, tseq)
 
-    # Normalize range to 1-based inclusive input, convert to 0-based slicing
-    if ts is not None and te is not None:
-        if ts <= 0 or te <= 0:
-            return jsonify({"error": "Target range must be positive integers (1-based)."}), 400
-        if te < ts:
-            return jsonify({"error": "Target range end must be greater than or equal to start."}), 400
+    try:
+        targets_list = [ _slice_target(tid, tseq) for (tid, tseq) in targets_list ]
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
 
-        # Compute 0-based slice indices
-        s_idx = max(0, ts - 1)
-        e_idx = min(len(target_seq), te)  # Python slice end is exclusive
-        if s_idx >= len(target_seq):
-            return jsonify({"error": "Target range start exceeds the target sequence length."}), 400
-        if e_idx - s_idx < 1:
-            return jsonify({"error": "Selected target range is empty. Please adjust the indices."}), 400
-
-        # Slice the target sequence to the requested region
-        target_seq = target_seq[s_idx:e_idx]
-        # Augment the target ID so results are traceable
-        target_id = f"{target_id}:{ts}-{te}"
-
-
-    # ✅ Enforce minimum target length on final sequence (full or sliced)
+    # Length / AA checks per target (after slicing)
     MIN_TARGET_LEN = 30
-    if len((target_seq or '').replace('\n', '').strip()) < MIN_TARGET_LEN:
-        return jsonify({"error": f"Target sequence must be at least {MIN_TARGET_LEN} nt long (after applying range if provided)."}), 400
+    _fixed_targets = []
+    for (tid, tseq) in targets_list:
+        seq = (tseq or '').replace('\n', '').strip()
+        if len(seq) < MIN_TARGET_LEN:
+            return jsonify({"error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after applying range if provided)."}), 400
+        if is_aa_like(seq):
+            if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
+                seq = back_translate(seq)
+            else:
+                return jsonify({"error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+        _fixed_targets.append((tid, seq))
+    targets_list = _fixed_targets
 
-    # Competitor: at most one sequence
-    competitor_id, competitor_seq = ("competitor", "")
+    # Competitors: zero or more sequences (FASTA or raw). If none, use a single empty placeholder.
+    competitors_list = []
     if competitor_seq_text.strip():
-        competitor_parsed = parse_fasta_records(competitor_seq_text)
-        if len(competitor_parsed) == 0:
-            competitor_id, competitor_seq = ("competitor", "")
-        elif len(competitor_parsed) > 1:
-            return jsonify({"error": "Your competitor input contains multiple sequences. Please provide exactly one competitor sequence to proceed."}), 400
-        else:
-            competitor_id, competitor_seq = competitor_parsed[0]
-
-        # ✅ Enforce minimum competitor length
+        competitors_list = parse_fasta_records(competitor_seq_text)
+        if len(competitors_list) == 0:
+            return jsonify({"error": "Could not parse the competitor sequences."}), 400
+        # Per-competitor checks
         MIN_COMP_LEN = 15
-        if len((competitor_seq or '').replace('\n', '').strip()) < MIN_COMP_LEN:
-            return jsonify({"error": f"Competitor sequence must be at least {MIN_COMP_LEN} nt long."}), 400
+        _fixed_comps = []
+        for (cid, cseq) in competitors_list:
+            s = (cseq or '').replace('\n', '').strip()
+            if len(s) < MIN_COMP_LEN:
+                return jsonify({"error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."}), 400
+            if is_aa_like(s):
+                if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
+                    s = back_translate(s)
+                else:
+                    return jsonify({"error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+            _fixed_comps.append((cid, s))
+        competitors_list = _fixed_comps
+    else:
+        competitors_list = [("none", "")]  # placeholder meaning “no competitor”
 
-    # Optional AA detection and handling for target/competitor
-    if is_aa_like(target_seq):
-        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-            target_seq = back_translate(target_seq)
-        else:
-            return jsonify({"error": "Target appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
-    if competitor_seq and is_aa_like(competitor_seq):
-        if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-            competitor_seq = back_translate(competitor_seq)
-        else:
-            return jsonify({"error": "Competitor appears to be an amino-acid sequence. Please provide nucleotide (RNA/DNA) sequence. If you want to back-translate AA→NT (lossy), enable the conversion option in Advanced."}), 400
 
     # Save uploaded 3D files to temp and index them
     tmp_paths_to_cleanup: List[str] = []
@@ -580,230 +582,187 @@ def start_prediction():
             mirna_3d_index[stem] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
+    # Derive total = miRNAs × targets × competitors
+    _total = len(primary_records) * max(1, len(targets_list)) * max(1, len(competitors_list))
+
     jobs[job_id] = {
-    "status": "running",
-    "results": [],
-    "error": None,
-    "total": len(primary_records),
-    "completed": 0,
-    "target_id": target_id,   # includes :start-end if sliced
-    "target_len": len(target_seq)
+        "status": "running",
+        "results": [],
+        "error": None,
+        "total": _total,
+        "completed": 0,
+        "target_id": "MULTIPLE" if len(targets_list) > 1 else targets_list[0][0],
+        "target_len": -1  # not meaningful for multiple; kept for backward compatibility
     }
 
-    send_ga_event("prediction_started", {"total": len(primary_records)})
+    send_ga_event("prediction_started", {"total": _total})
 
     threading.Thread(
         target=process_job,
-        args=(job_id, primary_records, (target_id, target_seq), (competitor_id, competitor_seq),
+        args=(job_id, primary_records, targets_list, competitors_list,
               target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
               convert_aa_to_nt_flag, mature_trim_flag),
         daemon=True
     ).start()
 
+
     return jsonify({"job_id": job_id, "status": "started"})
 
 def process_job(job_id: str,
                 primary_records: List[Tuple[str,str]],
-                target_tuple: Tuple[str,str],
-                competitor_tuple: Tuple[str,str],
+                targets_list: List[Tuple[str,str]],
+                competitors_list: List[Tuple[str,str]],
                 target_3d_path: Optional[str],
                 competitor_3d_path: Optional[str],
                 mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]],
                 tmp_paths_to_cleanup: List[str],
                 convert_aa_to_nt_flag: bool,
                 mature_trim_flag: bool):
-  try:
-    if model is None or scaler is None:
-      jobs[job_id]["status"] = "error"
-      jobs[job_id]["error"] = "Model or scaler not loaded on server."
-      return
-
-    # Wrap to ensure dict with expected keys
-    def ensure_dict(data):
-      if isinstance(data, tuple):
-        # expect like ((id, seq), meta, label) from your processor usage
-        return {
-          "sequence": data[1] if len(data) > 1 else "",
-          "gc_content": 0.5,
-          "dg": 0.0,
-          "conservation": 0.0,
-          "structure_vector": "[]",
-          "adjacency_matrix": "[]"
-        }
-      return data
-
-    # Prepare Target
-    target_id, target_str = target_tuple
-    target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
-
-    # Prepare Competitor (optional)
-    competitor_id, competitor_str = competitor_tuple
-    competitor_processed = {'sequence': ''}
-    if competitor_str.strip():
-      competitor_processed = ensure_dict(process_molecule_universal(((competitor_id, competitor_str), {}, 'competitor_molecule')))
-
-    # Validate 3D vs FASTA for target/competitor if files provided
-    if target_3d_path and target_processed.get('sequence',''):
-      kind, seq = extract_seq_from_structure(target_3d_path)
-      ok, msg = validate_structure_matches_sequence(kind, seq, target_processed.get('sequence',''), "Target")
-      if not ok:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["error"] = msg
-        return
-
-    if competitor_3d_path and competitor_processed.get('sequence',''):
-      kind, seq = extract_seq_from_structure(competitor_3d_path)
-      ok, msg = validate_structure_matches_sequence(kind, seq, competitor_processed.get('sequence',''), "Competitor")
-      if not ok:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["error"] = msg
-        return
-
-    # Prepare inputs per model signatures
-    model_inputs = {inp.name: inp.shape for inp in model.inputs}
-    max_primary_len = model_inputs['primary_sequence_input'][1]
-    max_target_len = model_inputs['target_sequence_input'][1]
-    max_competitor_len = model_inputs['competitor_sequence_input'][1]
-
-    # Pre-encode common target/competitor sequences
-    target_seq_enc = one_hot_encode_sequence(target_processed.get('sequence', ''), max_target_len)
-    empty_comp_enc = one_hot_encode_sequence('', max_competitor_len)
-
-    comp_seq_enc = None
-    if competitor_processed.get('sequence', '').strip():
-      comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
-
-    # Build structural inputs for target/competitor if the model expects them
-    target_struct_input = None
-    competitor_struct_input = None
-
-    if 'target_structure_input' in model_inputs:
-      # Try 3D-derived vector first, then processed JSON, else zeros
-      vec = None
-      if target_3d_path:
-        vec = extract_structure_vector_from_file(target_3d_path, max_target_len)
-      if vec is None:
-        vec = structure_vector_from_processed_json(target_processed.get('structure_vector', '[]'), max_target_len)
-      target_struct_input = vec  # shape (max_target_len,1)
-
-    if 'competitor_structure_input' in model_inputs:
-      vec = None
-      if competitor_3d_path:
-        vec = extract_structure_vector_from_file(competitor_3d_path, max_competitor_len)
-      if vec is None:
-        if competitor_processed.get('sequence','').strip():
-          vec = structure_vector_from_processed_json(competitor_processed.get('structure_vector', '[]'), max_competitor_len)
-        else:
-          vec = np.zeros((max_competitor_len,1), dtype=np.float32)
-      competitor_struct_input = vec  # shape (max_competitor_len,1)
-
-    # Batch over primaries
-    for start in range(0, len(primary_records), BATCH_SIZE):
-      batch_records = primary_records[start:start + BATCH_SIZE]
-      prim_seq_list, num_feat_list, prim_struct_list = [], [], []
-
-      # Prepare primary (miRNA) batch
-      for pri_id, pri_seq in batch_records:
-        pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
-
-        # Optionally trim miRNAs longer than 30 nt to mature-like window
-        seq = pdata.get('sequence', '')
-        if mature_trim_flag and len(seq) > 30:
-          seq = choose_mature_window(seq, window=MATURE_TRIM_WINDOW)
-          pdata['sequence'] = seq
-
-        prim_seq_list.append(one_hot_encode_sequence(seq, max_primary_len))
-        nf = [pdata.get('gc_content', 0.5), pdata.get('dg', 0.0), pdata.get('conservation', 0.0)]
-        if hasattr(scaler, 'n_features_in_') and len(nf) < scaler.n_features_in_:
-          nf += [0.0] * (scaler.n_features_in_ - len(nf))
-        num_feat_list.append(nf)
-
-        # If a 3D file for this miRNA exists, validate match
-        if pri_id in mirna_3d_index:
-          kind, seq3d, path3d = mirna_3d_index[pri_id]
-          ok, msg = validate_structure_matches_sequence(kind, seq3d, pdata.get('sequence',''), f"miRNA {pri_id}")
-          if not ok:
+    try:
+        if model is None or scaler is None:
             jobs[job_id]["status"] = "error"
-            jobs[job_id]["error"] = msg
+            jobs[job_id]["error"] = "Model or scaler not loaded on server."
             return
 
-        # Build primary structure input, prefer 3D-derived vector if path exists
-        if 'primary_structure_input' in model_inputs:
-          sp = None
-          if pri_id in mirna_3d_index:
-            _kind, _seq3d, path3d = mirna_3d_index[pri_id]
-            # Use the 3D structure-derived vector
-            sp = extract_structure_vector_from_file(path3d, max_primary_len)
-          if sp is None:
-            # Fall back to processed JSON vector or zeros
-            sp = structure_vector_from_processed_json(pdata.get('structure_vector', '[]'), max_primary_len)
-          prim_struct_list.append(sp)
+        # Helpers
+        def ensure_dict(data):
+            if isinstance(data, tuple):
+                return {
+                    "sequence": data[1] if len(data) > 1 else "",
+                    "gc_content": 0.5, "dg": 0.0, "conservation": 0.0,
+                    "structure_vector": "[]", "adjacency_matrix": "[]"
+                }
+            return data
 
-      # Scale numeric features
-      if hasattr(scaler, 'feature_names_in_'):
-        df_features = pd.DataFrame(num_feat_list, columns=scaler.feature_names_in_)
-        scaled_num = scaler.transform(df_features)
-      else:
-        scaled_num = scaler.transform(num_feat_list)
+        # Static model input shapes
+        model_inputs        = {inp.name: inp.shape for inp in model.inputs}
+        max_primary_len     = model_inputs['primary_sequence_input'][1]
+        max_target_len      = model_inputs['target_sequence_input'][1]
+        max_competitor_len  = model_inputs['competitor_sequence_input'][1]
+        empty_comp_enc      = one_hot_encode_sequence('', max_competitor_len)
 
-      batch_size = len(batch_records)
-      common_inputs = {
-        'primary_sequence_input': np.stack(prim_seq_list),
-        'target_sequence_input': np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0),
-        'numerical_features_input': scaled_num
-      }
-      if 'primary_structure_input' in model_inputs:
-        common_inputs['primary_structure_input'] = np.stack(prim_struct_list) if prim_struct_list else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
+        # Iterate in the requested order: competitors → targets → miRNA batches
+        for (competitor_id, competitor_str) in competitors_list:
+            # Prepare competitor once per competitor_id
+            competitor_processed = {'sequence': ''}
+            if competitor_str.strip():
+                competitor_processed = ensure_dict(process_molecule_universal(((competitor_id, competitor_str), {}, 'competitor_molecule')))
+            comp_seq_enc = None
+            if competitor_processed.get('sequence', '').strip():
+                comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
 
-      # Broadcast target/competitor structural inputs across the batch if model expects them
-      if 'target_structure_input' in model_inputs and target_struct_input is not None:
-        common_inputs['target_structure_input'] = np.repeat(target_struct_input[np.newaxis, ...], batch_size, axis=0)
-      if 'competitor_structure_input' in model_inputs and competitor_struct_input is not None:
-        common_inputs['competitor_structure_input'] = np.repeat(competitor_struct_input[np.newaxis, ...], batch_size, axis=0)
+            # Competitor structural input (if expected)
+            competitor_struct_input = None
+            if 'competitor_structure_input' in model_inputs:
+                vec = None
+                if competitor_3d_path:
+                    vec = extract_structure_vector_from_file(competitor_3d_path, max_competitor_len)
+                if vec is None:
+                    if competitor_processed.get('sequence','').strip():
+                        vec = structure_vector_from_processed_json(competitor_processed.get('structure_vector', '[]'), max_competitor_len)
+                    else:
+                        vec = np.zeros((max_competitor_len,1), dtype=np.float32)
+                competitor_struct_input = vec
 
-      # Prepare competitor present/absent inputs
-      with_comp = dict(common_inputs)
-      if comp_seq_enc is not None:
-        with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
-      else:
-        with_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+            for (target_id, target_str) in targets_list:
+                # Prepare target once per target_id
+                target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
+                target_seq_enc   = one_hot_encode_sequence(target_processed.get('sequence', ''), max_target_len)
 
-      no_comp = dict(common_inputs)
-      no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+                # Validate optional 3D file vs FASTA (target)
+                if target_3d_path and target_processed.get('sequence',''):
+                    kind, seq = extract_seq_from_structure(target_3d_path)
+                    ok, msg = validate_structure_matches_sequence(kind, seq, target_processed.get('sequence',''), "Target")
+                    if not ok:
+                        jobs[job_id]["status"] = "error"
+                        jobs[job_id]["error"] = msg
+                        return
 
-      # Predict
-      preds_with = model.predict(with_comp, verbose=0).reshape(-1)
-      preds_no = model.predict(no_comp, verbose=0).reshape(-1)
+                # Target structural input (if expected)
+                target_struct_input = None
+                if 'target_structure_input' in model_inputs:
+                    vec = None
+                    if target_3d_path:
+                        vec = extract_structure_vector_from_file(target_3d_path, max_target_len)
+                    if vec is None:
+                        vec = structure_vector_from_processed_json(target_processed.get('structure_vector', '[]'), max_target_len)
+                    target_struct_input = vec
 
-      # Square if intended (preserving your previous code)
-      pred_with_sq = np.square(preds_with)
-      pred_no_sq = np.square(preds_no)
+                # Batch over primaries (same as before)
+                for start in range(0, len(primary_records), BATCH_SIZE):
+                    batch_records = primary_records[start:start + BATCH_SIZE]
+                    prim_seq_list, num_feat_list, prim_struct_list = [], [], []
 
-      # Accumulate results
-      for (pri_id, _), p_base, p_with in zip(batch_records, pred_no_sq, pred_with_sq):
-        jobs[job_id]["results"].append({
-          'primary_molecule_id': pri_id,
-          'mirna_id': pri_id,
-          'predicted_affinity_baseline': format(float(p_base), '.10f'),
-          'predicted_affinity_with_competitor': format(float(p_with), '.10f'),
-          'competitive_effect (higher_is_better)': format(float(p_base - p_with), '.10f'),
-        })
-        jobs[job_id]["completed"] += 1
+                    # Prepare primary (miRNA) batch (optionally trim)
+                    for pri_id, pri_seq in batch_records:
+                        pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
+                        seq = pdata.get('sequence', '')
+                        if mature_trim_flag and len(seq) > 30:
+                            seq = choose_mature_window(seq, window=MATURE_TRIM_WINDOW)
+                            pdata['sequence'] = seq
+                        prim_seq_list.append(one_hot_encode_sequence(pdata.get('sequence',''), max_primary_len))
+                        num_feat_list.append(numerical_features_from_processed_json(pdata))
+                        prim_struct_list.append(structure_vector_from_processed_json(pdata.get('structure_vector','[]'), max_primary_len))
 
-    jobs[job_id]["status"] = "completed"
-    send_ga_event("prediction_completed", {"total": jobs[job_id]["total"]})
+                    # Stack primary inputs
+                    pri_seq_enc   = np.stack(prim_seq_list, axis=0).astype(np.float32)
+                    pri_num_feat  = np.stack(num_feat_list, axis=0).astype(np.float32)
+                    pri_struct    = np.stack(prim_struct_list, axis=0).astype(np.float32)
+                    batch_size    = pri_seq_enc.shape[0]
 
-  except Exception as e:
-    logging.exception(f"Prediction error: {e}")
-    jobs[job_id]["status"] = "error"
-    jobs[job_id]["error"] = str(e)[:500]
-  finally:
-    # Cleanup temp files
-    for p in tmp_paths_to_cleanup:
-      try:
-        os.unlink(p)
-      except Exception:
-        pass
+                    # Common inputs (repeat target/competitor per batch)
+                    common_inputs = {
+                        'primary_sequence_input': pri_seq_enc,
+                        'primary_numeric_features': scaler.transform(pri_num_feat),
+                        'primary_structure_input': pri_struct,
+                        'target_sequence_input':  np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0)
+                    }
+                    if 'target_structure_input' in model_inputs and target_struct_input is not None:
+                        common_inputs['target_structure_input'] = np.repeat(target_struct_input[np.newaxis, ...], batch_size, axis=0)
+                    if 'competitor_structure_input' in model_inputs and competitor_struct_input is not None:
+                        common_inputs['competitor_structure_input'] = np.repeat(competitor_struct_input[np.newaxis, ...], batch_size, axis=0)
+
+                    # Prepare competitor present/absent inputs
+                    with_comp = dict(common_inputs)
+                    if comp_seq_enc is not None:
+                        with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
+                    else:
+                        with_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+
+                    no_comp = dict(common_inputs)
+                    no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+
+                    # Predict
+                    preds_with = model.predict(with_comp, verbose=0).reshape(-1)
+                    preds_no   = model.predict(no_comp,   verbose=0).reshape(-1)
+
+                    # Safe floats & results
+                    pred_with_sq = preds_with.astype(np.float64)
+                    pred_no_sq   = preds_no.astype(np.float64)
+
+                    for (pri_id, _), p_base, p_with in zip(batch_records, pred_no_sq, pred_with_sq):
+                        jobs[job_id]["results"].append({
+                            'primary_molecule_id': pri_id,
+                            'mirna_id': pri_id,
+                            'target_id': target_id,
+                            'competitor_id': competitor_id if competitor_str else '',
+                            'predicted_affinity_baseline': format(float(p_base), '.10f'),
+                            'predicted_affinity_with_competitor': format(float(p_with), '.10f'),
+                            'competitive_effect (higher_is_better)': format(float(p_base - p_with), '.10f'),
+                        })
+                        jobs[job_id]["completed"] += 1
+
+        jobs[job_id]["status"] = "completed"
+        send_ga_event("prediction_completed", {"total": jobs[job_id]["total"]})
+    except Exception as e:
+        logging.exception(f"Prediction error: {e}")
+        jobs[job_id]["status"] = "error"
+        jobs[job_id]["error"] = str(e)[:500]
+    finally:
+        for p in tmp_paths_to_cleanup:
+            try: os.unlink(p)
+            except Exception: pass
+
 
 @app.route('/progress/<job_id>', methods=['GET'])
 def get_progress(job_id):
