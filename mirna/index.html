@@ -106,29 +106,45 @@
     <div class="mirna-container">
       <header>
         <h1>miRNA-Affinity Predictor</h1>
-        <p>A deep learning tool to predict miRNA binding affinity and competitive effects using sequence and optional 3D structural data.</p>
+        <p>
+          Predict miRNA binding affinity and the effect of <em>competitor</em> RNAs against one or more <em>targets</em>.
+          Provide sequences (multi-FASTA supported), optionally add 3D structures (PDB/mmCIF), and run a batched deep-learning analysis.
+        </p>
       </header>
-        <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
-          <div><strong>Formatting tips:</strong></div>
-          <ul style="margin:6px 0 0 18px;">
-            <li>miRNA accepts multiple sequences; each should start with a header line, e.g. <code>&gt;hsa-let-7a-5p</code></li>
-            <li>Target and Competitor accept exactly one sequence each</li>
-            <li>3D files (PDB/CIF) must match the corresponding sequence; mismatches will be rejected</li>
-            <li>If allowed by server, you can opt to back-translate AA to NT for Target/Competitor in Advanced Options</li>
-          </ul>
-        </div>
 
-        <br>
-        <br>
-        <!-- Tabs -->
-        <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
+      <!-- Workflow Overview (what actually happens) -->
+      <section aria-label="Workflow overview" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
+        <strong>Workflow overview:</strong>
+        <ol style="margin:6px 0 0 18px;">
+          <li>You can paste <b>multiple miRNAs</b> (multi-FASTA), <b>multiple targets</b> (multi-FASTA), and <b>zero or more competitors</b> (multi-FASTA).</li>
+          <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b> in RAM-safe batches.</li>
+          <li>Two conditions are scored per miRNA: <b>Baseline</b> (no competitor) and <b>With Competitor</b> (if provided).</li>
+          <li>Results table shows per-row: miRNA ID, Target ID, Competitor ID (if any), Baseline score, With-competitor score, and <b>Competitive effect</b> = Baseline − With-competitor.</li>
+        </ol>
+      </section>
+
+      <!-- Formatting tips: now aligned with multi-target/competitor -->
+      <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
+        <div><strong>Formatting tips</strong></div>
+        <ul style="margin:6px 0 0 18px;">
+          <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>).</li>
+          <li><b>Targets & Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
+          <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence; mismatches are rejected.</li>
+          <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
+        </ul>
+      </div>
+
+      <br />
+
+      <!-- Tabs -->
+      <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
         <button class="tab-btn active"
                 role="tab"
                 aria-selected="true"
                 aria-controls="input-tab"
                 id="tab-inputs"
                 onclick="openTab(this, 'input-tab')">
-            Inputs
+          Inputs
         </button>
         <button class="tab-btn"
                 role="tab"
@@ -136,7 +152,7 @@
                 aria-controls="advanced-tab"
                 id="tab-advanced"
                 onclick="openTab(this, 'advanced-tab')">
-            Advanced Options
+          Advanced Options
         </button>
         <button class="tab-btn"
                 role="tab"
@@ -144,7 +160,7 @@
                 aria-controls="results-tab"
                 id="tab-results"
                 onclick="openTab(this, 'results-tab')">
-            Results
+          Results
         </button>
         <button class="tab-btn"
                 role="tab"
@@ -152,29 +168,29 @@
                 aria-controls="about-tab"
                 id="tab-about"
                 onclick="openTab(this, 'about-tab')">
-            About
+          About
         </button>
-        </div>
-
+      </div>
 
       <!-- Input card -->
-      <div
-        id="input-tab"
-        class="card active"
-        role="tabpanel"
-        aria-labelledby="tab-inputs"
-      >
+      <div id="input-tab" class="card active" role="tabpanel" aria-labelledby="tab-inputs">
         <form id="prediction-form" aria-label="miRNA prediction form">
+          <!-- Quick actions -->
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+            <button type="button" id="load-sample-btn" aria-label="Load example sequences">Load Sample</button>
+            <button type="button" id="clear-inputs-btn" aria-label="Clear all inputs">Clear Inputs</button>
+          </div>
+
           <!-- Primary miRNA -->
-          <label for="primary-seqs">Primary miRNA Sequence(s) (FASTA):</label>
+          <label for="primary-seqs">Primary miRNA Sequence(s) <span aria-hidden="true">(multi-FASTA)</span>:</label>
           <textarea
             id="primary-seqs"
             required
-            placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU..."
+            placeholder=">hsa-let-7a-5p&#10;UGAGGUAGUAGGUUGUAUAGUU"
             class="sequence-input"
             aria-describedby="primary-seqs-desc"
           ></textarea>
-          <small id="primary-seqs-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <small id="primary-seqs-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequences above (headers required).</small>
           <input
             type="file"
             id="mirna-seq-file"
@@ -183,15 +199,15 @@
           />
 
           <!-- Target -->
-          <label for="target-seq">Target Molecule Sequence:</label>
+          <label for="target-seq">Target Molecule Sequence(s) <span aria-hidden="true">(FASTA or raw; one or many)</span>:</label>
           <textarea
             id="target-seq"
             required
-            placeholder="Enter the full RNA target sequence..."
+            placeholder=">target1&#10;AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC"
             class="sequence-input"
             aria-describedby="target-seq-desc"
           ></textarea>
-          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above.</small>
           <input
             type="file"
             id="target-seq-file"
@@ -200,14 +216,14 @@
           />
 
           <!-- Competitor -->
-          <label for="competitor-seq">Competitor Molecule Sequence (Optional):</label>
+          <label for="competitor-seq">Competitor Molecule Sequence(s) <span aria-hidden="true">(optional; FASTA or raw; one or many)</span>:</label>
           <textarea
             id="competitor-seq"
-            placeholder="Enter the competitor sequence..."
+            placeholder="(Optional) >comp1&#10;ACUGAUGAUGAUGCUAUGCUAUGCUA"
             class="sequence-input"
             aria-describedby="competitor-seq-desc"
           ></textarea>
-          <small id="competitor-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence above.</small>
+          <small id="competitor-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above. Leave empty to run baseline only.</small>
           <input
             type="file"
             id="competitor-seq-file"
@@ -219,10 +235,10 @@
 
           <!-- Optional PDB uploads -->
           <div class="file-uploads" aria-label="Optional 3D structure files">
-            <label>Upload 3D Structure Files (Optional, PDB/CIF):</label>
+            <label>Upload 3D Structure Files (Optional, PDB/mmCIF):</label>
             <br />
-            <label for="mirna-file">Upload miRNA Structure File(s):</label>
-            <!-- multiple to match backend multi-file append; filenames must match FASTA IDs -->
+            <label for="mirna-file">miRNA 3D file(s):</label>
+            <!-- filenames should match FASTA IDs (e.g., >hsa-let-7a-5p → hsa-let-7a-5p.pdb) -->
             <input
               type="file"
               id="mirna-file"
@@ -231,7 +247,7 @@
               aria-label="Upload miRNA structure files"
             />
             <br />
-            <label for="target-file">Upload Target Structure File:</label>
+            <label for="target-file">Target 3D file:</label>
             <input
               type="file"
               id="target-file"
@@ -239,7 +255,7 @@
               aria-label="Upload target structure file"
             />
             <br />
-            <label for="competitor-file">Upload Competitor Structure File:</label>
+            <label for="competitor-file">Competitor 3D file:</label>
             <input
               type="file"
               id="competitor-file"
@@ -255,13 +271,8 @@
       </div>
 
       <!-- Advanced options -->
-      <div
-        id="advanced-tab"
-        class="card"
-        role="tabpanel"
-        aria-labelledby="tab-advanced"
-      >
-        <label for="target-start">Target Region Start:</label>
+      <div id="advanced-tab" class="card" role="tabpanel" aria-labelledby="tab-advanced">
+        <label for="target-start">Target Region Start (1-based):</label>
         <input
           type="number"
           id="target-start"
@@ -269,55 +280,42 @@
           aria-describedby="target-region-desc"
         />
 
-        <label for="target-end">Target Region End:</label>
+        <label for="target-end">Target Region End (1-based):</label>
         <input
           type="number"
           id="target-end"
           placeholder="e.g., 150"
         />
         <small id="target-region-desc">
-          Optionally select a target region slice. If server enforces prediction region, these may be applied or ignored.
+          Optionally analyze a specific sub-region for every target. If left blank, the full target sequence is used.
         </small>
 
-        <!-- Advanced flags container: mirna.js injects singleton #server-config-note and #advanced-flags-wrapper here -->
+        <!-- Advanced flags container: mirna.js injects #server-config-note and #advanced-flags-wrapper here -->
       </div>
 
       <!-- Results -->
-      <div
-        id="results-tab"
-        class="card"
-        role="tabpanel"
-        aria-labelledby="tab-results"
-      >
-        <div
-          id="loader"
-          class="hidden"
-          role="status"
-          aria-live="polite"
-        >
+      <div id="results-tab" class="card" role="tabpanel" aria-labelledby="tab-results">
+        <p style="margin:4px 0 10px 0; color:#333;">
+          <b>What you’ll see here:</b> a sortable table with miRNA ID, Target ID, Competitor ID (if any),
+          baseline affinity, affinity with competitor, and the competitive effect (baseline − competitor).
+          Rows are color-graded by baseline score for quick scanning.
+        </p>
+
+        <div id="loader" class="hidden" role="status" aria-live="polite">
           Running prediction...
         </div>
         <br />
 
-        <!-- Static gradient scale for context; dynamic legend/scale + table injected per run -->
+        <!-- Static gradient scale for context; dynamic legend + table injected per run -->
         <details class="legend-toggle" open>
-        <summary>Show/Hide Gradient Legend</summary>
-        <div class="gradient-scale-container">
-          <div class="gradient-scale-bar"></div>
-          <div class="gradient-scale-labels">
-            <span>0.0</span>
-            <span>0.1</span>
-            <span>0.2</span>
-            <span>0.3</span>
-            <span>0.4</span>
-            <span>0.5</span>
-            <span>0.6</span>
-            <span>0.7</span>
-            <span>0.8</span>
-            <span>0.9</span>
-            <span>1.0</span>
+          <summary>Show/Hide Gradient Legend</summary>
+          <div class="gradient-scale-container">
+            <div class="gradient-scale-bar"></div>
+            <div class="gradient-scale-labels">
+              <span>0.0</span><span>0.1</span><span>0.2</span><span>0.3</span><span>0.4</span>
+              <span>0.5</span><span>0.6</span><span>0.7</span><span>0.8</span><span>0.9</span><span>1.0</span>
+            </div>
           </div>
-        </div>
         </details>
         <br />
 
@@ -326,41 +324,36 @@
       </div>
 
       <!-- About -->
-      <div
-        id="about-tab"
-        class="card"
-        role="tabpanel"
-        aria-labelledby="tab-about"
-      >
+      <div id="about-tab" class="card" role="tabpanel" aria-labelledby="tab-about">
         <h2>About this tool</h2>
         <p>
-          This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules. It fuses sequence features with optional 3D structure-derived features, and is trained on curated datasets with experimental binding information.
+          This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules.
+          It fuses sequence features with optional 3D structure-derived features and evaluates inputs in RAM-safe batches.
         </p>
         <br>
         <h3>How it works</h3>
         <ul>
           <li>Input your miRNA(s) as multi-FASTA. You may also provide <b>one or more targets</b> (multi-FASTA) and <b>zero or more competitors</b> (multi-FASTA).</li>
-          <li>Analysis order: competitor1 → all targets, then competitor2 → all targets; 3D structure files (PDB/mmCIF) remain optional.</li>
-          <li>Advanced options include auto‑trimming long miRNAs to a mature‑like window and lossy AA→NT back‑translation where allowed.</li>
-          <li>The backend validates inputs, encodes sequences and structures, and performs RAM‑safe batch model inference.</li>
+          <li>The analysis iterates: <b>competitor1 → all targets → all miRNAs</b>, then <b>competitor2 → all targets → all miRNAs</b>, and so on.</li>
+          <li>Advanced options include auto-trimming long miRNAs to a mature-like window and lossy AA→NT back-translation (where enabled).</li>
+          <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
         </ul>
         <br>
         <h3>Results interpretation</h3>
         <ul>
-          <li>Baseline affinity: predicted binding strength without competitor.</li>
-          <li>Affinity with competitor: predicted binding strength considering the competitor.</li>
-          <li>Competitive effect: difference between baseline and competitor conditions.</li>
+          <li><b>Baseline affinity:</b> predicted binding strength without competitor.</li>
+          <li><b>With competitor:</b> predicted binding strength considering the provided competitor.</li>
+          <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
         </ul>
         <li>
-          For best results, ensure that miRNA FASTA headers match any provided miRNA 3D filenames (e.g., <code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code>).
+          For best results, ensure miRNA FASTA headers match any provided miRNA 3D filenames (e.g., <code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code>).
         </li>
         <br>
-        <h3>Points to be noted</h3>
+        <h3>Notes</h3>
         <ul>
-          <li>Predictions are based on training data and may not generalize to all miRNA-target pairs.</li>
-          <li>3D structure files must correspond to the provided sequences; mismatches will be rejected.</li>
-          <li>Back-translation of amino acid sequences to nucleotide is lossy and may introduce inaccuracies.</li>
-          <li>Server resource limits may restrict input sizes and batch processing capabilities.</li>   
+          <li>Predictions are based on training data; experimental validation is recommended.</li>
+          <li>3D structure files must correspond to sequences; mismatches will be rejected.</li>
+          <li>AA→NT back-translation is lossy and may introduce inaccuracies.</li>
         </ul>
         <br>
       </div>
@@ -430,11 +423,52 @@
     document.addEventListener('DOMContentLoaded', function () {
       const runBtn = document.querySelector('#prediction-form button[type="submit"]');
       const clickSound = document.getElementById('click-sound');
-
       if (runBtn && clickSound) {
         runBtn.addEventListener('click', function () {
           clickSound.currentTime = 0;
           clickSound.play();
+        });
+      }
+
+      // ---- Load Sample & Clear Inputs ----
+      const btnSample = document.getElementById('load-sample-btn');
+      const btnClear  = document.getElementById('clear-inputs-btn');
+
+      const SAMPLE_MIRNA = `>hsa-miR-1-3p
+UGGAAUGUAAAGAAGUAUGUAU`;
+      const SAMPLE_TARGET = `>target1
+AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC`;
+      const SAMPLE_COMP   = `>comp1
+ACUGAUGAUGAUGCUAUGCUAUGCUA`;
+
+      if (btnSample) {
+        btnSample.addEventListener('click', () => {
+          const p = document.getElementById('primary-seqs');
+          const t = document.getElementById('target-seq');
+          const c = document.getElementById('competitor-seq');
+          if (p) p.value = SAMPLE_MIRNA;
+          if (t) t.value = SAMPLE_TARGET;
+          if (c) c.value = SAMPLE_COMP;
+
+          // Switch to Inputs tab if not visible (only if openTab is available)
+          if (typeof openTab === 'function') {
+            const inputsBtn = document.getElementById('tab-inputs');
+            openTab(inputsBtn, 'input-tab');
+          }
+        });
+      }
+
+      if (btnClear) {
+        btnClear.addEventListener('click', () => {
+          ['primary-seqs','target-seq','competitor-seq'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+          ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
+            .forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = '';
+            });
         });
       }
     });
