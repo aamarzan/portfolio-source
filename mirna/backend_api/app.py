@@ -1,4 +1,4 @@
-# app.py — multi-target & multi-competitor ready (drop-in)
+# app.py — multi-target & multi-competitor + seed-scan + IG explain (drop-in)
 
 import os
 import io
@@ -111,7 +111,8 @@ def issue_nonce():
 def require_nonce_or_key():
     if request.method == "OPTIONS":
         return '', 200
-    if request.endpoint == 'start_prediction':
+    # ✅ protect prediction + new analysis endpoints
+    if request.endpoint in ('start_prediction', 'seed_scan', 'explain'):
         if USE_NONCE:
             client_ip = get_remote_address()
             provided_nonce = request.headers.get("X-Nonce")
@@ -433,7 +434,85 @@ def structure_vector_from_processed_json(struct_json: str, max_len: int) -> np.n
     return out
 
 # =========================
-# Prediction endpoints
+# Seed-scan helpers
+# =========================
+def revcomp_rna(seq: str) -> str:
+    comp = str.maketrans({'A':'U','U':'A','G':'C','C':'G','T':'A','N':'N'})
+    return (seq or '').upper().translate(comp)[::-1].replace('T','U')
+
+def is_wc(a: str, b: str) -> bool:   # Watson–Crick
+    return (a=='A' and b=='U') or (a=='U' and b=='A') or (a=='C' and b=='G') or (a=='G' and b=='C')
+
+def is_gu(a: str, b: str) -> bool:   # GU wobble
+    return (a=='G' and b=='U') or (a=='U' and b=='G')
+
+def match_seed(seed_rc: str, window: str, allow_gu: bool = True, max_mismatch: int = 0):
+    mism = wob = 0
+    for x,y in zip(seed_rc, window):
+        if is_wc(x,y):
+            continue
+        elif allow_gu and is_gu(x,y):
+            wob += 1
+        else:
+            mism += 1
+            if mism > max_mismatch:
+                return None
+    return {'mismatches': mism, 'wobble': wob}
+
+def classify_seed(miRNA_seq: str, target_seq: str, i: int, L: int) -> str:
+    """
+    Classify using simple canonical rules:
+    - 7mer-m8: perfect 2–8 match (L==7)
+    - 8mer: 7mer-m8 + upstream target base 'A' (position i-1 exists and is 'A')
+    - 7mer-A1: perfect 2–7 (L==6) + upstream 'A'
+    - 6mer: perfect 2–7 without upstream A
+    If mismatches/wobbles exist, append '/wobble' or '/mm'.
+    """
+    m = (miRNA_seq or '').upper().replace('T','U')
+    t = (target_seq or '').upper().replace('T','U')
+    label = f'seed{L}'
+    # upstream base at t[i-1] if available
+    upstream_A = (i-1 >= 0 and t[i-1] == 'A')
+    if L == 7:
+        label = '7mer-m8'
+        if upstream_A:
+            label = '8mer'
+    elif L == 6:
+        label = '7mer-A1' if upstream_A else '6mer'
+    return label
+
+# =========================
+# IG explain helper
+# =========================
+def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: str, steps: int = 50) -> List[float]:
+    """
+    Compute Integrated Gradients on a single input tensor of shape (1, L, C).
+    Returns a list of length L with per-position attribution magnitude (sum over channels).
+    """
+    x = tf.convert_to_tensor(inputs_dict[input_key], dtype=tf.float32)  # (1, L, C)
+    baseline = tf.zeros_like(x)
+    grads_accum = tf.zeros_like(x)
+
+    for k in range(1, steps + 1):
+        alpha = tf.cast(k / steps, tf.float32)
+        x_step = baseline + alpha * (x - baseline)
+        with tf.GradientTape() as tape:
+            tape.watch(x_step)
+            # feed: replace only the key under analysis with x_step
+            feed = {k2: (tf.convert_to_tensor(v) if not isinstance(v, tf.Tensor) else v)
+                    for k2, v in inputs_dict.items()}
+            feed[input_key] = x_step
+            out = model(feed, training=False)
+            out = tf.reduce_mean(out)  # ensure scalar
+        grads = tape.gradient(out, x_step)
+        grads_accum += grads
+
+    ig = (x - baseline) * grads_accum / steps
+    ig_pos = tf.reduce_sum(tf.abs(ig), axis=-1).numpy()[0].tolist()  # (L,)
+    return ig_pos
+
+# =========================
+# Prediction & analysis endpoints
 # =========================
 limiter = Limiter(key_func=get_remote_address)
 limiter.init_app(app)
@@ -442,7 +521,7 @@ limiter.init_app(app)
 def ratelimit_handler(e):
     return jsonify({
         "error": "rate_limit_exceeded",
-        "message": "We limit predictions to 10 every 15 minutes to keep the service fast for everyone. Please wait a few minutes before starting your next run."
+        "message": "We limit predictions to keep the service fast for everyone. Please try again later."
     }), 429
 
 @app.route('/predict', methods=['POST'])
@@ -823,6 +902,185 @@ def download_results(job_id):
     except Exception:
         pass
     return jsonify({"results": job["results"]})
+
+# =========================
+# NEW: Seed-scan endpoint
+# =========================
+@app.route('/seed_scan', methods=['POST'])
+@limiter.limit("30 per 15 minutes")
+def seed_scan():
+    """
+    JSON body:
+    {
+      "mirna_seq": "UGAGGUAGUAGGUUGUAUAGUU",
+      "targets": {"target1": "ACGU..."},
+      "competitors": {"comp1": "ACGU..."},
+      "allow_gu": true,
+      "max_mismatch": 0
+    }
+    Returns { "hits": [ {molecule, id, start, end, seed_len, seed_type, mismatches, wobble} ... ] }
+    Coordinates are 1-based on the provided target/competitor sequences.
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        mirna = (data.get('mirna_seq') or '').strip()
+        targets = data.get('targets') or {}
+        competitors = data.get('competitors') or {}
+        allow_gu = bool(data.get('allow_gu', True))
+        max_mism = int(data.get('max_mismatch', 0))
+
+        if not mirna or not targets:
+            return jsonify({'error': 'Provide mirna_seq and at least one target'}), 400
+
+        m = mirna.upper().replace('T','U')
+        hits: List[Dict] = []
+
+        # Prepare seeds: 2–8 (7 nt) and 2–7 (6 nt)
+        seed_2_8 = m[1:8] if len(m) >= 8 else m[1:]
+        seed_2_7 = m[1:7] if len(m) >= 7 else m[1:]
+        seeds = [(seed_2_8, 7), (seed_2_7, 6)]
+        seeds = [(s, L) for (s, L) in seeds if len(s) == L and L in (6,7)]
+
+        # Scan function
+        def scan_one(label: str, seq_map: Dict[str, str]):
+            for sid, sseq in seq_map.items():
+                t = (sseq or '').upper().replace('T','U')
+                for seed, L in seeds:
+                    if len(seed) < L:
+                        continue
+                    seed_rc = revcomp_rna(seed)
+                    max_i = max(0, len(t) - len(seed_rc) + 1)
+                    for i in range(0, max_i):
+                        w = t[i:i+len(seed_rc)]
+                        score = match_seed(seed_rc, w, allow_gu=allow_gu, max_mismatch=max_mism)
+                        if score is None:
+                            continue
+                        stype = classify_seed(m, t, i, L)
+                        hit = {
+                            'molecule': label,
+                            'id': sid,
+                            'start': i + 1,
+                            'end': i + len(seed_rc),
+                            'seed_len': len(seed_rc),
+                            'seed_type': stype,
+                            **score
+                        }
+                        # annotate if upstream A present (useful context)
+                        if i - 1 >= 0:
+                            hit['upstream_base'] = t[i-1]
+                        hits.append(hit)
+
+        scan_one('target', targets)
+        scan_one('competitor', competitors)
+        return jsonify({'hits': hits})
+    except Exception as e:
+        logging.exception(f"/seed_scan error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# =========================
+# NEW: Explain (Integrated Gradients) endpoint
+# =========================
+@app.route('/explain', methods=['POST'])
+@limiter.limit("20 per 15 minutes")
+def explain():
+    """
+    JSON body:
+    {
+      "mirna_seq": "UGAGGUAGUAGGUUGUAUAGUU",
+      "target_seq": "ACGU...",
+      "competitor_seq": "ACGU..."   # optional
+    }
+    Returns:
+    {
+      "target_attrib": [ ... per-position magnitude ... ],
+      "competitor_attrib": [ ... ] | null
+    }
+    """
+    try:
+        if model is None or scaler is None:
+            return jsonify({"error": "Model or scaler not loaded on server."}), 500
+
+        data = request.get_json(force=True, silent=True) or {}
+        mirna = (data.get('mirna_seq') or '').strip()
+        target = (data.get('target_seq') or '').strip()
+        competitor = (data.get('competitor_seq') or '').strip()
+
+        if not mirna or not target:
+            return jsonify({'error': 'Provide mirna_seq and target_seq'}), 400
+
+        # Shapes & inputs that model expects
+        model_inputs = {inp.name: inp.shape for inp in model.inputs}
+        Lp = int(model_inputs.get('primary_sequence_input', [None, 120])[1])
+        Lt = int(model_inputs.get('target_sequence_input', [None, 200])[1])
+        Lc = int(model_inputs.get('competitor_sequence_input', [None, 200])[1])
+
+        # Process through your processor to get features & structure vectors
+        def ensure_dict(data):
+            if isinstance(data, tuple):
+                return {
+                    "sequence": data[1] if len(data) > 1 else "",
+                    "gc_content": 0.5, "dg": 0.0, "conservation": 0.0,
+                    "structure_vector": "[]", "adjacency_matrix": "[]"
+                }
+            return data
+
+        pdat = ensure_dict(process_molecule_universal((("miRNA", mirna), {}, 'primary_molecule')))
+        tdat = ensure_dict(process_molecule_universal((("target", target), {}, 'target_molecule')))
+        if competitor:
+            cdat = ensure_dict(process_molecule_universal((("competitor", competitor), {}, 'competitor_molecule')))
+        else:
+            cdat = {'sequence': ''}
+
+        # Optionally mature-trim primary if you want explanations on trimmed form (keep consistent with predict UX)
+        pseq = pdat.get('sequence','')
+        if MATURE_TRIM_ENABLED and len(pseq) > 30:
+            pseq = choose_mature_window(pseq, window=MATURE_TRIM_WINDOW)
+
+        # Encode sequences
+        pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...]
+        tgt_enc = one_hot_encode_sequence(tdat.get('sequence',''), Lt)[None, ...]
+        if competitor:
+            cmp_enc = one_hot_encode_sequence(cdat.get('sequence',''), Lc)[None, ...]
+        else:
+            cmp_enc = one_hot_encode_sequence('', Lc)[None, ...]
+
+        # Numeric features (scaled) – using primary features for consistency
+        num_list = [numerical_features_from_processed_json(pdat)]
+        if hasattr(scaler, 'feature_names_in_'):
+            df_features = pd.DataFrame(num_list, columns=scaler.feature_names_in_)
+            scaled_num = scaler.transform(df_features)
+        else:
+            scaled_num = scaler.transform(num_list)
+
+        feed = {
+            'primary_sequence_input': pri_enc.astype(np.float32),
+            'target_sequence_input':  tgt_enc.astype(np.float32),
+            'competitor_sequence_input': cmp_enc.astype(np.float32),
+            'numerical_features_input': scaled_num.astype(np.float32)
+        }
+
+        # Structure vectors (zeros fallback)
+        if 'primary_structure_input' in model_inputs:
+            feed['primary_structure_input'] = structure_vector_from_processed_json(pdat.get('structure_vector','[]'), Lp)[None, ...].astype(np.float32)
+        if 'target_structure_input' in model_inputs:
+            feed['target_structure_input'] = structure_vector_from_processed_json(tdat.get('structure_vector','[]'), Lt)[None, ...].astype(np.float32)
+        if 'competitor_structure_input' in model_inputs:
+            if competitor:
+                feed['competitor_structure_input'] = structure_vector_from_processed_json(cdat.get('structure_vector','[]'), Lc)[None, ...].astype(np.float32)
+            else:
+                feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
+
+        # Compute IG for target (+ competitor if present)
+        tgt_attr = integrated_gradients(model, feed, 'target_sequence_input', steps=50)
+        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if competitor else None
+
+        return jsonify({
+            'target_attrib': tgt_attr,
+            'competitor_attrib': cmp_attr
+        })
+    except Exception as e:
+        logging.exception(f"/explain error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # =========================
 # Startup

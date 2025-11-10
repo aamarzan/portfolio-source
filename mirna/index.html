@@ -298,7 +298,8 @@
         <p style="margin:4px 0 10px 0; color:#333;">
           <b>What you’ll see here:</b> a sortable table with miRNA ID, Target ID, Competitor ID (if any),
           baseline affinity, affinity with competitor, and the competitive effect (baseline − competitor).
-          Rows are color-graded by baseline score for quick scanning.
+          Rows are color-graded by baseline score for quick scanning.<br/>
+          <span style="color:#1e5a9c;"><b>Tip:</b> after results render, use the <em>Seed Sites</em> and <em>Heatmap</em> buttons (shown above the table) to see base-level coordinates and model saliency.</span>
         </p>
 
         <div id="loader" class="hidden" role="status" aria-live="polite">
@@ -434,12 +435,17 @@
       const btnSample = document.getElementById('load-sample-btn');
       const btnClear  = document.getElementById('clear-inputs-btn');
 
+      // Sample set:
+      // miRNA: hsa-miR-1-3p (seed = positions 2–8 = GGAAUGU)
+      // Target below contains reverse-complement "ACAUUCC" so Seed Sites will show a hit immediately.
       const SAMPLE_MIRNA = `>hsa-miR-1-3p
 UGGAAUGUAAAGAAGUAUGUAU`;
+
       const SAMPLE_TARGET = `>target1
-AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC`;
+GGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
+
       const SAMPLE_COMP   = `>comp1
-ACUGAUGAUGAUGCUAUGCUAUGCUA`;
+AUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
 
       if (btnSample) {
         btnSample.addEventListener('click', () => {
@@ -450,7 +456,11 @@ ACUGAUGAUGAUGCUAUGCUAUGCUA`;
           if (t) t.value = SAMPLE_TARGET;
           if (c) c.value = SAMPLE_COMP;
 
-          // Switch to Inputs tab if not visible (only if openTab is available)
+          // Clear any uploaded files to avoid conflicts
+          ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+          // Focus the Inputs tab
           if (typeof openTab === 'function') {
             const inputsBtn = document.getElementById('tab-inputs');
             openTab(inputsBtn, 'input-tab');
@@ -469,6 +479,11 @@ ACUGAUGAUGAUGCUAUGCUAUGCUA`;
               const el = document.getElementById(id);
               if (el) el.value = '';
             });
+          // Optional: also clear target region fields
+          const s = document.getElementById('target-start');
+          const e = document.getElementById('target-end');
+          if (s) s.value = '';
+          if (e) e.value = '';
         });
       }
     });
@@ -477,6 +492,6 @@ ACUGAUGAUGAUGCUAUGCUAUGCUA`;
   <!-- Global/site scripts -->
   <script src="../script.js?v=1" defer></script>
   <!-- Page script (guard-safe, duplication-proof) -->
-  <script src="../mirna.js?v=1" defer></script>
+  <script src="../mirna.js?v=2" defer></script>
 </body>
 </html>

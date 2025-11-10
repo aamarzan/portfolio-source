@@ -1,10 +1,8 @@
-// mirna.js — upgraded & sync’d with multi-target/competitor backend (855+ lines → compact, robust)
-// - Nonce auth optional (no error if server nonce is off)
-// - Multi-target & multi-competitor friendly (order: competitor1 → all targets → miRNA batches; then competitor2…)
-// - No duplicate listeners or UI insertions
-// - Sorted results, gradient rows, CSV export, copy-to-clipboard
-// - Defensive against missing DOM nodes
-// - Clear, friendly progress and error messages
+// mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
+// - Keeps your existing UX: nonce, batching, progress, CSV/copy, gradient table, tabs
+// - Adds per-row "Seed Sites" (exact coordinates) and "Heatmap" (IG saliency) actions
+// - Adds analysis controls (Allow GU wobble, Max mismatches) above results
+// - Range-aware (e.g., target IDs like "TP53_3UTR:90-150") to align coordinates properly
 
 // =====================================================
 // Global state
@@ -18,16 +16,25 @@ let CONFIG = {
   use_nonce: false
 };
 
+// Store the exact inputs used at submit time so downstream analysis matches predictions
+const CURRENT_INPUTS = {
+  mirnas: {},      // id -> sequence
+  targets: {},     // id -> sequence
+  competitors: {}  // id -> sequence
+};
+
 // Guards to prevent duplicate injections/bindings
 const GUARDS = {
   advancedInjected: false,
   fastaTipsInjected: false,
   tabWiringDone: false,
-  formBindingDone: false
+  formBindingDone: false,
+  analysisControlsInjected: false,
+  modalInjected: false
 };
 
 // =====================================================
-/** API routing and auth */
+// API routing and auth
 // =====================================================
 const LOCAL_BASE = "http://127.0.0.1:8080";
 const PROD_BASE  = "https://mirna.aamarzan.com";
@@ -36,11 +43,13 @@ const isLocal =
   window.location.hostname === "127.0.0.1";
 const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
-const API_URL      = `${BASE_URL}/predict`;
-const PROGRESS_URL = (jobId) => `${BASE_URL}/progress/${jobId}`;
-const DOWNLOAD_URL = (jobId) => `${BASE_URL}/download/${jobId}`;
-const NONCE_URL    = `${BASE_URL}/nonce`;
-const CONFIG_URL   = `${BASE_URL}/config`;
+const API_URL        = `${BASE_URL}/predict`;
+const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
+const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;
+const NONCE_URL      = `${BASE_URL}/nonce`;
+const CONFIG_URL     = `${BASE_URL}/config`;
+const SEED_SCAN_URL  = `${BASE_URL}/seed_scan`;
+const EXPLAIN_URL    = `${BASE_URL}/explain`;
 
 const MAX_FILE_SIZE_MB = 100;
 
@@ -128,6 +137,58 @@ function ensureSingleton(id, html, parent){
   const created = holder.firstElementChild;
   if(created) parent.appendChild(created);
   return created;
+}
+
+// Simple FASTA parser → { id: seq, ... } (if no headers: {"<prefix>_1": raw})
+function parseFastaToMap(text, defaultPrefix='seq'){
+  const map = {};
+  if(!text || !text.trim()){
+    return map;
+  }
+  const hasHeader = hasFastaHeaders(text);
+  if(!hasHeader){
+    map[`${defaultPrefix}_1`] = text.replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase();
+    return map;
+  }
+  let curId = null;
+  let curSeq = [];
+  const lines = text.split(/\r?\n/);
+  for(const ln of lines){
+    if(ln.trim().startsWith('>')){
+      if(curId){
+        map[curId] = (curSeq.join('')).toUpperCase();
+      }
+      curId = ln.replace(/^>/,'').trim() || `${defaultPrefix}_${Object.keys(map).length+1}`;
+      curSeq = [];
+    }else{
+      curSeq.push(ln.trim());
+    }
+  }
+  if(curId){
+    map[curId] = (curSeq.join('')).toUpperCase();
+  }
+  return map;
+}
+
+// Parse an ID like "TP53:90-150" → {baseId, start, end} (1-based)
+function parseIdRange(id){
+  const m = String(id||'').match(/^(.+):(\d+)-(\d+)$/);
+  if(!m) return null;
+  return { baseId: m[1], start: parseInt(m[2],10), end: parseInt(m[3],10) };
+}
+
+// Get (possibly sliced) target sequence for a target_id possibly carrying :start-end
+function getTargetSeqForId(targetId){
+  const r = parseIdRange(targetId);
+  if(!r){
+    const s = CURRENT_INPUTS.targets[targetId];
+    return typeof s === 'string' ? s : '';
+  }
+  const base = CURRENT_INPUTS.targets[r.baseId] || '';
+  if(!base) return '';
+  const sIdx = Math.max(0, r.start - 1);
+  const eIdx = Math.min(base.length, r.end);
+  return base.slice(sIdx, eIdx);
 }
 
 // =====================================================
@@ -247,7 +308,7 @@ function injectAdvancedOnce(){
     advTab
   );
 
-  // Respect server toggle (disable + uncheck if not allowed)
+  // Respect server toggle
   const aaFlag = $('aa-convert-flag');
   if(aaFlag && !CONFIG.aa_convert_allowed){
     aaFlag.disabled = true;
@@ -269,6 +330,11 @@ async function handleSubmit(event){
   const primarySeqs   = $('primary-seqs')?.value?.trim() ?? '';
   const targetSeq     = $('target-seq')?.value?.trim() ?? '';
   const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
+
+  // Snapshot FASTA → maps for downstream analysis
+  CURRENT_INPUTS.mirnas     = parseFastaToMap(primarySeqs, 'miRNA');
+  CURRENT_INPUTS.targets    = parseFastaToMap(targetSeq, 'target');
+  CURRENT_INPUTS.competitors= parseFastaToMap(competitorSeq, 'competitor');
 
   // Clear results view
   if(resultsContainer) setHTML(resultsContainer, '');
@@ -320,7 +386,7 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
-  // Switch to results tab (defensive)
+  // Switch to results tab
   const resultsTabButton = byQS('button.tab-btn:nth-child(3)');
   if(resultsTabButton) openTab(resultsTabButton, 'results-tab');
 
@@ -382,7 +448,7 @@ async function handleSubmit(event){
     const { job_id } = await startRes.json();
     if(!job_id) throw new Error('No job ID returned from server.');
 
-    // 2) Poll progress (timer)
+    // 2) Poll progress
     const poll = async () => {
       const res = await fetch(PROGRESS_URL(job_id), { method:'GET' });
       if(!res.ok) throw new Error('Failed to check job progress.');
@@ -443,6 +509,7 @@ async function handleSubmit(event){
 
 // =====================================================
 // Display results (sorted by baseline; gradient by baseline)
+// + injects analysis controls + per-row action buttons
 // =====================================================
 function displayResults(results){
   const container = $('results-container');
@@ -454,6 +521,9 @@ function displayResults(results){
     setHTML(container, '<p>No results to display.</p>');
     return;
   }
+
+  // Inject analysis controls (singleton)
+  injectAnalysisControls(container);
 
   // Sort by baseline desc
   results.sort((a,b) =>
@@ -500,11 +570,10 @@ function displayResults(results){
 
   // Download + Copy buttons
   const downloadId = 'download-btn';
-  const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button></div>`;
+  const downloadButtonHTML = `<div style="margin-bottom:12px;"><button id="${downloadId}">Download Results as CSV</button> <button id="copy-results-btn" class="btn-accent">Copy Results</button></div>`;
 
   appendHTML(container, legendHTML);
   appendHTML(container, downloadButtonHTML);
-  appendHTML(container, `<button id="copy-results-btn" class="btn-accent">Copy Results</button>`);
   bindOnce($('copy-results-btn'), 'click', () => {
     // Copy TSV (stable columns as printed in table rendering)
     const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
@@ -526,7 +595,7 @@ function displayResults(results){
     navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Results copied to clipboard.'));
   }, 'copyResultsClick');
 
-  // Table with optional Target/Competitor columns
+  // Table with optional Target/Competitor columns + Analysis col
   const hasTargetCol = (results || []).some(r => typeof r.target_id !== 'undefined');
   const hasCompCol   = (results || []).some(r => (r.competitor_id ?? '') !== '');
 
@@ -537,9 +606,10 @@ function displayResults(results){
     '<th>Predicted Affinity (Baseline)</th>' +
     '<th>Predicted Affinity (With Competitor)</th>' +
     '<th>Competitive Effect (higher is better)</th>' +
+    '<th>Analysis</th>' +
     '</tr></thead><tbody>';
 
-  results.forEach(item => {
+  results.forEach((item, idx) => {
     const id        = item.primary_molecule_id ?? item.mirna_id ?? 'N/A';
     const tid       = item.target_id ?? '';
     const cid       = item.competitor_id ?? '';
@@ -548,6 +618,9 @@ function displayResults(results){
     const compEff   = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor   = getGradientColor(baseline);
 
+    const seedBtn = `<button class="seed-btn" data-row="${idx}">Seed Sites</button>`;
+    const heatBtn = `<button class="heatmap-btn" data-row="${idx}">Heatmap</button>`;
+
     table += `<tr style="background-color:${bgColor}">
       <td>${escapeHTML(id)}</td>` +
       (hasTargetCol ? `<td>${escapeHTML(tid)}</td>` : '') +
@@ -555,6 +628,7 @@ function displayResults(results){
       `<td>${escapeHTML(baseline)}</td>
        <td>${escapeHTML(withComp)}</td>
        <td>${escapeHTML(compEff)}</td>
+       <td>${seedBtn} ${heatBtn}</td>
     </tr>`;
   });
 
@@ -562,9 +636,55 @@ function displayResults(results){
   appendHTML(container, table);
   makeTableSortable('results-table');
 
-  // Bind CSV download (only once per render)
+  // Bind CSV download
   const dl = $(downloadId);
   if(dl) bindOnce(dl, 'click', downloadCSV, 'clickOnce');
+
+  // Delegate click handlers for action buttons
+  const resultsTable = $('results-table');
+  if(resultsTable){
+    bindOnce(resultsTable, 'click', async (e) => {
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      const rowIdx = t.dataset?.row ? parseInt(t.dataset.row, 10) : NaN;
+      if(Number.isNaN(rowIdx) || !predictionResults[rowIdx]) return;
+      const item = predictionResults[rowIdx];
+
+      if(t.classList.contains('seed-btn')){
+        await handleSeedSitesClick(item);
+      }else if(t.classList.contains('heatmap-btn')){
+        await handleHeatmapClick(item);
+      }
+    }, 'resultsActions');
+  }
+}
+
+// Inject analysis controls (GU wobble + mismatch cap)
+function injectAnalysisControls(parent){
+  if(GUARDS.analysisControlsInjected) return;
+
+  const controlsId = 'analysis-controls';
+  ensureSingleton(
+    controlsId,
+    `
+    <div id="${controlsId}" style="display:flex;gap:16px;align-items:center;margin:8px 0 14px 0;flex-wrap:wrap;">
+      <label style="display:flex;gap:6px;align-items:center;">
+        <input type="checkbox" id="allow-gu" checked />
+        <span>Allow GU wobble</span>
+      </label>
+      <label style="display:flex;gap:6px;align-items:center;">
+        <span>Max mismatches:</span>
+        <select id="max-mm">
+          <option value="0" selected>0</option>
+          <option value="1">1</option>
+        </select>
+      </label>
+      <small style="color:#555;">Seed scanning matches canonical 6/7/8mer rules; coordinates are 1-based on the (possibly sliced) target sequence.</small>
+    </div>
+    `,
+    parent
+  );
+  GUARDS.analysisControlsInjected = true;
 }
 
 // =====================================================
@@ -685,6 +805,236 @@ function wireTabButtonsOnce(){
   });
 
   GUARDS.tabWiringDone = true;
+}
+
+// =====================================================
+// Modal (singleton)
+// =====================================================
+function ensureModal(){
+  if(GUARDS.modalInjected) return;
+  const body = document.body;
+  ensureSingleton(
+    'analysis-modal',
+    `
+    <div id="analysis-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;">
+      <div data-overlay style="position:absolute;inset:0;background:rgba(0,0,0,0.45);"></div>
+      <div data-panel style="position:relative;max-width:980px;width:96%;max-height:86vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <h3 id="modal-title" style="margin:0;">Analysis</h3>
+          <button id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div id="modal-content"></div>
+      </div>
+    </div>
+    `,
+    body
+  );
+  const modal = $('analysis-modal');
+  const closeBtn = $('modal-close');
+  const overlay = modal?.querySelector('[data-overlay]');
+  if(closeBtn) bindOnce(closeBtn,'click',closeModal,'mclose');
+  if(overlay)  bindOnce(overlay,'click',closeModal,'moverlay');
+  GUARDS.modalInjected = true;
+}
+function openModal(title, html){
+  ensureModal();
+  const modal = $('analysis-modal');
+  if(!modal) return;
+  text($('modal-title'), title || 'Analysis');
+  setHTML($('modal-content'), html || '');
+  modal.style.display = 'flex';
+}
+function closeModal(){
+  const modal = $('analysis-modal');
+  if(modal) modal.style.display = 'none';
+}
+
+// =====================================================
+// Seed Sites (exact base-level coordinates)
+// =====================================================
+async function handleSeedSitesClick(item){
+  try{
+    const allowGU = byQS('#allow-gu')?.checked ?? true;
+    const maxMM   = parseInt(byQS('#max-mm')?.value ?? '0', 10);
+
+    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+    const targetId= item.target_id ?? '';
+    const compId  = item.competitor_id ?? '';
+
+    const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
+    const targetSeq= getTargetSeqForId(targetId);
+    const compSeq  = compId ? (CURRENT_INPUTS.competitors[compId] || '') : '';
+
+    if(!mirnaSeq || !targetSeq){
+      openModal('Seed Sites', formatError('Could not resolve miRNA and/or target sequences for this row. Please ensure IDs match your FASTA headers.'));
+      return;
+    }
+
+    const payload = {
+      mirna_seq: mirnaSeq,
+      targets: { [targetId]: targetSeq },
+      competitors: compSeq ? { [compId]: compSeq } : {},
+      allow_gu: !!allowGU,
+      max_mismatch: Number.isFinite(maxMM) ? maxMM : 0
+    };
+
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(SEED_SCAN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(payload)
+    });
+
+    if(!res.ok){
+      let msg = 'Seed scanning failed.';
+      try{ const j = await res.json(); msg = j.error || msg; }catch(_){}
+      openModal('Seed Sites', formatError(msg));
+      return;
+    }
+
+    const data = await res.json();
+    const hits = Array.isArray(data.hits) ? data.hits : [];
+
+    if(hits.length === 0){
+      openModal('Seed Sites', `<p>No canonical seed matches found under current settings (GU=${allowGU ? 'on':'off'}, max mismatch=${maxMM}).</p>`);
+      return;
+    }
+
+    // Build table
+    let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence.</div>`;
+    html += `<table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid #ddd;">
+          <th>Molecule</th><th>ID</th><th>Start</th><th>End</th><th>Seed</th><th>Type</th><th>Wobble</th><th>Mismatches</th><th>Upstream</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    hits.forEach(h => {
+      html += `<tr style="border-bottom:1px solid #f0f0f0;">
+        <td>${escapeHTML(h.molecule)}</td>
+        <td>${escapeHTML(h.id)}</td>
+        <td>${h.start}</td>
+        <td>${h.end}</td>
+        <td>${h.seed_len}</td>
+        <td>${escapeHTML(h.seed_type || '')}</td>
+        <td>${h.wobble ?? 0}</td>
+        <td>${h.mismatches ?? 0}</td>
+        <td>${escapeHTML(h.upstream_base ?? '')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+
+    openModal('Seed Sites', html);
+
+  }catch(err){
+    openModal('Seed Sites', formatError(err?.message || 'Unexpected error during seed scan.'));
+  }
+}
+
+// =====================================================
+// Heatmap (Integrated Gradients saliency)
+// =====================================================
+async function handleHeatmapClick(item){
+  try{
+    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+    const targetId= item.target_id ?? '';
+    const compId  = item.competitor_id ?? '';
+
+    const mirnaSeq = CURRENT_INPUTS.mirnas[mirnaId];
+    const targetSeq= getTargetSeqForId(targetId);
+    const compSeq  = compId ? (CURRENT_INPUTS.competitors[compId] || '') : '';
+
+    if(!mirnaSeq || !targetSeq){
+      openModal('Heatmap', formatError('Could not resolve miRNA and/or target sequences for this row.'));
+      return;
+    }
+
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(EXPLAIN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({
+        mirna_seq: mirnaSeq,
+        target_seq: targetSeq,
+        competitor_seq: compSeq || undefined
+      })
+    });
+
+    if(!res.ok){
+      let msg = 'Explanation failed.';
+      try{ const j = await res.json(); msg = j.error || msg; }catch(_){}
+      openModal('Heatmap', formatError(msg));
+      return;
+    }
+
+    const data = await res.json();
+    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : [];
+    const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+
+    // Trim to actual seq lengths (model returns fixed-length arrays)
+    const targAttrTrim = targAttr.slice(0, targetSeq.length);
+    const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
+
+    // Build content
+    let html = '';
+    html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
+    if(compSeq){
+      html += `<div style="height:12px;"></div>`;
+      html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
+    }
+
+    openModal('Heatmap (Integrated Gradients)', html);
+
+  }catch(err){
+    openModal('Heatmap', formatError(err?.message || 'Unexpected error during explanation.'));
+  }
+}
+
+// Render one attribution panel (mini heat-strip + top peaks)
+function renderAttributionPanel(label, seq, attrib){
+  if(!Array.isArray(attrib) || attrib.length === 0){
+    return `<div><h4 style="margin:6px 0;">${escapeHTML(label)}</h4><p>No attribution available.</p></div>`;
+  }
+  const max = Math.max(1e-12, ...attrib.map(v => Math.abs(v)));
+  const norm = attrib.map(v => Math.abs(v) / max);
+
+  // Build heat strip (monospace cells)
+  let strip = `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
+  strip += `<div style="white-space:nowrap;">`;
+  for(let i=0;i<seq.length;i++){
+    const v = norm[i] || 0;
+    const color = viridisColor(v, 0.85);
+    strip += `<span title="pos ${i+1} • ${seq[i]} • ${v.toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(seq[i] || '')}</span>`;
+  }
+  strip += `</div></div>`;
+
+  // Top-5 peaks
+  const idxs = norm.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,5);
+  const peaks = idxs.map(o => `pos ${o.i+1} (${escapeHTML(seq[o.i]||'')}) → ${o.v.toFixed(3)}`).join(', ');
+
+  return `
+    <div>
+      <h4 style="margin:6px 0;">${escapeHTML(label)}</h4>
+      ${strip}
+      <div style="margin-top:6px;color:#333;"><strong>Top positions:</strong> ${peaks}</div>
+      <small style="color:#666;">Color scale is relative within each sequence (min→max saliency, Viridis).</small>
+    </div>
+  `;
+}
+
+// Viridis color helper for heatmaps (0..1 → rgba)
+function viridisColor(t, alpha=1.0){
+  const lut = [
+    [68,1,84],[71,44,122],[59,82,139],[44,113,142],[33,144,141],[39,173,129],[92,200,99],[170,220,50],[253,231,37]
+  ];
+  const x = Math.max(0, Math.min(1, t)) * (lut.length-1);
+  const i = Math.floor(x);
+  const j = Math.min(i+1, lut.length-1);
+  const f = x - i;
+  const r = Math.round(lut[i][0] + f*(lut[j][0]-lut[i][0]));
+  const g = Math.round(lut[i][1] + f*(lut[j][1]-lut[i][1]));
+  const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // =====================================================
