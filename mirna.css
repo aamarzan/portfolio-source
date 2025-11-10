@@ -7,9 +7,9 @@
   --button-default-blue: #0d47a1;
   --accent-color: #20a4b9;
 
-  /* NEW: sticky offsets for tables */
+  /* Sticky offsets */
   --sticky-offset-main: 96px; /* main page results */
-  --sticky-offset-modal: 0px; /* tables inside modal */
+  --sticky-offset-modal: 0px; /* tables inside modal (title/tools live above) */
 }
 
 /* Background animation for miRNA page only */
@@ -174,6 +174,10 @@ textarea.sequence-input {
 
 /* Base per-row buttons */
 .btn-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
   min-width: 120px;
   min-height: 40px;
   padding: 10px 16px;
@@ -183,13 +187,23 @@ textarea.sequence-input {
   background: linear-gradient(180deg,#fff,#f8fafc);
   transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
 }
+.btn-action[disabled]{
+  filter: grayscale(0.15) opacity(0.7);
+  cursor: not-allowed;
+}
 
 /* STRONGER hover/press for Row CSV + 3D buttons (no HTML edit required) */
 .row-csv-btn:hover,
 .view3d-btn:hover,
+.rowcsv-btn:hover,     /* alias used by JS */
+.t3d-btn:hover,       /* alias used by JS */
+.c3d-btn:hover,       /* alias used by JS */
 .btn-action:hover,
 .row-csv-btn:focus-visible,
 .view3d-btn:focus-visible,
+.rowcsv-btn:focus-visible,
+.t3d-btn:focus-visible,
+.c3d-btn:focus-visible,
 .btn-action:focus-visible{
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(17,24,39,.08);
@@ -199,6 +213,9 @@ textarea.sequence-input {
 }
 .row-csv-btn:active,
 .view3d-btn:active,
+.rowcsv-btn:active,
+.t3d-btn:active,
+.c3d-btn:active,
 .btn-action:active{
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(17,24,39,.10) inset;
@@ -310,9 +327,7 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   margin-left:6px;
 }
 
-/* === NEW: Chips as tiny toggles (no HTML changes needed)
-   Just give chips a class .chip-toggle and set aria-pressed in JS.
-   Optional table-level classes activate CSS filtering (see below). === */
+/* === Chips as tiny toggles (used by JS filters) === */
 .chip-toggle{
   cursor:pointer;
   user-select:none;
@@ -428,12 +443,12 @@ body.mirna-page table thead th {
   box-shadow: 0 1px 0 rgba(0,0,0,0.06) inset;
 }
 
-/* FIX: Sticky header inside MODAL (Seed table, etc.) — no overlap */
+/* FIX: Sticky header inside MODAL (Seed/Heatmap tables) — no overlap & solid bg */
 #analysis-modal table thead th{
   position: sticky;
-  top: var(--sticky-offset-modal); /* 0 by default */
+  top: var(--sticky-offset-modal);
   z-index: 30;
-  background: #ffffff;            /* solid so rows don’t show through */
+  background: #ffffff;
   border-bottom: 1px solid #e5e9f2;
   box-shadow: 0 1px 0 rgba(0,0,0,0.06) inset;
 }
@@ -452,6 +467,9 @@ body.mirna-page thead {
 }
 body.mirna-page tbody tr:nth-child(even) { background: #f9f9f9; }
 body.mirna-page tbody tr:hover { background:#f3f8ff; }
+
+/* Action cell: keep buttons on one line */
+#results-table td:last-child{ white-space: nowrap; }
 
 /* Sort indicators */
 table#results-table th{

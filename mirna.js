@@ -1,7 +1,7 @@
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
 // persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
-// and an interactive 3D viewer (target/competitor) with snapshots.
+// filter chips (range-aware / tolerant), progress stall detector, and a 3D viewer with plain-text guidance.
 
 // =====================================================
 // Global state
@@ -98,6 +98,18 @@ function formatWarn(msg){
 }
 function formatInfo(msg){
   return `<p style="color:#1e5a9c;margin:8px 0;">${escapeHTML(msg)}</p>`;
+}
+
+// Plain-text modal (no HTML tags rendered)
+function openModalText(title, textMessage, toolbarHTML=''){
+  ensureModal();
+  const modal = $('analysis-modal');
+  if(!modal) return;
+  text($('modal-title'), title || 'Message');
+  const mc = $('modal-content');
+  mc.textContent = textMessage || '';
+  setHTML($('modal-tools'), toolbarHTML || '');
+  modal.style.display = 'flex';
 }
 
 function validateFileSize(file){
@@ -275,6 +287,14 @@ function globalCoordForId(anyId, localStart, localEnd){
   if(!r) return null; // no global translation needed
   const offset = (r.start || 1) - 1; // 0-based offset
   return { globalStart: offset + localStart, globalEnd: offset + localEnd };
+}
+
+// Quick check: exact key (respecting baseId for ranged IDs)
+function exactKeyExists(pool, anyId){
+  if(!pool || !anyId) return false;
+  const r = parseIdRange(anyId);
+  const k = r ? r.baseId : anyId;
+  return Object.prototype.hasOwnProperty.call(pool, k);
 }
 
 // =====================================================
@@ -542,25 +562,38 @@ async function handleSubmit(event){
     if(!job_id) throw new Error('No job ID returned from server.');
     CURRENT_JOB_ID = job_id;
 
-    // 2) Poll progress
+    // 2) Poll progress (with stall detection)
+    let lastCompleted = -1;
+    let lastTick = Date.now();
+
     const poll = async () => {
       const res = await fetch(PROGRESS_URL(job_id), { method:'GET' });
       if(!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
       if(data.status === 'running'){
+        const total     = Number.isFinite(data.total) ? data.total : '?';
+        const completed = Number.isFinite(data.completed) ? data.completed : '?';
+
         if(loader){
           if(!loader.querySelector('.loader-spinner')){
             loader.innerHTML = `<span class="loader-spinner"></span><span id="loader-text"></span>`;
           }
-          const loaderText = loader.querySelector('#loader-text');
-          if(loaderText){
-            const total     = Number.isFinite(data.total) ? data.total : '?';
-            const completed = Number.isFinite(data.completed) ? data.completed : '?';
-            loaderText.textContent = `Processing... ${completed}/${total} completed`;
-          }
+          const lt = loader.querySelector('#loader-text');
+          if(lt) lt.textContent = `Processing... ${completed}/${total} completed`;
           show(loader);
         }
+
+        // stall hint if progress hasn't changed for 120s
+        if(Number.isFinite(completed) && completed !== lastCompleted){
+          lastCompleted = completed; lastTick = Date.now();
+        }else if(Date.now() - lastTick > 120000){
+          prependHTML(resultsContainer, formatWarn(
+            'Progress appears stalled. If you run Flask with the debug reloader, it can spawn a second process and break in-memory progress (shows 0/…). Run the server with debug=false & use_reloader=false (single process).'
+          ));
+          lastTick = Date.now(); // show only occasionally
+        }
+
         setTimeout(poll, 1200);
         return;
       }
@@ -603,7 +636,7 @@ async function handleSubmit(event){
 
 // =====================================================
 // Display results (sorted by baseline; gradient by baseline)
-// + injects analysis controls + per-row action buttons
+// + injects analysis controls + filter chips + per-row action buttons
 // =====================================================
 function displayResults(results){
   const container = $('results-container');
@@ -662,7 +695,7 @@ function displayResults(results){
   </div>
   `;
 
-  // Download + Copy buttons
+  // Download + Copy buttons (+ client-synced CSV option if needed later)
   const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
     <button id="download-all-server-csv" class="btn-premium">Download Results (server CSV)</button>
     <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results (TSV)</button>
@@ -674,15 +707,19 @@ function displayResults(results){
   bindOnce($('download-all-server-csv'), 'click', async () => {
     if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
     try{
+      const allowGU = byQS('#allow-gu')?.checked ?? true;
+      const maxMM   = parseInt(byQS('#max-mm')?.value ?? '0', 10);
       const headers = await getNonceOrKeyHeaders();
-      const res = await fetch(DOWNLOAD_ALL_CSV_URL(CURRENT_JOB_ID), { method:'GET', headers });
+      const url = DOWNLOAD_ALL_CSV_URL(CURRENT_JOB_ID) +
+        `?allow_gu=${allowGU ? 1 : 0}&max_mismatch=${Number.isFinite(maxMM)?maxMM:0}&range_aware=1&tolerant=1`;
+      const res = await fetch(url, { method:'GET', headers });
       if(!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
+      const dl  = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `mirna_results_${CURRENT_JOB_ID}.csv`;
+      a.href = dl; a.download = `mirna_results_${CURRENT_JOB_ID}.csv`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(dl);
     }catch(err){ alert('Could not download CSV.'); }
   }, 'dlAllCsvOnce');
 
@@ -730,13 +767,19 @@ function displayResults(results){
     const compEff   = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor   = getGradientColor(baseline);
 
+    // filter flags per row
+    const isRange = (!!tid && /:\d+-\d+/.test(tid)) || (!!cid && /:\d+-\d+/.test(cid));
+    const tolT = tid ? (!exactKeyExists(CURRENT_INPUTS.targets, parseIdRange(tid)?.baseId || tid) && !!lookupTolerant(CURRENT_INPUTS.targets, parseIdRange(tid)?.baseId || tid)) : false;
+    const tolC = cid ? (!exactKeyExists(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid) && !!lookupTolerant(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid)) : false;
+    const isTol = tolT || tolC;
+
     const seedBtn   = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
     const heatBtn   = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
     const csvBtn    = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
     const t3dBtn    = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
     const c3dBtn    = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
 
-    table += `<tr style="background-color:${bgColor}">
+    table += `<tr data-range="${isRange ? '1':'0'}" data-tolerant="${isTol ? '1':'0'}" style="background-color:${bgColor}">
       <td>${escapeHTML(id)}</td>` +
       (hasTargetCol ? `<td>${escapeHTML(tid)}</td>` : '') +
       (hasCompCol   ? `<td>${escapeHTML(cid)}</td>` : '') +
@@ -750,6 +793,9 @@ function displayResults(results){
   table += '</tbody></table>';
   appendHTML(container, table);
   makeTableSortable('results-table');
+
+  // Inject filter chips (range-aware / tolerant)
+  injectResultFilters();
 
   // Delegate click handlers for action buttons
   const resultsTable = $('results-table');
@@ -776,72 +822,44 @@ function displayResults(results){
   }
 }
 
-// Inject analysis controls (GU wobble + mismatch cap) with persistence
-// + Heatmap mode & steps controls (persisted)
-function injectAnalysisControls(parent){
-  if(GUARDS.analysisControlsInjected) return;
+// Inject range/tolerant filter chips (toggle behavior)
+function injectResultFilters(){
+  if($('result-filters')) return;
+  const box = document.createElement('div');
+  box.id = 'result-filters';
+  box.className = 'result-filters';
+  box.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px;';
+  box.innerHTML = `
+    <label class="chip-toggle" id="chip-range" style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef5ff;border:1px solid #cfe0ff;color:#163b66;cursor:pointer;font-size:12px;font-weight:600;">
+      <input type="checkbox" id="filter-range" style="accent-color:#1e5a9c;"> range-aware only
+    </label>
+    <label class="chip-toggle" id="chip-tol" style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef5ff;border:1px solid #cfe0ff;color:#163b66;cursor:pointer;font-size:12px;font-weight:600;">
+      <input type="checkbox" id="filter-tolerant" style="accent-color:#1e5a9c;"> tolerant-matched only
+    </label>
+    <button class="chip-clear" id="clear-filters" style="padding:4px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;">clear</button>
+  `;
+  byQS('#results-container')?.insertBefore(box, byQS('#results-container').firstChild);
 
-  const savedAllowGU = localStorage.getItem('mi_allowGU');
-  const savedMaxMM   = localStorage.getItem('mi_maxMM');
-  const savedHM      = localStorage.getItem('mi_heatmap_mode') || 'ig_target';
-  const savedSteps   = localStorage.getItem('mi_heatmap_steps') || '50';
+  const apply = () => {
+    const rOnly = byQS('#filter-range')?.checked || false;
+    const tOnly = byQS('#filter-tolerant')?.checked || false;
+    $('chip-range')?.classList.toggle('active', rOnly);
+    $('chip-tol')?.classList.toggle('active', tOnly);
 
-  const controlsId = 'analysis-controls';
-  ensureSingleton(
-    controlsId,
-    `
-    <div id="${controlsId}" style="display:flex;gap:16px;align-items:center;margin:8px 0 14px 0;flex-wrap:wrap;">
-      <label style="display:flex;gap:6px;align-items:center;">
-        <input type="checkbox" id="allow-gu" ${savedAllowGU === null ? 'checked' : (savedAllowGU === 'true' ? 'checked' : '')}/>
-        <span>Allow GU wobble</span>
-      </label>
-      <label style="display:flex;gap:6px;align-items:center;">
-        <span>Max mismatches:</span>
-        <select id="max-mm">
-          <option value="0">0</option>
-          <option value="1">1</option>
-        </select>
-      </label>
-      <label style="display:flex;gap:6px;align-items:center;">
-        <span>Heatmap:</span>
-        <select id="heatmap-mode">
-          <option value="ig_target">IG – Target</option>
-          <option value="ig_competitor">IG – Competitor</option>
-          <option value="seed_density">Seed density</option>
-        </select>
-      </label>
-      <label style="display:flex;gap:6px;align-items:center;">
-        <span>IG steps:</span>
-        <input id="heatmap-steps" type="number" min="10" max="200" value="50" style="width:72px;"/>
-      </label>
-      <small style="color:#555;">Seed scanning matches canonical 6/7/8mer rules; coordinates are 1-based on the (possibly sliced) target sequence.</small>
-    </div>
-    `,
-    parent
-  );
+    byQSA('#results-table tbody tr').forEach(tr=>{
+      const hasRange = tr.getAttribute('data-range') === '1';
+      const isTol    = tr.getAttribute('data-tolerant') === '1';
+      const hide = (rOnly && !hasRange) || (tOnly && !isTol);
+      tr.style.display = hide ? 'none' : '';
+    });
+  };
 
-  const mmSel = byQS('#max-mm');
-  if(mmSel){
-    mmSel.value = (savedMaxMM === null ? '0' : savedMaxMM);
-    bindOnce(mmSel,'change',()=> localStorage.setItem('mi_maxMM', mmSel.value),'mmPersist');
-  }
-  const guChk = byQS('#allow-gu');
-  if(guChk){
-    bindOnce(guChk,'change',()=> localStorage.setItem('mi_allowGU', guChk.checked ? 'true' : 'false'),'guPersist');
-  }
-
-  const hmSel = byQS('#heatmap-mode');
-  if(hmSel){
-    hmSel.value = savedHM;
-    bindOnce(hmSel,'change',()=> localStorage.setItem('mi_heatmap_mode', hmSel.value),'hmPersist');
-  }
-  const stepsInp = byQS('#heatmap-steps');
-  if(stepsInp){
-    stepsInp.value = savedSteps;
-    bindOnce(stepsInp,'change',()=> localStorage.setItem('mi_heatmap_steps', stepsInp.value),'stepsPersist');
-  }
-
-  GUARDS.analysisControlsInjected = true;
+  bindOnce($('filter-range'),'change',apply,'rFilter');
+  bindOnce($('filter-tolerant'),'change',apply,'tFilter');
+  bindOnce($('clear-filters'),'click',()=>{
+    const r=$('filter-range'), t=$('filter-tolerant');
+    if(r) r.checked=false; if(t) t.checked=false; apply();
+  },'cFilter');
 }
 
 // =====================================================
@@ -865,7 +883,7 @@ async function handleRowCsvClick(item){
 }
 
 // =====================================================
-// Heatmap (server PNG first; fallback to client IG rendering)
+// Heatmap (server PNG first; fallback to client IG; fallback-fallback to seed density)
 // =====================================================
 async function handleHeatmapClick(item){
   // Prefer server PNG so users can also download it directly
@@ -947,6 +965,13 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       return;
     }
 
+    // If user explicitly chose seed_density, render from the most recent seed scan cache
+    if((forcedMode || '').toLowerCase() === 'seed_density'){
+      const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
+      setHTML($('modal-content'), html);
+      return;
+    }
+
     setHTML($('modal-content'), smallSpinner('Computing attributions...'));
 
     const headers = await getNonceOrKeyHeaders();
@@ -961,9 +986,9 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     }, 30000);
 
     if(!res.ok){
-      let msg = 'Explanation failed.';
-      try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
-      setHTML($('modal-content'), formatError(msg));
+      // graceful degrade to seed-density strip
+      const fallback = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
+      setHTML($('modal-content'), `<div>${formatWarn('Attribution timed out or was aborted. Showing seed density instead.')}${fallback}</div>`);
       return;
     }
 
@@ -977,7 +1002,7 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     let html = '';
     const mode = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
 
-    if(mode === 'ig_target' || mode === 'seed_density'){
+    if(mode === 'ig_target'){
       html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
     }
     if((mode === 'ig_competitor') && compSeq){
@@ -988,8 +1013,40 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     setHTML($('modal-content'), html);
 
   }catch(err){
-    setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
+    // last resort: seed density
+    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+    const targetId= item.target_id ?? '';
+    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
+    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    if(mirnaSeq && targetSeq){
+      const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
+      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${html}</div>`);
+    }else{
+      setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
+    }
   }
+}
+
+// Render a simple seed-density heat strip from LAST_SEED_HITS (client fallback)
+function renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq){
+  const L = targetSeq.length;
+  const density = new Array(L).fill(0);
+  if(Array.isArray(LAST_SEED_HITS)){
+    LAST_SEED_HITS.filter(h => h.molecule === 'target' && h.id === targetId).forEach(h=>{
+      for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
+    });
+  }
+  const max = Math.max(1, ...density);
+  const norm = density.map(v => v / max);
+
+  let strip = `<div style="font-family:ui-monospace, Menlo, Consolas;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
+  strip += `<div style="white-space:nowrap;">`;
+  for(let i=0;i<L;i++){
+    const color = viridisColor(norm[i] || 0, 0.85);
+    strip += `<span title="pos ${i+1} • ${(targetSeq[i]||'')} • ${(norm[i]||0).toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(targetSeq[i] || '')}</span>`;
+  }
+  strip += `</div></div>`;
+  return `<div><h4 style="margin:6px 0;">Seed density (client fallback)</h4>${strip}<small style="color:#666;">Derived from current Seed Sites; no long server request needed.</small></div>`;
 }
 
 // Render one attribution panel (mini heat-strip + top peaks)
@@ -1191,7 +1248,7 @@ function downloadSeedCSV(){
 }
 
 // =====================================================
-// 3D Viewer — friendly message if missing; viewer if present
+// 3D Viewer — friendly plain-text message if missing; viewer if present
 // =====================================================
 async function ensureNGL(){
   if(GUARDS.nglLoaded) return true;
@@ -1209,14 +1266,13 @@ async function ensureNGL(){
   }catch(_){ return false; }
 }
 
-// Main entry for table buttons — exactly as requested
+// Entry from table buttons
 async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
   if(!CURRENT_JOB_ID){
-    openModal('3D Viewer', formatWarn('You need to run a prediction first.'));
+    openModalText('3D Viewer', 'Run a prediction first.');
     return;
   }
   const pool = kind === 'target' ? CURRENT_INPUTS.targets : CURRENT_INPUTS.competitors;
-  const seq  = tolerantGetAnySeqForId(anyId, pool); // might be empty, still okay for message
   const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
 
   // Try to fetch the structure associated with this job + kind
@@ -1227,33 +1283,33 @@ async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
   }catch(_){ /* network/timeout */ }
 
   if(!res || !res.ok){
-    // Friendly guidance with exact naming tip
-    openModal('3D Viewer', formatInfo(
-      `No 3D structure found for <b>${escapeHTML(anyId || '(unknown)')}</b>.<br>
-       Upload a PDB/mmCIF named exactly after the FASTA header (e.g., <code>${escapeHTML(baseId || 'TARGET')}.pdb</code> or <code>.cif</code>), then re-run the prediction.`
-    ));
+    const prettyId = anyId || '(Unknown)';
+    const sample   = baseId || (kind === 'target' ? 'TARGET' : 'COMPETITOR');
+    openModalText(
+      '3D Viewer',
+      `No 3D structure found for ${prettyId}. Upload a PDB or mmCIF named exactly after the FASTA header (for example: ${sample}.pdb or ${sample}.cif), then re-run the prediction.`
+    );
     return;
   }
 
-  // If we do have a file, open the NGL viewer
   const ok = await ensureNGL();
   if(!ok){
-    openModal('3D Viewer', formatError('Could not load 3D engine. Check your network.'));
+    openModalText('3D Viewer', 'Could not load the 3D engine (NGL). Check your connection.');
     return;
   }
 
   try{
     const blob = await res.blob();
-    await open3DStageFromBlob(kind, blob, anyId, seq);
+    await open3DStageFromBlob(kind, blob, anyId);
   }catch(err){
-    openModal('3D Viewer', formatError(err?.message || '3D viewer error.'));
+    openModalText('3D Viewer', err?.message || '3D viewer error.');
   }
 }
 
 // Helper to actually mount NGL stage and wire toolbar
-async function open3DStageFromBlob(kind, blob, anyId, seq){
+async function open3DStageFromBlob(kind, blob, anyId){
   const url  = URL.createObjectURL(blob);
-  const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'} ${anyId ? '• ' + escapeHTML(anyId) : ''}`;
+  const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}${anyId ? ' • ' + anyId : ''}`;
   const toolbar = `
     <button id="ngl-center" class="toolbar-btn">Center on site</button>
     <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
@@ -1270,17 +1326,11 @@ async function open3DStageFromBlob(kind, blob, anyId, seq){
   comp.addRepresentation('ball+stick', { multipleBond: true });
   stage.autoView();
 
-  // Toolbar actions
   const centerBtn = $('ngl-center');
   const snapBtn   = $('ngl-snap');
   const openBtn   = $('ngl-open');
 
-  if(centerBtn) bindOnce(centerBtn, 'click', () => {
-    // If ID has :start-end, we could attempt a selection; without residue mapping we autoView as a safe default
-    // TODO: when residue numbering map is available, replace with a precise selection focus.
-    stage.autoView();
-  }, 'centerOnce');
-
+  if(centerBtn) bindOnce(centerBtn, 'click', () => { stage.autoView(); }, 'centerOnce');
   if(snapBtn) bindOnce(snapBtn, 'click', async () => {
     const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
     const a = document.createElement('a');
@@ -1288,33 +1338,29 @@ async function open3DStageFromBlob(kind, blob, anyId, seq){
     a.download = `structure_${kind}.png`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }, 'snapOnce');
-
   if(openBtn) bindOnce(openBtn, 'click', () => {
-    const w = window.open(url, '_blank');
-    if(w) w.opener = null;
+    const w = window.open(url, '_blank'); if(w) w.opener = null;
   }, 'openOnce');
 }
 
-// (legacy helper kept for compatibility if used elsewhere)
+// Legacy helper (kept) — now plain-text on errors
 async function open3DViewer(kind){
-  if(!CURRENT_JOB_ID){ openModal('3D Viewer', formatWarn('You need to run a prediction first.')); return; }
-  if(!['target','competitor'].includes(kind)){ openModal('3D Viewer', formatError('Invalid molecule kind.')); return; }
+  if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
+  if(!['target','competitor'].includes(kind)){ openModalText('3D Viewer', 'Invalid molecule kind.'); return; }
   const ok = await ensureNGL();
-  if(!ok){ openModal('3D Viewer', formatError('Could not load 3D engine. Check your network.')); return; }
+  if(!ok){ openModalText('3D Viewer', 'Could not load 3D engine.'); return; }
 
   try{
     const headers = await getNonceOrKeyHeaders();
     const res = await fetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
     if(!res.ok){
-      let msg = 'No 3D structure available (maybe not uploaded or expired).';
-      try{ const j = await res.json(); msg = j.error || msg; }catch(_){ }
-      openModal('3D Viewer', formatWarn(msg));
+      openModalText('3D Viewer', 'No 3D structure available (maybe not uploaded or expired).');
       return;
     }
     const blob = await res.blob();
     await open3DStageFromBlob(kind, blob, '', '');
   }catch(err){
-    openModal('3D Viewer', formatError(err?.message || '3D viewer error.'));
+    openModalText('3D Viewer', err?.message || '3D viewer error.');
   }
 }
 

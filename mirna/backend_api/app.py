@@ -1780,8 +1780,19 @@ def explain():
 # =========================
 # Startup
 # =========================
-if __name__ == '__main__':
+def main():
     port = int(os.environ.get("PORT", 8080))
-    # ensure janitor alive for artifact cleanup
-    start_janitor()
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # ensure janitor alive for artifact cleanup (don’t crash if it can’t start)
+    try:
+        start_janitor()
+    except Exception as e:
+        app.logger.warning("Janitor failed to start: %s", e)
+
+    # Single-process, multithreaded server:
+    # - debug=False + use_reloader=False prevents the duplicate worker that causes 0/N progress stalls
+    # - threaded=True allows /progress and /heatmap to run concurrently
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=True)
+
+if __name__ == '__main__':
+    main()
+
