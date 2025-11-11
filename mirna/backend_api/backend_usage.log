@@ -655,3 +655,12 @@
 2025-11-11 13:11:04,025 | INFO | 127.0.0.1 - - [11/Nov/2025 13:11:04] "GET /progress/4b838f43-660d-459e-bfbf-f21b4ccc47d0 HTTP/1.1" 200 -
 2025-11-11 13:11:05,858 | INFO | 127.0.0.1 - - [11/Nov/2025 13:11:05] "GET /progress/4b838f43-660d-459e-bfbf-f21b4ccc47d0 HTTP/1.1" 200 -
 2025-11-11 13:11:07,156 | INFO | 127.0.0.1 - - [11/Nov/2025 13:11:07] "GET /download/4b838f43-660d-459e-bfbf-f21b4ccc47d0 HTTP/1.1" 200 -
+2025-11-11 14:29:30,837 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-11 14:29:32,631 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.100:8080
+2025-11-11 14:29:32,632 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-11 14:39:28,074 | INFO | 127.0.0.1 - - [11/Nov/2025 14:39:28] "GET /config HTTP/1.1" 200 -
+2025-11-11 14:40:11,209 | INFO | 127.0.0.1 - - [11/Nov/2025 14:40:11] "GET /config HTTP/1.1" 200 -

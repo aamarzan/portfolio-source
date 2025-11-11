@@ -135,61 +135,16 @@
   <noscript><div style="padding:10px;margin:16px;border:1px solid #e0b4b4;background:#fff5f5;color:#7a1f1f;border-radius:8px;">This tool requires JavaScript to run predictions, show seed sites and heatmaps.</div></noscript>
 
   <!-- Global header -->
-  <header id="main-header" role="banner">
-    <div class="container header-container">
-      <div class="logo">
-        <a href="../" aria-label="Go to homepage">
-          <img src="../media/home/Logo.png" alt="Abdullah Al Marzan Logo"/>
-        </a>
-      </div>
-      <nav class="main-nav" role="navigation" aria-label="Primary">
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li class="has-submenu">
-            <a>Biography</a>
-            <ul class="submenu">
-              <li><a href="../aboutme/">About Me</a></li>
-              <li><a href="../academics/">Academics</a></li>
-            </ul>
-          </li>
-          <li class="has-submenu">
-            <a>Research</a>
-            <ul class="submenu">
-              <li><a href="../interest/">Interests</a></li>
-              <li><a href="../goals/">Goal</a></li>
-            </ul>
-          </li>
-          <li class="has-submenu">
-            <a class="active">Projects</a>
-            <ul class="submenu">
-              <li><a href="../ongoing-projects/">Ongoing</a></li>
-              <li><a href="../previous-projects/">Previous</a></li>
-              <li><a href="../mirna/" class="active-submenu">Affinity Predictor</a></li>
-            </ul>
-          </li>
-          <li><a href="../dissertation/">Thesis</a></li>
-          <li class="has-submenu">
-            <a>Publications</a>
-            <ul class="submenu">
-              <li><a href="../articles/">Article</a></li>
-              <li><a href="../grant/">Grant</a></li>
-            </ul>
-          </li>
-          <li><a href="../certification/">Certifications</a></li>
-          <li class="has-submenu">
-            <a>More</a>
-            <ul class="submenu">
-              <li><a href="../blog/">Blog</a></li>
-              <li><a href="../activity/">Extra Curricular</a></li>
-              <li><a href="../acknowledgment/">Acknowledgment</a></li>
-              <li><a href="../contacts/">Contact</a></li>
-            </ul>
-          </li>
-        </ul>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <img src="/assets/logo.svg" alt="AAM" class="topbar__logo">
+      <span class="topbar__brand">miRNA-Affinity</span>
+      <div class="topbar__spacer"></div>
+      <nav class="topbar__actions">
+        <a href="/docs" aria-label="Docs" class="icon-btn">Docs</a>
+        <a href="https://github.com/..." aria-label="GitHub" class="icon-btn">GitHub</a>
+        <button id="helpBtn" aria-label="Help" class="icon-btn">?</button>
       </nav>
-      <button id="hamburger-btn" aria-label="Toggle menu">
-        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-      </button>
     </div>
   </header>
 
