@@ -314,25 +314,26 @@ async function loadConfig(){
 // Nonce (optional; graceful when disabled on server)
 // =====================================================
 async function getNonceOrKeyHeaders() {
-  // Works whether server uses nonce or not.
-  const h = { };
+  const h = {};
   try {
     if (CONFIG && CONFIG.use_nonce) {
-      if (CONFIG.nonce_url) {
-        const r = await fetch(CONFIG.nonce_url, { method: 'GET' });
-        if (r.ok) {
-          const j = await r.json();
-          if (j && j.nonce) h['X-ONE-TIME-NONCE'] = j.nonce;
-        }
+      const r = await fetch(`${BASE_URL}/nonce`, { method: 'GET' });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && j.nonce) h['X-Nonce'] = j.nonce;   // <-- correct header name
+      } else {
+        console.warn('Nonce fetch failed:', r.status);
       }
     } else if (CONFIG && CONFIG.api_key) {
       h['X-API-KEY'] = CONFIG.api_key;
     }
   } catch (e) {
     console.warn('Auth header setup warning:', e);
+    // non-fatal; return empty headers so UI keeps working in open mode
   }
   return h;
 }
+
 
 // =====================================================
 // Safe event binding (prevent duplicates)
