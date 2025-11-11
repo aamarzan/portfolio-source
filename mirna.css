@@ -701,13 +701,3 @@ body.mirna-page main .mirna-container{
   border-radius: 10px;
 }
 
-.topbar{position:sticky;top:0;z-index:1000;background:#000;color:#fff;backdrop-filter:saturate(1.2) blur(6px);box-shadow:0 1px 0 rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.24)}
-.topbar__inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;height:70px;padding:0 16px}
-.topbar__logo{height:26px;width:auto}
-.topbar__brand{margin-left:8px;font-weight:600;letter-spacing:.2px}
-.topbar__spacer{flex:1}
-.topbar__actions{display:flex;gap:10px}
-.icon-btn{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;text-decoration:none}
-.icon-btn:hover{background:rgba(255,255,255,.10)}
-/* Mobile: collapse labels if you want */
-@media (max-width:640px){.topbar__brand{font-size:14px}.icon-btn{padding:0 10px}}
