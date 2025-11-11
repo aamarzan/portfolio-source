@@ -784,3 +784,28 @@ body.mirna-page main .mirna-container{
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
+
+/* Results: make the Analysis button cell a tidy 3×2 grid */
+#results-container td:has(.seed-btn),
+#results-container td:has(.btn-seed) {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 10px 12px;            /* row gap, column gap */
+  align-items: center;
+  justify-content: start;
+  white-space: normal;       /* allow wrapping inside the cell */
+}
+
+/* Remove stray margins so the grid controls spacing */
+#results-container td:has(.seed-btn) > *,
+#results-container td:has(.btn-seed) > * {
+  margin: 0 !important;
+}
+
+/* Responsive: when narrow, drop to 2 columns */
+@media (max-width: 640px) {
+  #results-container td:has(.seed-btn),
+  #results-container td:has(.btn-seed) {
+    grid-template-columns: repeat(2, max-content);
+  }
+}
