@@ -1135,3 +1135,9 @@
 2025-11-11 18:59:03,097 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:03] "GET /progress/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
 2025-11-11 18:59:04,525 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:04] "GET /progress/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
 2025-11-11 18:59:06,546 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:06] "GET /progress/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
+2025-11-11 18:59:07,978 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:07] "GET /progress/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
+2025-11-11 18:59:09,494 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:09] "GET /progress/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
+2025-11-11 18:59:09,708 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:09] "GET /download/b16c9e52-acfc-445b-9dff-e8fc44b0bec1 HTTP/1.1" 200 -
+2025-11-11 18:59:59,771 | INFO | 127.0.0.1 - - [11/Nov/2025 18:59:59] "GET /nonce HTTP/1.1" 200 -
+2025-11-11 19:00:00,238 | INFO | 127.0.0.1 - - [11/Nov/2025 19:00:00] "OPTIONS /download/b16c9e52-acfc-445b-9dff-e8fc44b0bec1/all.zip HTTP/1.1" 200 -
+2025-11-11 19:00:01,733 | INFO | 127.0.0.1 - - [11/Nov/2025 19:00:01] "GET /download/b16c9e52-acfc-445b-9dff-e8fc44b0bec1/all.zip HTTP/1.1" 200 -
