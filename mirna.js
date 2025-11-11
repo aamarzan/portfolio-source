@@ -1,7 +1,7 @@
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
 // persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
-// filter chips (range-aware / tolerant), progress stall detector, and a 3D viewer with plain-text guidance.
+// progress stall detector, and a 3D viewer with plain-text guidance.
 
 // =====================================================
 // Global state
@@ -96,8 +96,9 @@ function formatError(msg){
 function formatWarn(msg){
   return `<p style="color:#b36b00;margin:8px 0;">${escapeHTML(msg)}</p>`;
 }
+// A) Centered info note (CSS styles it)
 function formatInfo(msg){
-  return `<p style="color:#1e5a9c;margin:8px 0;">${escapeHTML(msg)}</p>`;
+  return `<p class="info-note">${escapeHTML(msg)}</p>`;
 }
 
 // Plain-text modal (no HTML tags rendered)
@@ -163,19 +164,53 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
-// Inject premium styles for bigger, nicer buttons (Load Sample, Clear Inputs, Seed Sites, Heatmap)
+// Inject premium styles and small utility classes (kept inline to be drop-in)
 function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
   const css = `
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
-    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);} 
-    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);} 
+    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
+    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
+
+    /* Center the friendly info + the no-refresh warning */
+    .info-note{ text-align:center; margin:8px 0; }
+    .reload-warning{ text-align:center; margin:8px 0; }
+
+    /* B) perfectly leveled analysis controls (grid) */
+    .controls-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+      margin:8px 0 12px;
+    }
+    .controls-grid .ctrl{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      justify-content:center;
+      white-space:nowrap;
+    }
+    .controls-grid .ctrl input[type="number"], .controls-grid .ctrl select{
+      padding:6px 10px;border:1px solid #d8dee9;border-radius:8px;min-height:40px;
+    }
+    .controls-grid .ctrl input[type="checkbox"]{ transform: translateY(1px); }
+
+    /* D) two-line action cluster so nothing gets cut off */
+    .action-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap:8px;
+    }
+    .action-grid .btn-action{ width:100%; }
+    .action-grid .action-spacer{ display:block; } /* empty cell to center the 3D row */
   `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
@@ -320,7 +355,7 @@ async function getNonceOrKeyHeaders() {
       const r = await fetch(`${BASE_URL}/nonce`, { method: 'GET' });
       if (r.ok) {
         const j = await r.json();
-        if (j && j.nonce) h['X-Nonce'] = j.nonce;   // <-- correct header name
+        if (j && j.nonce) h['X-Nonce'] = j.nonce;   // correct header for your server
       } else {
         console.warn('Nonce fetch failed:', r.status);
       }
@@ -329,7 +364,6 @@ async function getNonceOrKeyHeaders() {
     }
   } catch (e) {
     console.warn('Auth header setup warning:', e);
-    // non-fatal; return empty headers so UI keeps working in open mode
   }
   return h;
 }
@@ -481,7 +515,7 @@ async function handleSubmit(event){
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
-  // Friendly info + estimated total pairs
+  // Friendly info + estimated total pairs (centered)
   const estTotal = (mirnaCount || 0) * (tgtCount || 0) * (compCount || 1);
   prependHTML(resultsContainer, formatInfo(
     `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s). Estimated evaluations: ${estTotal}.`
@@ -594,7 +628,7 @@ async function handleSubmit(event){
           show(loader);
         }
 
-        // stall hint if progress hasn't changed for 120s
+        // stall hint if progress hasn't changed for 180s
         if(Number.isFinite(completed) && completed !== lastCompleted){
           lastCompleted = completed; lastTick = Date.now();
         }else if(Date.now() - lastTick > 180000){
@@ -603,7 +637,6 @@ async function handleSubmit(event){
             'Please keep this page open; closing it will stop the analysis.',
           ].join(' ');
 
-          // Optional: tiny “details” block for admins
           const details = `
             <details style="margin-top:6px;">
               <summary style="cursor:pointer;color:#1e5a9c;">Technical details (for administrators)</summary>
@@ -674,12 +707,12 @@ function displayResults(results){
     return;
   }
 
-  // Inject analysis controls (singleton)
+  // Inject analysis controls (singleton) — B) grid + leveled labels
   injectAnalysisControls(container);
 
   // Sort by baseline desc
   results.sort((a,b) =>
-    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) - 
+    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) -
     safeParseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0, 0)
   );
 
@@ -703,7 +736,7 @@ function displayResults(results){
     return `rgba(${r},${g},${b},0.3)`;
   }
 
-  // Legend (singleton into results container) — chips removed & centered
+  // C) Legend (chips removed & centered)
   const legendId = 'affinity-legend';
   const legendHTML = `
   <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;text-align:center;">
@@ -803,6 +836,18 @@ function displayResults(results){
     const t3dBtn    = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
     const c3dBtn    = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
 
+    // D) two-line action block; spacer centers the second row (3D buttons)
+    const actionBlock = `
+      <div class="action-grid">
+        ${seedBtn}
+        ${heatBtn}
+        ${csvBtn}
+        <span class="action-spacer"></span>
+        ${t3dBtn}
+        ${c3dBtn}
+      </div>
+    `;
+
     table += `<tr data-range="${isRange ? '1':'0'}" data-tolerant="${isTol ? '1':'0'}" style="background-color:${bgColor}">
       <td>${escapeHTML(id)}</td>` +
       (hasTargetCol ? `<td>${escapeHTML(tid)}</td>` : '') +
@@ -810,7 +855,7 @@ function displayResults(results){
       `<td>${escapeHTML(baseline)}</td>
        <td>${escapeHTML(withComp)}</td>
        <td>${escapeHTML(compEff)}</td>
-       <td>${seedBtn} ${heatBtn} ${csvBtn} ${t3dBtn} ${c3dBtn}</td>
+       <td>${actionBlock}</td>
     </tr>`;
   });
 
@@ -818,7 +863,7 @@ function displayResults(results){
   appendHTML(container, table);
   makeTableSortable('results-table');
 
-  // Inject filter chips (range-aware / tolerant)
+  // Keep range/tolerant filter chips (your choice) — unchanged
   injectResultFilters();
 
   // Delegate click handlers for action buttons
@@ -887,49 +932,32 @@ function injectResultFilters(){
 }
 
 // =====================================================
-// Analysis controls (singleton) — leveled & centered (labels: Allow G:U, Max mismatches, Heatmap, Steps)
+// Analysis controls (singleton) — B) grid layout with leveled labels
 // =====================================================
 function injectAnalysisControls(container){
   if(GUARDS.analysisControlsInjected) return;
 
   const html = `
-  <div id="analysis-controls" style="max-width:90vw;margin:0 auto 12px;">
-    <div class="ctrl-wrap" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;">
-      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
-        <label for="allow-gu" style="font-weight:700;margin-bottom:6px;text-align:center;">Allow G:U wobble</label>
-        <input type="checkbox" id="allow-gu" checked />
-      </div>
+  <div id="analysis-controls" class="controls-grid">
+    <label class="ctrl"><input type="checkbox" id="allow-gu" checked /><span>Allow G:U wobble</span></label>
+    <label class="ctrl"><span>Max mismatches</span><input id="max-mm" type="number" value="0" min="0" max="3" step="1"></label>
+    <label class="ctrl"><span>Heatmap</span>
+      <select id="heatmap-mode">
+        <option value="ig_target" selected>IG → Target</option>
+        <option value="ig_competitor">IG → Competitor</option>
+        <option value="seed_density">Seed density (fast)</option>
+      </select>
+    </label>
+    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
 
-      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
-        <label for="max-mm" style="font-weight:700;margin-bottom:6px;text-align:center;">Max mismatches</label>
-        <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
-      </div>
-
-      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
-        <label for="heatmap-mode" style="font-weight:700;margin-bottom:6px;text-align:center;">Heatmap</label>
-        <select id="heatmap-mode" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
-          <option value="ig_target" selected>IG → Target</option>
-          <option value="ig_competitor">IG → Competitor</option>
-          <option value="seed_density">Seed density (fast)</option>
-        </select>
-      </div>
-
-      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
-        <label for="heatmap-steps" style="font-weight:700;margin-bottom:6px;text-align:center;">Steps</label>
-        <input id="heatmap-steps" type="number" value="64" min="8" max="256" step="8" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
-      </div>
-
-      <div class="ctrl btns" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
-        <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-        <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
-      </div>
-    </div>
+    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
+    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
   </div>
   `;
 
   prependHTML(container, html);
 
-  // Global buttons: operate on the top-ranked row
+  // Global buttons: operate on the top-ranked row (simple, deterministic)
   const seedBtn = $('seed-scan-global-btn');
   const hmBtn   = $('explain-global-btn');
 
@@ -979,7 +1007,7 @@ async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
-  const steps = Math.max(8, Math.min(256, parseInt(stepsInp?.value || '64', 10) || 64));
+  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64));
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
@@ -1050,7 +1078,7 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     }
 
     const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-    const uiSteps = Math.max(8, Math.min(256, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
+    const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
 
     if(uiMode === 'seed_density'){
       const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);

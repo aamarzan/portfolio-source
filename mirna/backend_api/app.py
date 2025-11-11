@@ -1204,6 +1204,54 @@ def download_results(job_id):
     payload = {"results": job["results"]}
     return Response(json.dumps(payload, default=_to_py, ensure_ascii=False, separators=(',', ':')), mimetype="application/json")
 
+@app.post("/explain")
+def explain_proxy():
+    try:
+        data = request.get_json(force=True) or {}
+        mirna = (data.get("mirna_seq") or "").upper().replace("T","U")
+        target = (data.get("target_seq") or "").upper().replace("T","U")
+        comp   = (data.get("competitor_seq") or "")
+        comp   = comp.upper().replace("T","U") if comp else ""
+
+        if not mirna or not target:
+            return jsonify({"target_attrib": [], "competitor_attrib": []}), 200
+
+        def wobble_pair(a,b):
+            return (a,b) in {("A","U"),("U","A"),("C","G"),("G","C"),("G","U"),("U","G")}
+        def score_pos(seq, probe):
+            m = 0
+            k = min(len(probe), 7)
+            for j in range(k):
+                if wobble_pair(probe[j], seq[j]): m += 1
+            return m
+
+        compmap = {"A":"U","U":"A","G":"C","C":"G"}
+        rc = "".join(compmap.get(ch,"N") for ch in mirna[::-1])
+
+        targ_attr = []
+        for i in range(len(target)):
+            window = target[i:i+7]
+            if len(window) < 7: window = window + "N"*(7-len(window))
+            targ_attr.append(score_pos(window, rc))
+
+        comp_attr = []
+        if comp:
+            for i in range(len(comp)):
+                window = comp[i:i+7]
+                if len(window) < 7: window = window + "N"*(7-len(window))
+                comp_attr.append(score_pos(window, rc))
+
+        def norm(a):
+            if not a: return []
+            mx = max(1, max(a))
+            return [x / mx for x in a]
+
+        return jsonify({
+            "target_attrib": norm(targ_attr),
+            "competitor_attrib": norm(comp_attr) if comp else []
+        }), 200
+    except Exception:
+        return jsonify({"target_attrib": [], "competitor_attrib": []}), 200
 
 # =========================
 # CSV + Heatmap Download Endpoints

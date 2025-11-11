@@ -648,3 +648,55 @@ body.mirna-page main .mirna-container{
 
 /* Make row action buttons roomy */
 .seed-btn,.heatmap-btn,.btn-action{ min-width:140px; min-height:40px; }
+
+/* Center the friendly notices */
+.info-note,
+.reload-warning {
+  text-align: center;
+  margin: 10px auto;
+}
+
+/* Make the results box breathe and use up to 90% width on wide screens */
+#results-container {
+  max-width: 90vw;
+}
+
+/* Perfectly level analysis controls */
+#analysis-controls.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 16px;
+  align-items: center;
+}
+#analysis-controls .ctrl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#analysis-controls input[type="number"],
+#analysis-controls select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  min-height: 40px;
+}
+#analysis-controls input[type="checkbox"] {
+  transform: translateY(1px);
+}
+
+/* Two-row actions in table cells */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 8px;
+  align-items: stretch;
+  justify-items: stretch;
+}
+.action-grid .btn-action {
+  min-width: 0;       /* let grid control width */
+  width: 100%;
+  min-height: 36px;
+  white-space: nowrap;
+  border-radius: 10px;
+}
