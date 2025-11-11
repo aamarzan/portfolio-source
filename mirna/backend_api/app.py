@@ -179,7 +179,7 @@ def issue_nonce():
 
 def _nonce_protected(endpoint_name: Optional[str]) -> bool:
     protected = {
-        'start_prediction', 'seed_scan', 'explain',
+        'start_prediction', 'seed_scan', 'explain', 'explain_fast',
         'download_all_csv', 'download_single_csv',
         'download_heatmap_png',
         'download_seeds_all', 'download_seeds_one',
@@ -298,7 +298,8 @@ try:
     }
     model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')
     scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
-    model = tf.keras.models.load_model(model_path, custom_objects=custom_objects)
+    # inference-only: avoid recompiling with custom losses
+    model = tf.keras.models.load_model(model_path, custom_objects=custom_objects, compile=False)
     scaler = joblib.load(scaler_path)
 
     PROVENANCE["model_path"] = os.path.abspath(model_path)
@@ -383,6 +384,25 @@ def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
     dg  = float(pdata.get('dg', 0.0))
     cons= float(pdata.get('conservation', 0.0))
     return [gc, dg, cons]
+
+
+# =========================
+# Keras input-name normalization (strip ':0')
+# =========================
+
+def _keras_inputs_map() -> Dict[str, Tuple[Optional[int], ...]]:
+    """Return {clean_input_name: shape_tuple} stripping TF tensor suffixes."""
+    if model is None:
+        return {}
+    m: Dict[str, Tuple[Optional[int], ...]] = {}
+    for inp in model.inputs:
+        nm = inp.name.split(':')[0]
+        dims = tuple(int(d) if d is not None else None for d in inp.shape)
+        m[nm] = dims
+    return m
+
+def _has_input(name: str) -> bool:
+    return name in _keras_inputs_map()
 
 
 # =========================
@@ -906,7 +926,6 @@ def start_prediction():
     return jsonify({"job_id": job_id, "status": "started"})
 
 
-
 def process_job(job_id: str,
                 primary_records: List[Tuple[str,str]],
                 targets_list: List[Tuple[str,str]],
@@ -934,11 +953,17 @@ def process_job(job_id: str,
             return data
 
         # Static model input shapes (and which inputs exist)
-        model_inputs = {inp.name: inp.shape for inp in model.inputs}
-        max_primary_len    = int(model_inputs.get('primary_sequence_input', [None, 120])[1])
-        max_target_len     = int(model_inputs.get('target_sequence_input', [None, 200])[1])
-        max_competitor_len = int(model_inputs.get('competitor_sequence_input', [None, 200])[1])
+        model_inputs = _keras_inputs_map()
+        max_primary_len    = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
+        max_target_len     = int((model_inputs.get('target_sequence_input')  or (None,200))[1] or 200)
+        max_competitor_len = int((model_inputs.get('competitor_sequence_input') or (None,200))[1] or 200)
         empty_comp_enc     = one_hot_encode_sequence('', max_competitor_len)
+
+        has_comp_input = 'competitor_sequence_input' in model_inputs
+        has_num_input  = 'numerical_features_input' in model_inputs
+        has_p_struct   = 'primary_structure_input' in model_inputs
+        has_t_struct   = 'target_structure_input' in model_inputs
+        has_c_struct   = 'competitor_structure_input' in model_inputs
 
         jobs[job_id]["model_input_shapes"] = {"Lp": max_primary_len, "Lt": max_target_len, "Lc": max_competitor_len}
 
@@ -961,12 +986,12 @@ def process_job(job_id: str,
                     return
 
             comp_seq_enc = None
-            if competitor_processed.get('sequence', '').strip():
+            if competitor_processed.get('sequence', '').strip() and has_comp_input:
                 comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
 
             # Competitor structural input (if expected)
             competitor_struct_input = None
-            if 'competitor_structure_input' in model_inputs:
+            if has_c_struct:
                 vec = None
                 if competitor_3d_path:
                     vec = extract_structure_vector_from_file(competitor_3d_path, max_competitor_len)
@@ -994,7 +1019,7 @@ def process_job(job_id: str,
 
                 # Target structural input (if expected)
                 target_struct_input = None
-                if 'target_structure_input' in model_inputs:
+                if has_t_struct:
                     vec = None
                     if target_3d_path:
                         vec = extract_structure_vector_from_file(target_3d_path, max_target_len)
@@ -1018,10 +1043,11 @@ def process_job(job_id: str,
 
                         trimmed_sequences.append(seq)
                         prim_seq_list.append(one_hot_encode_sequence(seq, max_primary_len))
-                        num_feat_list.append(numerical_features_from_processed_json(pdata))
+                        if has_num_input:
+                            num_feat_list.append(numerical_features_from_processed_json(pdata))
 
                         # Build primary structure vector (if model expects it)
-                        if 'primary_structure_input' in model_inputs:
+                        if has_p_struct:
                             sp = structure_vector_from_processed_json(pdata.get('structure_vector','[]'), max_primary_len)
                             prim_struct_list.append(sp)
 
@@ -1036,7 +1062,7 @@ def process_job(job_id: str,
                                 return
 
                     # Encode/scale numeric features
-                    if 'numerical_features_input' in model_inputs:
+                    if has_num_input:
                         try:
                             if hasattr(scaler, 'feature_names_in_'):
                                 df_features = pd.DataFrame(num_feat_list, columns=scaler.feature_names_in_)
@@ -1055,29 +1081,32 @@ def process_job(job_id: str,
                         'primary_sequence_input': pri_seq_enc,
                         'target_sequence_input':  np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0),
                     }
-                    if 'numerical_features_input' in model_inputs:
+                    if has_num_input:
                         common_inputs['numerical_features_input'] = scaled_num
-                    if 'primary_structure_input' in model_inputs:
+                    if has_p_struct:
                         pri_struct = np.stack(prim_struct_list, axis=0).astype(np.float32) if prim_struct_list else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
                         common_inputs['primary_structure_input'] = pri_struct
-                    if 'target_structure_input' in model_inputs and target_struct_input is not None:
+                    if has_t_struct and target_struct_input is not None:
                         common_inputs['target_structure_input'] = np.repeat(target_struct_input[np.newaxis, ...], batch_size, axis=0)
-                    if 'competitor_structure_input' in model_inputs and competitor_struct_input is not None:
+                    if has_c_struct and competitor_struct_input is not None:
                         common_inputs['competitor_structure_input'] = np.repeat(competitor_struct_input[np.newaxis, ...], batch_size, axis=0)
 
-                    # Prepare competitor present/absent inputs
-                    with_comp = dict(common_inputs)
-                    if comp_seq_enc is not None:
-                        with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
+                    if has_comp_input:
+                        with_comp = dict(common_inputs)
+                        if comp_seq_enc is not None:
+                            with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
+                        else:
+                            with_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+
+                        no_comp = dict(common_inputs)
+                        no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
+
+                        preds_with = model.predict(with_comp, verbose=0).reshape(-1).astype(np.float64)
+                        preds_no   = model.predict(no_comp,   verbose=0).reshape(-1).astype(np.float64)
                     else:
-                        with_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
-
-                    no_comp = dict(common_inputs)
-                    no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
-
-                    # Predict
-                    preds_with = model.predict(with_comp, verbose=0).reshape(-1).astype(np.float64)
-                    preds_no   = model.predict(no_comp,   verbose=0).reshape(-1).astype(np.float64)
+                        # Model without competitor input: single prediction acts as both
+                        preds_no = model.predict(common_inputs, verbose=0).reshape(-1).astype(np.float64)
+                        preds_with = preds_no.copy()
 
                     # Accumulate results (+ seed details)
                     for row_idx, ((pri_id, _), p_base, p_with) in enumerate(zip(batch_records, preds_no, preds_with)):
@@ -1188,7 +1217,7 @@ def download_results(job_id):
     # Prefer prewritten file for speed (avoids heavy in-request serialization)
     results_path = job.get("results_json_path")
     if results_path and os.path.exists(results_path):
-        return send_file(results_path, mimetype="application/json", as_attachment=False, max_age=0)
+        return send_file(results_path, mimetype="application/json", as_attachment=False)
 
     # Fallback: serialize on the fly (still efficient via _to_py and gzip)
     try:
@@ -1204,8 +1233,12 @@ def download_results(job_id):
     payload = {"results": job["results"]}
     return Response(json.dumps(payload, default=_to_py, ensure_ascii=False, separators=(',', ':')), mimetype="application/json")
 
-@app.post("/explain")
-def explain_proxy():
+
+# -------------------------
+# Quick heuristic visual map (renamed to /explain_fast to avoid route collision)
+# -------------------------
+@app.post("/explain_fast")
+def explain_fast():
     try:
         data = request.get_json(force=True) or {}
         mirna = (data.get("mirna_seq") or "").upper().replace("T","U")
@@ -1252,6 +1285,7 @@ def explain_proxy():
         }), 200
     except Exception:
         return jsonify({"target_attrib": [], "competitor_attrib": []}), 200
+
 
 # =========================
 # CSV + Heatmap Download Endpoints
@@ -1426,31 +1460,39 @@ def download_seeds_one(job_id, interaction_id):
 
 
 def _build_ig_feed(pseq: str, tseq: str, cseq: str,
-                   Lp: int, Lt: int, Lc: int, include_struct: Dict[str, bool]) -> Dict[str, np.ndarray]:
-    # sequences
-    pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...]
-    tgt_enc = one_hot_encode_sequence(tseq, Lt)[None, ...]
-    cmp_enc = one_hot_encode_sequence(cseq or '', Lc)[None, ...]
+                   Lp: int, Lt: int, Lc: int,
+                   include_struct: Dict[str, bool],
+                   model_inputs: Optional[Dict[str, Tuple[Optional[int], ...]]] = None) -> Dict[str, np.ndarray]:
+    model_inputs = model_inputs or _keras_inputs_map()
 
-    # numeric features (safe baseline)
-    if hasattr(scaler, 'feature_names_in_'):
-        z = np.zeros((1, len(scaler.feature_names_in_)), dtype=np.float32)
-        scaled_num = scaler.transform(z)
-    else:
-        scaled_num = scaler.transform([[0.5, 0.0, 0.0]])
+    # sequences (always present in this model family)
+    pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...].astype(np.float32)
+    tgt_enc = one_hot_encode_sequence(tseq, Lt)[None, ...].astype(np.float32)
 
-    feed = {
-        'primary_sequence_input': pri_enc.astype(np.float32),
-        'target_sequence_input':  tgt_enc.astype(np.float32),
-        'competitor_sequence_input': cmp_enc.astype(np.float32),
-        'numerical_features_input': scaled_num.astype(np.float32)
+    feed: Dict[str, np.ndarray] = {
+        'primary_sequence_input': pri_enc,
+        'target_sequence_input':  tgt_enc,
     }
 
+    if 'competitor_sequence_input' in model_inputs:
+        cmp_enc = one_hot_encode_sequence(cseq or '', Lc)[None, ...].astype(np.float32)
+        feed['competitor_sequence_input'] = cmp_enc
+
+    # numeric features if present
+    if 'numerical_features_input' in model_inputs:
+        if hasattr(scaler, 'feature_names_in_'):
+            z = np.zeros((1, len(scaler.feature_names_in_)), dtype=np.float32)
+            scaled_num = scaler.transform(z).astype(np.float32)
+        else:
+            scaled_num = scaler.transform([[0.5, 0.0, 0.0]]).astype(np.float32)
+        feed['numerical_features_input'] = scaled_num
+
+    # structure channels if expected
     if include_struct.get('primary_structure_input', False):
         feed['primary_structure_input'] = np.zeros((1, Lp, 1), dtype=np.float32)
     if include_struct.get('target_structure_input', False):
         feed['target_structure_input'] = np.zeros((1, Lt, 1), dtype=np.float32)
-    if include_struct.get('competitor_structure_input', False):
+    if include_struct.get('competitor_structure_input', False) and 'competitor_sequence_input' in model_inputs:
         feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
 
     return feed
@@ -1484,21 +1526,24 @@ def download_heatmap_png(job_id, interaction_id):
 
     shapes = job.get("model_input_shapes", {})
     Lp, Lt, Lc = int(shapes.get('Lp', 120)), int(shapes.get('Lt', 200)), int(shapes.get('Lc', 200))
+
+    model_inputs = _keras_inputs_map()
     include_struct = {
-        'primary_structure_input': 'primary_structure_input' in {i.name for i in model.inputs},
-        'target_structure_input': 'target_structure_input' in {i.name for i in model.inputs},
-        'competitor_structure_input': 'competitor_structure_input' in {i.name for i in model.inputs},
+        'primary_structure_input': 'primary_structure_input' in model_inputs,
+        'target_structure_input': 'target_structure_input' in model_inputs,
+        'competitor_structure_input': 'competitor_structure_input' in model_inputs,
     }
 
     # Build feed & compute data
     if mode.startswith('ig'):
-        # Integrated Gradients heatmap over model inputs
-        feed = _build_ig_feed(pseq, tseq, cseq, Lp, Lt, Lc, include_struct)
+        feed = _build_ig_feed(pseq, tseq, cseq, Lp, Lt, Lc, include_struct, model_inputs)
         if mode == 'ig_target':
             values = integrated_gradients(model, feed, 'target_sequence_input', steps=steps)
             title = f"IG (target) — {row.get('mirna_id')} vs {row.get('target_id')}"
             L = Lt
         elif mode == 'ig_competitor':
+            if 'competitor_sequence_input' not in model_inputs:
+                return jsonify({"error": "Model does not include a competitor input."}), 400
             values = integrated_gradients(model, feed, 'competitor_sequence_input', steps=steps)
             title = f"IG (competitor) — {row.get('mirna_id')} vs {row.get('competitor_id','')}"
             L = Lc
@@ -1911,10 +1956,16 @@ def explain():
             return jsonify({'error': 'Provide mirna_seq and target_seq'}), 400
 
         # Shapes & inputs that model expects
-        model_inputs = {inp.name: inp.shape for inp in model.inputs}
-        Lp = int(model_inputs.get('primary_sequence_input', [None, 120])[1])
-        Lt = int(model_inputs.get('target_sequence_input', [None, 200])[1])
-        Lc = int(model_inputs.get('competitor_sequence_input', [None, 200])[1])
+        model_inputs = _keras_inputs_map()
+        Lp = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
+        Lt = int((model_inputs.get('target_sequence_input')  or (None,200))[1] or 200)
+        Lc = int((model_inputs.get('competitor_sequence_input') or (None,200))[1] or 200)
+
+        has_comp_input = 'competitor_sequence_input' in model_inputs
+        has_num_input  = 'numerical_features_input' in model_inputs
+        has_p_struct   = 'primary_structure_input' in model_inputs
+        has_t_struct   = 'target_structure_input' in model_inputs
+        has_c_struct   = 'competitor_structure_input' in model_inputs
 
         # Process through your processor to get features & structure vectors
         def ensure_dict(data):
@@ -1939,34 +1990,36 @@ def explain():
             pseq = choose_mature_window(pseq, window=MATURE_TRIM_WINDOW)
 
         # Encode sequences
-        pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...]
-        tgt_enc = one_hot_encode_sequence(tdat.get('sequence',''), Lt)[None, ...]
-        if competitor:
-            cmp_enc = one_hot_encode_sequence(cdat.get('sequence',''), Lc)[None, ...]
-        else:
-            cmp_enc = one_hot_encode_sequence('', Lc)[None, ...]
+        pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...].astype(np.float32)
+        tgt_enc = one_hot_encode_sequence(tdat.get('sequence',''), Lt)[None, ...].astype(np.float32)
+        if has_comp_input:
+            if competitor:
+                cmp_enc = one_hot_encode_sequence(cdat.get('sequence',''), Lc)[None, ...].astype(np.float32)
+            else:
+                cmp_enc = one_hot_encode_sequence('', Lc)[None, ...].astype(np.float32)
 
         # Numeric features (scaled) – using primary features for consistency
-        num_list = [numerical_features_from_processed_json(pdat)]
-        if hasattr(scaler, 'feature_names_in_'):
-            df_features = pd.DataFrame(num_list, columns=scaler.feature_names_in_)
-            scaled_num = scaler.transform(df_features)
-        else:
-            scaled_num = scaler.transform(num_list)
-
-        feed = {
-            'primary_sequence_input': pri_enc.astype(np.float32),
-            'target_sequence_input':  tgt_enc.astype(np.float32),
-            'competitor_sequence_input': cmp_enc.astype(np.float32),
-            'numerical_features_input': scaled_num.astype(np.float32)
+        feed: Dict[str, np.ndarray] = {
+            'primary_sequence_input': pri_enc,
+            'target_sequence_input':  tgt_enc,
         }
+        if has_comp_input:
+            feed['competitor_sequence_input'] = cmp_enc
+        if has_num_input:
+            num_list = [numerical_features_from_processed_json(pdat)]
+            if hasattr(scaler, 'feature_names_in_'):
+                df_features = pd.DataFrame(num_list, columns=scaler.feature_names_in_)
+                scaled_num = scaler.transform(df_features)
+            else:
+                scaled_num = scaler.transform(num_list)
+            feed['numerical_features_input'] = scaled_num.astype(np.float32)
 
-        # Structure vectors (zeros fallback)
-        if 'primary_structure_input' in model_inputs:
+        # Structure vectors (zeros fallback if missing)
+        if has_p_struct:
             feed['primary_structure_input'] = structure_vector_from_processed_json(pdat.get('structure_vector','[]'), Lp)[None, ...].astype(np.float32)
-        if 'target_structure_input' in model_inputs:
+        if has_t_struct:
             feed['target_structure_input'] = structure_vector_from_processed_json(tdat.get('structure_vector','[]'), Lt)[None, ...].astype(np.float32)
-        if 'competitor_structure_input' in model_inputs:
+        if has_c_struct and has_comp_input:
             if competitor:
                 feed['competitor_structure_input'] = structure_vector_from_processed_json(cdat.get('structure_vector','[]'), Lc)[None, ...].astype(np.float32)
             else:
@@ -1974,7 +2027,7 @@ def explain():
 
         # Compute IG for target (+ competitor if present)
         tgt_attr = integrated_gradients(model, feed, 'target_sequence_input', steps=50)
-        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if competitor else None
+        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if (has_comp_input and competitor) else None
 
         return jsonify({
             'target_attrib': tgt_attr,
@@ -1983,6 +2036,21 @@ def explain():
     except Exception as e:
         logging.exception(f"/explain error: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+# =========================
+# Health check (quick diagnostics)
+# =========================
+@app.get("/healthz")
+def healthz():
+    ok = (model is not None) and (scaler is not None)
+    return jsonify({
+        "ok": ok,
+        "model_loaded": model is not None,
+        "scaler_loaded": scaler is not None,
+        "provenance": PROVENANCE,
+        "active_jobs": len(jobs)
+    }), (200 if ok else 503)
 
 
 # =========================

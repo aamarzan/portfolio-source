@@ -52,7 +52,7 @@ const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
 const API_URL        = `${BASE_URL}/predict`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
-const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON
+const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON (unprotected)
 const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
 const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
 const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
@@ -347,15 +347,16 @@ async function loadConfig(){
 
 // =====================================================
 // Nonce (optional; graceful when disabled on server)
+// Each call fetches a fresh nonce when CONFIG.use_nonce = true
 // =====================================================
 async function getNonceOrKeyHeaders() {
   const h = {};
   try {
     if (CONFIG && CONFIG.use_nonce) {
-      const r = await fetch(`${BASE_URL}/nonce`, { method: 'GET' });
+      const r = await fetch(NONCE_URL, { method: 'GET', cache: 'no-store' });
       if (r.ok) {
         const j = await r.json();
-        if (j && j.nonce) h['X-Nonce'] = j.nonce;   // correct header for your server
+        if (j && j.nonce) h['X-Nonce'] = j.nonce;
       } else {
         console.warn('Nonce fetch failed:', r.status);
       }
@@ -367,7 +368,6 @@ async function getNonceOrKeyHeaders() {
   }
   return h;
 }
-
 
 // =====================================================
 // Safe event binding (prevent duplicates)
@@ -387,6 +387,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   injectPremiumStyles();
   await loadConfig();
   ensureModal(); // make sure modal exists early
+  syncStickyOffset(); // keep sticky headers perfect
+  window.addEventListener('resize', syncStickyOffset, { passive:true });
 
   const loader = $('loader');
   if(loader){
@@ -407,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Make primary action buttons look premium if present
-  ['load-sample-btn','clear-btn','seed-scan-global-btn','explain-global-btn'].forEach(id=>{
+  ['load-sample-btn','clear-btn','clear-inputs-btn','seed-scan-global-btn','explain-global-btn'].forEach(id=>{
     const el = $(id);
     if(el) el.classList.add('btn-premium');
   });
@@ -863,7 +865,7 @@ function displayResults(results){
   appendHTML(container, table);
   makeTableSortable('results-table');
 
-  // Keep range/tolerant filter chips (your choice) — unchanged
+  // Keep range/tolerant filter chips
   injectResultFilters();
 
   // Delegate click handlers for action buttons
@@ -1574,6 +1576,16 @@ function openModal(title, html, toolbarHTML=''){
 function closeModal(){
   const modal = $('analysis-modal');
   if(modal) modal.style.display = 'none';
+}
+
+// =====================================================
+// Sticky header offset sync (matches CSS --sticky-offset-main)
+// =====================================================
+function syncStickyOffset(){
+  // Try common site header; fall back to 96px (CSS default)
+  const header = document.querySelector('header.site-header, header#site-header, .site-header');
+  const h = header ? Math.max(64, Math.round(header.getBoundingClientRect().height)) : 96;
+  document.documentElement.style.setProperty('--sticky-offset-main', `${h}px`);
 }
 
 // =====================================================

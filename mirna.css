@@ -2,14 +2,18 @@
    miRNA Page Styles (Scoped)
    =========================== */
 
-/* Color fallbacks (safe if CSS vars exist globally) */
+/* Color & sizing tokens (safe if global vars exist) */
 :root{
   --button-default-blue: #0d47a1;
   --accent-color: #20a4b9;
+  --ring: #1e5a9c;
 
   /* Sticky offsets */
-  --sticky-offset-main: 96px; /* main page results */
-  --sticky-offset-modal: 0px; /* tables inside modal (title/tools live above) */
+  --sticky-offset-main: 96px;  /* main page results */
+  --sticky-offset-modal: 0px;  /* tables inside modal (title/tools live above) */
+
+  /* Type scale */
+  --ui-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
 }
 
 /* Background animation for miRNA page only */
@@ -19,12 +23,18 @@ body.mirna-page {
   background-size: 400% 400%;
   animation: subtleSky 60s ease infinite;
   line-height: 1.6;
+  font-family: var(--ui-font);
 }
-
 @keyframes subtleSky {
   0% { background-position: 0% 0%; }
   50% { background-position: 100% 100%; }
   100% { background-position: 0% 0%; }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce){
+  body.mirna-page { animation: none !important; }
+  .btn-premium, .btn-action, .tab-btn { transition: none !important; }
 }
 
 /* Main content container (inside <main>) */
@@ -38,10 +48,9 @@ body.mirna-page main .mirna-container {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
   animation: fadeIn 1.2s ease forwards;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Page title & description */
@@ -74,28 +83,36 @@ body.mirna-page .tabs {
   max-width: 100%;
   box-sizing: border-box;
 }
-
 body.mirna-page .tab-btn {
   flex: 0 0 auto;
   min-width: 200px;
-  padding: 12px;
+  padding: 12px 16px;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 10px;
   background: #fff;
   color: var(--button-default-blue);
   border: 1px solid var(--button-default-blue);
-  font-weight: 600;
-  transition: background-color 0.3s, color 0.3s, transform .15s ease;
+  font-weight: 700;
+  transition: background-color 0.3s, color 0.3s, transform .15s ease, box-shadow .2s ease;
+  line-height: 1.2;
 }
 body.mirna-page .tab-btn:hover {
   background-color: var(--button-default-blue);
   color: #fff;
+  box-shadow: 0 6px 16px rgba(13,71,161,.18);
 }
 body.mirna-page .tab-btn.active {
   background-color: var(--button-default-blue);
   color: #fff;
   border-bottom: none;
   transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(13,71,161,.22);
+}
+/* Keyboard focus */
+body.mirna-page .tab-btn:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 
 /* On smaller screens, stack buttons vertically */
@@ -112,9 +129,7 @@ body.mirna-page .card {
   padding: 20px;
   animation: fadeIn 0.8s ease;
 }
-body.mirna-page .card.active {
-  display: block;
-}
+body.mirna-page .card.active { display: block; }
 
 /* =================
    Inputs & Fields
@@ -122,37 +137,38 @@ body.mirna-page .card.active {
 body.mirna-page label {
   display: block;
   margin-bottom: 6px;
-  font-weight: 600;
+  font-weight: 700;
   color: #333;
 }
 body.mirna-page textarea,
 body.mirna-page input[type="number"],
 body.mirna-page input[type="file"] {
   width: 100%;
-  padding: 14px;
+  padding: 14px 16px;
   border-radius: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #ccd6e0;
   outline: none;
-  font-family: 'Courier New', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 14px;
   margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  transition: all 0.4s ease;
+  background: rgba(255, 255, 255, 0.75);
+  transition: all 0.2s ease;
 }
 body.mirna-page textarea:focus,
 body.mirna-page input:focus {
-  box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent-color) 35%, transparent);
   border-color: #2196f3;
 }
-textarea.sequence-input {
-  height: 200px;
-  resize: vertical;
-}
+textarea.sequence-input { height: 200px; resize: vertical; }
 
 /* ============================
    Premium Action Button Sizing
    ============================ */
 .btn-premium{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
   padding: 12px 18px;
   min-height: 46px;
   min-width: 140px;
@@ -171,6 +187,10 @@ textarea.sequence-input {
   box-shadow: 0 10px 24px rgba(17,24,39,.09);
   background: #eef3fb;
 }
+.btn-premium:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
+}
 
 /* Base per-row buttons */
 .btn-action{
@@ -182,14 +202,17 @@ textarea.sequence-input {
   min-height: 40px;
   padding: 10px 16px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
   border: 1px solid #d8dee9;
   background: linear-gradient(180deg,#fff,#f8fafc);
   transition: transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+  line-height: 1.15;
 }
-.btn-action[disabled]{
-  filter: grayscale(0.15) opacity(0.7);
-  cursor: not-allowed;
+.btn-action[disabled]{ filter: grayscale(0.15) opacity(0.7); cursor: not-allowed; }
+.btn-action:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
+  border-radius: 12px;
 }
 
 /* STRONGER hover/press for Row CSV + 3D buttons (no HTML edit required) */
@@ -230,7 +253,7 @@ body.mirna-page main .mirna-container button[type="submit"] {
   background-size: 400% 400%;
   animation: blackBlueShift 20s ease infinite;
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 16px;
   border: none;
   border-radius: 12px;
@@ -246,16 +269,26 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
+body.mirna-page main .mirna-container button[type="submit"]:focus-visible{
+  outline: 3px solid color-mix(in oklab, #0d47a1 70%, white);
+  outline-offset: 3px;
+}
 
-/* Load Sample / Clear Inputs → bigger, premium look */
+/* ======= Bigger, Premium Utility Buttons ======= */
+/* Load Sample / Clear Inputs */
 #load-sample-btn,
 #clear-inputs-btn {
-  padding: 12px 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding: 12px 20px;         /* more breathing room */
   border-radius: 12px;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.2;
   min-height: 46px;
+  min-width: 164px;           /* wider to avoid text hugging the edge */
   border: 1px solid #d0d7de;
   background: #f9fbfe;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -264,19 +297,27 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   cursor: pointer;
 }
 #load-sample-btn:hover,
-#clear-inputs-btn:hover {
-  background: #eef3fb;
+#clear-inputs-btn:hover { background: #eef3fb; }
+#load-sample-btn:focus-visible,
+#clear-inputs-btn:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
 }
 
 /* Per-row analysis buttons (Seed Sites / Heatmap) — bigger boxes */
 .seed-btn,
 .heatmap-btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding: 12px 18px;       /* ↑ padding so text never touches edge */
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 800;
   line-height: 1.1;
-  min-height: 40px;
+  min-height: 44px;         /* taller for premium feel */
+  min-width: 150px;         /* wider for readability */
   border: 1px solid #d0d7de;
   background: #f7f9fc;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -285,6 +326,10 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   cursor: pointer;
 }
 .seed-btn:hover, .heatmap-btn:hover { background: #eef3fb; }
+.seed-btn:focus-visible, .heatmap-btn:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
+}
 
 /* Copy Results accent button */
 #copy-results-btn {
@@ -292,15 +337,19 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   color: #000000;
   padding: 10px 18px;
   font-size: .9rem;
-  border-radius: 6px;
-  min-width: 140px;
-  font-weight: 600;
+  border-radius: 8px;
+  min-width: 160px;
+  font-weight: 800;
   border: none;
   cursor: pointer;
 }
 #copy-results-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+#copy-results-btn:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--accent-color) 70%, white);
+  outline-offset: 2px;
 }
 
 /* Generic accent button utility */
@@ -309,11 +358,16 @@ body.mirna-page main .mirna-container button[type="submit"]:hover {
   border:1px solid #1e5a9c;
   background:#1e5a9c;
   color:#fff;
-  padding:6px 10px;
-  border-radius:6px;
+  padding:8px 12px;
+  border-radius:8px;
   cursor:pointer;
+  font-weight:700;
 }
 .btn-accent:hover{ filter:brightness(0.95); }
+.btn-accent:focus-visible{
+  outline: 3px solid color-mix(in oklab, #1e5a9c 70%, white);
+  outline-offset: 2px;
+}
 
 /* Chips (badges) */
 .chip{
@@ -396,8 +450,9 @@ body.mirna-page #loader {
   color: #5a4a00;
   padding: 8px 12px;
   font-size: 0.92em;
-  font-weight: 500;
+  font-weight: 600;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  text-align: center;
 }
 
 /* Sticky analysis controls bar (injected by JS) */
@@ -413,15 +468,24 @@ body.mirna-page #loader {
   border-radius:8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
+#analysis-controls { max-width: 90vw; margin: 0 auto 10px; }
+#analysis-controls .ctrl-wrap{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px;
+}
+#analysis-controls .ctrl{ display:flex; flex-direction:column; align-items:center; min-width:160px; }
+#analysis-controls .ctrl > label{ font-weight:800; text-align:center; margin-bottom:6px; }
+#analysis-controls input, #analysis-controls select{
+  min-height:42px; padding:8px 10px; border-radius:10px; border:1px solid #d0d7de;
+}
+#analysis-controls input[type="checkbox"] { transform: translateY(1px); }
 
 /* Results container quick polish */
-#results-container{ overflow:auto; }
+#results-container{ overflow:auto; max-width: 90vw; }
 
 /* =================
    Results Table
    ================= */
 body.mirna-page #results-area { margin-top: 30px; }
-
 body.mirna-page table {
   width: 100%;
   border-collapse: separate;
@@ -431,6 +495,7 @@ body.mirna-page table {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  table-layout: auto;
 }
 
 /* Sticky header for MAIN results table */
@@ -462,7 +527,7 @@ body.mirna-page th, body.mirna-page td {
 body.mirna-page thead {
   background: #e3f2fd;
   color:#0b3d7a;
-  font-weight:700;
+  font-weight:800;
   letter-spacing:.2px;
 }
 body.mirna-page tbody tr:nth-child(even) { background: #f9f9f9; }
@@ -492,7 +557,7 @@ table#results-table th:not(.asc)::after{
   color:#bbb;
 }
 
-/* Download button (CSV) */
+/* Download (CSV) */
 body.mirna-page #download-btn {
   margin-top: 8px;
   padding: 12px 16px;
@@ -500,13 +565,17 @@ body.mirna-page #download-btn {
   border: none;
   border-radius: 10px;
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   transition: all 0.3s ease;
   cursor: pointer;
 }
 body.mirna-page #download-btn:hover {
   background: #1565c0;
   transform: translateY(-2px);
+}
+body.mirna-page #download-btn:focus-visible{
+  outline: 3px solid color-mix(in oklab, #1565c0 70%, white);
+  outline-offset: 2px;
 }
 
 /* ==========================
@@ -526,11 +595,10 @@ body.mirna-page #download-btn:hover {
   border-radius:999px;
   background:#eef5ff;
   border:1px solid #cfe0ff;
-  font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size:.88em;
   color:#163b66;
 }
-
 .heatmap-wrap{
   margin:10px 0;
   padding:10px;
@@ -551,7 +619,7 @@ body.mirna-page #download-btn:hover {
   image-rendering: crisp-edges;
 }
 
-/* Legend + table styling for the dynamic affinity legend */
+/* Dynamic affinity legend */
 #affinity-legend,
 .affinity-legend{ margin-bottom:10px; }
 #affinity-legend h4,
@@ -565,10 +633,10 @@ body.mirna-page #download-btn:hover {
   border:1px solid #e5e9f2; padding:6px 8px; text-align:left; font-size:.94em;
 }
 
-/* Collapsible legend toggle (matches <details class="legend-toggle"> in HTML) */
+/* Collapsible legend toggle */
 details.legend-toggle summary{
   cursor:pointer;
-  font-weight:600;
+  font-weight:800;
   color:#163b66;
 }
 
@@ -585,11 +653,16 @@ details.legend-toggle summary{
   border:1px solid #e2e8f0;
   background:#f8fafc;
   color:#111;
-  padding:6px 10px;
-  border-radius:8px;
+  padding:8px 12px;
+  border-radius:10px;
   cursor:pointer;
+  font-weight:700;
 }
 #modal-close:hover{ background:#eef3fb; }
+#modal-close:focus-visible{
+  outline: 3px solid color-mix(in oklab, var(--ring) 70%, white);
+  outline-offset: 2px;
+}
 
 /* ========== 3D Viewer (future proof) */
 .viewer3d-wrap{ border:1px solid #e5e9f2; border-radius:8px; overflow:hidden; }
@@ -615,15 +688,8 @@ body.mirna-page #main-footer .container {
 
 /* ==========================
    OPTIONAL: Filter mechanics
-   ==========================
-   When JS toggles table classes or row data-attributes,
-   these selectors “do the hiding” with no HTML change.
-*/
-
-/* Only show rows that come from a sliced ID (e.g., TP53:90-150) */
+   ========================== */
 #results-table.filter-range-only tbody tr[data-has-range="false"]{ display:none; }
-
-/* Mark/keep only tolerant or exact header matches */
 #results-table.filter-match-tolerant tbody tr[data-match="exact"]{ display:none; }
 #results-table.filter-match-exact tbody tr[data-match="tolerant"]{ display:none; }
 
@@ -637,42 +703,14 @@ body.mirna-page main .mirna-container{
   max-width: min(90vw, 1400px);
 }
 
-/* Analysis controls bar: centered & leveled */
-#analysis-controls { max-width: 90vw; margin: 0 auto 10px; }
-#analysis-controls .ctrl-wrap{
-  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px;
-}
-#analysis-controls .ctrl{ display:flex; flex-direction:column; align-items:center; min-width:160px; }
-#analysis-controls .ctrl > label{ font-weight:700; text-align:center; margin-bottom:6px; }
-#analysis-controls input, #analysis-controls select{ min-height:42px; padding:8px 10px; border-radius:10px; border:1px solid #d0d7de; }
-
-/* Make row action buttons roomy */
-.seed-btn,.heatmap-btn,.btn-action{ min-width:140px; min-height:40px; }
-
-/* Center the friendly notices */
-.info-note,
-.reload-warning {
-  text-align: center;
-  margin: 10px auto;
-}
-
-/* Make the results box breathe and use up to 90% width on wide screens */
-#results-container {
-  max-width: 90vw;
-}
-
-/* Perfectly level analysis controls */
+/* Perfectly level analysis controls grid */
 #analysis-controls.controls-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px 16px;
   align-items: center;
 }
-#analysis-controls .ctrl {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+#analysis-controls .ctrl { display: flex; align-items: center; gap: 10px; }
 #analysis-controls input[type="number"],
 #analysis-controls select {
   width: 100%;
@@ -680,9 +718,6 @@ body.mirna-page main .mirna-container{
   border: 1px solid #d8dee9;
   border-radius: 8px;
   min-height: 40px;
-}
-#analysis-controls input[type="checkbox"] {
-  transform: translateY(1px);
 }
 
 /* Two-row actions in table cells */
@@ -694,9 +729,36 @@ body.mirna-page main .mirna-container{
   justify-items: stretch;
 }
 .action-grid .btn-action {
-  min-width: 0;       /* let grid control width */
+  min-width: 0;
   width: 100%;
   min-height: 36px;
   white-space: nowrap;
   border-radius: 10px;
+}
+
+/* Lightweight scrollbar polish (WebKit/Chromium) */
+#results-container::-webkit-scrollbar{ height: 10px; width: 10px; }
+#results-container::-webkit-scrollbar-thumb{
+  background: #c5d5f5; border-radius: 8px; border:2px solid #eff3fb;
+}
+#results-container::-webkit-scrollbar-track{ background:#f3f6fc; }
+
+/* Dark mode touch-up (optional) */
+@media (prefers-color-scheme: dark){
+  body.mirna-page {
+    color:#e6e6e6;
+    background: linear-gradient(135deg, #0b0f14, #102033);
+  }
+  body.mirna-page main .mirna-container{ background: rgba(22, 28, 36, 0.6); }
+  body.mirna-page table{ background:#0f1722; }
+  body.mirna-page thead{ background:#10223a; color:#dfe9ff; }
+  body.mirna-page tbody tr:nth-child(even){ background:#0b1520; }
+  body.mirna-page tbody tr:hover{ background:#0f1c2a; }
+  body.mirna-page #download-btn{ background:#1e429f; }
+  .chip, .seed-chip{ background:#152235; border-color:#1d2d45; color:#c9d8f2; }
+  #analysis-controls{ background:#0f1722cc; border-color:#213552; }
+  .btn-action{ background: linear-gradient(180deg,#0f1722,#0b1420); border-color:#23324a; color:#e3ecff; }
+  .btn-premium{ background: linear-gradient(180deg,#162132,#0f1722); color:#e8f0ff; border-color:#23324a; }
+  #load-sample-btn, #clear-inputs-btn{ background:#0f1722; color:#d7e3ff; border-color:#23324a; }
+  .seed-btn, .heatmap-btn{ background:#0f1722; color:#e8f0ff; border-color:#23324a; }
 }
