@@ -794,3 +794,51 @@ body.mirna-page main .mirna-container{
 
 /* Make the results box breathe and use up to 90% width on wide screens */
 #results-container { max-width: 90vw; }
+
+/* --- FINAL LOCK: 3×2 layout for the Analysis cell --- */
+#results-container td:has(.seed-btn){
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  grid-template-areas:
+    "seed heat rowcsv"
+    "t3d  c3d  dload";
+  gap: 12px 12px;
+  align-items: stretch;
+  justify-items: stretch;
+  font-size: 0;              /* neutralize stray text nodes */
+}
+
+#results-container td:has(.seed-btn) > *{
+  margin: 0 !important;      /* spacing controlled by grid gap */
+  min-width: 0;
+  font-size: 1rem;           /* restore font on children */
+}
+
+/* Map known buttons */
+#results-container td:has(.seed-btn) .seed-btn{ grid-area: seed !important; }
+#results-container td:has(.seed-btn) .heatmap-btn{ grid-area: heat !important; }
+#results-container td:has(.seed-btn) .row-csv-btn,
+#results-container td:has(.seed-btn) .rowcsv-btn{ grid-area: rowcsv !important; }
+#results-container td:has(.seed-btn) .t3d-btn,
+#results-container td:has(.seed-btn) .view3d-btn{ grid-area: t3d !important; }
+#results-container td:has(.seed-btn) .c3d-btn{ grid-area: c3d !important; }
+
+/* Download: handle all common variants AND a wrapper/unknown by targeting :last-child */
+#results-container td:has(.seed-btn) #download-btn,
+#results-container td:has(.seed-btn) .btn-action.download,
+#results-container td:has(.seed-btn) .download-btn,
+#results-container td:has(.seed-btn) .btn-download,
+#results-container td:has(.seed-btn) > :last-child{
+  grid-area: dload !important;
+}
+
+/* Flatten any unexpected wrappers so children become grid items */
+#results-container td:has(.seed-btn) >
+  :not(.seed-btn,.heatmap-btn,.row-csv-btn,.rowcsv-btn,.t3d-btn,.view3d-btn,.c3d-btn,
+        #download-btn,.btn-action.download,.download-btn,.btn-download){
+  display: contents !important;
+}
+
+/* Ensure the Download button doesn’t add extra vertical offset */
+body.mirna-page #download-btn{ margin-top: 0 !important; }
+
