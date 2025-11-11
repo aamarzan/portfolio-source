@@ -2,6 +2,8 @@
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
 // persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
 // progress stall detector, and a 3D viewer with plain-text guidance.
+// + 2025-11-11: multi-PDB upload (target/competitor), per-row bundle download, global “Download All”,
+//   and perfectly leveled Heatmap controls.
 
 // =====================================================
 // Global state
@@ -187,19 +189,29 @@ function injectPremiumStyles(){
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
       gap:12px;
-      align-items:center;
+      align-items:center;           /* keep labels & boxes level */
       justify-content:center;
       margin:8px 0 12px;
     }
     .controls-grid .ctrl{
       display:flex;
-      align-items:center;
+      align-items:center;           /* vertically center */
       gap:8px;
       justify-content:center;
       white-space:nowrap;
     }
-    .controls-grid .ctrl input[type="number"], .controls-grid .ctrl select{
-      padding:6px 10px;border:1px solid #d8dee9;border-radius:8px;min-height:40px;
+    .controls-grid .ctrl span{
+      font-weight:700;
+      line-height:40px;             /* match input/select line-height */
+    }
+    .controls-grid .ctrl input[type="number"],
+    .controls-grid .ctrl select{
+      padding:6px 10px;
+      border:1px solid #d8dee9;
+      border-radius:8px;
+      min-height:40px;              /* equal height */
+      height:40px;                  /* enforce equal height */
+      line-height:40px;             /* align text baseline */
     }
     .controls-grid .ctrl input[type="checkbox"]{ transform: translateY(1px); }
 
@@ -571,23 +583,27 @@ async function handleSubmit(event){
   formData.append('mature_trim', matureTrimFlag ? 'true' : 'false');
   formData.append('convert_aa_to_nt', aaConvertFlag ? 'true' : 'false');
 
-  // Optional 3D files
+  // --- Optional 3D files (multiple allowed) ---
   const mirnaFileInput = $('mirna-file');
-  if(mirnaFileInput && mirnaFileInput.files && mirnaFileInput.files.length > 0){
-    for(const f of mirnaFileInput.files){
-      if(!validateFileSize(f)){ mirnaFileInput.value=''; return; }
+  if (mirnaFileInput?.files?.length) {
+    for (const f of mirnaFileInput.files) {
+      if (!validateFileSize(f)) { mirnaFileInput.value=''; return; }
       formData.append('mirna_3d_file', f);
     }
   }
-  const targetFile = $('target-file')?.files?.[0];
-  if(targetFile){
-    if(!validateFileSize(targetFile)){ $('target-file').value=''; return; }
-    formData.append('target_3d_file', targetFile);
+  const targetFiles = $('target-file')?.files;
+  if (targetFiles?.length) {
+    for (const f of targetFiles) {
+      if (!validateFileSize(f)) { $('target-file').value=''; return; }
+      formData.append('target_3d_file', f);      // repeat key, backend loops
+    }
   }
-  const competitorFile = $('competitor-file')?.files?.[0];
-  if(competitorFile){
-    if(!validateFileSize(competitorFile)){ $('competitor-file').value=''; return; }
-    formData.append('competitor_3d_file', competitorFile);
+  const competitorFiles = $('competitor-file')?.files;
+  if (competitorFiles?.length) {
+    for (const f of competitorFiles) {
+      if (!validateFileSize(f)) { $('competitor-file').value=''; return; }
+      formData.append('competitor_3d_file', f); // repeat key, backend loops
+    }
   }
 
   try{
@@ -757,9 +773,10 @@ function displayResults(results){
   </div>
   `;
 
-  // Download + Copy buttons
+  // Download + Copy buttons  (renamed + new "Download All")
   const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-    <button id="download-all-server-csv" class="btn-premium">Download Results (server CSV)</button>
+    <button id="download-all-server-csv" class="btn-premium">Download Results (CSV)</button>
+    <button id="download-all-bundles" class="btn-premium">Download All</button>
     <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results (TSV)</button>
   </div>`;
 
@@ -784,6 +801,22 @@ function displayResults(results){
       URL.revokeObjectURL(dl);
     }catch(err){ alert('Could not download CSV.'); }
   }, 'dlAllCsvOnce');
+
+  // NEW: Download All (zip of all artifacts)
+  bindOnce($('download-all-bundles'), 'click', async () => {
+    if (!CURRENT_JOB_ID) { alert('No active job.'); return; }
+    try {
+      const headers = await getNonceOrKeyHeaders();
+      const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, { method:'GET', headers });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `mirna_job_${CURRENT_JOB_ID}_all.zip`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) { alert('Could not download all bundles.'); }
+  }, 'dlAllZipOnce');
 
   bindOnce($('copy-results-btn'), 'click', () => {
     const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
@@ -834,11 +867,12 @@ function displayResults(results){
     const tolC = cid ? (!exactKeyExists(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid) && !!lookupTolerant(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid)) : false;
     const isTol = tolT || tolC;
 
-    const seedBtn   = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
-    const heatBtn   = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
-    const csvBtn    = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
-    const t3dBtn    = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
-    const c3dBtn    = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
+    const seedBtn    = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
+    const heatBtn    = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
+    const csvBtn     = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
+    const t3dBtn     = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
+    const c3dBtn     = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
+    const bundleBtn  = `<button class="bundle-btn btn-action" data-row="${idx}">Download</button>`;
 
     // D) two-line action block; spacer centers the second row (3D buttons)
     const actionBlock = `
@@ -849,6 +883,7 @@ function displayResults(results){
         <span class="action-spacer"></span>
         ${t3dBtn}
         ${c3dBtn}
+        ${bundleBtn}
       </div>
     `;
 
@@ -890,6 +925,8 @@ function displayResults(results){
         await open3DOrExplain(item.target_id || '', 'target');
       }else if(t.classList.contains('c3d-btn')){
         await open3DOrExplain(item.competitor_id || '', 'competitor');
+      }else if(t.classList.contains('bundle-btn')){
+        await handleBundleClick(item);
       }
     }, 'resultsActions');
   }
@@ -985,7 +1022,7 @@ function injectAnalysisControls(container){
 }
 
 // =====================================================
-// CSV download helpers (server-backed for full seed details)
+// CSV & bundles
 // =====================================================
 async function handleRowCsvClick(item){
   if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
@@ -1002,6 +1039,24 @@ async function handleRowCsvClick(item){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }catch(err){ alert('Could not download row CSV.'); }
+}
+
+// Per-row bundle (zip) download
+async function handleBundleClick(item){
+  if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
+  const interactionId = item.interaction_id || null;
+  if(!interactionId){ alert('Row is missing interaction_id.'); return; }
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/${interactionId}/bundle.zip`, { method:'GET', headers });
+    if(!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `interaction_${interactionId}.zip`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(err){ alert('Could not download this interaction bundle.'); }
 }
 
 // =====================================================

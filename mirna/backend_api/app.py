@@ -12,6 +12,7 @@ import logging
 import tempfile
 import threading
 import hashlib
+import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple, List, Optional
@@ -184,7 +185,9 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
         'download_heatmap_png',
         'download_seeds_all', 'download_seeds_one',
         'get_structure_artifact', 'get_structure_mirna',
-        'get_contacts'
+        'get_contacts',
+        # NEW
+        'download_all_zip', 'download_bundle_zip'
     }
     return endpoint_name in protected
 
@@ -738,6 +741,102 @@ def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
             return idx[k]
     return None
 
+# Save possibly multiple files for the same form key
+def _save_optional_multi(fs_key: str) -> List[Tuple[str, str]]:
+    """
+    Return [(original_filename, temp_path), ...] for all uploaded under fs_key.
+    """
+    out: List[Tuple[str, str]] = []
+    files = request.files.getlist(fs_key)
+    for f in files:
+        if f and f.filename:
+            p = save_filestorage_to_temp(f)
+            out.append((f.filename, p))
+    return out
+
+
+# NEW: tolerant lookup for a structure file under artifacts indexes
+def _select_struct_path(art: Dict, kind: str, req_id: Optional[str]) -> Optional[str]:
+    """
+    kind: 'target' | 'competitor'
+    If req_id is provided, try tolerant match in per-kind index; else return default path.
+    """
+    if req_id:
+        idx_key = f"{kind}_3d_index"
+        idx = art.get(idx_key) or {}
+        val = None
+        for k in _id_variants(req_id):
+            if k in idx:
+                val = idx[k]
+                break
+        if val and os.path.exists(val):
+            return val
+    # fallback to single default
+    key = f"{kind}_3d_path"
+    p = art.get(key)
+    return p if p and os.path.exists(p) else None
+
+
+# NEW: build heatmap PNG bytes for a row (reuses IG + plotting logic)
+def _build_heatmap_bytes_for_row(job: Dict, row: Dict, mode: str = 'ig_target', steps: int = 50) -> bytes:
+    shapes = job.get("model_input_shapes", {})
+    Lp, Lt, Lc = int(shapes.get('Lp', 120)), int(shapes.get('Lt', 200)), int(shapes.get('Lc', 200))
+
+    pseq = row.get('primary_seq_used','') or ''
+    tseq = row.get('target_seq_used','') or ''
+    cseq = row.get('competitor_seq_used','') or ''
+
+    model_inputs = _keras_inputs_map()
+    include_struct = {
+        'primary_structure_input': 'primary_structure_input' in model_inputs,
+        'target_structure_input': 'target_structure_input' in model_inputs,
+        'competitor_structure_input': 'competitor_structure_input' in model_inputs,
+    }
+
+    if mode.startswith('ig'):
+        feed = _build_ig_feed(pseq, tseq, cseq, Lp, Lt, Lc, include_struct, model_inputs)
+        if mode == 'ig_target':
+            values = integrated_gradients(model, feed, 'target_sequence_input', steps=steps)
+            data = np.array(values[:Lt], dtype=np.float32)[None, :]
+            title = f"IG (target) — {row.get('mirna_id')} vs {row.get('target_id')}"
+            ytick = ['IG magnitude']
+        elif mode == 'ig_competitor':
+            if 'competitor_sequence_input' not in model_inputs or not cseq:
+                raise RuntimeError("No competitor channel/sequence available.")
+            values = integrated_gradients(model, feed, 'competitor_sequence_input', steps=steps)
+            data = np.array(values[:Lc], dtype=np.float32)[None, :]
+            title = f"IG (competitor) — {row.get('mirna_id')} vs {row.get('competitor_id','')}"
+            ytick = ['IG magnitude']
+        else:
+            raise RuntimeError("Invalid IG mode")
+    elif mode == 'seed_density':
+        hits = json.loads(row.get('seed_hits_json') or "[]")
+        L = len(tseq)
+        vec = np.zeros(L, dtype=np.float32)
+        for h in hits:
+            s = int(h['start'])-1
+            e = int(h['end'])
+            vec[s:e] += 1.0
+        if L == 0:
+            vec = np.zeros(1, dtype=np.float32)
+        data = vec[None, :]
+        title = f"Seed-hit density — {row.get('mirna_id')} on {row.get('target_id')}"
+        ytick = ['hit count']
+    else:
+        raise RuntimeError("Invalid mode")
+
+    fig, ax = plt.subplots(figsize=(max(6, data.shape[1] / 20.0), 1.8))
+    im = ax.imshow(data, aspect='auto')
+    ax.set_yticks([0]); ax.set_yticklabels(ytick)
+    ax.set_xlabel('Position'); ax.set_title(title, fontsize=10)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    buf = io.BytesIO()
+    plt.tight_layout()
+    fig.savefig(buf, format='png', dpi=200)
+    plt.close(fig)
+    buf.seek(0)
+    return buf.getvalue()
+
 
 # =========================
 # Prediction & analysis endpoints
@@ -865,18 +964,28 @@ def start_prediction():
     # Save uploaded 3D files to temp and index them
     tmp_paths_to_cleanup: List[str] = []
 
-    def _save_optional(fs_key: str) -> Optional[str]:
-        f = request.files.get(fs_key)
-        if f and f.filename:
-            p = save_filestorage_to_temp(f)
-            tmp_paths_to_cleanup.append(p)
-            return p
-        return None
+    # (a) target & competitor — multiple allowed
+    target_3d_files = _save_optional_multi('target_3d_file')
+    competitor_3d_files = _save_optional_multi('competitor_3d_file')
+    for _, p in target_3d_files + competitor_3d_files:
+        tmp_paths_to_cleanup.append(p)
 
-    target_3d_path = _save_optional('target_3d_file')
-    competitor_3d_path = _save_optional('competitor_3d_file')
+    target_3d_path = target_3d_files[0][1] if target_3d_files else None
+    competitor_3d_path = competitor_3d_files[0][1] if competitor_3d_files else None
 
-    # PATCH: index miRNA 3D files under multiple tolerant keys
+    target_3d_index: Dict[str, str] = {}
+    for fname, p in target_3d_files:
+        stem = os.path.splitext(secure_filename(fname))[0]
+        for k in _id_variants(stem):
+            target_3d_index[k] = p
+
+    competitor_3d_index: Dict[str, str] = {}
+    for fname, p in competitor_3d_files:
+        stem = os.path.splitext(secure_filename(fname))[0]
+        for k in _id_variants(stem):
+            competitor_3d_index[k] = p
+
+    # (b) miRNA — multiple (as before) with tolerant keys
     mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
     for f in mirna_3d_files:
@@ -887,6 +996,7 @@ def start_prediction():
             kind, seq = extract_seq_from_structure(p)
             for k in _id_variants(stem):
                 mirna_3d_index[k] = (kind, seq, p)
+
 
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
@@ -905,6 +1015,8 @@ def start_prediction():
         "artifacts": {
             "target_3d_path": target_3d_path,
             "competitor_3d_path": competitor_3d_path,
+            "target_3d_index": target_3d_index,
+            "competitor_3d_index": competitor_3d_index,
             "mirna_3d_index": mirna_3d_index,
             "expiry": time.time() + ARTIFACT_TTL_SECONDS
         },
@@ -1587,6 +1699,111 @@ def download_heatmap_png(job_id, interaction_id):
                      download_name=f"{interaction_id}_{mode}.png")
 
 
+# NEW: per-row bundle (CSV + seed CSV + heatmaps)
+@app.route('/download/<job_id>/<interaction_id>/bundle.zip', methods=['GET'])
+def download_bundle_zip(job_id, interaction_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    if job["status"] != "completed":
+        return jsonify({"error": "Job not completed yet"}), 400
+
+    row = next((r for r in job["results"] if r.get('interaction_id') == interaction_id), None)
+    if not row:
+        return jsonify({"error": "Invalid interaction_id"}), 404
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        # interaction CSV
+        df = pd.DataFrame([row])
+        csv_io = io.StringIO(); df.to_csv(csv_io, index=False); csv_io.seek(0)
+        zf.writestr(f"interaction_{interaction_id}.csv", csv_io.getvalue())
+
+        # seeds CSV
+        seeds = _explode_seed_hits(row, allow_gu=None, max_mm=None)
+        s_io = io.StringIO()
+        (pd.DataFrame(seeds) if seeds else pd.DataFrame(columns=[
+            "interaction_id","mirna_id","target_id","competitor_id","seed_type","start","end","seed_len","mismatches","wobble","upstream_base"
+        ])).to_csv(s_io, index=False); s_io.seek(0)
+        zf.writestr(f"seed_hits_{interaction_id}.csv", s_io.getvalue())
+
+        # heatmaps
+        try:
+            zf.writestr(f"{interaction_id}_ig_target.png", _build_heatmap_bytes_for_row(job, row, 'ig_target', steps=50))
+        except Exception:
+            pass
+        try:
+            zf.writestr(f"{interaction_id}_ig_competitor.png", _build_heatmap_bytes_for_row(job, row, 'ig_competitor', steps=50))
+        except Exception:
+            pass
+        try:
+            zf.writestr(f"{interaction_id}_seed_density.png", _build_heatmap_bytes_for_row(job, row, 'seed_density', steps=50))
+        except Exception:
+            pass
+
+    buf.seek(0)
+    send_ga_event("download_bundle_zip", {"job_id": job_id, "interaction_id": interaction_id})
+    return send_file(buf, mimetype='application/zip', as_attachment=True,
+                     download_name=f"interaction_{interaction_id}.zip")
+
+
+# NEW: job-level archive (results + seeds + provenance)
+@app.route('/download/<job_id>/all.zip', methods=['GET'])
+def download_all_zip(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    if job["status"] != "completed":
+        return jsonify({"error": "Job not completed yet"}), 400
+
+    df = _results_df(job_id)
+    if df.empty:
+        return jsonify({"error": "No results available"}), 400
+
+    # seeds for all
+    rows = []
+    for r in job["results"]:
+        rows.extend(_explode_seed_hits(r, allow_gu=None, max_mm=None))
+    seeds_df = pd.DataFrame(rows)
+
+    # results JSON (prewritten if available)
+    results_json_path = job.get("results_json_path")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        # CSVs
+        csv_all = io.StringIO(); df.to_csv(csv_all, index=False); csv_all.seek(0)
+        zf.writestr(f"mirna_results_{job_id}.csv", csv_all.getvalue())
+
+        csv_seeds = io.StringIO(); seeds_df.to_csv(csv_seeds, index=False); csv_seeds.seek(0)
+        zf.writestr(f"seed_hits_{job_id}.csv", csv_seeds.getvalue())
+
+        # JSON results
+        if results_json_path and os.path.exists(results_json_path):
+            with open(results_json_path, 'rb') as f:
+                zf.writestr("results.json", f.read())
+        else:
+            zf.writestr("results.json", json.dumps({"results": job["results"]}, default=_to_py, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+
+        # provenance
+        prov = {
+            "provenance": PROVENANCE,
+            "config": {
+                "mirna_max": MIRNA_MAX,
+                "mature_trim_enabled": MATURE_TRIM_ENABLED,
+                "mature_window": MATURE_TRIM_WINDOW,
+                "aa_convert_allowed": AA_CONVERT_ALLOWED
+            }
+        }
+        zf.writestr("provenance.json", json.dumps(prov, indent=2).encode('utf-8'))
+
+    buf.seek(0)
+    send_ga_event("download_all_zip", {"job_id": job_id})
+    return send_file(buf, mimetype='application/zip', as_attachment=True,
+                     download_name=f"mirna_job_{job_id}_all.zip")
+
+
+
 # =========================
 # Public structure artifact getters (for 3D viewer)
 # =========================
@@ -1594,6 +1811,7 @@ def download_heatmap_png(job_id, interaction_id):
 def get_structure_artifact(job_id, kind):
     """
     kind: target | competitor
+    Optional query: ?id=<FASTA header to match> (tolerant)
     """
     job = jobs.get(job_id)
     if not job:
@@ -1602,15 +1820,12 @@ def get_structure_artifact(job_id, kind):
     if time.time() > float(art.get("expiry", 0)):
         return jsonify({"error": "Artifacts expired"}), 410
 
-    path = None
-    if kind == 'target':
-        path = art.get('target_3d_path')
-    elif kind == 'competitor':
-        path = art.get('competitor_3d_path')
-    else:
+    if kind not in {'target','competitor'}:
         return jsonify({"error": "Invalid kind"}), 400
 
-    if not path or not os.path.exists(path):
+    req_id = (request.args.get('id') or '').strip() or None
+    path = _select_struct_path(art, kind, req_id)
+    if not path:
         return jsonify({"error": "No artifact available"}), 404
 
     return send_file(path, as_attachment=True, download_name=os.path.basename(path))
@@ -1813,13 +2028,41 @@ def start_janitor():
                     exp = float(art.get("expiry", 0))
                     if exp and now > exp:
                         # try cleaning files
-                        for key in ('target_3d_path','competitor_3d_path'):
+
+                        # single-path artifacts
+                        for key in ('target_3d_path', 'competitor_3d_path'):
                             p = art.get(key)
                             if p and os.path.exists(p):
                                 try:
                                     os.unlink(p)
                                 except Exception:
                                     pass
+
+                        # NEW: clean multi-indexed target/competitor files
+                        try:
+                            tidx = art.get('target_3d_index') or {}
+                            # de-dup paths in case multiple keys point to same file
+                            for p in set(tidx.values()):
+                                if p and os.path.exists(p):
+                                    try:
+                                        os.unlink(p)
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+
+                        try:
+                            cidx = art.get('competitor_3d_index') or {}
+                            for p in set(cidx.values()):
+                                if p and os.path.exists(p):
+                                    try:
+                                        os.unlink(p)
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+
+                        # miRNA index artifacts (tuple: (kind, seq, path))
                         idx = art.get('mirna_3d_index') or {}
                         for _, (_, __, p) in idx.items():
                             if p and os.path.exists(p):
@@ -1827,6 +2070,7 @@ def start_janitor():
                                     os.unlink(p)
                                 except Exception:
                                     pass
+
                         # results.json (keep for a bit longer if needed)
                         rjp = job.get("results_json_path")
                         if rjp and os.path.exists(rjp):
@@ -1834,6 +2078,7 @@ def start_janitor():
                                 os.unlink(rjp)
                             except Exception:
                                 pass
+
                         # remove job dir if empty
                         jdir = job.get("job_dir")
                         try:
@@ -1841,8 +2086,10 @@ def start_janitor():
                                 os.rmdir(jdir)
                         except Exception:
                             pass
+
                         # prevent re-clean
                         job["artifacts"]["expiry"] = 0
+
                 time.sleep(120)
             except Exception:
                 time.sleep(120)
