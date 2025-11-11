@@ -801,43 +801,17 @@ body.mirna-page .tabs .tab-btn.active {
   border-radius: 8px;       /* slightly softer corners */
   background: linear-gradient(
       135deg,
-      #0b1020,
-      #3b0a52,
-      #6e1247,
-      #a92b2b,
-      #f08c3b,
-      #f7cf55
+      #161b2c,
+      #253774,
+      #492574,
+      #4b195b,
+      #4f1040,
+      #3e0c0f
   );
   background-size: 400% 400%;
   animation: mirnaMagmaFill 40s ease infinite; /* slow, premium loop */
   box-shadow: 0 10px 24px rgba(17,24,39,.08);
   transform: translateY(-1px);
-}
-
-/* Rotating blue border ring */
-body.mirna-page .tabs .tab-btn.active::before {
-  content: "";
-  position: absolute;
-  inset: -2px;             /* a tiny overscan so the ring hugs edges */
-  padding: 2px;            /* ring thickness */
-  border-radius: inherit;
-  background: conic-gradient(
-    #0a2f6f,
-    #1551b2,
-    #1f75ff,
-    #57a4ff,
-    #1f75ff,
-    #1551b2,
-    #0a2f6f
-  );
-  /* Mask out the center so only the ring shows */
-  -webkit-mask: 
-      linear-gradient(#000 0 0) content-box, 
-      linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: mirnaBlueRing 6s linear infinite;
-  pointer-events: none;     /* keeps button clicks normal */
 }
 
 /* Optional inner glow for a premium look */
