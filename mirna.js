@@ -880,7 +880,6 @@ function displayResults(results){
         ${seedBtn}
         ${heatBtn}
         ${csvBtn}
-        <span class="action-spacer"></span>
         ${t3dBtn}
         ${c3dBtn}
         ${bundleBtn}
