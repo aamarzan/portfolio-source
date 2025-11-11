@@ -771,30 +771,62 @@ body.mirna-page main .mirna-container{
   letter-spacing: normal;
 }
 
-/* Results: make the Analysis button cell a tidy 3×2 grid */
+/* Treat any cell that has our buttons as a flex container */
 #results-container td:has(.seed-btn),
-#results-container td:has(.btn-seed) {
-  display: grid;
-  grid-template-columns: repeat(3, max-content);
-  gap: 10px 12px;            /* row gap, column gap */
+#results-container td:has(.btn-seed),
+#results-container td:has(.row-csv-btn),
+#results-container td:has(.t3d-btn),
+#results-container td:has(.c3d-btn),
+#results-container td:has(#download-btn) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;                 /* space between buttons */
   align-items: center;
-  justify-content: start;
-  white-space: normal;       /* allow wrapping inside the cell */
+  justify-content: flex-start;
+  white-space: normal !important; /* allow wrapping */
 }
 
-/* Remove stray margins so the grid controls spacing */
+/* Remove line breaks that were creating phantom columns/rows */
+#results-container td:has(.seed-btn) > br,
+#results-container td:has(.btn-seed) > br,
+#results-container td:has(.row-csv-btn) > br,
+#results-container td:has(.t3d-btn) > br,
+#results-container td:has(.c3d-btn) > br,
+#results-container td:has(#download-btn) > br {
+  display: none !important;
+}
+
+/* Normalize margins so flex controls the spacing */
 #results-container td:has(.seed-btn) > *,
 #results-container td:has(.btn-seed) > * {
   margin: 0 !important;
 }
 
-/* Responsive: when narrow, drop to 2 columns */
-@media (max-width: 640px) {
-  #results-container td:has(.seed-btn),
-  #results-container td:has(.btn-seed) {
-    grid-template-columns: repeat(2, max-content);
+/* Make exactly 3 items per row on wide screens */
+#results-container td:has(.seed-btn) > .seed-btn,
+#results-container td:has(.seed-btn) > .heatmap-btn,
+#results-container td:has(.seed-btn) > .row-csv-btn,
+#results-container td:has(.seed-btn) > .t3d-btn,
+#results-container td:has(.seed-btn) > .c3d-btn,
+#results-container td:has(.seed-btn) > #download-btn,
+#results-container td:has(.seed-btn) > .btn-action {
+  flex: 1 1 calc((100% - 24px) / 3);  /* 3 columns, accounting for two 12px gaps */
+  min-width: 140px;                    /* keeps your premium sizing */
+}
+
+/* 2 columns on narrow screens */
+@media (max-width: 720px){
+  #results-container td:has(.seed-btn) > .seed-btn,
+  #results-container td:has(.seed-btn) > .heatmap-btn,
+  #results-container td:has(.seed-btn) > .row-csv-btn,
+  #results-container td:has(.seed-btn) > .t3d-btn,
+  #results-container td:has(.seed-btn) > .c3d-btn,
+  #results-container td:has(.seed-btn) > #download-btn,
+  #results-container td:has(.seed-btn) > .btn-action {
+    flex: 1 1 calc((100% - 12px) / 2);
   }
 }
+
 
 /* Kill any <br> that break the grid inside the Analysis cell */
 #results-container td:has(.seed-btn) br,
