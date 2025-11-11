@@ -786,3 +786,84 @@ body.mirna-page main .mirna-container{
 .mirna-page #intro-tab [aria-label="Workflow overview"] ol{
   margin-left: 1.25rem !important;
 }
+
+
+/* ===== Premium animated "active" tab button ===== */
+body.mirna-page .tabs .tab-btn { 
+  position: relative; 
+  overflow: hidden;         /* so the animated ring stays tidy */
+}
+
+/* Magma fill + subtle lift */
+body.mirna-page .tabs .tab-btn.active {
+  color: #fff;
+  border: none;             /* the ring will be drawn by ::before */
+  border-radius: 8px;       /* slightly softer corners */
+  background: linear-gradient(
+      135deg,
+      #0b1020,
+      #3b0a52,
+      #6e1247,
+      #a92b2b,
+      #f08c3b,
+      #f7cf55
+  );
+  background-size: 400% 400%;
+  animation: mirnaMagmaFill 40s ease infinite; /* slow, premium loop */
+  box-shadow: 0 10px 24px rgba(17,24,39,.08);
+  transform: translateY(-1px);
+}
+
+/* Rotating blue border ring */
+body.mirna-page .tabs .tab-btn.active::before {
+  content: "";
+  position: absolute;
+  inset: -2px;             /* a tiny overscan so the ring hugs edges */
+  padding: 2px;            /* ring thickness */
+  border-radius: inherit;
+  background: conic-gradient(
+    #0a2f6f,
+    #1551b2,
+    #1f75ff,
+    #57a4ff,
+    #1f75ff,
+    #1551b2,
+    #0a2f6f
+  );
+  /* Mask out the center so only the ring shows */
+  -webkit-mask: 
+      linear-gradient(#000 0 0) content-box, 
+      linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: mirnaBlueRing 6s linear infinite;
+  pointer-events: none;     /* keeps button clicks normal */
+}
+
+/* Optional inner glow for a premium look */
+body.mirna-page .tabs .tab-btn.active::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  box-shadow: inset 0 0 24px rgba(255,255,255,.08);
+  pointer-events: none;
+}
+
+/* Keyframes */
+@keyframes mirnaBlueRing {
+  to { transform: rotate(360deg); }
+}
+@keyframes mirnaMagmaFill {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  body.mirna-page .tabs .tab-btn.active,
+  body.mirna-page .tabs .tab-btn.active::before {
+    animation: none;
+  }
+}
