@@ -546,7 +546,9 @@ async function handleSubmit(event){
   }
 
   // Switch to results tab
-  const resultsTabButton = byQS('button.tab-btn:nth-child(3)');
+  const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
+  .find(b => /results/i.test(b.textContent || ''));
+
   if(resultsTabButton) openTab(resultsTabButton, 'results-tab');
 
   // Show loader
@@ -1528,6 +1530,7 @@ function wireTabButtonsOnce(){
           setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
         }
       }
+      if (name.includes('introduction')) { if (loader) hide(loader); }
     }, 'tabClick');
   });
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-11 r2: synced with upgraded app.py & mirna.js (multi-target/competitor + seed-scan + IG heatmap; header-match notes; enlarged action/analysis buttons; heatmap viewer hooks; nonce helper) -->
+  <!-- v2025-11-11 r3: Intro tab added; About merged into Intro; About tab removed; tabs moved directly under header -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -59,7 +59,7 @@
 
     /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
     .seed-btn, .heatmap-btn,
-    .btn-seed, .btn-heatmap{ /* aliases for backward compat */
+    .btn-seed, .btn-heatmap{
       padding: 10px 16px !important;
       border-radius: 10px !important;
       font-size: 0.95rem !important;
@@ -204,36 +204,19 @@
         </p>
       </header>
 
-      <!-- Workflow Overview (what actually happens) -->
-      <section aria-label="Workflow overview" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
-        <strong>Workflow overview:</strong>
-        <ol style="margin:6px 0 0 18px;">
-          <li>You can paste <b>multiple miRNAs</b> (multi-FASTA), <b>multiple targets</b> (multi-FASTA), and <b>zero or more competitors</b> (multi-FASTA).</li>
-          <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b> in RAM-safe batches.</li>
-          <li>Two conditions are scored per miRNA: <b>Baseline</b> (no competitor) and <b>With Competitor</b> (if provided).</li>
-          <li>Results table shows per-row: miRNA ID, Target ID, Competitor ID (if any), Baseline score, With-competitor score, and <b>Competitive effect</b> = Baseline − With-competitor.</li>
-        </ol>
-      </section>
-
-      <!-- Formatting tips + header matching notes -->
-      <div style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px;">
-        <div><strong>Formatting tips</strong></div>
-        <ul style="margin:6px 0 0 18px;">
-          <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved in results.</li>
-          <li><b>Targets &amp; Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
-          <li><b>Range-aware IDs:</b> For subregions, reference as <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites will display both local (slice) and global coordinates.</li>
-          <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence. <u>Use the base FASTA header</u> for filenames (e.g., <code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.pdb</code>) even if results show a slice like <code>TP53_3UTR:90-150</code>.</li>
-          <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
-        </ul>
-      </div>
-
-      <br />
-
-      <!-- Tabs -->
+      <!-- Tabs directly under header -->
       <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
         <button class="tab-btn active"
                 role="tab"
                 aria-selected="true"
+                aria-controls="intro-tab"
+                id="tab-introduction"
+                onclick="openTab(this, 'intro-tab')">
+          Introduction
+        </button>
+        <button class="tab-btn"
+                role="tab"
+                aria-selected="false"
                 aria-controls="input-tab"
                 id="tab-inputs"
                 onclick="openTab(this, 'input-tab')">
@@ -255,18 +238,77 @@
                 onclick="openTab(this, 'results-tab')">
           Results
         </button>
-        <button class="tab-btn"
-                role="tab"
-                aria-selected="false"
-                aria-controls="about-tab"
-                id="tab-about"
-                onclick="openTab(this, 'about-tab')">
-          About
-        </button>
+      </div>
+
+      <!-- Introduction (About + Workflow + Tips unified) -->
+      <div id="intro-tab" class="card active" role="tabpanel" aria-labelledby="tab-introduction">
+        <section aria-label="About this tool" style="margin-bottom:14px;">
+          <h2 style="margin:0 0 6px 0;">About this tool</h2>
+          <p>
+            This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules.
+            It fuses sequence features with optional 3D structure-derived features and evaluates inputs in RAM-safe batches.
+          </p>
+        </section>
+
+        <section aria-label="How it works" style="margin-bottom:14px;">
+          <h3 style="margin:0 0 6px 0;">How it works</h3>
+          <ul>
+            <li>Input your miRNA(s) as multi-FASTA. You may also provide one or more targets (multi-FASTA) and zero or more competitors (multi-FASTA).</li>
+            <li>The analysis iterates: competitor1 → all targets → all miRNAs, then competitor2 → all targets → all miRNAs, and so on.</li>
+            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and lossy AA→NT back-translation (where enabled).</li>
+            <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
+          </ul>
+        </section>
+
+        <section aria-label="Workflow overview" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
+          <strong>Workflow overview:</strong>
+          <ol style="margin:6px 0 0 18px;">
+            <li>You can paste <b>multiple miRNAs</b> (multi-FASTA), <b>multiple targets</b> (multi-FASTA), and <b>zero or more competitors</b> (multi-FASTA).</li>
+            <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b> in RAM-safe batches.</li>
+            <li>Two conditions are scored per miRNA: <b>Baseline</b> (no competitor) and <b>With Competitor</b> (if provided).</li>
+            <li>Results table shows per-row: miRNA ID, Target ID, Competitor ID (if any), Baseline score, With-competitor score, and <b>Competitive effect</b> = Baseline − With-competitor.</li>
+          </ol>
+        </section>
+
+        <section aria-label="Formatting tips" style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px; margin-bottom:14px;">
+          <div><strong>Formatting tips</strong></div>
+          <ul style="margin:6px 0 0 18px;">
+            <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved in results.</li>
+            <li><b>Targets &amp; Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
+            <li><b>Range-aware IDs:</b> For subregions, reference as <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites will display both local (slice) and global coordinates.</li>
+            <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence. Use the base FASTA header for filenames (e.g., <code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.pdb</code>) even if results show a slice like <code>TP53_3UTR:90-150</code>.</li>
+            <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
+          </ul>
+        </section>
+
+        <section aria-label="Results interpretation" style="margin-bottom:14px;">
+          <h3 style="margin:0 0 6px 0;">Results interpretation</h3>
+          <ul>
+            <li><b>Baseline affinity:</b> predicted binding strength without competitor.</li>
+            <li><b>With competitor:</b> predicted binding strength considering the provided competitor.</li>
+            <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
+          </ul>
+          <div>
+            For best results, ensure FASTA headers match any provided 3D filenames exactly:
+            <ul>
+              <li><code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code></li>
+              <li><code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.cif</code> (even if analysis uses <code>TP53_3UTR:90-150</code>)</li>
+            </ul>
+          </div>
+        </section>
+
+        <section aria-label="Notes">
+          <h3 style="margin:0 0 6px 0;">Notes</h3>
+          <ul>
+            <li>Predictions are based on training data; experimental validation is recommended.</li>
+            <li>3D structure files must correspond to sequences; mismatches will be rejected.</li>
+            <li>AA→NT back-translation is lossy and may introduce inaccuracies.</li>
+          </ul>
+        </section>
       </div>
 
       <!-- Input card -->
-      <div id="input-tab" class="card active" role="tabpanel" aria-labelledby="tab-inputs">
+      <div id="input-tab" class="card" role="tabpanel" aria-labelledby="tab-inputs">
         <form id="prediction-form" aria-label="miRNA prediction form">
           <!-- Quick actions -->
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
@@ -435,44 +477,7 @@
         <div id="results-container" aria-live="polite" aria-busy="false"></div>
       </div>
 
-      <!-- About -->
-      <div id="about-tab" class="card" role="tabpanel" aria-labelledby="tab-about">
-        <h2>About this tool</h2>
-        <p>
-          This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules.
-          It fuses sequence features with optional 3D structure-derived features and evaluates inputs in RAM-safe batches.
-        </p>
-        <br>
-        <h3>How it works</h3>
-        <ul>
-          <li>Input your miRNA(s) as multi-FASTA. You may also provide <b>one or more targets</b> (multi-FASTA) and <b>zero or more competitors</b> (multi-FASTA).</li>
-          <li>The analysis iterates: <b>competitor1 → all targets → all miRNAs</b>, then <b>competitor2 → all targets → all miRNAs</b>, and so on.</li>
-          <li>Advanced options include auto-trimming long miRNAs to a mature-like window and lossy AA→NT back-translation (where enabled).</li>
-          <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
-        </ul>
-        <br>
-        <h3>Results interpretation</h3>
-        <ul>
-          <li><b>Baseline affinity:</b> predicted binding strength without competitor.</li>
-          <li><b>With competitor:</b> predicted binding strength considering the provided competitor.</li>
-          <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
-        </ul>
-        <li>
-          For best results, ensure FASTA headers match any provided 3D filenames exactly:
-          <ul>
-            <li><code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code></li>
-            <li><code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.cif</code> (even if analysis uses <code>TP53_3UTR:90-150</code>)</li>
-          </ul>
-        </li>
-        <br>
-        <h3>Notes</h3>
-        <ul>
-          <li>Predictions are based on training data; experimental validation is recommended.</li>
-          <li>3D structure files must correspond to sequences; mismatches will be rejected.</li>
-          <li>AA→NT back-translation is lossy and may introduce inaccuracies.</li>
-        </ul>
-        <br>
-      </div>
+      <!-- (About tab removed; content merged into Introduction) -->
     </div>
   </main>
 
@@ -537,7 +542,6 @@
   <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
   <script>
     // Lightweight nonce helper for gated endpoints (/predict, /seed_scan, /explain, /download/...)
-    // mirna.js will call window.acquireNonce() before heavy requests.
     (function(){
       const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
       async function fetchNonce(){
@@ -549,7 +553,6 @@
         }catch(_){ return null; }
       }
       window.acquireNonce = async function(){
-        // Always fetch a fresh nonce; server consumes it once.
         const token = await fetchNonce();
         if(token){
           window.__MIRNA_NONCE__ = token;
@@ -574,9 +577,6 @@
       const btnSample = document.getElementById('load-sample-btn');
       const btnClear  = document.getElementById('clear-inputs-btn');
 
-      // Sample set:
-      // miRNA: hsa-miR-1-3p (seed = positions 2–8 = GGAAUGU)
-      // Target below contains reverse-complement "ACAUUCC" so Seed Sites will show a hit immediately.
       const SAMPLE_MIRNA = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
       const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
       const SAMPLE_COMP   = `>comp1\nAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
@@ -590,11 +590,9 @@
           if (t) t.value = SAMPLE_TARGET;
           if (c) c.value = SAMPLE_COMP;
 
-          // Clear any uploaded files to avoid conflicts
           ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
-          // Focus the Inputs tab
           if (typeof openTab === 'function') {
             const inputsBtn = document.getElementById('tab-inputs');
             openTab(inputsBtn, 'input-tab');
@@ -613,7 +611,6 @@
               const el = document.getElementById(id);
               if (el) el.value = '';
             });
-          // Optional: also clear target region fields
           const s = document.getElementById('target-start');
           const e = document.getElementById('target-end');
           if (s) s.value = '';
