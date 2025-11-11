@@ -561,20 +561,11 @@ async function handleSubmit(event){
   const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
   .find(b => /results/i.test(b.textContent || ''));
 
-  if(resultsTabButton) openTab(resultsTabButton, 'results-tab');
-
-    // Smooth-scroll to the top of the Results card (avoid landing near footer)
-    const target = document.getElementById('results-tab');
-    if (target) {
-      const header = document.querySelector('#main-header');   // site header
-      const tabs   = document.querySelector('.tabs');          // sticky tab bar
-      const offset =
-        ((header && header.offsetHeight) || 64) +
-        ((tabs && tabs.offsetHeight) || 0) + 8;
-
-      const y = target.getBoundingClientRect().top + window.pageYOffset - offset;
-      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-    }
+if (resultsTabButton) {
+  openTab(resultsTabButton, 'results-tab');
+  // Jump to the absolute top of the page (very beginning)
+  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); // or 'instant'
+}
 
   // Show loader
   if(loader){
