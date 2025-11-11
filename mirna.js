@@ -597,10 +597,25 @@ async function handleSubmit(event){
         // stall hint if progress hasn't changed for 120s
         if(Number.isFinite(completed) && completed !== lastCompleted){
           lastCompleted = completed; lastTick = Date.now();
-        }else if(Date.now() - lastTick > 120000){
-          prependHTML(resultsContainer, formatWarn(
-            'Progress appears stalled. If you run Flask with the debug reloader, it can spawn a second process and break in-memory progress (shows 0/…). Run the server with debug=false & use_reloader=false (single process).'
-          ));
+        }else if(Date.now() - lastTick > 180000){
+          const friendly = [
+            'Still working — this is taking longer than usual.',
+            'Please keep this page open; closing it will stop the analysis.',
+          ].join(' ');
+
+          // Optional: tiny “details” block for admins
+          const details = `
+            <details style="margin-top:6px;">
+              <summary style="cursor:pointer;color:#1e5a9c;">Technical details (for administrators)</summary>
+              <div style="margin-top:6px;font-size:13px;color:#444;">
+                On some servers, the Flask <em>debug reloader</em> can start a second process and break live progress (it may show 0/… forever).
+                If you manage this server, run it in single-process mode:
+                <code>debug=False</code> and <code>use_reloader=False</code>.
+              </div>
+            </details>
+          `;
+
+          prependHTML(resultsContainer, formatWarn(friendly) + details);
           lastTick = Date.now(); // show only occasionally
         }
 
