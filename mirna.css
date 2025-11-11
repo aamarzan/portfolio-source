@@ -766,3 +766,23 @@ body.mirna-page main .mirna-container{
 
 /* Make the results box breathe and use up to 90% width on wide screens */
 #results-container { max-width: 90vw; }
+
+/* ——— Workflow/Intro tab list alignment ——— */
+.mirna-page #intro-tab [aria-label="Workflow overview"],
+.mirna-page #intro-tab [aria-label="Formatting tips"]{
+  padding-left: 14px !important;   /* unify left padding for the boxed sections */
+}
+
+/* Make UL/OL indent identical everywhere in the Workflow page */
+.mirna-page #intro-tab ul,
+.mirna-page #intro-tab ol{
+  margin: 6px 0 0 1.25rem !important;
+  padding-left: 1.25rem !important;
+  list-style-position: outside;
+}
+.mirna-page #intro-tab li{ text-indent: 0; }
+
+/* Override the inline 18px margin used in the numbered list */
+.mirna-page #intro-tab [aria-label="Workflow overview"] ol{
+  margin-left: 1.25rem !important;
+}

@@ -563,6 +563,19 @@ async function handleSubmit(event){
 
   if(resultsTabButton) openTab(resultsTabButton, 'results-tab');
 
+    // Smooth-scroll to the top of the Results card (avoid landing near footer)
+    const target = document.getElementById('results-tab');
+    if (target) {
+      const header = document.querySelector('#main-header');   // site header
+      const tabs   = document.querySelector('.tabs');          // sticky tab bar
+      const offset =
+        ((header && header.offsetHeight) || 64) +
+        ((tabs && tabs.offsetHeight) || 0) + 8;
+
+      const y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    }
+
   // Show loader
   if(loader){
     text(loader, "Running prediction...");
