@@ -771,20 +771,6 @@ body.mirna-page main .mirna-container{
   letter-spacing: normal;
 }
 
-/* Normalize <select> arrow so spacing matches inputs */
-#analysis-controls select{
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: calc(var(--ctl-px) + 22px);
-  background-image: url("data:image/svg+xml;utf8,\
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'>\
-      <path d='M5.25 7.5L10 12.25L14.75 7.5'/>\
-    </svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-
 /* Results: make the Analysis button cell a tidy 3×2 grid */
 #results-container td:has(.seed-btn),
 #results-container td:has(.btn-seed) {
@@ -809,3 +795,16 @@ body.mirna-page main .mirna-container{
     grid-template-columns: repeat(2, max-content);
   }
 }
+
+/* Normalize <select> arrow so spacing matches inputs */
+#analysis-controls select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: calc(var(--ctl-px) + 22px);
+  background-image: url
+  ("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'><path d='M5.25 7.5L10 12.25L14.75 7.5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
