@@ -313,16 +313,25 @@ async function loadConfig(){
 // =====================================================
 // Nonce (optional; graceful when disabled on server)
 // =====================================================
-async function getNonceOrKeyHeaders(){
-  if(!('use_nonce' in CONFIG)) await loadConfig();
-  if(!CONFIG.use_nonce){
-    // Backend not using nonce — proceed without extra headers
-    return {};
+async function getNonceOrKeyHeaders() {
+  // Works whether server uses nonce or not.
+  const h = { };
+  try {
+    if (CONFIG && CONFIG.use_nonce) {
+      if (CONFIG.nonce_url) {
+        const r = await fetch(CONFIG.nonce_url, { method: 'GET' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.nonce) h['X-ONE-TIME-NONCE'] = j.nonce;
+        }
+      }
+    } else if (CONFIG && CONFIG.api_key) {
+      h['X-API-KEY'] = CONFIG.api_key;
+    }
+  } catch (e) {
+    console.warn('Auth header setup warning:', e);
   }
-  const res = await fetch(NONCE_URL, { method:'GET' });
-  if(!res.ok) throw new Error('Failed to obtain auth token from server.');
-  const data = await res.json();
-  return { 'X-Nonce': data.nonce };
+  return h;
 }
 
 // =====================================================
@@ -654,7 +663,7 @@ function displayResults(results){
 
   // Sort by baseline desc
   results.sort((a,b) =>
-    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) -
+    safeParseFloat(b.predicted_affinity_baseline ?? b.baseline_score ?? 0, 0) - 
     safeParseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0, 0)
   );
 
@@ -678,12 +687,12 @@ function displayResults(results){
     return `rgba(${r},${g},${b},0.3)`;
   }
 
-  // Legend (singleton into results container)
+  // Legend (singleton into results container) — chips removed & centered
   const legendId = 'affinity-legend';
   const legendHTML = `
-  <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;">
-    <h4>Affinity Classification Guide <span class="chip">range-aware</span> <span class="chip" title="Tolerant header matching on">tolerant match</span></h4>
-    <table>
+  <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;text-align:center;">
+    <h4 style="margin:6px 0 10px 0;">Affinity Classification Guide</h4>
+    <table style="margin:0 auto;">
       <thead><tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr></thead>
       <tbody>
         <tr style="background-color:rgba(189,223,38,0.3)"><td>High Affinity</td><td>0.76–1.00</td><td>Strong binding; prioritized for validation</td></tr>
@@ -695,8 +704,8 @@ function displayResults(results){
   </div>
   `;
 
-  // Download + Copy buttons (+ client-synced CSV option if needed later)
-  const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+  // Download + Copy buttons
+  const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
     <button id="download-all-server-csv" class="btn-premium">Download Results (server CSV)</button>
     <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results (TSV)</button>
   </div>`;
@@ -724,7 +733,6 @@ function displayResults(results){
   }, 'dlAllCsvOnce');
 
   bindOnce($('copy-results-btn'), 'click', () => {
-    // Copy TSV (stable columns as printed in table rendering)
     const hasTargetCol = (predictionResults || []).some(r => typeof r.target_id !== 'undefined');
     const hasCompCol   = (predictionResults || []).some(r => (r.competitor_id ?? '') !== '');
     const lines = predictionResults.map(item => {
@@ -828,7 +836,7 @@ function injectResultFilters(){
   const box = document.createElement('div');
   box.id = 'result-filters';
   box.className = 'result-filters';
-  box.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px;';
+  box.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px;justify-content:center;';
   box.innerHTML = `
     <label class="chip-toggle" id="chip-range" style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;background:#eef5ff;border:1px solid #cfe0ff;color:#163b66;cursor:pointer;font-size:12px;font-weight:600;">
       <input type="checkbox" id="filter-range" style="accent-color:#1e5a9c;"> range-aware only
@@ -863,45 +871,49 @@ function injectResultFilters(){
 }
 
 // =====================================================
-// Analysis controls (singleton) — adds allowGU/maxMM + heatmap mode/steps + global buttons
+// Analysis controls (singleton) — leveled & centered (labels: Allow G:U, Max mismatches, Heatmap, Steps)
 // =====================================================
 function injectAnalysisControls(container){
   if(GUARDS.analysisControlsInjected) return;
 
   const html = `
-  <div id="analysis-controls" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:8px 0 12px;">
-    <label style="display:flex;gap:8px;align-items:center;">
-      <input type="checkbox" id="allow-gu" checked />
-      <span>Allow G:U wobble</span>
-    </label>
+  <div id="analysis-controls" style="max-width:90vw;margin:0 auto 12px;">
+    <div class="ctrl-wrap" style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;">
+      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
+        <label for="allow-gu" style="font-weight:700;margin-bottom:6px;text-align:center;">Allow G:U wobble</label>
+        <input type="checkbox" id="allow-gu" checked />
+      </div>
 
-    <label style="display:flex;gap:6px;align-items:center;">
-      <span>Max mismatches</span>
-      <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="width:70px;padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
-    </label>
+      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
+        <label for="max-mm" style="font-weight:700;margin-bottom:6px;text-align:center;">Max mismatches</label>
+        <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
+      </div>
 
-    <label style="display:flex;gap:6px;align-items:center;">
-      <span>Heatmap</span>
-      <select id="heatmap-mode" style="padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
-        <option value="ig_target" selected>IG → Target</option>
-        <option value="ig_competitor">IG → Competitor</option>
-        <option value="seed_density">Seed density (fast)</option>
-      </select>
-    </label>
+      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
+        <label for="heatmap-mode" style="font-weight:700;margin-bottom:6px;text-align:center;">Heatmap</label>
+        <select id="heatmap-mode" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
+          <option value="ig_target" selected>IG → Target</option>
+          <option value="ig_competitor">IG → Competitor</option>
+          <option value="seed_density">Seed density (fast)</option>
+        </select>
+      </div>
 
-    <label style="display:flex;gap:6px;align-items:center;">
-      <span>Steps</span>
-      <input id="heatmap-steps" type="number" value="50" min="10" max="200" step="5" style="width:80px;padding:6px 8px;border:1px solid #d8dee9;border-radius:8px;">
-    </label>
+      <div class="ctrl" style="display:flex;flex-direction:column;align-items:center;min-width:160px;">
+        <label for="heatmap-steps" style="font-weight:700;margin-bottom:6px;text-align:center;">Steps</label>
+        <input id="heatmap-steps" type="number" value="64" min="8" max="256" step="8" style="min-height:42px;padding:8px 10px;border:1px solid #d8dee9;border-radius:10px;">
+      </div>
 
-    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
+      <div class="ctrl btns" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+        <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
+        <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
+      </div>
+    </div>
   </div>
   `;
 
   prependHTML(container, html);
 
-  // Global buttons: operate on the top-ranked row (simple, deterministic)
+  // Global buttons: operate on the top-ranked row
   const seedBtn = $('seed-scan-global-btn');
   const hmBtn   = $('explain-global-btn');
 
@@ -948,27 +960,22 @@ async function handleRowCsvClick(item){
 // Heatmap (server PNG first; fallback to client IG; fallback-fallback to seed density)
 // =====================================================
 async function handleHeatmapClick(item){
-  // Prefer server PNG so users can also download it directly
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
-  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '50', 10) || 50));
+  const steps = Math.max(8, Math.min(256, parseInt(stepsInp?.value || '64', 10) || 64));
 
-  // Always show a modal immediately so users get feedback
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
   if(!CURRENT_JOB_ID){
-    // Fallback to client IG when job context missing
     return clientExplainHeatmapFallback(item, mode);
   }
 
   const interactionId = item.interaction_id || null;
   if(!interactionId){
-    // Fallback to client IG when interaction id missing
     return clientExplainHeatmapFallback(item, mode);
   }
 
-  // If competitor IG requested but none present, hint and switch to target
   if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
     setHTML($('modal-content'), formatWarn('This row has no competitor. Showing IG for target instead.') + smallSpinner());
     return clientExplainHeatmapFallback(item, 'ig_target');
@@ -1007,7 +1014,6 @@ async function handleHeatmapClick(item){
     }, 'hmSaveOnce');
 
   }catch(_){
-    // Fall back to client rendering using /explain
     await clientExplainHeatmapFallback(item, mode);
   }
 }
@@ -1027,8 +1033,10 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       return;
     }
 
-    // If user explicitly chose seed_density, render from the most recent seed scan cache
-    if((forcedMode || '').toLowerCase() === 'seed_density'){
+    const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
+    const uiSteps = Math.max(8, Math.min(256, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
+
+    if(uiMode === 'seed_density'){
       const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
       setHTML($('modal-content'), html);
       return;
@@ -1043,31 +1051,31 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       body: JSON.stringify({
         mirna_seq: mirnaSeq,
         target_seq: targetSeq,
-        competitor_seq: compSeq || undefined
+        competitor_seq: compSeq || undefined,
+        steps: uiSteps,
+        mode: uiMode
       })
     }, 30000);
 
     if(!res.ok){
-      // graceful degrade to seed-density strip
       const fallback = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      setHTML($('modal-content'), `<div>${formatWarn('Attribution timed out or was aborted. Showing seed density instead.')}${fallback}</div>`);
+      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${fallback}</div>`);
       return;
     }
 
     const data = await res.json();
-    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : [];
+    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : (Array.isArray(data.attribution) ? data.attribution : []);
     const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
 
     const targAttrTrim = targAttr.slice(0, targetSeq.length);
     const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
 
     let html = '';
-    const mode = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
 
-    if(mode === 'ig_target'){
+    if(uiMode === 'ig_target'){
       html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
     }
-    if((mode === 'ig_competitor') && compSeq){
+    if((uiMode === 'ig_competitor') && compSeq){
       html += `<div style="height:12px;"></div>`;
       html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
     }
@@ -1075,7 +1083,6 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     setHTML($('modal-content'), html);
 
   }catch(err){
-    // last resort: seed density
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
     const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
@@ -1120,7 +1127,6 @@ function renderAttributionPanel(label, seq, attrib){
   const max = Math.max(1e-12, ...attrib.map(v => Math.abs(v)));
   const norm = attrib.map(v => Math.abs(v) / max);
 
-  // Build heat strip (monospace cells)
   let strip = `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
   strip += `<div style="white-space:nowrap;">`;
   for(let i=0;i<seq.length;i++){
@@ -1130,7 +1136,6 @@ function renderAttributionPanel(label, seq, attrib){
   }
   strip += `</div></div>`;
 
-  // Top-5 peaks
   const idxs = norm.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,5);
   const peaks = idxs.map(o => `pos ${o.i+1} (${escapeHTML(seq[o.i]||'')}) → ${o.v.toFixed(3)}`).join(', ');
 
@@ -1210,11 +1215,9 @@ async function handleSeedSitesClick(item){
       return;
     }
 
-    // If target/competitor IDs have :start-end, compute global (unsliced) coordinates
     const tRange = parseIdRange(targetId);
     const cRange = compId ? parseIdRange(compId) : null;
 
-    // Enrich hits with global coords when applicable
     hits = hits.map(h => {
       if(h.molecule === 'target' && tRange){
         const g = globalCoordForId(targetId, h.start, h.end);
@@ -1230,7 +1233,6 @@ async function handleSeedSitesClick(item){
     LAST_SEED_HITS = hits;
     LAST_SEED_META = { mirnaId, targetId, compId };
 
-    // Build table (shows global columns only if any range existed)
     const showGlobalCols = !!(tRange || cRange);
 
     let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence${showGlobalCols ? ' and global positions are shown when a :start-end range was applied' : ''}.</div>`;
@@ -1338,12 +1340,11 @@ async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
   const pool = kind === 'target' ? CURRENT_INPUTS.targets : CURRENT_INPUTS.competitors;
   const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
 
-  // Try to fetch the structure associated with this job + kind
   let res;
   try{
     const headers = await getNonceOrKeyHeaders();
     res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 15000);
-  }catch(_){ /* network/timeout */ }
+  }catch(_){}
 
   if(!res || !res.ok){
     const prettyId = anyId || '(Unknown)';
@@ -1369,7 +1370,6 @@ async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
   }
 }
 
-// Helper to actually mount NGL stage and wire toolbar
 async function open3DStageFromBlob(kind, blob, anyId){
   const url  = URL.createObjectURL(blob);
   const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}${anyId ? ' • ' + anyId : ''}`;
@@ -1384,7 +1384,7 @@ async function open3DStageFromBlob(kind, blob, anyId){
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
 
-  const comp = await stage.loadFile(url); // PDB/mmCIF auto-detected
+  const comp = await stage.loadFile(url);
   comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
   comp.addRepresentation('ball+stick', { multipleBond: true });
   stage.autoView();
@@ -1406,7 +1406,7 @@ async function open3DStageFromBlob(kind, blob, anyId){
   }, 'openOnce');
 }
 
-// Legacy helper (kept) — now plain-text on errors
+// Legacy helper — plain-text on errors
 async function open3DViewer(kind){
   if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
   if(!['target','competitor'].includes(kind)){ openModalText('3D Viewer', 'Invalid molecule kind.'); return; }
@@ -1450,7 +1450,6 @@ function makeTableSortable(tableId){
       rows.sort((a,b) => {
         const aText = a.children[idx].textContent.trim();
         const bText = b.children[idx].textContent.trim();
-        // numeric-aware compare
         const na = parseFloat(aText), nb = parseFloat(bText);
         if(!Number.isNaN(na) && !Number.isNaN(nb)){
           return asc ? na - nb : nb - na;

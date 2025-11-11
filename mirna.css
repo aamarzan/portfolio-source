@@ -631,3 +631,20 @@ body.mirna-page #main-footer .container {
 #results-table tbody tr[data-match="tolerant"] td{
   box-shadow: inset 0 0 0 2px rgba(30,90,156,0.08);
 }
+
+/* Widen the whole app so results/buttons aren't cramped */
+body.mirna-page main .mirna-container{
+  max-width: min(90vw, 1400px);
+}
+
+/* Analysis controls bar: centered & leveled */
+#analysis-controls { max-width: 90vw; margin: 0 auto 10px; }
+#analysis-controls .ctrl-wrap{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px;
+}
+#analysis-controls .ctrl{ display:flex; flex-direction:column; align-items:center; min-width:160px; }
+#analysis-controls .ctrl > label{ font-weight:700; text-align:center; margin-bottom:6px; }
+#analysis-controls input, #analysis-controls select{ min-height:42px; padding:8px 10px; border-radius:10px; border:1px solid #d0d7de; }
+
+/* Make row action buttons roomy */
+.seed-btn,.heatmap-btn,.btn-action{ min-width:140px; min-height:40px; }
