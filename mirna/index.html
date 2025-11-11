@@ -208,13 +208,13 @@
   <!-- Main content -->
   <main role="main">
     <div class="mirna-container">
-  <!--    <header>
-        <h1>miRNA-Affinity Predictor</h1>
-        <p>
+      <header>
+        <h2>SeedScope™</h2>
+        <!--<p>
           Predict miRNA binding affinity and the effect of <em>competitor</em> RNAs against one or more <em>targets</em>.
           Provide sequences (multi-FASTA supported), optionally add 3D structures (PDB/mmCIF), and run a batched deep-learning analysis.
-        </p>
-      </header> -->
+        </p>  -->
+      </header> 
 
       <!-- Tabs directly under header -->
       <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
@@ -222,9 +222,9 @@
                 role="tab"
                 aria-selected="true"
                 aria-controls="intro-tab"
-                id="tab-introduction"
+                id="tab-Workflow"
                 onclick="openTab(this, 'intro-tab')">
-          Introduction
+          Workflow
         </button>
         <button class="tab-btn"
                 role="tab"
@@ -252,8 +252,8 @@
         </button>
       </div>
 
-      <!-- Introduction (About + Workflow + Tips unified) -->
-      <div id="intro-tab" class="card active" role="tabpanel" aria-labelledby="tab-introduction">
+      <!-- Workflow (About + Workflow + Tips unified) -->
+      <div id="intro-tab" class="card active" role="tabpanel" aria-labelledby="tab-workflow">
         <section aria-label="About this tool" style="margin-bottom:14px;">
           <h2 style="margin:0 0 6px 0;">About this tool</h2>
           <p>
@@ -489,7 +489,7 @@
         <div id="results-container" aria-live="polite" aria-busy="false"></div>
       </div>
 
-      <!-- (About tab removed; content merged into Introduction) -->
+      <!-- (About tab removed; content merged into workflow) -->
     </div>
   </main>
 
