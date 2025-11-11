@@ -801,12 +801,12 @@ body.mirna-page .tabs .tab-btn.active {
   border-radius: 8px;       /* slightly softer corners */
   background: linear-gradient(
       135deg,
-      #5369b1,
-      #586caf,
-      #8967b3,
-      #90669e,
-      #6b889a,
-      #478b82
+      #36003c,
+      #001044,
+      #460027,
+      #3e0005,
+      #003b37,
+      #242e00
   );
   background-size: 400% 400%;
   animation: mirnaMagmaFill 40s ease infinite; /* slow, premium loop */
