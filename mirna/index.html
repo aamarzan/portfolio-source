@@ -644,6 +644,26 @@
     });
   </script>
 
+  <script>
+  (function tidyActionCells(){
+    const root = document.getElementById('results-container');
+    if(!root) return;
+
+    const clean = (scope) => {
+      scope.querySelectorAll('#results-container td').forEach(td => {
+        if (td.querySelector('.seed-btn') || td.querySelector('.heatmap-btn') || td.querySelector('.btn-action')) {
+          td.querySelectorAll('br').forEach(br => br.remove());
+        }
+      });
+    };
+
+    const mo = new MutationObserver(muts => muts.forEach(m => clean(m.target)));
+    mo.observe(root, { childList: true, subtree: true });
+    clean(root);
+  })();
+  </script>
+
+
   <!-- Simple Heatmap modal viewer (optional; JS opens via CustomEvent) -->
   <dialog id="heatmap-dialog">
     <div id="heatmap-shell">

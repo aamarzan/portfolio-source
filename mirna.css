@@ -796,6 +796,19 @@ body.mirna-page main .mirna-container{
   }
 }
 
+/* Kill any <br> that break the grid inside the Analysis cell */
+#results-container td:has(.seed-btn) br,
+#results-container td:has(.heatmap-btn) br,
+#results-container td:has(.btn-action) br {
+  display: none !important;
+}
+
+/* Make the grid pack items left-to-right, top-to-bottom tightly */
+#results-container td:has(.seed-btn),
+#results-container td:has(.btn-action) {
+  grid-auto-flow: row dense;
+}
+
 /* Normalize <select> arrow so spacing matches inputs */
 #analysis-controls select{
   appearance: none;
@@ -807,4 +820,3 @@ body.mirna-page main .mirna-container{
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
-
