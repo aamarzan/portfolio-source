@@ -507,7 +507,7 @@ body.mirna-page #download-btn {
   cursor: pointer;
 }
 body.mirna-page #download-btn:hover {
-  background: #1565c0;
+  background: #070037;
   transform: translateY(-2px);
 }
 
