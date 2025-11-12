@@ -1773,49 +1773,53 @@ async function ensureNGL(){
 }
 
 async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
-  if(!CURRENT_JOB_ID){
-    openModalText('3D Viewer', 'Run a prediction first.');
-    return;
-  }
-  const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
+  if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
 
+  const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
   let res;
   try{
     const headers = await getNonceOrKeyHeaders();
-    res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 15000);
-  }catch(_){}
-
-  if(!res || !res.ok){
-    const prettyId = anyId || '(Unknown)';
-    const sample   = baseId || (kind === 'target' ? 'TARGET' : 'COMPETITOR');
-    openModalText(
-      '3D Viewer',
-      `No 3D structure found for ${prettyId}. Upload a PDB or mmCIF named exactly after the FASTA header (for example: ${sample}.pdb or ${sample}.cif), or embed a PDB ID in the FASTA header like "PDB:7YTW", then re-run the prediction.`
-    );
+    res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+  }catch(e){
+    openModalText('3D Viewer', `Could not contact the server for ${kind} structure.`); 
     return;
   }
 
-  const ok = await ensureNGL();
-  if(!ok){
-    openModalText('3D Viewer', 'Could not load the 3D engine (NGL). Check your connection.');
+  if(!res.ok){
+    const code = res.status;
+    if(code === 404){
+      openModalText('3D Viewer', `No 3D structure found for “${baseId || kind}”. Upload a PDB/mmCIF or embed a PDB ID in the FASTA header (e.g., “PDB:7YTW”) and re-run.`);
+    }else if(code === 403){
+      openModalText('3D Viewer', 'Access denied while fetching structure. If your backend uses nonce/API-key, ensure it’s enabled and reachable from this page.');
+    }else{
+      openModalText('3D Viewer', `Server returned ${code} while fetching the structure.`);
+    }
     return;
   }
+
+  const ctype = (res.headers.get('Content-Type') || '').toLowerCase();
+  const dispo = (res.headers.get('Content-Disposition') || '').toLowerCase();
+  let ext = 'pdb';
+  if(/cif|mmcif/.test(ctype) || /\.mm?cif\b/.test(dispo)) ext = 'cif';
+  if(/pdb|x-pdb|ent/.test(ctype) || /\.pdb\b/.test(dispo)) ext = 'pdb';
 
   try{
     const blob = await res.blob();
-    await open3DStageFromBlob(kind, blob, anyId);
+    await open3DStageFromBlob(kind, blob, anyId, ext);
   }catch(err){
     openModalText('3D Viewer', err?.message || '3D viewer error.');
   }
 }
 
-async function open3DStageFromBlob(kind, blob, anyId){
-  const url  = URL.createObjectURL(blob);
+async function open3DStageFromBlob(kind, blob, anyId, ext){
+  const ok = await ensureNGL();
+  if(!ok){ openModalText('3D Viewer', 'Could not load the 3D engine (NGL).'); return; }
+
   const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}${anyId ? ' • ' + anyId : ''}`;
   const toolbar = `
-    <button id="ngl-center" class="toolbar-btn">Center on site</button>
+    <button id="ngl-center" class="toolbar-btn">Center</button>
     <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
-    <button id="ngl-open" class="toolbar-btn">Open File</button>
+    <button id="ngl-open" class="toolbar-btn">Open raw file</button>
   `;
   const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
   openModal(title, html, toolbar);
@@ -1823,26 +1827,22 @@ async function open3DStageFromBlob(kind, blob, anyId){
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
 
-  const comp = await stage.loadFile(url);
+  // IMPORTANT: pass the Blob with an explicit extension so NGL knows how to parse it
+  const comp = await stage.loadFile(blob, { ext });
   comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
   comp.addRepresentation('ball+stick', { multipleBond: true });
   stage.autoView();
 
-  const centerBtn = $('ngl-center');
-  const snapBtn   = $('ngl-snap');
-  const openBtn   = $('ngl-open');
-
-  if(centerBtn) bindOnce(centerBtn, 'click', () => { stage.autoView(); }, 'centerOnce');
-  if(snapBtn) bindOnce(snapBtn, 'click', async () => {
+  bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter');
+  bindOnce($('ngl-snap'), 'click', async () => {
     const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
     const a = document.createElement('a');
-    a.href = img.toDataURL('image/png');
-    a.download = `structure_${kind}.png`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, 'snapOnce');
-  if(openBtn) bindOnce(openBtn, 'click', () => {
+    a.href = img.toDataURL('image/png'); a.download = `structure_${kind}.png`; a.click();
+  }, 'nglsnap');
+  bindOnce($('ngl-open'), 'click', () => {
+    const url = URL.createObjectURL(blob);
     const w = window.open(url, '_blank'); if(w) w.opener = null;
-  }, 'openOnce');
+  }, 'nglopen');
 }
 
 // Legacy helper (kept): text only message if structure missing
