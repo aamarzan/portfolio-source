@@ -13,6 +13,7 @@
 //   • Pre-validation “Use/Skip” table (best-effort; graceful if /precheck is unavailable)
 //   • Tolerant chain hints in FASTA header (e.g., >TP53_3UTR|chain=A)
 //   • Result badges + Run Manifest; soft recovery on structure errors
+//   • FIX: final results fetch uses nonce/API-key headers + timeout + graceful fallback link
 
 // =====================================================
 // Global state
@@ -66,7 +67,7 @@ const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 const API_URL        = `${BASE_URL}/predict`;
 const PRECHECK_URL   = `${BASE_URL}/precheck`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
-const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON (unprotected)
+const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON
 const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
 const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
 const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
@@ -215,6 +216,17 @@ function fetchWithTimeout(url, options={}, ms=30000){
   const timer = setTimeout(()=>ac.abort(), ms);
   return fetch(url, { ...options, signal: ac.signal })
     .finally(()=>clearTimeout(timer));
+}
+
+// --- JSON helper with timeout + no-store cache ---
+async function fetchJSONWithTimeout(url, opts={}, ms=60000){
+  const c = new AbortController();
+  const t = setTimeout(()=>c.abort(), ms);
+  try{
+    const r = await fetch(url, { ...opts, signal: c.signal, cache: 'no-store' });
+    if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    return await r.json();
+  } finally { clearTimeout(t); }
 }
 
 // Simple FASTA parser → { id: seq, ... } (if no headers: {"<prefix>_1": raw})
@@ -814,9 +826,16 @@ async function handleSubmit(event){
         const maybePdbWarning = /pdb|structure|polymer|chain|back-translate/i.test(data.error || '');
         try{
           if(loader) text(loader, "Attempting to fetch partial results...");
-          const dr = await fetch(DOWNLOAD_URL(job_id), { method:'GET' });
-          if(dr.ok){
-            const finalDataSoft = await dr.json();
+          const headers = await getNonceOrKeyHeaders();
+          let finalDataSoft = null;
+          try {
+            finalDataSoft = await fetchJSONWithTimeout(
+              DOWNLOAD_URL(job_id),
+              { method:'GET', headers },
+              60000
+            );
+          } catch(_){}
+          if(finalDataSoft){
             const rows = finalDataSoft.results || [];
             if(rows.length){
               predictionResults = rows;
@@ -837,16 +856,30 @@ async function handleSubmit(event){
         const rw = resultsContainer.querySelector('.reload-warning'); if(rw) rw.remove();
 
         if(loader) text(loader, "Fetching final results...");
-        const dr = await fetch(DOWNLOAD_URL(job_id), { method:'GET' });
-        if(!dr.ok) throw new Error('Failed to download results.');
-        const finalData = await dr.json();
+        try {
+          const headers = await getNonceOrKeyHeaders();
+          const finalData = await fetchJSONWithTimeout(
+            DOWNLOAD_URL(job_id),
+            { method:'GET', headers },
+            60000
+          );
 
-        predictionResults = finalData.results || [];
-        displayResults(predictionResults, finalData);
+          predictionResults = finalData.results || [];
+          displayResults(predictionResults, finalData);
 
-        if(loader){
-          text(loader, "✅ Prediction completed. Results are shown below.");
-          setTimeout(() => hide(loader), 3000);
+          if(loader){
+            text(loader, "✅ Prediction completed. Results are shown below.");
+            setTimeout(() => hide(loader), 3000);
+          }
+        } catch (err){
+          // Graceful fallback: give a direct link and clear the loader
+          prependHTML(resultsContainer, `
+            <div class="note error" style="margin:8px 0;">
+              Couldn’t fetch results quickly. You can still open them directly:
+              <a href="${DOWNLOAD_URL(job_id)}" target="_blank" rel="noopener">Open results JSON</a>
+            </div>
+          `);
+          if(loader) hide(loader);
         }
       }
     };
