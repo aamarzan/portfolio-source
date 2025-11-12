@@ -3,6 +3,7 @@
 
 import os
 import io
+import re  # [ADDED]
 import json
 import time
 import uuid
@@ -13,6 +14,9 @@ import tempfile
 import threading
 import hashlib
 import zipfile
+import shutil  # [ADDED]
+import functools  # [ADDED]
+import flask  # [ADDED]
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Tuple, List, Optional
@@ -139,7 +143,7 @@ CORS(app, origins=[
     "https://mirna.aamarzan.com",
     "http://localhost",
     "http://127.0.0.1"
-], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce"])
+], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce", "X-API-KEY"])  # [UPDATED]
 
 
 @app.after_request
@@ -154,23 +158,66 @@ def handle_large_file(e):
 
 
 # =========================
-# Security: Nonce (optional safer flow)
+# Security: API Key + Nonce (optional safer flow)
 # =========================
-nonce_store: Dict[str, Dict[str, float]] = {}
 
+# New config wrapper (non-breaking, mirrors existing flags) [ADDED]
+APP_CFG = {
+    "MIRNA_MAX": MIRNA_MAX,
+    "MATURE_TRIM_ENABLED": MATURE_TRIM_ENABLED,
+    "MATURE_WINDOW": MATURE_TRIM_WINDOW,
+    "AA_CONVERT_ALLOWED": AA_CONVERT_ALLOWED,
+    "USE_NONCE": USE_NONCE,
+    "API_KEY": os.getenv("MIRNA_API_KEY", "").strip() or None,
+    "ENABLE_HEATMAPS": True
+}
+
+# Single-use, token-keyed nonce store (no IP collisions)
+nonce_store: Dict[str, float] = {}  # {nonce: expiry_ts}
 
 @app.route('/nonce', methods=['GET'])
 def issue_nonce():
-    client_ip = get_remote_address()
+    if not APP_CFG["USE_NONCE"]:
+        return jsonify({"error": "nonce disabled"}), 400
     token = secrets.token_urlsafe(32)
-    expiry = time.time() + NONCE_EXPIRY_SECONDS
-    nonce_store[client_ip] = {"nonce": token, "expiry": expiry}
+    nonce_store[token] = time.time() + NONCE_EXPIRY_SECONDS
     return jsonify({"nonce": token, "expires_in": NONCE_EXPIRY_SECONDS})
+
+def _check_auth() -> bool:
+    """Accept either X-API-KEY (if set) or a valid X-Nonce when USE_NONCE=True.
+       If USE_NONCE=False and no API_KEY, allow open access."""
+    api_key = APP_CFG["API_KEY"]
+
+    # API key path (takes precedence; not single-use)
+    provided_key = request.headers.get("X-API-KEY")
+    if api_key and provided_key and secrets.compare_digest(api_key, provided_key):
+        return True
+
+    # Nonce path (single-use)
+    if APP_CFG["USE_NONCE"]:
+        n = request.headers.get("X-Nonce")
+        if n and n in nonce_store and time.time() <= nonce_store[n]:
+            nonce_store.pop(n, None)  # consume once
+            return True
+        return False
+
+    # Open if neither API key nor nonce required
+    return not api_key
+
+
+def require_auth(fn):
+    @functools.wraps(fn)
+    def _wrap(*args, **kwargs):
+        if not _check_auth():
+            return jsonify({"error": "Unauthorized"}), 401
+        return fn(*args, **kwargs)
+    return _wrap
 
 
 def _nonce_protected(endpoint_name: Optional[str]) -> bool:
     protected = {
         'start_prediction', 'seed_scan', 'explain', 'explain_fast',
+        'download_results',
         'download_all_csv', 'download_single_csv',
         'download_heatmap_png',
         'download_seeds_all', 'download_seeds_one',
@@ -187,13 +234,8 @@ def require_nonce_or_key():
     if request.method == "OPTIONS":
         return '', 200
     if _nonce_protected(request.endpoint):
-        if USE_NONCE:
-            client_ip = get_remote_address()
-            provided_nonce = request.headers.get("X-Nonce")
-            stored = nonce_store.get(client_ip)
-            if not stored or stored["nonce"] != provided_nonce or time.time() > stored["expiry"]:
-                return jsonify({"error": "Invalid or expired nonce"}), 403
-            del nonce_store[client_ip]
+        if not _check_auth():  # [UPDATED] now accepts API key OR nonce according to APP_CFG
+            return jsonify({"error": "Invalid or missing authorization"}), 403
 
 
 @app.errorhandler(Exception)
@@ -210,7 +252,8 @@ def get_config():
         "mature_trim_enabled": MATURE_TRIM_ENABLED,
         "mature_window": MATURE_TRIM_WINDOW,
         "aa_convert_allowed": AA_CONVERT_ALLOWED,
-        "use_nonce": USE_NONCE
+        "use_nonce": APP_CFG["USE_NONCE"],           # [UPDATED]
+        "api_key": bool(APP_CFG["API_KEY"])          # [UPDATED]
     })
 
 
@@ -710,6 +753,47 @@ def _id_variants(s: str) -> List[str]:
     return list(cand)
 
 
+# NEW: Public variants/range helpers (non-breaking) [ADDED]
+_ID_CLEAN_RE = re.compile(r"[^a-z0-9_\-\.]", re.I)
+
+def id_variants(s: str):
+    s = (s or "").strip()
+    if not s:
+        return []
+    slug = re.sub(r"\s+", "_", s.lower())
+    slug = _ID_CLEAN_RE.sub("", slug)
+    out = {s, s.replace(" ", "_"), s.replace(" ", ""), slug, slug.replace("_", " "), s.lower(),
+           s.replace(" ", "_").lower(), s.replace(" ", "").lower()}
+    return list(out)
+
+_RANGE_RE = re.compile(r"^(.+):(\d+)-(\d+)$")
+def parse_range_id(any_id: str):
+    m = _RANGE_RE.match(any_id or "")
+    if not m:
+        return None
+    base, a, b = m.group(1), int(m.group(2)), int(m.group(3))
+    return {"baseId": base, "start": a, "end": b}
+
+def tolerant_get(pool: Dict[str, str], key: str) -> Optional[str]:
+    if key in pool:
+        return pool[key]
+    for v in id_variants(key):
+        if v in pool:
+            return pool[v]
+    return None
+
+def slice_by_range(pool: Dict[str, str], any_id: str) -> str:
+    r = parse_range_id(any_id)
+    if not r:
+        return tolerant_get(pool, any_id) or ""
+    base_seq = tolerant_get(pool, r["baseId"]) or ""
+    if not base_seq:
+        return ""
+    s = max(0, r["start"] - 1)
+    e = min(len(base_seq), r["end"])
+    return base_seq[s:e]
+
+
 def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
     for k in _id_variants(key):
         if k in idx:
@@ -852,6 +936,39 @@ def _derive_nt_from_structure(path: str) -> Tuple[Optional[str], str, bool]:
     return (None, kind, False)
 
 
+# --- /precheck: light 3D file/PDB sanity, non-blocking ---------------------
+_ALLOWED_3D_EXT = {".pdb", ".cif", ".mmcif"}
+_AA_RES = {"ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HIS","ILE","LEU","LYS","MET","PHE","PRO","SER","THR","TRP","TYR","VAL"}
+_NT_RES = {"A","C","G","U","DA","DT","DG","DC","DU","I"}
+
+def _guess_polymer_type(sample: str) -> str:
+    if any(tok in sample for tok in (" DA ", " DT ", " DG ", " DC ", " DU ", "  A ", "  U ")):
+        return "nucleotide"
+    for aa in _AA_RES:
+        if f" {aa} " in sample:
+            return "protein"
+    return "unknown"
+
+@app.post("/precheck")
+def precheck():
+    out = {"targets": [], "competitors": []}
+    def handle(kind: str):
+        items = []
+        for pid in request.form.getlist(f"{kind}_pdb_id"):
+            items.append({"id": pid, "polymer_type": "unknown", "present_for_viz": True, "note": "remote PDB id"})
+        for f in request.files.getlist(f"{kind}_3d_file"):
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext not in _ALLOWED_3D_EXT:
+                continue
+            sample = f.stream.read(4096).decode(errors="ignore"); f.stream.seek(0)
+            items.append({"id": f.filename, "polymer_type": _guess_polymer_type(sample), "present_for_viz": True, "note": ""})
+        return items
+    out["targets"] = handle("target")
+    out["competitors"] = handle("competitor")
+    return jsonify(out)
+# ---------------------------------------------------------------------------
+
+
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
 def start_prediction():
@@ -886,7 +1003,7 @@ def start_prediction():
     # Parse targets (may be empty — PDB-only supported now)
     targets_list = parse_fasta_records(target_seq_text)
 
-    # Optional target region
+    # Optional target range
     target_start_raw = request.form.get('target_start', '').strip()
     target_end_raw   = request.form.get('target_end', '').strip()
     def _to_int_safe(s):
@@ -991,11 +1108,15 @@ def start_prediction():
         for k in _id_variants(stem):
             competitor_3d_index[k] = p
 
-    # Accept PDB IDs (download & index)
-    target_pdb_ids = request.form.get('target_pdb_ids', '')
-    competitor_pdb_ids = request.form.get('competitor_pdb_ids', '')
-    t_ids = _split_ids(target_pdb_ids)
-    c_ids = _split_ids(competitor_pdb_ids)
+    # Accept PDB IDs (download & index) — support both plural string and repeated fields [UPDATED]
+    # Old form (comma/space/semicolon separated):
+    target_pdb_ids_str = request.form.get('target_pdb_ids', '')
+    competitor_pdb_ids_str = request.form.get('competitor_pdb_ids', '')
+    t_ids = _split_ids(target_pdb_ids_str)
+    c_ids = _split_ids(competitor_pdb_ids_str)
+    # New form (repeated fields):
+    t_ids += [x.strip() for x in request.form.getlist("target_pdb_id") if x.strip()]
+    c_ids += [x.strip() for x in request.form.getlist("competitor_pdb_id") if x.strip()]
 
     for pid in t_ids:
         p = _download_pdb_to_tmp(pid, tmp_paths_to_cleanup)
@@ -1070,11 +1191,21 @@ def start_prediction():
 
     _total = len(primary_records) * max(1, len(targets_list)) * max(1, len(competitors_list))
 
+    # NEW: optional chain hints manifest capture [ADDED]
+    try:
+        target_chain_hints = json.loads(request.form.get("target_chain_hints_json") or "{}")
+    except Exception:
+        target_chain_hints = {}
+    try:
+        competitor_chain_hints = json.loads(request.form.get("competitor_chain_hints_json") or "{}")
+    except Exception:
+        competitor_chain_hints = {}
+
     jobs[job_id] = {
         "status": "running",
         "results": [],
         "error": None,
-        "warnings": [],                # NEW: accumulate non-blocking issues
+        "warnings": [],
         "total": _total,
         "completed": 0,
         "target_id": "MULTIPLE" if len(targets_list) > 1 else (targets_list[0][0] if targets_list else "NONE"),
@@ -1090,9 +1221,17 @@ def start_prediction():
         "job_dir": str(job_dir),
         "results_json_path": None,
         "model_input_shapes": {},
-        # provenance badges
-        "target_meta": target_meta_map,         # id -> {source, aa_to_nt_applied, aa_to_nt_mode}
-        "competitor_meta": competitor_meta_map  # id -> {source, aa_to_nt_applied, aa_to_nt_mode}
+        "target_meta": target_meta_map,
+        "competitor_meta": competitor_meta_map,
+        # NEW: manifest stub to mirror client expectations [ADDED]
+        "manifest": {
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "client": "mirna.js",
+            "target_pdb_ids": t_ids,
+            "competitor_pdb_ids": c_ids,
+            "target_chain_hints": target_chain_hints,
+            "competitor_chain_hints": competitor_chain_hints,
+        }
     }
 
     send_ga_event("prediction_started", {"total": _total})
@@ -1140,9 +1279,10 @@ def process_job(job_id: str,
             return data
 
         model_inputs = _keras_inputs_map()
-        max_primary_len    = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
-        max_target_len     = int((model_inputs.get('target_sequence_input')  or (None,200))[1 or 200])
-        max_competitor_len = int((model_inputs.get('competitor_sequence_input') or (None,200))[1 or 200])
+        max_primary_len    = int((model_inputs.get('primary_sequence_input')      or (None,120))[1] or 120)
+        max_target_len     = int((model_inputs.get('target_sequence_input')       or (None,200))[1] or 200)
+        max_competitor_len = int((model_inputs.get('competitor_sequence_input')   or (None,200))[1] or 200)
+
         empty_comp_enc     = one_hot_encode_sequence('', max_competitor_len)
 
         has_comp_input = 'competitor_sequence_input' in model_inputs
@@ -1394,7 +1534,7 @@ def get_progress(job_id):
         "completed": job["completed"],
         "total": job["total"],
         "error": job["error"],
-        "warnings": job.get("warnings", []),  # NEW
+        "warnings": job.get("warnings", []),
         "results": job["results"] if job["status"] == "completed" else []
     })
 

@@ -6,12 +6,13 @@
 //   perfectly leveled Heatmap controls, and AA→NT before any analysis (no AA letters in alignments).
 // + 2025-11-12: Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
 // + 2025-11-12 (this build):
+//   • Harmonized with HTML baskets & PDB-ID shim: relies on window.__BASKET__ and window.__MIRNA_PDB_IDS__
+//   • No duplicate staging UI: keeps the HTML chips/baskets; no hiding/replacing inputs
+//   • Uses existing #analysis-controls (adds GU/mismatch + global buttons instead of re-injecting a second block)
 //   • PDB is optional/non-blocking; PDB-only and FASTA-only supported; protein→AA→NT auto (mode selectable)
-//   • Staging basket for target/competitor structures (pick multiple times; accumulate chips; remove)
 //   • Pre-validation “Use/Skip” table (best-effort; graceful if /precheck is unavailable)
 //   • Tolerant chain hints in FASTA header (e.g., >TP53_3UTR|chain=A)
-//   • Result badges (“PDB used”, “AA→NT mode”, “Structure-features on/off”) and “Run Manifest” download
-//   • Progress errors with PDB mismatches try to fetch & render results with warnings instead of hard fail
+//   • Result badges + Run Manifest; soft recovery on structure errors
 
 // =====================================================
 // Global state
@@ -33,12 +34,6 @@ const CURRENT_INPUTS = {
   competitors: {}  // id -> sequence (as typed)
 };
 
-// Staged 3D files accumulated across multiple selections
-const STAGED = {
-  target3dFiles: [],      // File[]
-  competitor3dFiles: []   // File[]
-};
-
 // Last analysis cache (for exports)
 let LAST_SEED_HITS = null;   // Array of hits
 let LAST_SEED_META = null;   // { mirnaId, targetId, compId }
@@ -52,12 +47,10 @@ const GUARDS = {
   fastaTipsInjected: false,
   tabWiringDone: false,
   formBindingDone: false,
-  analysisControlsInjected: false,
+  analysisControlsWired: false,
   modalInjected: false,
   styleInjected: false,
-  nglLoaded: false,
-  threeDToolbarInjected: false,
-  stagingDone: false
+  nglLoaded: false
 };
 
 // =====================================================
@@ -117,7 +110,6 @@ function formatError(msg){
 function formatWarn(msg){
   return `<p style="color:#b36b00;margin:8px 0;">${escapeHTML(msg)}</p>`;
 }
-// A) Centered info note (CSS styles it)
 function formatInfo(msg){
   return `<p class="info-note">${escapeHTML(msg)}</p>`;
 }
@@ -185,7 +177,7 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
-// Inject premium styles and small utility classes (kept inline to be drop-in)
+// Inject premium styles and small utility classes (drop-in)
 function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
   const css = `
@@ -198,60 +190,8 @@ function injectPremiumStyles(){
     table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
-
-    /* Center the friendly info + the no-refresh warning */
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
-
-    /* B) perfectly leveled analysis controls (grid) */
-    .controls-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
-      gap:12px;
-      align-items:center;
-      justify-content:center;
-      margin:8px 0 12px;
-    }
-    .controls-grid .ctrl{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      justify-content:center;
-      white-space:nowrap;
-    }
-    .controls-grid .ctrl span{
-      font-weight:700;
-      line-height:40px;
-    }
-    .controls-grid .ctrl input[type="number"],
-    .controls-grid .ctrl select{
-      padding:6px 10px;
-      border:1px solid #d8dee9;
-      border-radius:8px;
-      min-height:40px;
-      height:40px;
-      line-height:40px;
-    }
-    .controls-grid .ctrl input[type="checkbox"]{ transform: translateY(1px); }
-
-    /* D) two-line action cluster so nothing gets cut off */
-    .action-grid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(120px, 1fr));
-      gap:8px;
-    }
-    .action-grid .btn-action{ width:100%; }
-    .action-grid .action-spacer{ display:block; }
-
-    /* Staging baskets */
-    .staging-box{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-top:8px;background:#fafbff;}
-    .staging-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
-    .chipfile{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:9999px;border:1px solid #e2e8f0;background:#fff;margin:4px 6px 0 0;font-size:12px;}
-    .chipfile button{border:none;background:transparent;cursor:pointer;font-weight:700;}
-    .badge{display:inline-block;border-radius:9999px;padding:2px 8px;font-size:11px;border:1px solid #e5e7eb;background:#f8fafc;margin:2px 4px;color:#334155;}
-    .badge.ok{background:#ecfdf5;border-color:#bbf7d0;color:#065f46;}
-    .badge.warn{background:#fff7ed;border-color:#fed7aa;color:#7c2d12;}
-    .badge.off{background:#f1f5f9;border-color:#cbd5e1;color:#475569;}
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
     .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
   `;
@@ -262,7 +202,6 @@ function injectPremiumStyles(){
   GUARDS.styleInjected = true;
 }
 
-// Small spinner HTML for modal bodies
 function smallSpinner(text='Working...'){
   return `<div style="text-align:center;padding:10px 0;">
     <span class="loader-spinner"></span>
@@ -311,7 +250,7 @@ function parseFastaToMap(text, defaultPrefix='seq'){
   return map;
 }
 
-// ===== Tolerant ID helpers (mirror backend tolerant matching) =====
+// ===== Tolerant ID helpers =====
 function idVariants(s){
   if(!s) return [];
   const t = String(s).trim();
@@ -328,7 +267,6 @@ function idVariants(s){
   ]);
   return Array.from(set);
 }
-
 function lookupTolerant(pool, key){
   if(!pool || !key) return undefined;
   if(Object.prototype.hasOwnProperty.call(pool, key)) return pool[key];
@@ -337,15 +275,11 @@ function lookupTolerant(pool, key){
   }
   return undefined;
 }
-
-// Parse an ID like "TP53:90-150" → {baseId, start, end} (1-based)
 function parseIdRange(id){
   const m = String(id||'').match(/^(.+):(\d+)-(\d+)$/);
   if(!m) return null;
   return { baseId: m[1], start: parseInt(m[2],10), end: parseInt(m[3],10) };
 }
-
-// Get (possibly sliced) sequence for ID with tolerant baseId lookup
 function tolerantGetAnySeqForId(anyId, pool){
   const r = parseIdRange(anyId);
   if(!r){
@@ -358,16 +292,12 @@ function tolerantGetAnySeqForId(anyId, pool){
   const eIdx = Math.min(base.length, r.end);
   return base.slice(sIdx, eIdx);
 }
-
-// For displaying global coords when a :start-end slice is used
 function globalCoordForId(anyId, localStart, localEnd){
   const r = parseIdRange(anyId);
-  if(!r) return null; // no global translation needed
-  const offset = (r.start || 1) - 1; // 0-based offset
+  if(!r) return null;
+  const offset = (r.start || 1) - 1;
   return { globalStart: offset + localStart, globalEnd: offset + localEnd };
 }
-
-// Quick check: exact key (respecting baseId for ranged IDs)
 function exactKeyExists(pool, anyId){
   if(!pool || !anyId) return false;
   const r = parseIdRange(anyId);
@@ -383,7 +313,6 @@ function isLikelyAA(seq){
   if(!seq) return false;
   const s = String(seq).replace(/[\s\-]/g,'').toUpperCase();
   if(!s) return false;
-  // If every char is nucleotide-ish, it's NT; otherwise likely AA
   return /[^ACGTUNRYKMSWBVDH]/.test(s);
 }
 function toRNA(seq){
@@ -391,7 +320,6 @@ function toRNA(seq){
     return NUCLEOTIDE_CHARS.has(ch) ? ch : '';
   });
 }
-// Canonical RNA codon picks per amino acid (lossy but stable and deterministic)
 const AA2RNA_CANON = {
   A:'GCU', R:'CGU', N:'AAU', D:'GAU', C:'UGU',
   Q:'CAA', E:'GAA', G:'GGU', H:'CAU', I:'AUU',
@@ -399,7 +327,6 @@ const AA2RNA_CANON = {
   S:'UCU', T:'ACU', W:'UGG', Y:'UAU', V:'GUU',
   U:'UGA', O:'UAG', B:'AAN', Z:'CAN', X:'NNN', '*':'NNN'
 };
-// GC-balanced (rough heuristic)
 const AA2RNA_GC = {
   A:'GCC', R:'CGC', N:'AAC', D:'GAC', C:'UGC',
   Q:'CAG', E:'GAG', G:'GGC', H:'CAC', I:'AUC',
@@ -407,13 +334,12 @@ const AA2RNA_GC = {
   S:'UCC', T:'ACC', W:'UGG', Y:'UAC', V:'GUG',
   U:'UGA', O:'UAG', B:'AAN', Z:'CAN', X:'NNN', '*':'NNN'
 };
-// NNK degenerate (keeps codon length; visualization-safe)
 const AA2RNA_NNK = {
   A:'NNK', R:'NNK', N:'NNK', D:'NNK', C:'NNK',
   Q:'NNK', E:'NNK', G:'NNK', H:'NNK', I:'NNK',
   L:'NNK', K:'NNK', M:'AUG', F:'NNK', P:'NNK',
   S:'NNK', T:'NNK', W:'UGG', Y:'NNK', V:'NNK',
-  U:'UGA', O:'UAG', B:'NNK', Z:'NNK', X:'NNK', '*':'NNN'
+  U:'UGA', O:'UAG', B:'NNK', Z:'NNK', X:'NNN', '*':'NNN'
 };
 function aaToRNAWithMode(aaSeq, mode='canonical'){
   const s = String(aaSeq||'').replace(/\s+/g,'').toUpperCase();
@@ -421,19 +347,11 @@ function aaToRNAWithMode(aaSeq, mode='canonical'){
   let out = '';
   for(const ch of s){
     if(table[ch]) out += table[ch];
-    else if(NUCLEOTIDE_CHARS.has(ch)) out += ch; // if already NT-ish, keep
+    else if(NUCLEOTIDE_CHARS.has(ch)) out += ch;
     else out += 'NNN';
   }
   return out;
 }
-/**
- * Resolve a sequence by ID from a pool, slicing if :start-end, and
- * converting AA→RNA when:
- *  - the sequence looks like amino acids, AND
- *  - server allows AA conversion, AND
- *  - the user toggled the AA conversion flag ON.
- * Returns {seq, converted:boolean, note:string, mode:string}
- */
 function resolveSeqWithAAHandling(anyId, pool){
   const raw = tolerantGetAnySeqForId(anyId, pool);
   if(!raw) return { seq:'', converted:false, note:'', mode:'' };
@@ -499,6 +417,14 @@ function bindOnce(el, event, handler, key){
   if(el.dataset) el.dataset[k] = '1';
 }
 
+// Handy: get staged 3D files from HTML baskets (fallback to empty)
+function getBasketFiles(kind){
+  try{
+    if(window.__BASKET__ && Array.isArray(window.__BASKET__[kind])) return window.__BASKET__[kind];
+  }catch(_){}
+  return [];
+}
+
 // =====================================================
 // Initialization
 // =====================================================
@@ -515,13 +441,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     show(loader);
   }
 
-  // Link file pickers → textareas
+  // Link file pickers → textareas (sequence FASTA inputs)
   bindFileToTextarea('mirna-seq-file', 'primary-seqs');
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
-
-  // Build staging baskets for 3D files
-  setupStagingBaskets();
 
   // Form submit
   const form = $('prediction-form');
@@ -530,7 +453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     GUARDS.formBindingDone = true;
   }
 
-  // Make primary action buttons look premium if present
+  // Premium look for primary buttons if present
   ['load-sample-btn','clear-btn','clear-inputs-btn','seed-scan-global-btn','explain-global-btn'].forEach(id=>{
     const el = $(id);
     if(el) el.classList.add('btn-premium');
@@ -637,106 +560,11 @@ function extractChainHintsFromFasta(text){
   for(const ln of lines){
     if(!ln.trim().startsWith('>')) continue;
     const header = ln.slice(1).trim();
-    const id = header.replace(/\|.*$/,'').trim(); // before first pipe
+    const id = header.replace(/\|.*$/,'').trim();
     const m = header.match(/\bchain\b\s*=\s*([A-Za-z0-9])/i);
     if(m && id){ hints[id] = m[1].toUpperCase(); }
   }
-  return hints; // { headerId: 'A' }
-}
-
-// =====================================================
-// Staging baskets (accumulate 3D files across selections)
-// =====================================================
-function setupStagingBaskets(){
-  if(GUARDS.stagingDone) return;
-
-  setupOneBasket('target');
-  setupOneBasket('competitor');
-
-  GUARDS.stagingDone = true;
-}
-
-function setupOneBasket(kind){
-  const legacyInput = $(`${kind}-file`); // existing <input type="file" multiple>
-  if(!legacyInput || !legacyInput.parentElement) return;
-
-  // Hide legacy input but keep it as fallback (we still read its files on submit)
-  legacyInput.style.display = 'none';
-
-  // Create staging box
-  const boxId = `${kind}-staging-box`;
-  const chipsId = `${kind}-staged-chips`;
-  const pickId = `${kind}-staged-picker`;
-
-  const html = `
-    <div id="${boxId}" class="staging-box">
-      <div class="staging-head">
-        <div><strong>${kind === 'target' ? 'Target' : 'Competitor'} 3D files</strong>
-          <span class="badge off" id="${kind}-staged-count">0 staged</span>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button id="${kind}-staged-add" class="btn-action">Add PDB/mmCIF</button>
-          <button id="${kind}-staged-clear" class="btn-action">Clear</button>
-        </div>
-      </div>
-      <div id="${chipsId}" style="display:flex;flex-wrap:wrap;"></div>
-      <input id="${pickId}" type="file" accept=".pdb,.cif,.mmcif" multiple style="display:none"/>
-    </div>
-  `;
-  legacyInput.insertAdjacentHTML('afterend', html);
-
-  const pick = $(pickId);
-  const addBtn = $(`${kind}-staged-add`);
-  const clrBtn = $(`${kind}-staged-clear`);
-
-  if(addBtn && pick){
-    bindOnce(addBtn, 'click', () => pick.click(), `${kind}-stage-add`);
-  }
-  if(pick){
-    bindOnce(pick, 'change', () => {
-      const list = Array.from(pick.files || []);
-      if(list.length){
-        for(const f of list){
-          if(!validateFileSize(f)) continue;
-          STAGED[`${kind}3dFiles`].push(f);
-        }
-        renderStagedChips(kind);
-      }
-      pick.value = ''; // reset
-    }, `${kind}-stage-change`);
-  }
-  if(clrBtn){
-    bindOnce(clrBtn, 'click', () => {
-      STAGED[`${kind}3dFiles`] = [];
-      renderStagedChips(kind);
-    }, `${kind}-stage-clear`);
-  }
-  renderStagedChips(kind);
-}
-
-function renderStagedChips(kind){
-  const area = $(`${kind}-staged-chips`);
-  const countLbl = $(`${kind}-staged-count`);
-  if(!area) return;
-  area.innerHTML = '';
-  const arr = STAGED[`${kind}3dFiles`];
-  arr.forEach((f, idx) => {
-    const chip = document.createElement('span');
-    chip.className = 'chipfile';
-    chip.innerHTML = `${escapeHTML(f.name)} <button title="Remove">×</button>`;
-    const btn = chip.querySelector('button');
-    if(btn){
-      bindOnce(btn, 'click', () => {
-        STAGED[`${kind}3dFiles`].splice(idx,1);
-        renderStagedChips(kind);
-      }, `${kind}-rm-${idx}-${Date.now()}`);
-    }
-    area.appendChild(chip);
-  });
-  if(countLbl){
-    countLbl.textContent = `${arr.length} staged`;
-    countLbl.className = `badge ${arr.length ? 'ok' : 'off'}`;
-  }
+  return hints;
 }
 
 // =====================================================
@@ -780,8 +608,8 @@ async function handleSubmit(event){
       competitor_pdb_ids: extractPdbIdsFromFasta(competitorSeq),
       target_chain_hints: extractChainHintsFromFasta(targetSeq),
       competitor_chain_hints: extractChainHintsFromFasta(competitorSeq),
-      staged_target_files: STAGED.target3dFiles.map(f => f.name),
-      staged_competitor_files: STAGED.competitor3dFiles.map(f => f.name)
+      staged_target_files: getBasketFiles('target').map(f => f.name),
+      staged_competitor_files: getBasketFiles('competitor').map(f => f.name)
     }
   };
 
@@ -803,18 +631,18 @@ async function handleSubmit(event){
     return;
   }
 
-  // Count records for ETA hint (targets/competitors may be filled by PDB-only later; we allow 0 here)
+  // Count records for ETA hint (targets/competitors may be filled by PDB-only later; allow 0 here)
   const mirnaCount = countFastaRecords(primarySeqs);
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
-  // Friendly info + estimated total pairs (centered)
+  // Friendly info
   const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
   prependHTML(resultsContainer, formatInfo(
-    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${STAGED.target3dFiles.length}, competitor=${STAGED.competitor3dFiles.length}. Estimated evaluations: ${estTotal}.`
+    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
   ));
 
-  // Non-blocking tips (backend enforces), FASTA-only/PDB-only allowed
+  // Non-blocking tips
   const MIN_TARGET_LEN = 30;
   const MIN_COMP_LEN   = 15;
   if (targetSeq && (targetSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_TARGET_LEN){
@@ -836,7 +664,7 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
-  // Switch to results tab & scroll to page top
+  // Switch to results tab & scroll to top
   const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
@@ -881,11 +709,9 @@ async function handleSubmit(event){
     formData.append('competitor_chain_hints_json', JSON.stringify(compChainHints));
   }
 
-  // --- Optional 3D files (multiple allowed; include STAGED first) ---
-  for (const f of STAGED.target3dFiles) { if(!validateFileSize(f)) { continue; } formData.append('target_3d_file', f); }
-  for (const f of STAGED.competitor3dFiles) { if(!validateFileSize(f)) { continue; } formData.append('competitor_3d_file', f); }
-
-  // Also include any legacy one-off selections still present (compat)
+  // Optional 3D files:
+  // The HTML fetch wrapper will append window.__BASKET__ files automatically on /predict.
+  // For resilience, also include any still-selected legacy inputs.
   const legacyTargetFiles = $('target-file')?.files;
   if (legacyTargetFiles?.length) {
     for (const f of legacyTargetFiles) {
@@ -975,7 +801,7 @@ async function handleSubmit(event){
           `;
 
           prependHTML(resultsContainer, formatWarn(friendly) + details);
-          lastTick = Date.now(); // show only occasionally
+          lastTick = Date.now();
         }
 
         setTimeout(poll, 1200);
@@ -1042,7 +868,6 @@ async function handleSubmit(event){
 // Precheck (best-effort; shows Use/Skip table if backend supports /precheck)
 // =====================================================
 async function tryPrecheck(formData){
-  // clone FormData (can reuse same files safely)
   const fd = new FormData();
   for (const [k,v] of formData.entries()) { fd.append(k, v); }
 
@@ -1061,7 +886,6 @@ async function tryPrecheck(formData){
   const data = await res.json();
   renderPrecheckPanel(data);
 }
-
 function renderPrecheckPanel(data){
   const rc = $('results-container');
   if(!rc) return;
@@ -1086,8 +910,8 @@ function renderPrecheckPanel(data){
   add(data.competitors, 'Competitor');
 
   let html = `
-    <div class="staging-box" style="background:#f8fffb;border-color:#bbf7d0;">
-      <div class="staging-head">
+    <div class="staging-box" style="background:#f8fffb;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin:8px 0;">
+      <div class="staging-head" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
         <div><strong>Pre-validation</strong> <span class="badge ok">non-blocking</span></div>
         <div class="badge off">PDB optional</div>
       </div>
@@ -1124,14 +948,13 @@ function renderPrecheckPanel(data){
   `;
   prependHTML(rc, html);
 
-  // merge some info into manifest if provided
   RUN_MANIFEST = RUN_MANIFEST || {};
   RUN_MANIFEST.precheck = { targets: data.targets || [], competitors: data.competitors || [] };
 }
 
 // =====================================================
 // Display results (sorted by baseline; gradient by baseline)
-// + injects analysis controls + filter chips + per-row action buttons + row badges + manifest download
+// + wires existing analysis controls + per-row action buttons + row badges + manifest/buttons
 // =====================================================
 function displayResults(results, finalData=null){
   const container = $('results-container');
@@ -1144,8 +967,8 @@ function displayResults(results, finalData=null){
     return;
   }
 
-  // Inject analysis controls (singleton)
-  injectAnalysisControls(container);
+  // Wire up existing analysis controls (in HTML) and show them
+  wireExistingAnalysisControls();
 
   // Update RUN_MANIFEST with any server-side manifest/meta if present
   if(finalData && finalData.manifest){
@@ -1154,10 +977,13 @@ function displayResults(results, finalData=null){
 
   // Top badges about run
   const runBadgesId = 'run-badges';
+  const anyStruct = hasAnyStructure();
+  const aaOn = !!$('aa-convert-flag')?.checked;
+  const aaMode = (byQS('#aa-nt-mode')?.value || 'canonical');
   const topBadges = `
     <div id="${runBadgesId}" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0 8px;">
-      <span class="badge ${hasAnyStructure() ? 'ok':'off'}">PDB present: ${hasAnyStructure() ? 'yes':'no'}</span>
-      <span class="badge ${($('aa-convert-flag')?.checked ? 'warn':'off')}">AA→NT: ${$('aa-convert-flag')?.checked ? 'yes':'no'} (mode: ${(byQS('#aa-nt-mode')?.value || 'canonical')})</span>
+      <span class="badge ${anyStruct ? 'ok':'off'}">PDB present: ${anyStruct ? 'yes':'no'}</span>
+      <span class="badge ${aaOn ? 'warn':'off'}">AA→NT: ${aaOn ? 'yes':'no'}${aaOn ? ` (${escapeHTML(aaMode)})` : ''}</span>
       <span class="badge off">Seed/IG computed on NT</span>
     </div>
   `;
@@ -1169,7 +995,6 @@ function displayResults(results, finalData=null){
     safeParseFloat(a.predicted_affinity_baseline ?? a.baseline_score ?? 0, 0)
   );
 
-  // Gradient by baseline in [0,1]
   function getGradientColor(score){
     const s = Math.max(0, Math.min(1, parseFloat(score) || 0));
     const viridis = [
@@ -1189,10 +1014,8 @@ function displayResults(results, finalData=null){
     return `rgba(${r},${g},${b},0.3)`;
   }
 
-  // Legend
-  const legendId = 'affinity-legend';
   const legendHTML = `
-  <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;text-align:center;">
+  <div id="affinity-legend" class="affinity-legend" style="margin-bottom:10px;text-align:center;">
     <h4 style="margin:6px 0 10px 0;">Affinity Classification Guide</h4>
     <table style="margin:0 auto;">
       <thead><tr><th>Category</th><th>Score Range</th><th>Interpretation</th></tr></thead>
@@ -1206,7 +1029,6 @@ function displayResults(results, finalData=null){
   </div>
   `;
 
-  // Download + Copy + Manifest buttons
   const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
     <button id="download-all-server-csv" class="btn-premium">Download Results (CSV)</button>
     <button id="download-all-bundles" class="btn-premium">Download All</button>
@@ -1283,7 +1105,7 @@ function displayResults(results, finalData=null){
     navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Results copied to clipboard.'));
   }, 'copyResultsClick');
 
-  // Table with optional Target/Competitor columns + Badges + Analysis col
+  // Table
   const hasTargetCol = (results || []).some(r => typeof r.target_id !== 'undefined');
   const hasCompCol   = (results || []).some(r => (r.competitor_id ?? '') !== '');
 
@@ -1307,17 +1129,15 @@ function displayResults(results, finalData=null){
     const compEff   = (item["competitive_effect (higher_is_better)"] ?? item.competitive_effect ?? '').toString();
     const bgColor   = getGradientColor(baseline);
 
-    // filter flags per row
     const isRange = (!!tid && /:\d+-\d+/.test(tid)) || (!!cid && /:\d+-\d+/.test(cid));
     const tolT = tid ? (!exactKeyExists(CURRENT_INPUTS.targets, parseIdRange(tid)?.baseId || tid) && !!lookupTolerant(CURRENT_INPUTS.targets, parseIdRange(tid)?.baseId || tid)) : false;
     const tolC = cid ? (!exactKeyExists(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid) && !!lookupTolerant(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid)) : false;
     const isTol = tolT || tolC;
 
-    // Row badges (best-effort from server fields if present)
     const badgeBits = [];
     if (typeof item.pdb_used !== 'undefined'){
       badgeBits.push(`<span class="badge ${item.pdb_used ? 'ok':'off'}">PDB used: ${item.pdb_used ? 'yes':'no'}</span>`);
-    }else if (hasAnyStructure()){
+    }else if (anyStruct){
       badgeBits.push(`<span class="badge off">PDB used: —</span>`);
     }
     if (typeof item.aa_to_nt_mode !== 'undefined' || typeof item.aa_to_nt !== 'undefined'){
@@ -1328,9 +1148,7 @@ function displayResults(results, finalData=null){
     if (typeof item.structure_features_on !== 'undefined'){
       badgeBits.push(`<span class="badge ${item.structure_features_on ? 'ok':'off'}">Structure-features: ${item.structure_features_on ? 'on':'off'}</span>`);
     }
-
-    const badgesHTML = badgeBits.length ? badgeBits.join(' ') :
-      `<span class="badge off">Notes unavailable</span>`;
+    const badgesHTML = badgeBits.length ? badgeBits.join(' ') : `<span class="badge off">Notes unavailable</span>`;
 
     const seedBtn    = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
     const heatBtn    = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
@@ -1339,9 +1157,8 @@ function displayResults(results, finalData=null){
     const c3dBtn     = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
     const bundleBtn  = `<button class="bundle-btn btn-action" data-row="${idx}">Download</button>`;
 
-    // two-line action block
     const actionBlock = `
-      <div class="action-grid">
+      <div class="action-grid" style="display:grid;grid-template-columns: repeat(3, minmax(120px, 1fr));gap:8px;">
         ${seedBtn}
         ${heatBtn}
         ${csvBtn}
@@ -1367,7 +1184,7 @@ function displayResults(results, finalData=null){
   appendHTML(container, table);
   makeTableSortable('results-table');
 
-  // Keep range/tolerant filter chips
+  // Range / tolerant filter chips
   injectResultFilters();
 
   // Delegate click handlers for action buttons
@@ -1398,8 +1215,10 @@ function displayResults(results, finalData=null){
 }
 
 function hasAnyStructure(){
-  return STAGED.target3dFiles.length + STAGED.competitor3dFiles.length > 0 ||
-         !!$('target-file')?.files?.length || !!$('competitor-file')?.files?.length;
+  const tgt = getBasketFiles('target').length;
+  const cmp = getBasketFiles('competitor').length;
+  const legacy = ($('target-file')?.files?.length || 0) + ($('competitor-file')?.files?.length || 0);
+  return (tgt + cmp + legacy) > 0;
 }
 
 // === Inject range/tolerant filter chips (toggle behavior) ===
@@ -1443,32 +1262,30 @@ function injectResultFilters(){
 }
 
 // =====================================================
-// Analysis controls (singleton)
+// Wire existing analysis controls (HTML block) once
+// Adds Allow G:U, Max mismatches, and two global buttons.
 // =====================================================
-function injectAnalysisControls(container){
-  if(GUARDS.analysisControlsInjected) return;
+function wireExistingAnalysisControls(){
+  const ac = $('analysis-controls');
+  if(!ac || GUARDS.analysisControlsWired) return;
 
-  const html = `
-  <div id="analysis-controls" class="controls-grid">
-    <label class="ctrl"><input type="checkbox" id="allow-gu" checked /><span>Allow G:U wobble</span></label>
-    <label class="ctrl"><span>Max mismatches</span><input id="max-mm" type="number" value="0" min="0" max="3" step="1"></label>
-    <label class="ctrl"><span>Heatmap</span>
-      <select id="heatmap-mode">
-        <option value="ig_target" selected>IG → Target</option>
-        <option value="ig_competitor">IG → Competitor</option>
-        <option value="seed_density">Seed density (fast)</option>
-      </select>
-    </label>
-    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
+  // Ensure visible
+  ac.classList.remove('hidden');
 
-    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
-  </div>
-  `;
+  // Add GU wobble + max mismatches if missing
+  if(!$('allow-gu') || !$('max-mm') || !$('seed-scan-global-btn') || !$('explain-global-btn')){
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;"><input type="checkbox" id="allow-gu" checked /> <strong>Allow G:U wobble</strong></label>
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;"><strong>Max mismatches</strong> <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="width:72px;"></label>
+      <button id="seed-scan-global-btn" class="btn-premium" style="margin-right:6px;">Seed Sites (top row)</button>
+      <button id="explain-global-btn" class="btn-premium btn-accent">Heatmap (top row)</button>
+    `;
+    ac.appendChild(row);
+  }
 
-  prependHTML(container, html);
-
-  // Global buttons: operate on the top-ranked row (simple, deterministic)
+  // Bind global buttons
   const seedBtn = $('seed-scan-global-btn');
   const hmBtn   = $('explain-global-btn');
 
@@ -1485,10 +1302,10 @@ function injectAnalysisControls(container){
       openModal('Heatmap', formatInfo('Run a prediction first so we can use the top-ranked row.'));
       return;
     }
-    await handleHeatmapClick(predictionResults[0]); // uses current #heatmap-mode/#heatmap-steps
+    await handleHeatmapClick(predictionResults[0]);
   }, 'hmGlobalOnce');
 
-  GUARDS.analysisControlsInjected = true;
+  GUARDS.analysisControlsWired = true;
 }
 
 // =====================================================
@@ -1510,8 +1327,6 @@ async function handleRowCsvClick(item){
     URL.revokeObjectURL(url);
   }catch(err){ alert('Could not download row CSV.'); }
 }
-
-// Per-row bundle (zip) download
 async function handleBundleClick(item){
   if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
   const interactionId = item.interaction_id || null;
@@ -1924,7 +1739,6 @@ async function ensureNGL(){
   }catch(_){ return false; }
 }
 
-// Entry from table buttons
 async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
   if(!CURRENT_JOB_ID){
     openModalText('3D Viewer', 'Run a prediction first.');
@@ -1998,7 +1812,7 @@ async function open3DStageFromBlob(kind, blob, anyId){
   }, 'openOnce');
 }
 
-// Legacy helper — plain-text on errors
+// Legacy helper (kept): text only message if structure missing
 async function open3DViewer(kind){
   if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
   if(!['target','competitor'].includes(kind)){ openModalText('3D Viewer', 'Invalid molecule kind.'); return; }
@@ -2074,7 +1888,7 @@ function wireTabButtonsOnce(){
           setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
         }
       }
-      if (name.includes('introduction')) { if (loader) hide(loader); }
+      if (name.includes('workflow')) { if (loader) hide(loader); }
     }, 'tabClick');
   });
 
@@ -2129,8 +1943,7 @@ function closeModal(){
 // Sticky header offset sync (matches CSS --sticky-offset-main)
 // =====================================================
 function syncStickyOffset(){
-  // Try common site header; fall back to 96px (CSS default)
-  const header = document.querySelector('header.site-header, header#site-header, .site-header');
+  const header = document.querySelector('header.site-header, header#site-header, .site-header, header#main-header');
   const h = header ? Math.max(64, Math.round(header.getBoundingClientRect().height)) : 96;
   document.documentElement.style.setProperty('--sticky-offset-main', `${h}px`);
 }

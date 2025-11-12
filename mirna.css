@@ -841,3 +841,81 @@ body.mirna-page .tabs .tab-btn.active::after {
     animation: none;
   }
 }
+
+/* --- Premium buttons + action buttons (bigger, crisp) ------------------- */
+.btn-premium{
+  padding:10px 14px; min-height:42px; min-width:130px; border-radius:12px;
+  border:1px solid #d9d9e3; background:linear-gradient(180deg,#ffffff,#f6f7fb);
+  font-weight:600; letter-spacing:.2px;
+  box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);
+  transition:.15s transform ease,.2s box-shadow ease;
+}
+.btn-premium:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(17,24,39,.09); }
+.btn-action{
+  min-width:128px; min-height:40px; padding:9px 12px; border-radius:10px; font-weight:600;
+  border:1px solid #d8dee9; background:linear-gradient(180deg,#fff,#f8fafc);
+}
+.btn-accent{ background:#0ea5e9; color:#fff; border:1px solid #0284c7; }
+
+/* --- Loader spinner used by JS ------------------------------------------ */
+.loader-spinner{
+  display:inline-block; width:18px; height:18px; margin-right:8px;
+  border:3px solid #e5e7eb; border-top-color:#0ea5e9; border-radius:50%;
+  animation:spin .9s linear infinite; vertical-align:middle;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* --- Tabs + cards -------------------------------------------------------- */
+.card{ display:none; }
+.card.active{ display:block; }
+.tab-btn{ padding:8px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#fff; }
+.tab-btn.active{ background:#0ea5e9; color:#fff; border-color:#0284c7; }
+.hidden{ display:none !important; }
+
+/* --- Results table ------------------------------------------------------- */
+#results-table{ width:100%; border-collapse:collapse; }
+#results-table thead th{
+  position:sticky; top:var(--sticky-offset-main,96px); background:#fff; z-index:1;
+  padding:10px 8px; border-bottom:1px solid #e5e7eb; text-align:left;
+}
+#results-table tbody td{ padding:8px; border-bottom:1px solid #f1f5f9; }
+#results-table tbody tr:hover{ filter:brightness(.98); }
+
+/* --- Legend + filters ---------------------------------------------------- */
+.affinity-legend table{ border-collapse:collapse; }
+.affinity-legend th, .affinity-legend td{ padding:6px 10px; border:1px solid #e5e7eb; }
+#result-filters .chip-toggle.active{
+  filter:brightness(0.96); box-shadow:0 0 0 2px rgba(30,90,156,.15) inset;
+}
+
+/* --- Controls grid (keeps heatmap/seed controls perfectly level) -------- */
+.controls-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, max-content));
+  gap:12px; align-items:center; justify-content:center; margin:8px 0 12px;
+}
+.controls-grid .ctrl{ display:flex; align-items:center; gap:8px; justify-content:center; white-space:nowrap; }
+.controls-grid .ctrl input[type="number"],
+.controls-grid .ctrl select{
+  padding:6px 10px; border:1px solid #d8dee9; border-radius:8px; min-height:40px; height:40px; line-height:40px;
+}
+.controls-grid .ctrl input[type="checkbox"]{ transform: translateY(1px); }
+
+/* --- Two-line action cluster -------------------------------------------- */
+.action-grid{ display:grid; grid-template-columns:repeat(3, minmax(120px, 1fr)); gap:8px; }
+.action-grid .btn-action{ width:100%; }
+
+/* --- Staging boxes for multi-PDB upload --------------------------------- */
+.staging-box{ border:1px dashed #cbd5e1; border-radius:10px; padding:10px; margin-top:8px; background:#fafbff; }
+.staging-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+.chipfile{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:9999px; border:1px solid #e2e8f0; background:#fff; margin:4px 6px 0 0; font-size:12px; }
+.chipfile button{ border:none; background:transparent; cursor:pointer; font-weight:700; }
+.badge{ display:inline-block; border-radius:9999px; padding:2px 8px; font-size:11px; border:1px solid #e5e7eb; background:#f8fafc; margin:2px 4px; color:#334155; }
+.badge.ok{ background:#ecfdf5; border-color:#bbf7d0; color:#065f46; }
+.badge.warn{ background:#fff7ed; border-color:#fed7aa; color:#7c2d12; }
+.badge.off{ background:#f1f5f9; border-color:#cbd5e1; color:#475569; }
+
+/* --- Modal fallback classes (your JS creates inline styles too) ---------- */
+#analysis-modal [data-panel] h3{ margin:0; }
+#modal-tools .toolbar-btn{
+  min-height:32px; padding:6px 10px; border-radius:8px; border:1px solid #d8dee9; background:#fff; font-weight:600;
+}

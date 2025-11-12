@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-12 r7: Staging baskets, Use/Skip pre-check, PDB optional flow, PDB-only allowed, AA→NT banners, fetch wrapper to pass PDB IDs + staged files -->
+  <!-- v2025-11-12 r8: tab buttons type=button, PDB-only flow, styled 3D stagers (Add/Clear+badge), sticky Use/Skip header, AA→NT fallback checkbox -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -116,17 +116,20 @@
     }
     .aa-detect strong{ color:#7a4a00; }
 
-    /* Staging baskets */
-    .basket{ border:1px dashed #cfe0ff; background:#f7fbff; padding:8px; border-radius:10px; margin:6px 0 10px; }
-    .basket h5{ margin:0 0 8px 0; font-size:0.95rem; color:#163b66; }
-    .chips{ display:flex; flex-wrap:wrap; gap:6px; }
-    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--chip-bg); border:1px solid var(--chip-br); color:var(--chip-fg); font-size:12px; }
-    .chip button{ border:none; background:transparent; cursor:pointer; padding:0 2px; font-weight:900; color:#305089; }
+    /* Styled 3D stagers */
+    .stager{border:1px dashed #d8e2ef; border-radius:12px; padding:12px; background:#fbfdff; margin:12px 0;}
+    .stager legend{font-weight:700; color:#0b1426;}
+    .stager .badge{display:inline-block;font-size:12px;color:#334155;background:#eef2f7;border:1px solid #d9e1ea;border-radius:999px;padding:2px 8px;margin-left:8px;}
+    .stager .actions{display:flex; gap:10px; justify-content:flex-end; align-items:center;}
+    .stager .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+    .stager .chip{padding:2px 8px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; font-size:12px;}
 
     /* Use/Skip table */
     #precheck{ border:1px solid #e6eefc; background:#fbfdff; padding:10px; border-radius:10px; }
+    #precheck .wrap{max-height:260px; overflow:auto; border:1px solid #e6edf5; border-radius:10px;}
     #precheck table{ width:100%; border-collapse:collapse; font-size:0.95rem; }
     #precheck th, #precheck td{ padding:6px 8px; border-bottom:1px solid #eef4ff; }
+    #precheck thead th{ position: sticky; top: 0; z-index: 2; background:#eaf3ff; }
     #precheck .warn{ color:#7a4a00; }
     #precheck .ok{ color:#066c28; }
     #precheck .note{ color:#334155; font-size:0.9em; }
@@ -152,7 +155,6 @@
   <!-- Lightweight nonce helper (front-door) -->
   <script>
     (function(){
-      const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
       async function fetchNonce(){
         try{
           const r = await fetch('/nonce');
@@ -172,7 +174,7 @@
     })();
   </script>
 
-  <!-- Fetch wrapper: inject staged files + typed PDB IDs into /predict FormData without touching mirna.js -->
+  <!-- Fetch wrapper: inject staged files + typed PDB IDs into /predict FormData -->
   <script>
     (function(){
       const origFetch = window.fetch;
@@ -245,10 +247,10 @@
 
       <!-- Tabs -->
       <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
-        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="intro-tab" id="tab-Workflow" onclick="openTab(this, 'intro-tab')">Workflow</button>
-        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="input-tab" id="tab-inputs" onclick="openTab(this, 'input-tab')">Inputs</button>
-        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="advanced-tab" id="tab-advanced" onclick="openTab(this, 'advanced-tab')">Advanced Options</button>
-        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="results-tab" id="tab-results" onclick="openTab(this, 'results-tab')">Results</button>
+        <button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="intro-tab" id="tab-Workflow" onclick="openTab(this, 'intro-tab')">Workflow</button>
+        <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="input-tab" id="tab-inputs" onclick="openTab(this, 'input-tab')">Inputs</button>
+        <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="advanced-tab" id="tab-advanced" onclick="openTab(this, 'advanced-tab')">Advanced Options</button>
+        <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="results-tab" id="tab-results" onclick="openTab(this, 'results-tab')">Results</button>
       </div>
 
       <!-- Workflow (About + Workflow + Tips unified) -->
@@ -337,7 +339,6 @@
           <label for="target-seq">Target Molecule Sequence(s) <span aria-hidden="true">(FASTA or raw; RNA/DNA or Protein)</span>:</label>
           <textarea
             id="target-seq"
-            required
             placeholder=">TP53_3UTR&#10;AUGGCUAUGCUAUGC...   (or protein example)&#10;>Protein_example&#10;MKWVTFISLLFLFSSAYS..."
             class="sequence-input"
             aria-describedby="target-seq-desc"
@@ -400,37 +401,36 @@
             <small id="competitor-pdb-ids-desc">Provide PDB accession(s) if you don’t have files. These fields never block analysis from starting.</small>
           </div>
 
-          <br />
-
-          <!-- Optional 3D uploads -->
-          <div class="file-uploads" aria-label="Optional 3D structure files">
-            <label>Upload 3D Structure Files (Optional, PDB/mmCIF):</label>
-            <br />
-            <label for="mirna-file">miRNA 3D file(s):</label>
-            <input type="file" id="mirna-file" accept=".pdb,.cif" multiple aria-label="Upload miRNA structure files"/>
-            <div class="basket" id="mirna-basket">
-              <h5>Staged miRNA 3D files</h5>
-              <div class="chips" id="mirna-chips"></div>
+          <!-- Styled stagers for 3D files -->
+          <fieldset class="stager" id="stager-mirna" style="margin-top:12px;">
+            <legend>miRNA 3D files <span class="badge" id="badge-mirna">0 staged</span></legend>
+            <div class="actions">
+              <button type="button" id="btn-mirna-add" class="btn-premium">Add PDB/mmCIF</button>
+              <button type="button" id="btn-mirna-clear" class="btn-premium">Clear</button>
             </div>
+            <input type="file" id="mirna-file" accept=".pdb,.cif" multiple hidden />
+            <div class="chips" id="chips-mirna"></div>
+          </fieldset>
 
-            <label for="target-file">Target 3D file(s):</label>
-            <input type="file" id="target-file" accept=".pdb,.cif" multiple aria-label="Upload target structure file"/>
-            <div class="basket" id="target-basket">
-              <h5>Staged target 3D files</h5>
-              <div class="chips" id="target-chips"></div>
+          <fieldset class="stager" id="stager-target">
+            <legend>Target 3D files <span class="badge" id="badge-target">0 staged</span></legend>
+            <div class="actions">
+              <button type="button" id="btn-target-add" class="btn-premium">Add PDB/mmCIF</button>
+              <button type="button" id="btn-target-clear" class="btn-premium">Clear</button>
             </div>
+            <input type="file" id="target-file" accept=".pdb,.cif" multiple hidden />
+            <div class="chips" id="chips-target"></div>
+          </fieldset>
 
-            <label for="competitor-file">Competitor 3D file(s):</label>
-            <input type="file" id="competitor-file" accept=".pdb,.cif" multiple aria-label="Upload competitor structure file"/>
-            <div class="basket" id="competitor-basket">
-              <h5>Staged competitor 3D files</h5>
-              <div class="chips" id="competitor-chips"></div>
+          <fieldset class="stager" id="stager-competitor">
+            <legend>Competitor 3D files <span class="badge" id="badge-competitor">0 staged</span></legend>
+            <div class="actions">
+              <button type="button" id="btn-competitor-add" class="btn-premium">Add PDB/mmCIF</button>
+              <button type="button" id="btn-competitor-clear" class="btn-premium">Clear</button>
             </div>
-
-            <small class="note">
-              Selecting files multiple times adds to the basket; they won’t replace earlier selections. All staged files are sent on submit.
-            </small>
-          </div>
+            <input type="file" id="competitor-file" accept=".pdb,.cif" multiple hidden />
+            <div class="chips" id="chips-competitor"></div>
+          </fieldset>
 
           <!-- Pre-validation Use/Skip summary -->
           <div id="precheck" style="margin-top:12px;">
@@ -438,7 +438,7 @@
             <div class="note" style="margin:6px 0 8px;">
               This preview is heuristic. <b>FASTA wins for scoring.</b> PDB is used for 3D (and optional features). If only PDB is supplied: nucleic acid runs as-is; protein runs via AA→NT back-translation.
             </div>
-            <div id="precheck-table-wrap"></div>
+            <div class="wrap" id="precheck-table-wrap"></div>
           </div>
 
           <div style="margin-top:10px;">
@@ -459,7 +459,15 @@
         <small id="target-region-desc">
           Optionally analyze a specific sub-region for every target. If left blank, the full target sequence is used.
         </small>
-        <!-- mirna.js injects server-config-note and aa-convert flag here -->
+
+        <!-- Static AA→NT fallback; mirna.js may also inject/configure -->
+        <div id="advanced-flags-fallback" style="margin-top:10px;">
+          <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
+            <input type="checkbox" id="aa-convert-flag" checked />
+            <span>Convert AA → NT (lossy; affects Seed/IG and scoring when AA or protein-only PDB is provided)</span>
+          </label>
+        </div>
+        <!-- mirna.js injects any extra server-config notes here -->
       </div>
 
       <!-- Results -->
@@ -573,7 +581,7 @@
   <!-- Fixed relative path from /mirna/ -->
   <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
 
-  <!-- UI helpers: click sound, sample/clear, heatmap modal hook, AA detection & PDB-ID shim, staging baskets, Use/Skip precheck, manifest -->
+  <!-- UI helpers: click sound, sample/clear, heatmap modal hook, AA detection & PDB-ID shim, 3D stagers, Use/Skip precheck, manifest -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const clickSound = document.getElementById('click-sound');
@@ -599,7 +607,7 @@
         window.__BASKET__.mirna.length = 0;
         window.__BASKET__.target.length = 0;
         window.__BASKET__.competitor.length = 0;
-        renderChips('mirna'); renderChips('target'); renderChips('competitor');
+        ['mirna','target','competitor'].forEach(k=>{ renderChips(k); updateBadge(k); });
         renderPrecheck();
       }
 
@@ -613,10 +621,7 @@
           if (c) c.value = SAMPLE_COMP;
           resetFileInputs();
           clearBaskets();
-          if (typeof openTab === 'function') {
-            const inputsBtn = document.getElementById('tab-inputs');
-            openTab(inputsBtn, 'input-tab');
-          }
+          if (typeof openTab === 'function') openTab(document.getElementById('tab-inputs'), 'input-tab');
           hideAADetect('target-aa-note');
           hideAADetect('competitor-aa-note');
           renderPrecheck();
@@ -625,10 +630,7 @@
 
       if (btnClear) {
         btnClear.addEventListener('click', () => {
-          ['primary-seqs','target-seq','competitor-seq'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-          });
+          ['primary-seqs','target-seq','competitor-seq'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
           ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
           resetFileInputs();
           clearBaskets();
@@ -655,7 +657,7 @@
         if(dlg && typeof dlg.showModal === 'function') dlg.showModal();
       });
 
-      // ===== AA detection + auto-toggle AA→NT (mirna.js will inject #aa-convert-flag) =====
+      // ===== AA detection + auto-toggle AA→NT =====
       const targetTA = document.getElementById('target-seq');
       const compTA   = document.getElementById('competitor-seq');
 
@@ -714,42 +716,52 @@
         if(el){ el.addEventListener('input', collectPdbIds); }
       });
 
-      // ===== Staging baskets for 3D files (accumulate across selections) =====
-      ['mirna','target','competitor'].forEach(kind=>{
-        const input = document.getElementById(kind+'-file');
-        if(!input) return;
-        input.addEventListener('change', ()=>{
-          const files = Array.from(input.files || []);
-          files.forEach(f => {
-            // de-dup by name+size
-            const exists = (window.__BASKET__[kind]||[]).some(x => x.name===f.name && x.size===f.size);
-            if(!exists) window.__BASKET__[kind].push(f);
-          });
-          input.value = ''; // allow re-selecting same file later
-          renderChips(kind);
-          renderPrecheck();
-        });
-      });
-
+      // ===== Styled stagers: wire Add/Clear + hidden file inputs =====
+      function updateBadge(kind){
+        const b = document.getElementById('badge-'+kind);
+        if(!b) return;
+        const n = (window.__BASKET__[kind]||[]).length;
+        b.textContent = `${n} staged`;
+      }
       function renderChips(kind){
-        const wrap = document.getElementById(kind+'-chips');
+        const wrap = document.getElementById('chips-'+kind);
         if(!wrap) return;
         wrap.innerHTML = '';
         (window.__BASKET__[kind]||[]).forEach((f, idx)=>{
-          const chip = document.createElement('span');
-          chip.className = 'chip';
-          chip.innerHTML = `<span title="${f.name}">${f.name.length>28? (f.name.slice(0,25)+'...') : f.name}</span> <span>${(f.size/1024).toFixed(0)} KB</span> <button aria-label="Remove ${f.name}" data-kind="${kind}" data-idx="${idx}">×</button>`;
-          wrap.appendChild(chip);
-        });
-        wrap.querySelectorAll('button[data-kind]').forEach(btn=>{
-          btn.addEventListener('click', ()=>{
-            const k=btn.getAttribute('data-kind'); const i=parseInt(btn.getAttribute('data-idx'),10);
-            window.__BASKET__[k].splice(i,1);
-            renderChips(k);
-            renderPrecheck();
-          });
+          const span = document.createElement('span');
+          span.className = 'chip';
+          span.textContent = `${f.name} (${(f.size/1024).toFixed(0)} KB)`;
+          span.title = f.name;
+          span.addEventListener('click', ()=>{ window.__BASKET__[kind].splice(idx,1); renderChips(kind); updateBadge(kind); renderPrecheck(); });
+          wrap.appendChild(span);
         });
       }
+      ['mirna','target','competitor'].forEach(kind=>{
+        const addBtn = document.getElementById('btn-'+kind+'-add');
+        const clrBtn = document.getElementById('btn-'+kind+'-clear');
+        const input  = document.getElementById(kind+'-file');
+        if(addBtn && input){
+          addBtn.addEventListener('click', (e)=>{ e.preventDefault(); input.click(); });
+        }
+        if(clrBtn){
+          clrBtn.addEventListener('click', (e)=>{ e.preventDefault(); window.__BASKET__[kind]=[]; renderChips(kind); updateBadge(kind); renderPrecheck(); });
+        }
+        if(input){
+          input.addEventListener('change', ()=>{
+            const files = Array.from(input.files||[]);
+            files.forEach(f=>{
+              const exists = (window.__BASKET__[kind]||[]).some(x => x.name===f.name && x.size===f.size);
+              if(!exists) window.__BASKET__[kind].push(f);
+            });
+            input.value='';
+            renderChips(kind);
+            updateBadge(kind);
+            renderPrecheck();
+          });
+        }
+        updateBadge(kind);
+      });
+
       function getSeqBody(id){
         const el=document.getElementById(id);
         if(!el) return '';
@@ -759,19 +771,14 @@
 
       // ===== Use/Skip pre-validation (heuristic) =====
       async function sniffPDB(file){
-        // Read first ~200KB for quick heuristics
         const slice = file.slice(0, 200*1024);
         const text = await slice.text();
-        // Very rough heuristics:
-        const hasPDB = /^(ATOM|HETATM)/m.test(text) || /_atom_site\./.test(text);
         const ntResid = /\b(?: DA| DC| DG| DT|  A|  C|  G|  U)\b/.test(text) || /\b(?:DA|DC|DG|DT|A|C|G|U)\b/.test(text);
         const aaResid = /\b(?:ALA|ARG|ASN|ASP|CYS|GLN|GLU|GLY|HIS|ILE|LEU|LYS|MET|PHE|PRO|SER|THR|TRP|TYR|VAL)\b/.test(text);
         let polymer = 'unknown';
         if (ntResid && aaResid) polymer = 'mixed';
         else if (ntResid) polymer = 'nucleic acid';
         else if (aaResid) polymer = 'protein';
-
-        // crude length approx: count atom lines for main residues
         const len = (text.match(/^ATOM/mg) || []).length || (text.match(/_atom_site\.id/mg) || []).length || 0;
         return { name:file.name, size:file.size, polymer, length:len };
       }
@@ -786,30 +793,24 @@
         const aaFlagEl = document.getElementById('aa-convert-flag');
         const aaOn = !!(aaFlagEl && aaFlagEl.checked);
 
-        // Decide scoring sources
         const hasTargetFASTA = !!tg;
         const hasCompFASTA   = !!cp;
 
         const rows = [];
-
-        // Sequences (always show)
         rows.push({ kind:'miRNA FASTA', name:'primary-seqs', polymer:'nucleic acid', length: mi.length, scoring:'Yes', viz:'n/a', note:'' });
 
-        // Target choice
         if (hasTargetFASTA){
           rows.push({ kind:'Target FASTA', name:'target-seq', polymer: looksLikeNT(tg)?'nucleic acid':'protein (AA → NT)', length: tg.length, scoring:'Yes', viz:'If PDB present', note: looksLikeNT(tg)?'':'AA→NT will be applied' });
         } else {
           rows.push({ kind:'Target FASTA', name:'(none)', polymer:'—', length: 0, scoring:'No', viz:'—', note:'PDB-only allowed' });
         }
 
-        // Competitor choice
         if (hasCompFASTA){
           rows.push({ kind:'Competitor FASTA', name:'competitor-seq', polymer: looksLikeNT(cp)?'nucleic acid':'protein (AA → NT)', length: cp.length, scoring: 'Yes (with-comp)', viz:'If PDB present', note: looksLikeNT(cp)?'':'AA→NT will be applied' });
         } else {
           rows.push({ kind:'Competitor FASTA', name:'(none)', polymer:'—', length: 0, scoring:'No', viz:'—', note:'Baseline-only unless PDB-only path is used' });
         }
 
-        // Staged PDB/mmCIF files (sniff)
         async function addFileRows(label, arr){
           for (const f of arr){
             const sniff = await sniffPDB(f);
@@ -828,15 +829,13 @@
         await addFileRows('Target 3D', window.__BASKET__.target||[]);
         await addFileRows('Competitor 3D', window.__BASKET__.competitor||[]);
 
-        // PDB IDs
         (window.__MIRNA_PDB_IDS__.target||[]).forEach(id=>{
-          rows.push({ kind:'Target PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasTargetFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Chain selection is tolerant; chain hints supported via header' });
+          rows.push({ kind:'Target PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasTargetFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Chain selection is tolerant; chain hints via header supported' });
         });
         (window.__MIRNA_PDB_IDS__.competitor||[]).forEach(id=>{
-          rows.push({ kind:'Competitor PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasCompFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Largest relevant chain will be auto-chosen' });
+          rows.push({ kind:'Competitor PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasCompFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Largest relevant chain auto-chosen' });
         });
 
-        // Render table
         let html = '<table aria-label="Pre-validation Use/Skip summary"><thead><tr><th>Source</th><th>Name / ID</th><th>Polymer</th><th>Extracted length</th><th>Used for scoring?</th><th>Used for viz?</th><th>Notes</th></tr></thead><tbody>';
         rows.forEach(r=>{
           const scoreClass = /Yes/.test(r.scoring)?'ok':(/No/.test(r.scoring)?'warn':'');
@@ -934,6 +933,6 @@
   <!-- Global/site scripts -->
   <script src="../script.js?v=2" defer></script>
   <!-- Page script (guard-safe, duplication-proof) -->
-  <script src="../mirna.js?v=6" defer></script>
+  <script src="../mirna.js?v=7" defer></script>
 </body>
 </html>
