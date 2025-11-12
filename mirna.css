@@ -920,26 +920,3 @@ body.mirna-page .tabs .tab-btn.active::after {
   min-height:32px; padding:6px 10px; border-radius:8px; border:1px solid #d8dee9; background:#fff; font-weight:600;
 }
 
-/* Layout the analysis toolbar as a neat grid */
-#analysis-controls { position: static; } /* remove stickiness entirely */
-#analysis-controls .row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 16px 20px;
-  align-items: center;
-}
-#analysis-controls .row > * { min-height: 40px; }
-#analysis-controls select { min-width: 260px; }
-
-/* Make it responsive */
-@media (max-width: 900px){
-  #analysis-controls .row { grid-template-columns: 1fr 1fr; }
-}
-
-/* Ensure modals/panels from analysis are not sticky */
-.affinity-legend,
-#results-container .staging-box,
-#analysis-modal,
-#analysis-modal [data-panel] {
-  position: static;
-}
