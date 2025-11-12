@@ -555,6 +555,15 @@ def save_filestorage_to_temp(fs) -> str:
     return tmp_path
 
 
+# NEW: save raw bytes to temp (used by PDB-ID downloader)
+def save_bytes_to_temp(content: bytes, suggested_name: str = "artifact.bin") -> str:
+    ext = os.path.splitext(suggested_name)[1] or ".bin"
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
+    with open(tmp.name, "wb") as f:
+        f.write(content)
+    return tmp.name
+
+
 # =========================
 # Structural feature extraction and fallback helpers
 # =========================
@@ -964,7 +973,7 @@ def start_prediction():
     # Save uploaded 3D files to temp and index them
     tmp_paths_to_cleanup: List[str] = []
 
-    # (a) target & competitor — multiple allowed
+    # (a) target & competitor — multiple allowed (uploads)
     target_3d_files = _save_optional_multi('target_3d_file')
     competitor_3d_files = _save_optional_multi('competitor_3d_file')
     for _, p in target_3d_files + competitor_3d_files:
@@ -984,6 +993,56 @@ def start_prediction():
         stem = os.path.splitext(secure_filename(fname))[0]
         for k in _id_variants(stem):
             competitor_3d_index[k] = p
+
+    # ---- FIX #2: accept PDB IDs and fetch from RCSB; index like uploads ----
+    def _split_ids(val: str) -> List[str]:
+        raw = (val or '').replace(';', ',').replace(' ', ',')
+        return [x for x in (y.strip() for y in raw.split(',')) if x]
+
+    def _download_pdb_to_tmp(pid: str, tmp_list: List[str]) -> Optional[str]:
+        pid = (pid or '').strip().upper()
+        if not pid:
+            return None
+        for ext in ('.cif', '.pdb'):
+            url = f"https://files.rcsb.org/download/{pid}{ext}"
+            try:
+                r = requests.get(url, timeout=12)
+                if r.status_code == 200 and len(r.content) > 1000:
+                    p = save_bytes_to_temp(r.content, suggested_name=f"{pid}{ext}")
+                    tmp_list.append(p)
+                    return p
+            except Exception as _e:
+                continue
+        return None
+
+    target_pdb_ids = request.form.get('target_pdb_ids', '')
+    competitor_pdb_ids = request.form.get('competitor_pdb_ids', '')
+
+    t_ids = _split_ids(target_pdb_ids)
+    c_ids = _split_ids(competitor_pdb_ids)
+
+    for pid in t_ids:
+        p = _download_pdb_to_tmp(pid, tmp_paths_to_cleanup)
+        if p:
+            stem = pid
+            # add to "files" list semantics
+            target_3d_files.append((f"{stem}{os.path.splitext(p)[1]}", p))
+            # index with tolerant keys
+            for k in _id_variants(stem):
+                target_3d_index[k] = p
+            if not target_3d_path:
+                target_3d_path = p
+
+    for pid in c_ids:
+        p = _download_pdb_to_tmp(pid, tmp_paths_to_cleanup)
+        if p:
+            stem = pid
+            competitor_3d_files.append((f"{stem}{os.path.splitext(p)[1]}", p))
+            for k in _id_variants(stem):
+                competitor_3d_index[k] = p
+            if not competitor_3d_path:
+                competitor_3d_path = p
+    # ---- end FIX #2 ----
 
     # (b) miRNA — multiple (as before) with tolerant keys
     mirna_3d_files = request.files.getlist('mirna_3d_file')
@@ -2110,7 +2169,8 @@ def seed_scan():
       "targets": {"target1": "ACGU..."},
       "competitors": {"comp1": "ACGU..."},
       "allow_gu": true,
-      "max_mismatch": 0
+      "max_mismatch": 0,
+      "convert_aa_to_nt": false   # NEW (if AA input is provided)
     }
     Returns { "hits": [ {molecule, id, start, end, seed_len, seed_type, mismatches, wobble} ... ] }
     Coordinates are 1-based on the provided target/competitor sequences.
@@ -2122,11 +2182,42 @@ def seed_scan():
         competitors = data.get('competitors') or {}
         allow_gu = bool(data.get('allow_gu', True))
         max_mism = int(data.get('max_mismatch', 0))
+        convert_aa = bool(data.get('convert_aa_to_nt', False))  # NEW
 
         if not mirna or not targets:
             return jsonify({'error': 'Provide mirna_seq and at least one target'}), 400
 
-        m = mirna.upper().replace('T','U')
+        # Helper: normalize AA/NT → RNA (U) string; AA allowed only if convert_aa or policy disabled
+        def _normalize_to_rna(seq: str) -> str:
+            s = (seq or '').strip()
+            if not s:
+                return ''
+            if is_aa_like(s):
+                if AA_CONVERT_ALLOWED and convert_aa:
+                    s = back_translate(s)
+                else:
+                    raise ValueError("Amino-acid sequence provided; enable AA→NT (lossy) to back-translate for seed scanning.")
+            s = s.upper().replace('T','U')
+            s = ''.join(ch for ch in s if ch in 'AUGCN')
+            return s
+
+        m = (mirna or '').upper().replace('T','U')
+
+        # Normalize all target/competitor sequences
+        norm_targets: Dict[str, str] = {}
+        for sid, sseq in targets.items():
+            try:
+                norm_targets[sid] = _normalize_to_rna(sseq)
+            except ValueError as ve:
+                return jsonify({'error': f"Target '{sid}': {ve}"}), 400
+
+        norm_comp: Dict[str, str] = {}
+        for cid, cseq in competitors.items():
+            try:
+                norm_comp[cid] = _normalize_to_rna(cseq)
+            except ValueError as ve:
+                return jsonify({'error': f"Competitor '{cid}': {ve}"}), 400
+
         hits: List[Dict] = []
 
         # Prepare seeds: 2–8 (7 nt) and 2–7 (6 nt)
@@ -2137,8 +2228,7 @@ def seed_scan():
 
         # Scan function
         def scan_one(label: str, seq_map: Dict[str, str]):
-            for sid, sseq in seq_map.items():
-                t = (sseq or '').upper().replace('T','U')
+            for sid, t in seq_map.items():
                 for seed, L in seeds:
                     if len(seed) < L:
                         continue
@@ -2163,8 +2253,8 @@ def seed_scan():
                             hit['upstream_base'] = t[i-1]
                         hits.append(hit)
 
-        scan_one('target', targets)
-        scan_one('competitor', competitors)
+        scan_one('target', norm_targets)
+        scan_one('competitor', norm_comp)
         return jsonify({'hits': hits})
     except Exception as e:
         logging.exception(f"/seed_scan error: {e}")

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-11 r3: Intro tab added; About merged into Intro; About tab removed; tabs moved directly under header -->
+  <!-- v2025-11-12 r4: AA→NT auto-detect + auto-toggle, optional PDB ID fields added, keep prior dev intact -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -116,17 +116,16 @@
     #heatmap-body img{ max-width:100%; height:auto; display:block; margin:auto; }
     #heatmap-foot{ display:flex; gap:10px; justify-content:flex-end; padding:10px 12px; border-top:1px solid #eef2f7; }
 
-    /* Keep the rest of the nav styling, but allow mixed case for the brand */
-    #main-header .main-nav a.brand-name {
-      text-transform: none !important;
-      letter-spacing: normal;   /* optional: undo any wide tracking on uppercase */
+    /* Brand tweaks */
+    #main-header .main-nav a.brand-name { text-transform: none !important; letter-spacing: normal; }
+    #main-header .main-nav a.brand-name sup { font-size: 65%; vertical-align: super; line-height: 0; }
+
+    /* AA detect banners */
+    .aa-detect{
+      margin:6px 0 8px; padding:8px 10px; border:1px solid #ffd7a8; background:#fff7e6;
+      color:#7a4a00; border-left:4px solid #ff9900; border-radius:8px; display:none;
     }
-    /* Make ™ look neat */
-    #main-header .main-nav a.brand-name sup {
-      font-size: 65%;
-      vertical-align: super;
-      line-height: 0;
-    }
+    .aa-detect strong{ color:#7a4a00; }
   </style>
 
   <!-- Icons -->
@@ -154,49 +153,15 @@
           <img src="../media/home/Logo.png" alt="Abdullah Al Marzan Logo"/>
         </a>
       </div>
-   <nav class="main-nav" role="navigation" aria-label="Primary">
+      <nav class="main-nav" role="navigation" aria-label="Primary">
         <ul>
-      <!--    <li><a href="/">Home</a></li>
-          <li class="has-submenu">
-            <a>Biography</a>
-            <ul class="submenu">
-              <li><a href="../aboutme/">About Me</a></li>
-              <li><a href="../academics/">Academics</a></li>
-            </ul>
-          </li> -->
           <li class="has-submenu">
             <a class="brand-name" aria-label="SeedScope">SeedScope<sup>™</sup></a>
-             <ul class="submenu">
+            <ul class="submenu">
               <li><a href="https://github.com/aamarzan" class="brand-name" aria-label="GitHub">GitHub</a></li>
               <li><a href="../contacts/" class="brand-name" aria-label="Collaborate">Collaborate</a></li>
-            </ul> 
-          </li>
-      <!--    <li class="has-submenu">
-            <a class="active">Projects</a>
-            <ul class="submenu">
-              <li><a href="../ongoing-projects/">Ongoing</a></li>
-              <li><a href="../previous-projects/">Previous</a></li>
-              <li><a href="../mirna/" class="active-submenu">Affinity Predictor</a></li>
             </ul>
           </li>
-          <li><a href="../dissertation/">Thesis</a></li>
-          <li class="has-submenu">
-            <a>Publications</a>
-            <ul class="submenu">
-              <li><a href="../articles/">Article</a></li>
-              <li><a href="../grant/">Grant</a></li>
-            </ul>
-          </li>
-          <li><a href="../certification/">Certifications</a></li>
-          <li class="has-submenu">
-            <a>More</a>
-            <ul class="submenu">
-              <li><a href="../blog/">Blog</a></li>
-              <li><a href="../activity/">Extra Curricular</a></li>
-              <li><a href="../acknowledgment/">Acknowledgment</a></li>
-              <li><a href="../contacts/">Contact</a></li>
-            </ul>
-          </li> -->
         </ul>
       </nav>
       <button id="hamburger-btn" aria-label="Toggle menu">
@@ -210,10 +175,6 @@
     <div class="mirna-container">
       <header>
         <h2>SeedScope™</h2>
-        <!--<p>
-          Predict miRNA binding affinity and the effect of <em>competitor</em> RNAs against one or more <em>targets</em>.
-          Provide sequences (multi-FASTA supported), optionally add 3D structures (PDB/mmCIF), and run a batched deep-learning analysis.
-        </p>  -->
       </header> 
 
       <!-- Tabs directly under header -->
@@ -267,7 +228,7 @@
           <ul>
             <li>Input your miRNA(s) as multi-FASTA. You may also provide one or more targets (multi-FASTA) and zero or more competitors (multi-FASTA).</li>
             <li>The analysis iterates: competitor1 → all targets → all miRNAs, then competitor2 → all targets → all miRNAs, and so on.</li>
-            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and lossy AA→NT back-translation (where enabled).</li>
+            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and **lossy AA→NT back-translation** (where enabled).</li>
             <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
           </ul>
         </section>
@@ -276,20 +237,19 @@
           <strong>Workflow overview:</strong>
           <ol style="margin:6px 0 0 18px;">
             <li>You can paste <b>multiple miRNAs</b> (multi-FASTA), <b>multiple targets</b> (multi-FASTA), and <b>zero or more competitors</b> (multi-FASTA).</li>
-            <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b> in RAM-safe batches.</li>
-            <li>Two conditions are scored per miRNA: <b>Baseline</b> (no competitor) and <b>With Competitor</b> (if provided).</li>
-            <li>Results table shows per-row: miRNA ID, Target ID, Competitor ID (if any), Baseline score, With-competitor score, and <b>Competitive effect</b> = Baseline − With-competitor.</li>
+            <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b>.</li>
+            <li>Two conditions are scored per miRNA: <b>Baseline</b> and <b>With Competitor</b> (if provided).</li>
+            <li><b>Seed Sites</b> & Heatmaps use **nucleotides**. If you paste **protein (AA)**, the UI auto-enables AA→NT so seed-level views reflect the converted NT, not AA letters.</li>
           </ol>
         </section>
 
         <section aria-label="Formatting tips" style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px; margin-bottom:14px;">
           <div><strong>Formatting tips</strong></div>
           <ul style="margin:6px 0 0 18px;">
-            <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved in results.</li>
-            <li><b>Targets &amp; Competitors:</b> multi-FASTA supported (one or many). If left blank for competitors, baseline-only analysis is done.</li>
-            <li><b>Range-aware IDs:</b> For subregions, reference as <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites will display both local (slice) and global coordinates.</li>
-            <li><b>3D files (PDB/mmCIF):</b> optional and must match their sequence. Use the base FASTA header for filenames (e.g., <code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.pdb</code>) even if results show a slice like <code>TP53_3UTR:90-150</code>.</li>
-            <li><b>Advanced:</b> optional auto-trim of long miRNAs; optional AA→NT back-translation (if enabled server-side).</li>
+            <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved.</li>
+            <li><b>Targets &amp; Competitors:</b> multi-FASTA supported. You may paste **RNA/DNA** or **protein** (AA). Protein will be back-translated if enabled.</li>
+            <li><b>Range-aware IDs:</b> Use <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites show local and global coordinates.</li>
+            <li><b>3D (PDB/mmCIF):</b> optional files or **PDB IDs**. Filenames (or IDs) should match the base FASTA header (e.g., <code>&gt;TP53_3UTR</code> ↔ <code>TP53_3UTR.pdb</code> or PDB ID list).</li>
           </ul>
         </section>
 
@@ -300,28 +260,12 @@
             <li><b>With competitor:</b> predicted binding strength considering the provided competitor.</li>
             <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
           </ul>
-          <div>
-            For best results, ensure FASTA headers match any provided 3D filenames exactly:
-            <ul>
-              <li><code>&gt;hsa-let-7a-5p</code> → <code>hsa-let-7a-5p.pdb</code></li>
-              <li><code>&gt;TP53_3UTR</code> → <code>TP53_3UTR.cif</code> (even if analysis uses <code>TP53_3UTR:90-150</code>)</li>
-            </ul>
-          </div>
-        </section>
-
-        <section aria-label="Notes">
-          <h3 style="margin:0 0 6px 0;">Notes</h3>
-          <ul>
-            <li>Predictions are based on training data; experimental validation is recommended.</li>
-            <li>3D structure files must correspond to sequences; mismatches will be rejected.</li>
-            <li>AA→NT back-translation is lossy and may introduce inaccuracies.</li>
-          </ul>
         </section>
       </div>
 
       <!-- Input card -->
       <div id="input-tab" class="card" role="tabpanel" aria-labelledby="tab-inputs">
-        <form id="prediction-form" aria-label="miRNA prediction form">
+        <form id="prediction-form" aria-label="miRNA prediction form" novalidate>
           <!-- Quick actions -->
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
             <button type="button" id="load-sample-btn" class="btn-premium" aria-label="Load example sequences">Load Sample</button>
@@ -346,15 +290,18 @@
           />
 
           <!-- Target -->
-          <label for="target-seq">Target Molecule Sequence(s) <span aria-hidden="true">(FASTA or raw; one or many)</span>:</label>
+          <label for="target-seq">Target Molecule Sequence(s) <span aria-hidden="true">(FASTA or raw; RNA/DNA or Protein)</span>:</label>
           <textarea
             id="target-seq"
             required
-            placeholder=">TP53_3UTR&#10;AUGGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAGCUAUGC"
+            placeholder=">TP53_3UTR&#10;AUGGCUAUGCUAUGC...   (or protein example)&#10;>Protein_example&#10;MKWVTFISLLFLFSSAYS..."
             class="sequence-input"
             aria-describedby="target-seq-desc"
           ></textarea>
-          <small id="target-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above. Use <code>Header:Start-End</code> in IDs at analysis time to focus subregions.</small>
+          <div id="target-aa-note" class="aa-detect" role="status" aria-live="polite">
+            <strong>Protein detected:</strong> AA→NT conversion will be applied so Seed Sites/Heatmaps use <u>nucleotides</u>, not amino acids.
+          </div>
+          <small id="target-seq-desc">You can paste RNA/DNA or protein (AA). Protein input is back-translated to NT (lossy) when enabled.</small>
           <input
             type="file"
             id="target-seq-file"
@@ -362,30 +309,60 @@
             aria-label="Upload target FASTA file"
           />
 
+          <!-- Optional Target PDB IDs -->
+          <div style="margin-top:6px;">
+            <label for="target-pdb-ids">Target PDB ID(s) (optional):</label>
+            <input
+              type="text"
+              id="target-pdb-ids"
+              inputmode="text"
+              placeholder="e.g., 1A2B, 3XYZ (comma-separated)"
+              aria-describedby="target-pdb-ids-desc"
+              style="width:100%; padding:8px; border:1px solid #d0d7de; border-radius:8px;"
+            />
+            <small id="target-pdb-ids-desc">Provide PDB accession(s) if you don’t have files. Analysis will still run without files.</small>
+          </div>
+
           <!-- Competitor -->
-          <label for="competitor-seq">Competitor Molecule Sequence(s) <span aria-hidden="true">(optional; FASTA or raw; one or many)</span>:</label>
+          <label for="competitor-seq" style="margin-top:10px;">Competitor Molecule Sequence(s) <span aria-hidden="true">(optional; FASTA or raw; RNA/DNA or Protein)</span>:</label>
           <textarea
             id="competitor-seq"
-            placeholder="(Optional) >comp1&#10;ACUGAUGAUGAUGCUAUGCUAUGCUA"
+            placeholder="(Optional) >comp1&#10;ACUGAUGAUGAUGCUA...   (or protein AA)"
             class="sequence-input"
             aria-describedby="competitor-seq-desc"
           ></textarea>
-          <small id="competitor-seq-desc">Upload a FASTA/FA/FAS/TXT file or paste the sequence(s) above. Leave empty to run baseline only.</small>
+          <div id="competitor-aa-note" class="aa-detect" role="status" aria-live="polite">
+            <strong>Protein detected:</strong> AA→NT conversion will be applied so Seed Sites/Heatmaps use <u>nucleotides</u>.
+          </div>
+          <small id="competitor-seq-desc">Leave empty to run baseline only. Protein input is back-translated to NT (lossy) when enabled.</small>
           <input
             type="file"
             id="competitor-seq-file"
             accept=".fasta,.fas,.fa,.txt"
             aria-label="Upload competitor FASTA file"
           />
-          <br />
+
+          <!-- Optional Competitor PDB IDs -->
+          <div style="margin-top:6px;">
+            <label for="competitor-pdb-ids">Competitor PDB ID(s) (optional):</label>
+            <input
+              type="text"
+              id="competitor-pdb-ids"
+              inputmode="text"
+              placeholder="e.g., 6MNO, 7PQ0 (comma-separated)"
+              aria-describedby="competitor-pdb-ids-desc"
+              style="width:100%; padding:8px; border:1px solid #d0d7de; border-radius:8px;"
+            />
+            <small id="competitor-pdb-ids-desc">Provide PDB accession(s) if you don’t have files. These fields never block analysis from starting.</small>
+          </div>
+
           <br />
 
-          <!-- Optional PDB uploads -->
+          <!-- Optional 3D uploads -->
           <div class="file-uploads" aria-label="Optional 3D structure files">
             <label>Upload 3D Structure Files (Optional, PDB/mmCIF):</label>
             <br />
             <label for="mirna-file">miRNA 3D file(s):</label>
-            <!-- filenames should match FASTA IDs (e.g., >hsa-let-7a-5p → hsa-let-7a-5p.pdb) -->
             <input
               type="file"
               id="mirna-file"
@@ -394,7 +371,7 @@
               aria-label="Upload miRNA structure files"
             />
             <br />
-            <label for="target-file">Target 3D file:</label>
+            <label for="target-file">Target 3D file(s):</label>
             <input
               type="file"
               id="target-file"
@@ -402,7 +379,7 @@
               multiple aria-label="Upload target structure file"
             />
             <br />
-            <label for="competitor-file">Competitor 3D file:</label>
+            <label for="competitor-file">Competitor 3D file(s):</label>
             <input
               type="file"
               id="competitor-file"
@@ -413,8 +390,6 @@
 
           <button type="submit" class="btn-premium" aria-label="Run prediction">Run Prediction</button>
         </form>
-
-        <!-- FASTA tips container: mirna.js injects singleton #fasta-tips-box here -->
       </div>
 
       <!-- Advanced options -->
@@ -438,6 +413,7 @@
         </small>
 
         <!-- Advanced flags container: mirna.js injects #server-config-note and #advanced-flags-wrapper here -->
+        <!-- Note: AA→NT toggle (injected here) will be auto-enabled if protein is detected in Target/Competitor. -->
       </div>
 
       <!-- Results -->
@@ -488,8 +464,6 @@
         <!-- Results container: mirna.js clears and re-renders each time -->
         <div id="results-container" aria-live="polite" aria-busy="false"></div>
       </div>
-
-      <!-- (About tab removed; content merged into workflow) -->
     </div>
   </main>
 
@@ -552,8 +526,9 @@
 
   <!-- Fixed relative path from /mirna/ -->
   <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
+
+  <!-- Lightweight nonce helper for gated endpoints (/predict, /seed_scan, /explain, /download/...) -->
   <script>
-    // Lightweight nonce helper for gated endpoints (/predict, /seed_scan, /explain, /download/...)
     (function(){
       const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
       async function fetchNonce(){
@@ -575,6 +550,7 @@
     })();
   </script>
 
+  <!-- UI helpers: click sound, sample/clear, heatmap modal hook, AA detection & PDB-ID shim -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const runBtn = document.querySelector('#prediction-form button[type="submit"]');
@@ -589,7 +565,7 @@
       const btnSample = document.getElementById('load-sample-btn');
       const btnClear  = document.getElementById('clear-inputs-btn');
 
-      const SAMPLE_MIRNA = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
+      const SAMPLE_MIRNA  = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
       const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
       const SAMPLE_COMP   = `>comp1\nAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
 
@@ -609,6 +585,10 @@
             const inputsBtn = document.getElementById('tab-inputs');
             openTab(inputsBtn, 'input-tab');
           }
+
+          // reset banners
+          hideAADetect('target-aa-note');
+          hideAADetect('competitor-aa-note');
         });
       }
 
@@ -623,14 +603,19 @@
               const el = document.getElementById(id);
               if (el) el.value = '';
             });
+          ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{
+            const el = document.getElementById(id); if(el) el.value = '';
+          });
           const s = document.getElementById('target-start');
           const e = document.getElementById('target-end');
           if (s) s.value = '';
           if (e) e.value = '';
+          hideAADetect('target-aa-note');
+          hideAADetect('competitor-aa-note');
         });
       }
 
-      // Heatmap modal hooks (mirna.js can dispatch 'open-heatmap' with {src,title})
+      // ---- Heatmap modal hooks (mirna.js can dispatch 'open-heatmap' with {src,title}) ----
       const dlg = document.getElementById('heatmap-dialog');
       const img = document.getElementById('heatmap-img');
       const titleEl = document.getElementById('heatmap-title');
@@ -641,30 +626,120 @@
         if(img){ img.src = src; img.alt = title || 'Heatmap'; }
         if(dlg && typeof dlg.showModal === 'function') dlg.showModal();
       });
+
+      // ===== AA detection + auto-toggle AA→NT (works with mirna.js-injected checkbox) =====
+      const targetTA = document.getElementById('target-seq');
+      const compTA   = document.getElementById('competitor-seq');
+
+      function isLikelyAA(text){
+        if(!text) return false;
+        // Strip headers and whitespace
+        const body = String(text).replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase();
+        if(!body) return false;
+        // Allowed NT set (DNA/RNA with ambiguity codes)
+        const ntSet = new Set('AUGCTNWSMKRYBDHV-'.split(''));
+        let nt=0, aa=0;
+        for(const ch of body){
+          if(ntSet.has(ch)) nt++; else aa++;
+        }
+        // Heuristic: if >15% characters are non-NT AND we see clear AA letters, treat as AA
+        const ratio = aa / (nt+aa);
+        const aaLetters = /[EFILPQZMWVHKRDCSTYGNX]/; // typical AA alphabet
+        return ratio > 0.15 && aaLetters.test(body);
+      }
+
+      function waitForAAFlag(cb){
+        // mirna.js injects #aa-convert-flag into Advanced tab; wait for it
+        const el = document.getElementById('aa-convert-flag');
+        if(el) return cb(el);
+        const mo = new MutationObserver((_muts, obs)=>{
+          const x = document.getElementById('aa-convert-flag');
+          if(x){ obs.disconnect(); cb(x); }
+        });
+        mo.observe(document.body, { childList:true, subtree:true });
+      }
+
+      function showAADetect(id){
+        const el = document.getElementById(id);
+        if(el){ el.style.display = 'block'; }
+      }
+      function hideAADetect(id){
+        const el = document.getElementById(id);
+        if(el){ el.style.display = 'none'; }
+      }
+
+      function handleAAHint(textareaId, bannerId){
+        const ta = document.getElementById(textareaId);
+        if(!ta) return;
+        const apply = ()=>{
+          const aa = isLikelyAA(ta.value);
+          if(aa){
+            showAADetect(bannerId);
+            waitForAAFlag(flag=>{
+              // Only auto-check if user hasn't manually toggled off before
+              if(!flag.dataset.userTouched){
+                flag.checked = true; // enable AA→NT
+              }
+            });
+          }else{
+            hideAADetect(bannerId);
+            // do not auto-uncheck; respect user toggle
+          }
+        };
+        ta.addEventListener('input', apply);
+        apply();
+      }
+
+      // track user interaction with AA→NT flag so we don't override it later
+      document.addEventListener('change', (e)=>{
+        const t = e.target;
+        if(t && t.id === 'aa-convert-flag'){
+          t.dataset.userTouched = '1';
+        }
+      });
+
+      handleAAHint('target-seq','target-aa-note');
+      handleAAHint('competitor-seq','competitor-aa-note');
+
+      // ===== PDB ID shim: expose values so frontend/backend can use when ready =====
+      function collectPdbIds(){
+        const t = (document.getElementById('target-pdb-ids')||{}).value || '';
+        const c = (document.getElementById('competitor-pdb-ids')||{}).value || '';
+        // Make them visible to page scripts (mirna.js can read if implemented)
+        window.__MIRNA_PDB_IDS__ = {
+          target: t.split(',').map(s=>s.trim()).filter(Boolean),
+          competitor: c.split(',').map(s=>s.trim()).filter(Boolean)
+        };
+      }
+      collectPdbIds();
+      ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el){ el.addEventListener('input', collectPdbIds); }
+      });
     });
   </script>
 
+  <!-- Cleanup tiny layout artifacts in action cells -->
   <script>
-  (function tidyActionCells(){
-    const root = document.getElementById('results-container');
-    if(!root) return;
+    (function tidyActionCells(){
+      const root = document.getElementById('results-container');
+      if(!root) return;
 
-    const clean = (scope) => {
-      scope.querySelectorAll('#results-container td').forEach(td => {
-        if (td.querySelector('.seed-btn') || td.querySelector('.heatmap-btn') || td.querySelector('.btn-action')) {
-          td.querySelectorAll('br').forEach(br => br.remove());
-        }
-      });
-    };
+      const clean = (scope) => {
+        scope.querySelectorAll('#results-container td').forEach(td => {
+          if (td.querySelector('.seed-btn') || td.querySelector('.heatmap-btn') || td.querySelector('.btn-action')) {
+            td.querySelectorAll('br').forEach(br => br.remove());
+          }
+        });
+      };
 
-    const mo = new MutationObserver(muts => muts.forEach(m => clean(m.target)));
-    mo.observe(root, { childList: true, subtree: true });
-    clean(root);
-  })();
+      const mo = new MutationObserver(muts => muts.forEach(m => clean(m.target)));
+      mo.observe(root, { childList: true, subtree: true });
+      clean(root);
+    })();
   </script>
 
-
-  <!-- Simple Heatmap modal viewer (optional; JS opens via CustomEvent) -->
+  <!-- Simple Heatmap modal viewer -->
   <dialog id="heatmap-dialog">
     <div id="heatmap-shell">
       <div id="heatmap-head">

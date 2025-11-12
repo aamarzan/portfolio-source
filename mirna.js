@@ -4,6 +4,8 @@
 // progress stall detector, and a 3D viewer with plain-text guidance.
 // + 2025-11-11: multi-PDB upload (target/competitor), per-row bundle download, global “Download All”,
 //   and perfectly leveled Heatmap controls.
+// + 2025-11-12: FIX #1 — AA→NT conversion applied before any seed/IG analysis & UI (no AA letters in alignments)
+//                FIX #2 — Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
 
 // =====================================================
 // Global state
@@ -20,9 +22,9 @@ let CONFIG = {
 
 // Store the exact inputs used at submit time so downstream analysis matches predictions
 const CURRENT_INPUTS = {
-  mirnas: {},      // id -> sequence
-  targets: {},     // id -> sequence
-  competitors: {}  // id -> sequence
+  mirnas: {},      // id -> sequence (as typed)
+  targets: {},     // id -> sequence (as typed)
+  competitors: {}  // id -> sequence (as typed)
 };
 
 // Last analysis cache (for exports)
@@ -345,6 +347,72 @@ function exactKeyExists(pool, anyId){
 }
 
 // =====================================================
+// NEW: AA ↔ NT helpers (FIX #1)
+// =====================================================
+const NUCLEOTIDE_CHARS = new Set(['A','C','G','U','T','N','R','Y','K','M','S','W','B','D','H','V']);
+function isLikelyAA(seq){
+  if(!seq) return false;
+  const s = String(seq).replace(/[\s\-]/g,'').toUpperCase();
+  if(!s) return false;
+  // If every char is nucleotide-ish, it's NT; otherwise likely AA
+  return /[^ACGTUNRYKMSWBVDH]/.test(s);
+}
+function toRNA(seq){
+  return String(seq||'').toUpperCase().replace(/T/g,'U').replace(/[^ACGU]/g, (ch)=>{
+    // keep N and ambiguity letters that map to NT; drop others
+    return NUCLEOTIDE_CHARS.has(ch) ? ch : '';
+  });
+}
+// Canonical RNA codon picks per amino acid (lossy but stable and deterministic)
+const AA2RNA = {
+  A:'GCU', R:'CGU', N:'AAU', D:'GAU', C:'UGU',
+  Q:'CAA', E:'GAA', G:'GGU', H:'CAU', I:'AUU',
+  L:'UUA', K:'AAA', M:'AUG', F:'UUU', P:'CCU',
+  S:'UCU', T:'ACU', W:'UGG', Y:'UAU', V:'GUU',
+  U:'UGA', // selenocysteine (placeholder)
+  O:'UAG', // pyrrolysine (placeholder)
+  B:'AAN', // Asx ambiguous (N/D)
+  Z:'CAN', // Glx ambiguous (Q/E)
+  X:'NNN', '*':'NNN'
+};
+function aaToRNA(aaSeq){
+  const s = String(aaSeq||'').replace(/\s+/g,'').toUpperCase();
+  let out = '';
+  for(const ch of s){
+    if(AA2RNA[ch]) out += AA2RNA[ch];
+    else if(NUCLEOTIDE_CHARS.has(ch)) out += ch; // if already NT-ish, keep
+    else out += 'NNN';
+  }
+  return out;
+}
+/**
+ * Resolve a sequence by ID from a pool, slicing if :start-end, and
+ * converting AA→RNA when:
+ *  - the sequence looks like amino acids, AND
+ *  - server allows AA conversion, AND
+ *  - the user toggled the AA conversion flag ON.
+ * Returns {seq, converted:boolean, note:string}
+ */
+function resolveSeqWithAAHandling(anyId, pool){
+  const raw = tolerantGetAnySeqForId(anyId, pool);
+  if(!raw) return { seq:'', converted:false, note:'' };
+
+  // Respect UI toggle & server allow
+  const uiFlag = $('aa-convert-flag')?.checked ?? CONFIG.aa_convert_allowed;
+  const canConvert = CONFIG.aa_convert_allowed && uiFlag;
+
+  if(isLikelyAA(raw)){
+    if(!canConvert){
+      return { seq:'', converted:false, note:'Target appears to be amino acids; enable AA→NT conversion or supply nucleotides.' };
+    }
+    const nt = aaToRNA(raw);
+    return { seq: toRNA(nt), converted:true, note:'AA→NT conversion applied (canonical codons).' };
+  }
+  // Already nucleotide-ish → normalize to RNA alphabet
+  return { seq: toRNA(raw), converted:false, note:'' };
+}
+
+// =====================================================
 // Config loader
 // =====================================================
 async function loadConfig(){
@@ -359,7 +427,6 @@ async function loadConfig(){
 
 // =====================================================
 // Nonce (optional; graceful when disabled on server)
-// Each call fetches a fresh nonce when CONFIG.use_nonce = true
 // =====================================================
 async function getNonceOrKeyHeaders() {
   const h = {};
@@ -468,7 +535,7 @@ function injectAdvancedOnce(){
           <span>Auto-trim miRNAs &gt; 30nt to mature-like ${CONFIG.mature_window}nt</span>
         </label>
         <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
-          <input type="checkbox" id="aa-convert-flag" ${CONFIG.aa_convert_allowed ? '' : 'disabled'}/>
+          <input type="checkbox" id="aa-convert-flag" ${CONFIG.aa_convert_allowed ? 'checked' : 'disabled'}/>
           <span>Convert AA → NT (lossy; for target/competitor)</span>
         </label>
       </div>
@@ -486,6 +553,28 @@ function injectAdvancedOnce(){
   }
 
   GUARDS.advancedInjected = true;
+}
+
+// =====================================================
+// Utility: extract PDB IDs from FASTA headers (FIX #2)
+// Accepts patterns like "PDB:7YTW", "rcsb=2ABC", "pdb 1XYZ_A"
+// =====================================================
+function extractPdbIdsFromFasta(text){
+  const ids = [];
+  if(!text) return ids;
+  const lines = text.split(/\r?\n/);
+  for(const ln of lines){
+    if(!ln.trim().startsWith('>')) continue;
+    const header = ln.slice(1);
+    const re = /(pdb|rcsb)\s*[:=]\s*([0-9][A-Za-z0-9]{3})(?:[_\-\s]*([A-Za-z0-9]))?/gi;
+    let m;
+    while((m = re.exec(header)) !== null){
+      const code = (m[2] || '').toUpperCase();
+      const chain = (m[3] || '').toUpperCase();
+      ids.push(chain ? `${code}_${chain}` : code);
+    }
+  }
+  return Array.from(new Set(ids));
 }
 
 // =====================================================
@@ -557,15 +646,13 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
-  // Switch to results tab
+  // Switch to results tab & scroll to page top
   const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
-  .find(b => /results/i.test(b.textContent || ''));
-
-if (resultsTabButton) {
-  openTab(resultsTabButton, 'results-tab');
-  // Jump to the absolute top of the page (very beginning)
-  window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); // or 'instant'
-}
+    .find(b => /results/i.test(b.textContent || ''));
+  if (resultsTabButton) {
+    openTab(resultsTabButton, 'results-tab');
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }
 
   // Show loader
   if(loader){
@@ -586,6 +673,12 @@ if (resultsTabButton) {
   const aaConvertFlag  = $('aa-convert-flag')?.checked ?? false;
   formData.append('mature_trim', matureTrimFlag ? 'true' : 'false');
   formData.append('convert_aa_to_nt', aaConvertFlag ? 'true' : 'false');
+
+  // NEW (FIX #2): PDB IDs in FASTA headers → pass through so backend can fetch structures
+  const targetPdbIds = extractPdbIdsFromFasta(targetSeq);
+  const compPdbIds   = extractPdbIdsFromFasta(competitorSeq);
+  targetPdbIds.forEach(id => formData.append('target_pdb_id', id));
+  compPdbIds.forEach(id   => formData.append('competitor_pdb_id', id));
 
   // --- Optional 3D files (multiple allowed) ---
   const mirnaFileInput = $('mirna-file');
@@ -731,7 +824,7 @@ function displayResults(results){
     return;
   }
 
-  // Inject analysis controls (singleton) — B) grid + leveled labels
+  // Inject analysis controls (singleton)
   injectAnalysisControls(container);
 
   // Sort by baseline desc
@@ -777,7 +870,7 @@ function displayResults(results){
   </div>
   `;
 
-  // Download + Copy buttons  (renamed + new "Download All")
+  // Download + Copy buttons
   const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
     <button id="download-all-server-csv" class="btn-premium">Download Results (CSV)</button>
     <button id="download-all-bundles" class="btn-premium">Download All</button>
@@ -976,7 +1069,7 @@ function injectResultFilters(){
 }
 
 // =====================================================
-// Analysis controls (singleton) — B) grid layout with leveled labels
+// Analysis controls (singleton)
 // =====================================================
 function injectAnalysisControls(container){
   if(GUARDS.analysisControlsInjected) return;
@@ -1131,8 +1224,11 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const compId  = item.competitor_id ?? '';
 
     const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
+    const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
+    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:''};
+
+    const targetSeq= tRes.seq;
+    const compSeq  = cRes.seq;
 
     if(!mirnaSeq || !targetSeq){
       setHTML($('modal-content'), formatError('Could not resolve miRNA and/or target sequences for this row.'));
@@ -1155,7 +1251,7 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
-        mirna_seq: mirnaSeq,
+        mirna_seq: toRNA(mirnaSeq),
         target_seq: targetSeq,
         competitor_seq: compSeq || undefined,
         steps: uiSteps,
@@ -1165,7 +1261,9 @@ async function clientExplainHeatmapFallback(item, forcedMode){
 
     if(!res.ok){
       const fallback = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${fallback}</div>`);
+      const aaNote = (tRes.converted || cRes.converted)
+        ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
+      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${aaNote}${fallback}</div>`);
       return;
     }
 
@@ -1185,6 +1283,9 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       html += `<div style="height:12px;"></div>`;
       html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
     }
+    if(tRes.converted || cRes.converted){
+      html += `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (canonical codons) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
+    }
 
     setHTML($('modal-content'), html);
 
@@ -1192,7 +1293,8 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
     const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
+    const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
+    const targetSeq= tRes.seq;
     const html = (mirnaSeq && targetSeq)
       ? `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq)}</div>`
       : formatError(err?.message || 'Unexpected error during explanation.');
@@ -1282,12 +1384,16 @@ async function handleSeedSitesClick(item){
     const targetId= item.target_id ?? '';
     const compId  = item.competitor_id ?? '';
 
-    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-    const targetSeq= tolerantGetAnySeqForId(targetId, CURRENT_INPUTS.targets);
-    const compSeq  = compId ? tolerantGetAnySeqForId(compId, CURRENT_INPUTS.competitors) : '';
+    const mirnaSeq = toRNA(lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId));
+    const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
+    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:''};
+
+    const targetSeq= tRes.seq;
+    const compSeq  = cRes.seq;
 
     if(!mirnaSeq || !targetSeq){
-      openModal('Seed Sites', formatError('Could not resolve miRNA and/or target sequences for this row. Please ensure IDs match your FASTA headers.'));
+      const why = (tRes.note || '').trim();
+      openModal('Seed Sites', formatError('Could not resolve miRNA and/or target sequences for this row. ' + (why ? ` ${escapeHTML(why)}` : '')));
       return;
     }
 
@@ -1317,7 +1423,9 @@ async function handleSeedSitesClick(item){
     let hits = Array.isArray(data.hits) ? data.hits : [];
 
     if(hits.length === 0){
-      openModal('Seed Sites', `<p>No canonical seed matches found under current settings (GU=${allowGU ? 'on':'off'}, max mismatch=${maxMM}).</p>`);
+      const convNote = (tRes.converted || cRes.converted)
+        ? `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion was applied prior to scanning.</em></small></div>` : '';
+      openModal('Seed Sites', `<p>No canonical seed matches found under current settings (GU=${allowGU ? 'on':'off'}, max mismatch=${maxMM}).</p>${convNote}`);
       return;
     }
 
@@ -1342,6 +1450,9 @@ async function handleSeedSitesClick(item){
     const showGlobalCols = !!(tRange || cRange);
 
     let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence${showGlobalCols ? ' and global positions are shown when a :start-end range was applied' : ''}.</div>`;
+    if(tRes.converted || cRes.converted){
+      html += `<div style="margin:6px 0;color:#333;"><small><em>AA→NT conversion applied (canonical codons) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
+    }
     html += `<table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="text-align:left;border-bottom:1px solid #ddd;">
@@ -1443,7 +1554,6 @@ async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
     openModalText('3D Viewer', 'Run a prediction first.');
     return;
   }
-  const pool = kind === 'target' ? CURRENT_INPUTS.targets : CURRENT_INPUTS.competitors;
   const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
 
   let res;
@@ -1457,7 +1567,7 @@ async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
     const sample   = baseId || (kind === 'target' ? 'TARGET' : 'COMPETITOR');
     openModalText(
       '3D Viewer',
-      `No 3D structure found for ${prettyId}. Upload a PDB or mmCIF named exactly after the FASTA header (for example: ${sample}.pdb or ${sample}.cif), then re-run the prediction.`
+      `No 3D structure found for ${prettyId}. Upload a PDB or mmCIF named exactly after the FASTA header (for example: ${sample}.pdb or ${sample}.cif), or embed a PDB ID in the FASTA header like "PDB:7YTW", then re-run the prediction.`
     );
     return;
   }
