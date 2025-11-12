@@ -137,13 +137,21 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 if Compress:
     Compress(app)
 
-CORS(app, origins=[
-    "https://aamarzan.com",
-    "https://www.aamarzan.com",
-    "https://mirna.aamarzan.com",
-    "http://localhost",
-    "http://127.0.0.1"
-], methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "X-Nonce", "X-API-KEY"])  # [UPDATED]
+CORS(app,origins=[
+         "https://aamarzan.com",
+         "https://www.aamarzan.com",
+         "https://mirna.aamarzan.com",
+         r"http://localhost(:\d+)?",          # allow any localhost port
+         r"http://127\.0\.0\.1(:\d+)?"
+     ],
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "X-Nonce", "X-API-KEY"])
+
+
+def _to_bool(v, default=True):
+    if isinstance(v, bool): return v
+    if v is None: return default
+    return str(v).strip().lower() in {"1","true","yes","y"}
 
 
 @app.after_request
@@ -236,6 +244,18 @@ def require_nonce_or_key():
     if _nonce_protected(request.endpoint):
         if not _check_auth():  # [UPDATED] now accepts API key OR nonce according to APP_CFG
             return jsonify({"error": "Invalid or missing authorization"}), 403
+
+@app.before_request
+def _sweep_expired_nonces():
+    try:
+        if nonce_store:
+            now = time.time()
+            # avoid iterating a changing dict
+            for n, exp in list(nonce_store.items()):
+                if exp <= now:
+                    nonce_store.pop(n, None)
+    except Exception:
+        pass
 
 
 @app.errorhandler(Exception)
@@ -2186,9 +2206,11 @@ def get_manifest(job_id):
         "model_input_shapes": job.get("model_input_shapes", {}),
         "provenance": PROVENANCE,
         "target_meta": job.get("target_meta", {}),
-        "competitor_meta": job.get("competitor_meta", {})
+        "competitor_meta": job.get("competitor_meta", {}),
+        "manifest": job.get("manifest", {})  # <-- add this line
     }
     return jsonify(m)
+
 
 
 # =========================
@@ -2265,9 +2287,9 @@ def seed_scan():
         mirna = (data.get('mirna_seq') or '').strip()
         targets = data.get('targets') or {}
         competitors = data.get('competitors') or {}
-        allow_gu = bool(data.get('allow_gu', True))
-        max_mism = int(data.get('max_mismatch', 0))
-        convert_aa = bool(data.get('convert_aa_to_nt', False))
+        allow_gu   = _to_bool(data.get('allow_gu'), True)
+        max_mism   = int(data.get('max_mismatch') or 0)
+        convert_aa = _to_bool(data.get('convert_aa_to_nt'), False)
 
         if not mirna or not targets:
             return jsonify({'error': 'Provide mirna_seq and at least one target'}), 400
