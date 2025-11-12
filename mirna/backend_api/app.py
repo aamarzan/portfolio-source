@@ -137,15 +137,17 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 if Compress:
     Compress(app)
 
-CORS(app,origins=[
-         "https://aamarzan.com",
-         "https://www.aamarzan.com",
-         "https://mirna.aamarzan.com",
-         r"http://localhost(:\d+)?",          # allow any localhost port
-         r"http://127\.0\.0\.1(:\d+)?"
+CORS(app,
+     origins=[
+       "https://aamarzan.com",
+       "https://www.aamarzan.com",
+       "https://mirna.aamarzan.com",
+       re.compile(r"http://localhost(:\d+)?$"),
+       re.compile(r"http://127\.0\.0\.1(:\d+)?$")
      ],
-     methods=["GET", "POST", "OPTIONS"],
-     allow_headers=["Content-Type", "X-Nonce", "X-API-KEY"])
+     methods=["GET","POST","OPTIONS"],
+     allow_headers=["Content-Type","X-Nonce","X-API-KEY"])
+
 
 
 def _to_bool(v, default=True):
@@ -2447,7 +2449,7 @@ def explain():
                 feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
 
         tgt_attr = integrated_gradients(model, feed, 'target_sequence_input', steps=50)
-        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if (has_comp_input and competitor) else None
+        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if (has_comp_input and competitor) else []
 
         return jsonify({
             'target_attrib': tgt_attr,
