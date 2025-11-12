@@ -421,7 +421,7 @@ body.mirna-page table {
 
 /* Sticky header for MAIN results table */
 body.mirna-page table thead th {
-  position: sticky;
+  position: static;
   top: var(--sticky-offset-main);
   z-index: 18;
   background: #e9f2ff;
@@ -431,7 +431,7 @@ body.mirna-page table thead th {
 
 /* FIX: Sticky header inside MODAL (Seed/Heatmap tables) — no overlap & solid bg */
 #analysis-modal table thead th{
-  position: sticky;
+  position: static;
   top: var(--sticky-offset-modal);
   z-index: 30;
   background: #ffffff;
@@ -645,7 +645,7 @@ body.mirna-page main .mirna-container{
 #analysis-controls { 
   max-width: 90vw; 
   margin: 0 auto 10px; 
-  position: sticky;
+  position: static;
   top: 8px;
   z-index: 6;
   background: #fbfdff;
@@ -920,3 +920,33 @@ body.mirna-page .tabs .tab-btn.active::after {
   min-height:32px; padding:6px 10px; border-radius:8px; border:1px solid #d8dee9; background:#fff; font-weight:600;
 }
 
+/* Heatmap controls grid */
+.controls-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
+  gap:12px;
+  align-items:center;
+  justify-content:center;
+  margin:8px 0 12px;
+}
+.controls-grid .ctrl{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+  white-space:nowrap;
+}
+.controls-grid .ctrl span{ font-weight:700; line-height:40px; }
+.controls-grid .ctrl input[type="number"],
+.controls-grid .ctrl select{
+  padding:6px 10px; border:1px solid #d8dee9; border-radius:8px;
+  min-height:40px; height:40px; line-height:40px;
+}
+
+/* Two-row action block used in the table (keeps buttons from clipping) */
+.action-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap:8px;
+}
+.action-grid .btn-action{ width:100%; }
