@@ -29,7 +29,6 @@ from flask_limiter.errors import RateLimitExceeded
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
-
 # Optional gzip compression for large JSON/CSV
 try:
     from flask_compress import Compress
@@ -77,28 +76,20 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = True            # If your frontend isn't sending X-Nonce yet, set False temporarily
+USE_NONCE = True
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
 MATURE_TRIM_WINDOW = int(os.getenv("MATURE_TRIM_WINDOW", "22"))
 AA_CONVERT_ALLOWED = True
-STRUCTURE_MISMATCH_TOL = 0.10  # 10% mismatch allowed
+STRUCTURE_MISMATCH_TOL = 0.10  # 10%
 MAX_CONTENT_MB = 100
+AA_TO_NT_DEFAULT_MODE = "human_common"  # badge only
 
 # Persist uploaded 3D artifacts for viewer endpoints (kept until job clean-up)
 ARTIFACT_TTL_SECONDS = int(os.getenv("ARTIFACT_TTL_SECONDS", "7200"))  # 2h
 
 # Jobs registry
-# job_id -> {
-#   status, error, total, completed,
-#   target_id, target_len,
-#   artifacts: { 'target_3d_path':..., 'competitor_3d_path':..., 'mirna_3d_index':... , 'expiry': float },
-#   results: [ row, ... ],
-#   job_dir: str,
-#   results_json_path: str | None,
-#   model_input_shapes: {Lp, Lt, Lc},
-# }
 jobs: Dict[str, Dict] = {}
 
 # Google Analytics (GA4) Measurement Protocol (optional)
@@ -135,12 +126,12 @@ logging.basicConfig(
 # =========================
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_MB * 1024 * 1024  # MB → bytes
-app.config['JSON_SORT_KEYS'] = False  # faster dumps, keep original order
+app.config['JSON_SORT_KEYS'] = False
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 if Compress:
-    Compress(app)  # gzip large JSON/CSV responses
+    Compress(app)
 
 CORS(app, origins=[
     "https://aamarzan.com",
@@ -153,7 +144,6 @@ CORS(app, origins=[
 
 @app.after_request
 def _nocache(resp):
-    # Keep things fresh during development / Cloudflared
     resp.headers['Cache-Control'] = 'no-store'
     return resp
 
@@ -186,8 +176,8 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
         'download_seeds_all', 'download_seeds_one',
         'get_structure_artifact', 'get_structure_mirna',
         'get_contacts',
-        # NEW
-        'download_all_zip', 'download_bundle_zip'
+        'download_all_zip', 'download_bundle_zip',
+        'get_manifest'
     }
     return endpoint_name in protected
 
@@ -203,7 +193,6 @@ def require_nonce_or_key():
             stored = nonce_store.get(client_ip)
             if not stored or stored["nonce"] != provided_nonce or time.time() > stored["expiry"]:
                 return jsonify({"error": "Invalid or expired nonce"}), 403
-            # Consume nonce after use
             del nonce_store[client_ip]
 
 
@@ -301,7 +290,6 @@ try:
     }
     model_path = os.path.join(MODELS_DIR, 'supreme_model.keras')
     scaler_path = os.path.join(MODELS_DIR, 'minmax_scaler.pkl')
-    # inference-only: avoid recompiling with custom losses
     model = tf.keras.models.load_model(model_path, custom_objects=custom_objects, compile=False)
     scaler = joblib.load(scaler_path)
 
@@ -328,7 +316,7 @@ def one_hot_encode_sequence(sequence: str, max_len: int):
 
 
 # AA vs NT detection and optional back-translation
-AA_SET = set(list("ACDEFGHIKLMNPQRSTVWYBXZ"))  # includes ambiguous X,Z,B
+AA_SET = set(list("ACDEFGHIKLMNPQRSTVWYBXZ"))
 NT_SET = set(list("AUGCTN"))
 CODON_MAP = {
     'A':'GCU', 'C':'UGU', 'D':'GAU', 'E':'GAA', 'F':'UUU', 'G':'GGU',
@@ -348,12 +336,11 @@ def is_aa_like(seq: str) -> bool:
 
 
 def back_translate(aa_seq: str) -> str:
-    # very simple, organism-agnostic choice
     nt = []
     for a in (aa_seq or "").upper():
         if a in CODON_MAP:
             nt.append(CODON_MAP[a])
-        elif a == 'X':  # unknown AA
+        elif a == 'X':
             nt.append('NNN')
         else:
             nt.append('NNN')
@@ -380,8 +367,6 @@ def choose_mature_window(seq: str, window: int = 22) -> str:
     return best[1] if best else s
 
 
-# Numeric features helper (kept minimal & consistent with your scaler)
-
 def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
     gc  = float(pdata.get('gc_content', 0.5))
     dg  = float(pdata.get('dg', 0.0))
@@ -394,7 +379,6 @@ def numerical_features_from_processed_json(pdata: Dict) -> List[float]:
 # =========================
 
 def _keras_inputs_map() -> Dict[str, Tuple[Optional[int], ...]]:
-    """Return {clean_input_name: shape_tuple} stripping TF tensor suffixes."""
     if model is None:
         return {}
     m: Dict[str, Tuple[Optional[int], ...]] = {}
@@ -413,10 +397,7 @@ def _has_input(name: str) -> bool:
 # =========================
 
 def parse_fasta_records(text: str):
-    """Return list of (full_header, seq) from FASTA or raw (single) text.
-
-    FULL header = everything after '>' up to newline (spaces/punctuation preserved).
-    """
+    """Return list of (full_header, seq) from FASTA or raw (single) text."""
     try:
         from Bio import SeqIO
     except Exception:
@@ -514,36 +495,36 @@ def extract_seq_from_structure(file_path: str) -> Tuple[Optional[str], str]:
 def validate_structure_matches_sequence(struct_kind: Optional[str], struct_seq: str,
                                         fasta_seq: str, molecule_label: str,
                                         allow_mismatch_ratio: float = STRUCTURE_MISMATCH_TOL) -> Tuple[bool, str]:
+    """Kept for info; now used only for 'NT vs FASTA' soft check. AA kind never blocks."""
     try:
         from Bio import pairwise2
     except Exception:
-        logging.warning("Biopython pairwise2 not available; skipping structure-vs-FASTA validation.")
         return (True, "Skipped (Biopython missing)")
     if struct_kind is None or not struct_seq:
         return (False, f"Could not detect polymer sequence in {molecule_label} 3D file.")
     fasta = (fasta_seq or "").upper().replace("T","U")
     if struct_kind == "AA":
-        return (False, f"{molecule_label} 3D file appears to be protein (AA), but the model expects nucleic acid (NT).")
+        # Non-blocking: we will use this PDB only for viz or back-translation when needed.
+        return (True, f"{molecule_label} 3D is protein; continuing (used for viz/back-translation if applicable).")
     if struct_kind == "NT":
         s = struct_seq.upper().replace("T","U")
         if not fasta or not s:
-            return (False, f"Empty sequence for {molecule_label} during validation.")
+            return (True, f"{molecule_label} 3D had empty sequence during validation; continuing.")
         try:
             alns = pairwise2.align.globalms(fasta, s, 2, -1, -5, -0.5, one_alignment_only=True)
         except Exception as e:
-            logging.warning(f"Alignment failed: {e}")
-            return (True, "Alignment unavailable; not blocking.")
+            return (True, "Alignment unavailable; continuing.")
         if not alns:
-            return (False, f"Could not align {molecule_label} 3D sequence to provided FASTA.")
+            return (True, f"Could not align {molecule_label} 3D to provided FASTA; continuing.")
         a = alns[0]
         s1, s2 = a.seqA, a.seqB
         matches = sum(1 for x,y in zip(s1,s2) if x==y and x!='-' and y!='-')
         nongaps = sum(1 for x,y in zip(s1,s2) if x!='-' and y!='-')
         mismatch_ratio = 1 - (matches / max(1, nongaps))
         if mismatch_ratio > allow_mismatch_ratio:
-            return (False, f"{molecule_label} 3D sequence does not match FASTA (mismatch {mismatch_ratio:.1%}).")
+            return (True, f"{molecule_label} 3D vs FASTA mismatch {mismatch_ratio:.1%}; continuing.")
         return (True, "OK")
-    return (False, f"Unknown structure polymer kind for {molecule_label}.")
+    return (True, f"Unknown 3D polymer kind for {molecule_label}; continuing.")
 
 
 def save_filestorage_to_temp(fs) -> str:
@@ -555,7 +536,6 @@ def save_filestorage_to_temp(fs) -> str:
     return tmp_path
 
 
-# NEW: save raw bytes to temp (used by PDB-ID downloader)
 def save_bytes_to_temp(content: bytes, suggested_name: str = "artifact.bin") -> str:
     ext = os.path.splitext(suggested_name)[1] or ".bin"
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
@@ -569,10 +549,6 @@ def save_bytes_to_temp(content: bytes, suggested_name: str = "artifact.bin") -> 
 # =========================
 
 def _seq_to_struct_column(seq: str, max_len: int) -> np.ndarray:
-    """
-    Convert a nucleotide sequence into a simple numeric column vector (max_len, 1).
-    Placeholder: A,U,G,C,N -> 0.0..1.0.
-    """
     mapping = {'A': 0.0, 'U': 0.25, 'G': 0.50, 'C': 0.75, 'T': 0.25, 'N': 1.0}
     s = (seq or "").upper()
     v = np.zeros((max_len, 1), dtype=np.float32)
@@ -586,6 +562,8 @@ def extract_structure_vector_from_file(file_path: str, max_len: int) -> Optional
         kind, seq = extract_seq_from_structure(file_path)
         if kind is None or not seq:
             return None
+        if kind == "AA":
+            seq = back_translate(seq)
         return _seq_to_struct_column(seq, max_len)
     except Exception:
         return None
@@ -615,11 +593,11 @@ def revcomp_rna(seq: str) -> str:
     return (seq or '').upper().translate(comp)[::-1].replace('T','U')
 
 
-def is_wc(a: str, b: str) -> bool:   # Watson–Crick
+def is_wc(a: str, b: str) -> bool:
     return (a=='A' and b=='U') or (a=='U' and b=='A') or (a=='C' and b=='G') or (a=='G' and b=='C')
 
 
-def is_gu(a: str, b: str) -> bool:   # GU wobble
+def is_gu(a: str, b: str) -> bool:
     return (a=='G' and b=='U') or (a=='U' and b=='G')
 
 
@@ -638,13 +616,6 @@ def match_seed(seed_rc: str, window: str, allow_gu: bool = True, max_mismatch: i
 
 
 def classify_seed(miRNA_seq: str, target_seq: str, i: int, L: int) -> str:
-    """
-    Canonical labels:
-    - 7mer-m8: perfect 2–8 (L==7)
-    - 8mer: 7mer-m8 + upstream 'A'
-    - 7mer-A1: perfect 2–7 (L==6) + upstream 'A'
-    - 6mer: 2–7 perfect (no upstream A)
-    """
     m = (miRNA_seq or '').upper().replace('T','U')
     t = (target_seq or '').upper().replace('T','U')
     label = f'seed{L}'
@@ -695,11 +666,7 @@ def _scan_seeds_for_pair(mirna_seq: str, target_seq: str,
 # =========================
 
 def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: str, steps: int = 50) -> List[float]:
-    """
-    Compute Integrated Gradients on a single input tensor of shape (1, L, C).
-    Returns a list of length L with per-position attribution magnitude (sum over channels).
-    """
-    x = tf.convert_to_tensor(inputs_dict[input_key], dtype=tf.float32)  # (1, L, C)
+    x = tf.convert_to_tensor(inputs_dict[input_key], dtype=tf.float32)
     baseline = tf.zeros_like(x)
     grads_accum = tf.zeros_like(x)
 
@@ -712,21 +679,20 @@ def integrated_gradients(model, inputs_dict: Dict[str, np.ndarray], input_key: s
                     for k2, v in inputs_dict.items()}
             feed[input_key] = x_step
             out = model(feed, training=False)
-            out = tf.reduce_mean(out)  # ensure scalar
+            out = tf.reduce_mean(out)
         grads = tape.gradient(out, x_step)
         grads_accum += grads
 
     ig = (x - baseline) * grads_accum / steps
-    ig_pos = tf.reduce_sum(tf.abs(ig), axis=-1).numpy()[0].tolist()  # (L,)
+    ig_pos = tf.reduce_sum(tf.abs(ig), axis=-1).numpy()[0].tolist()
     return ig_pos
 
 
 # =========================
-# PATCH: tolerant ID variants for 3D-file ↔ FASTA header matching
+# PATCH: tolerant ID variants & helpers
 # =========================
 
 def _id_variants(s: str) -> List[str]:
-    """Generate tolerant keys to match filename stems against full FASTA headers."""
     if not s:
         return []
     t = s.strip()
@@ -750,11 +716,8 @@ def _lookup_3d(idx: Dict[str, Tuple[Optional[str], str, str]], key: str):
             return idx[k]
     return None
 
-# Save possibly multiple files for the same form key
+
 def _save_optional_multi(fs_key: str) -> List[Tuple[str, str]]:
-    """
-    Return [(original_filename, temp_path), ...] for all uploaded under fs_key.
-    """
     out: List[Tuple[str, str]] = []
     files = request.files.getlist(fs_key)
     for f in files:
@@ -764,12 +727,7 @@ def _save_optional_multi(fs_key: str) -> List[Tuple[str, str]]:
     return out
 
 
-# NEW: tolerant lookup for a structure file under artifacts indexes
 def _select_struct_path(art: Dict, kind: str, req_id: Optional[str]) -> Optional[str]:
-    """
-    kind: 'target' | 'competitor'
-    If req_id is provided, try tolerant match in per-kind index; else return default path.
-    """
     if req_id:
         idx_key = f"{kind}_3d_index"
         idx = art.get(idx_key) or {}
@@ -780,13 +738,11 @@ def _select_struct_path(art: Dict, kind: str, req_id: Optional[str]) -> Optional
                 break
         if val and os.path.exists(val):
             return val
-    # fallback to single default
     key = f"{kind}_3d_path"
     p = art.get(key)
     return p if p and os.path.exists(p) else None
 
 
-# NEW: build heatmap PNG bytes for a row (reuses IG + plotting logic)
 def _build_heatmap_bytes_for_row(job: Dict, row: Dict, mode: str = 'ig_target', steps: int = 50) -> bytes:
     shapes = job.get("model_input_shapes", {})
     Lp, Lt, Lc = int(shapes.get('Lp', 120)), int(shapes.get('Lt', 200)), int(shapes.get('Lc', 200))
@@ -862,10 +818,44 @@ def ratelimit_handler(e):
     }), 429
 
 
+def _split_ids(val: str) -> List[str]:
+    raw = (val or '').replace(';', ',').replace(' ', ',')
+    return [x for x in (y.strip() for y in raw.split(',')) if x]
+
+
+def _download_pdb_to_tmp(pid: str, tmp_list: List[str]) -> Optional[str]:
+    pid = (pid or '').strip().upper()
+    if not pid:
+        return None
+    for ext in ('.cif', '.pdb'):
+        url = f"https://files.rcsb.org/download/{pid}{ext}"
+        try:
+            r = requests.get(url, timeout=12)
+            if r.status_code == 200 and len(r.content) > 1000:
+                p = save_bytes_to_temp(r.content, suggested_name=f"{pid}{ext}")
+                tmp_list.append(p)
+                return p
+        except Exception:
+            continue
+    return None
+
+
+def _derive_nt_from_structure(path: str) -> Tuple[Optional[str], str, bool]:
+    """Return (nt_seq, source_kind, aa_to_nt_applied) from a structure file."""
+    kind, seq = extract_seq_from_structure(path)
+    if not kind or not seq:
+        return (None, "unknown", False)
+    if kind == "NT":
+        return (seq.upper().replace("T","U"), "NT", False)
+    if kind == "AA":
+        return (back_translate(seq), "AA", True)
+    return (None, kind, False)
+
+
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
 def start_prediction():
-    # 1. Strict Content-Type check
+    # Strict Content-Type check
     if request.mimetype != 'multipart/form-data':
         return jsonify({"error": "Bad request"}), 400
 
@@ -874,44 +864,37 @@ def start_prediction():
     target_seq_text = request.form.get('target_molecule', '')
     competitor_seq_text = request.form.get('competitor_molecule', '')
 
-    # Flags (from frontend Advanced Options)
+    # Flags
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Parse miRNA FASTA — require headers to identify each sequence
+    # Parse miRNA FASTA
     primary_records = parse_fasta_records(fasta_string)
     if not primary_records:
         return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
     if not has_any_fasta_header(fasta_string):
-        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p) so results can be labeled correctly."}), 400
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
     if len(primary_records) > MIRNA_MAX:
-        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences. Please reduce your input and try again."}), 400
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
-    # ✅ Enforce minimum miRNA length
+    # Min miRNA length
     MIN_MIRNA_LEN = 10
     short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
     if short_mirnas:
         return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
-    # Targets: one or more sequences (FASTA or raw)
+    # Parse targets (may be empty — PDB-only supported now)
     targets_list = parse_fasta_records(target_seq_text)
-    if len(targets_list) == 0:
-        return jsonify({"error": "Please provide at least one target sequence (FASTA or raw)."}), 400
 
-    # Optional target region from Advanced tab (applies to every target)
+    # Optional target region
     target_start_raw = request.form.get('target_start', '').strip()
     target_end_raw   = request.form.get('target_end', '').strip()
-
     def _to_int_safe(s):
-        try:
-            return int(s)
-        except Exception:
-            return None
-
+        try: return int(s)
+        except Exception: return None
     ts = _to_int_safe(target_start_raw)
     te = _to_int_safe(target_end_raw)
 
-    # Normalize range once; if both None → for each target, full length is used
     def _slice_target(tid: str, tseq: str) -> Tuple[str, str]:
         if ts is None and te is None:
             return (tid, tseq)
@@ -934,46 +917,60 @@ def start_prediction():
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
 
-    # Length / AA checks per target (after slicing)
+    # Validate & fix targets
     MIN_TARGET_LEN = 30
-    _fixed_targets = []
+    _fixed_targets: List[Tuple[str, str]] = []
+    target_meta_map: Dict[str, Dict] = {}
+
     for (tid, tseq) in targets_list:
         seq = (tseq or '').replace('\n', '').strip()
-        if len(seq) < MIN_TARGET_LEN:
-            return jsonify({"error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after applying range if provided)."}), 400
+        aa_to_nt = False
         if is_aa_like(seq):
             if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
                 seq = back_translate(seq)
+                aa_to_nt = True
             else:
                 return jsonify({"error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+        if len(seq) < MIN_TARGET_LEN:
+            return jsonify({"error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after range)."}), 400
         _fixed_targets.append((tid, seq))
+        target_meta_map[tid] = {
+            "source": "fasta",
+            "aa_to_nt_applied": aa_to_nt,
+            "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+        }
     targets_list = _fixed_targets
 
-    # Competitors: zero or more sequences (FASTA or raw). If none, use a single empty placeholder.
+    # Competitors
     if competitor_seq_text.strip():
-        competitors_list = parse_fasta_records(competitor_seq_text)
-        if len(competitors_list) == 0:
-            return jsonify({"error": "Could not parse the competitor sequences."}), 400
-        MIN_COMP_LEN = 15
-        _fixed_comps = []
-        for (cid, cseq) in competitors_list:
-            s = (cseq or '').replace('\n', '').strip()
-            if len(s) < MIN_COMP_LEN:
-                return jsonify({"error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."}), 400
-            if is_aa_like(s):
-                if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-                    s = back_translate(s)
-                else:
-                    return jsonify({"error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
-            _fixed_comps.append((cid, s))
-        competitors_list = _fixed_comps
+        competitors_list_raw = parse_fasta_records(competitor_seq_text)
     else:
-        competitors_list = [("none", "")]  # placeholder meaning “no competitor”
+        competitors_list_raw = []
 
-    # Save uploaded 3D files to temp and index them
+    MIN_COMP_LEN = 15
+    _fixed_comps: List[Tuple[str, str]] = []
+    competitor_meta_map: Dict[str, Dict] = {}
+
+    for (cid, cseq) in competitors_list_raw:
+        s = (cseq or '').replace('\n', '').strip()
+        aa_to_nt = False
+        if is_aa_like(s):
+            if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
+                s = back_translate(s)
+                aa_to_nt = True
+            else:
+                return jsonify({"error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+        if len(s) < MIN_COMP_LEN:
+            return jsonify({"error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."}), 400
+        _fixed_comps.append((cid, s))
+        competitor_meta_map[cid] = {
+            "source": "fasta",
+            "aa_to_nt_applied": aa_to_nt,
+            "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+        }
+
+    # Save uploaded 3D files (multi)
     tmp_paths_to_cleanup: List[str] = []
-
-    # (a) target & competitor — multiple allowed (uploads)
     target_3d_files = _save_optional_multi('target_3d_file')
     competitor_3d_files = _save_optional_multi('competitor_3d_file')
     for _, p in target_3d_files + competitor_3d_files:
@@ -994,30 +991,9 @@ def start_prediction():
         for k in _id_variants(stem):
             competitor_3d_index[k] = p
 
-    # ---- FIX #2: accept PDB IDs and fetch from RCSB; index like uploads ----
-    def _split_ids(val: str) -> List[str]:
-        raw = (val or '').replace(';', ',').replace(' ', ',')
-        return [x for x in (y.strip() for y in raw.split(',')) if x]
-
-    def _download_pdb_to_tmp(pid: str, tmp_list: List[str]) -> Optional[str]:
-        pid = (pid or '').strip().upper()
-        if not pid:
-            return None
-        for ext in ('.cif', '.pdb'):
-            url = f"https://files.rcsb.org/download/{pid}{ext}"
-            try:
-                r = requests.get(url, timeout=12)
-                if r.status_code == 200 and len(r.content) > 1000:
-                    p = save_bytes_to_temp(r.content, suggested_name=f"{pid}{ext}")
-                    tmp_list.append(p)
-                    return p
-            except Exception as _e:
-                continue
-        return None
-
+    # Accept PDB IDs (download & index)
     target_pdb_ids = request.form.get('target_pdb_ids', '')
     competitor_pdb_ids = request.form.get('competitor_pdb_ids', '')
-
     t_ids = _split_ids(target_pdb_ids)
     c_ids = _split_ids(competitor_pdb_ids)
 
@@ -1025,9 +1001,7 @@ def start_prediction():
         p = _download_pdb_to_tmp(pid, tmp_paths_to_cleanup)
         if p:
             stem = pid
-            # add to "files" list semantics
             target_3d_files.append((f"{stem}{os.path.splitext(p)[1]}", p))
-            # index with tolerant keys
             for k in _id_variants(stem):
                 target_3d_index[k] = p
             if not target_3d_path:
@@ -1042,9 +1016,43 @@ def start_prediction():
                 competitor_3d_index[k] = p
             if not competitor_3d_path:
                 competitor_3d_path = p
-    # ---- end FIX #2 ----
 
-    # (b) miRNA — multiple (as before) with tolerant keys
+    # ---- NEW: PDB-only allowance — derive sequences when FASTA empty ----
+    # Targets
+    if not targets_list and (target_3d_files or t_ids):
+        for fname, p in target_3d_files:
+            stem = os.path.splitext(secure_filename(fname))[0]
+            nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
+            if nt_seq and len(nt_seq) >= MIN_TARGET_LEN:
+                tid = stem
+                targets_list.append((tid, nt_seq))
+                target_meta_map[tid] = {
+                    "source": f"pdb:{src_kind}",
+                    "aa_to_nt_applied": aa_to_nt,
+                    "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+                }
+        if not targets_list:
+            return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
+
+    # Competitors
+    if not _fixed_comps and (competitor_3d_files or c_ids):
+        for fname, p in competitor_3d_files:
+            stem = os.path.splitext(secure_filename(fname))[0]
+            nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
+            if nt_seq and len(nt_seq) >= MIN_COMP_LEN:
+                cid = stem
+                _fixed_comps.append((cid, nt_seq))
+                competitor_meta_map[cid] = {
+                    "source": f"pdb:{src_kind}",
+                    "aa_to_nt_applied": aa_to_nt,
+                    "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+                }
+
+    # If still no competitors, use placeholder
+    competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
+    # ---------------------------------------------
+
+    # miRNA 3D index
     mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
     for f in mirna_3d_files:
@@ -1056,7 +1064,6 @@ def start_prediction():
             for k in _id_variants(stem):
                 mirna_3d_index[k] = (kind, seq, p)
 
-
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
@@ -1067,9 +1074,10 @@ def start_prediction():
         "status": "running",
         "results": [],
         "error": None,
+        "warnings": [],                # NEW: accumulate non-blocking issues
         "total": _total,
         "completed": 0,
-        "target_id": "MULTIPLE" if len(targets_list) > 1 else targets_list[0][0],
+        "target_id": "MULTIPLE" if len(targets_list) > 1 else (targets_list[0][0] if targets_list else "NONE"),
         "target_len": -1,
         "artifacts": {
             "target_3d_path": target_3d_path,
@@ -1081,7 +1089,10 @@ def start_prediction():
         },
         "job_dir": str(job_dir),
         "results_json_path": None,
-        "model_input_shapes": {}  # filled in process_job
+        "model_input_shapes": {},
+        # provenance badges
+        "target_meta": target_meta_map,         # id -> {source, aa_to_nt_applied, aa_to_nt_mode}
+        "competitor_meta": competitor_meta_map  # id -> {source, aa_to_nt_applied, aa_to_nt_mode}
     }
 
     send_ga_event("prediction_started", {"total": _total})
@@ -1089,7 +1100,7 @@ def start_prediction():
     threading.Thread(
         target=process_job,
         args=(job_id, primary_records, targets_list, competitors_list,
-              target_3d_path, competitor_3d_path, mirna_3d_index, tmp_paths_to_cleanup,
+              target_3d_path, competitor_3d_path, {}, tmp_paths_to_cleanup,
               convert_aa_to_nt_flag, mature_trim_flag),
         daemon=True
     ).start()
@@ -1103,7 +1114,7 @@ def process_job(job_id: str,
                 competitors_list: List[Tuple[str,str]],
                 target_3d_path: Optional[str],
                 competitor_3d_path: Optional[str],
-                mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]],
+                mirna_3d_index_unused: Dict[str, Tuple[Optional[str], str, str]],
                 tmp_paths_to_cleanup: List[str],
                 convert_aa_to_nt_flag: bool,
                 mature_trim_flag: bool):
@@ -1113,7 +1124,12 @@ def process_job(job_id: str,
             jobs[job_id]["error"] = "Model or scaler not loaded on server."
             return
 
-        # Helper to normalize processor outputs
+        def warn(msg: str):
+            try:
+                jobs[job_id]["warnings"].append(msg)
+            except Exception:
+                pass
+
         def ensure_dict(data):
             if isinstance(data, tuple):
                 return {
@@ -1123,11 +1139,10 @@ def process_job(job_id: str,
                 }
             return data
 
-        # Static model input shapes (and which inputs exist)
         model_inputs = _keras_inputs_map()
         max_primary_len    = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
-        max_target_len     = int((model_inputs.get('target_sequence_input')  or (None,200))[1] or 200)
-        max_competitor_len = int((model_inputs.get('competitor_sequence_input') or (None,200))[1] or 200)
+        max_target_len     = int((model_inputs.get('target_sequence_input')  or (None,200))[1 or 200])
+        max_competitor_len = int((model_inputs.get('competitor_sequence_input') or (None,200))[1 or 200])
         empty_comp_enc     = one_hot_encode_sequence('', max_competitor_len)
 
         has_comp_input = 'competitor_sequence_input' in model_inputs
@@ -1138,23 +1153,26 @@ def process_job(job_id: str,
 
         jobs[job_id]["model_input_shapes"] = {"Lp": max_primary_len, "Lt": max_target_len, "Lc": max_competitor_len}
 
-        # Iterate in the requested order: competitors → targets → miRNA batches
+        art = jobs[job_id]["artifacts"]
+        t_meta = jobs[job_id].get("target_meta", {}) or {}
+        c_meta = jobs[job_id].get("competitor_meta", {}) or {}
+
         interaction_counter = 0
 
         for (competitor_id, competitor_str) in competitors_list:
-            # Prepare competitor once per competitor_id
             competitor_processed = {'sequence': ''}
             if competitor_str.strip():
                 competitor_processed = ensure_dict(process_molecule_universal(((competitor_id, competitor_str), {}, 'competitor_molecule')))
 
-            # Validate optional 3D file vs FASTA (competitor)
-            if competitor_3d_path and competitor_processed.get('sequence','').strip():
-                kind, seq = extract_seq_from_structure(competitor_3d_path)
+            # Select competitor 3D path per ID (multi-index aware)
+            comp_path = _select_struct_path(art, 'competitor', competitor_id)
+
+            # Soft validation if both present
+            if comp_path and competitor_processed.get('sequence','').strip():
+                kind, seq = extract_seq_from_structure(comp_path)
                 ok, msg = validate_structure_matches_sequence(kind, seq, competitor_processed.get('sequence',''), "Competitor")
-                if not ok:
-                    jobs[job_id]["status"] = "error"
-                    jobs[job_id]["error"] = msg
-                    return
+                if msg:
+                    warn(msg)
 
             comp_seq_enc = None
             if competitor_processed.get('sequence', '').strip() and has_comp_input:
@@ -1164,8 +1182,8 @@ def process_job(job_id: str,
             competitor_struct_input = None
             if has_c_struct:
                 vec = None
-                if competitor_3d_path:
-                    vec = extract_structure_vector_from_file(competitor_3d_path, max_competitor_len)
+                if comp_path:
+                    vec = extract_structure_vector_from_file(comp_path, max_competitor_len)
                 if vec is None:
                     if competitor_processed.get('sequence','').strip():
                         vec = structure_vector_from_processed_json(competitor_processed.get('structure_vector', '[]'), max_competitor_len)
@@ -1174,26 +1192,26 @@ def process_job(job_id: str,
                 competitor_struct_input = vec
 
             for (target_id, target_str) in targets_list:
-                # Prepare target once per target_id
                 target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
                 target_seq_used = target_processed.get('sequence', '')
                 target_seq_enc  = one_hot_encode_sequence(target_seq_used, max_target_len)
 
-                # Validate optional 3D file vs FASTA (target)
-                if target_3d_path and target_seq_used:
-                    kind, seq = extract_seq_from_structure(target_3d_path)
+                # Select target 3D path per ID (multi-index aware)
+                t_path = _select_struct_path(art, 'target', target_id)
+
+                # Soft validation if both present
+                if t_path and target_seq_used:
+                    kind, seq = extract_seq_from_structure(t_path)
                     ok, msg = validate_structure_matches_sequence(kind, seq, target_seq_used, "Target")
-                    if not ok:
-                        jobs[job_id]["status"] = "error"
-                        jobs[job_id]["error"] = msg
-                        return
+                    if msg:
+                        warn(msg)
 
                 # Target structural input (if expected)
                 target_struct_input = None
                 if has_t_struct:
                     vec = None
-                    if target_3d_path:
-                        vec = extract_structure_vector_from_file(target_3d_path, max_target_len)
+                    if t_path:
+                        vec = extract_structure_vector_from_file(t_path, max_target_len)
                     if vec is None:
                         vec = structure_vector_from_processed_json(target_processed.get('structure_vector', '[]'), max_target_len)
                     target_struct_input = vec
@@ -1204,7 +1222,6 @@ def process_job(job_id: str,
                     prim_seq_list, num_feat_list, prim_struct_list = [], [], []
                     trimmed_sequences: List[str] = []
 
-                    # Prepare primary (miRNA) batch (optionally trim)
                     for pri_id, pri_seq in batch_records:
                         pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
                         seq = pdata.get('sequence', '')
@@ -1217,22 +1234,19 @@ def process_job(job_id: str,
                         if has_num_input:
                             num_feat_list.append(numerical_features_from_processed_json(pdata))
 
-                        # Build primary structure vector (if model expects it)
                         if has_p_struct:
                             sp = structure_vector_from_processed_json(pdata.get('structure_vector','[]'), max_primary_len)
                             prim_struct_list.append(sp)
 
-                        # PATCH: tolerant lookup for miRNA 3D matching
-                        val = _lookup_3d(mirna_3d_index, pri_id)
+                        # miRNA 3D validation (soft)
+                        idx = art.get('mirna_3d_index') or {}
+                        val = _lookup_3d(idx, pri_id)
                         if val is not None:
                             kind, seq3d, path3d = val
                             ok, msg = validate_structure_matches_sequence(kind, seq3d, pdata.get('sequence',''), f"miRNA {pri_id}")
-                            if not ok:
-                                jobs[job_id]["status"] = "error"
-                                jobs[job_id]["error"] = msg
-                                return
+                            if msg:
+                                warn(msg)
 
-                    # Encode/scale numeric features
                     if has_num_input:
                         try:
                             if hasattr(scaler, 'feature_names_in_'):
@@ -1275,26 +1289,32 @@ def process_job(job_id: str,
                         preds_with = model.predict(with_comp, verbose=0).reshape(-1).astype(np.float64)
                         preds_no   = model.predict(no_comp,   verbose=0).reshape(-1).astype(np.float64)
                     else:
-                        # Model without competitor input: single prediction acts as both
                         preds_no = model.predict(common_inputs, verbose=0).reshape(-1).astype(np.float64)
                         preds_with = preds_no.copy()
 
-                    # Accumulate results (+ seed details)
                     for row_idx, ((pri_id, _), p_base, p_with) in enumerate(zip(batch_records, preds_no, preds_with)):
                         interaction_counter += 1
                         pri_seq_used = trimmed_sequences[row_idx]
                         seed_hits = _scan_seeds_for_pair(pri_seq_used, target_seq_used, allow_gu=True, max_mismatch=0)
 
-                        # derive compact summary for CSV columns
                         best = None
                         if seed_hits:
-                            # prefer longer seed, then fewer mismatches, then fewer wobble, then earliest position
                             seed_hits_sorted = sorted(seed_hits, key=lambda h: (-h['seed_len'], h['mismatches'], h.get('wobble',0), h['start']))
                             best = seed_hits_sorted[0]
 
+                        # Badges / provenance per row
+                        t_badge = t_meta.get(target_id, {})
+                        c_badge = c_meta.get(competitor_id, {}) if competitor_id in c_meta else {}
+
+                        pdb_used_target = bool(_select_struct_path(art, 'target', target_id))
+                        pdb_used_comp   = bool(_select_struct_path(art, 'competitor', competitor_id)) if competitor_id and competitor_id != "none" else False
+                        struct_feats_on = bool('target_structure_input' in _keras_inputs_map() or
+                                               'competitor_structure_input' in _keras_inputs_map() or
+                                               'primary_structure_input' in _keras_inputs_map())
+
                         row = {
                             'interaction_id': f"I{interaction_counter:07d}",
-                            'timestamp_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),  # timezone-aware
+                            'timestamp_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
                             'mirna_id': pri_id,
                             'primary_molecule_id': pri_id,
                             'target_id': target_id,
@@ -1303,21 +1323,27 @@ def process_job(job_id: str,
                             'predicted_affinity_with_competitor': format(float(p_with), '.10f'),
                             'competitive_effect (higher_is_better)': format(float(p_base - p_with), '.10f'),
 
-                            # sequences used (to allow reproducible /explain & per-interaction heatmap)
                             'primary_seq_used': pri_seq_used,
                             'target_seq_used': target_seq_used,
                             'competitor_seq_used': competitor_processed.get('sequence','') if competitor_str else '',
 
-                            # seed info (JSON plus top summary columns)
                             'seed_hits_json': json.dumps(seed_hits, separators=(',',':')),
                             'seed_best_type': (best or {}).get('seed_type', ''),
                             'seed_best_start': (best or {}).get('start', ''),
                             'seed_best_end': (best or {}).get('end', ''),
                             'seed_best_wobble': (best or {}).get('wobble', ''),
-                            'seed_best_mismatches': (best or {}).get('mismatches', '')
+                            'seed_best_mismatches': (best or {}).get('mismatches', ''),
+
+                            # NEW badges
+                            'pdb_target_used': 'yes' if pdb_used_target else 'no',
+                            'pdb_competitor_used': 'yes' if pdb_used_comp else 'no',
+                            'aa_to_nt_applied_target': 'yes' if t_badge.get('aa_to_nt_applied') else 'no',
+                            'aa_to_nt_mode_target': t_badge.get('aa_to_nt_mode',''),
+                            'aa_to_nt_applied_competitor': 'yes' if c_badge.get('aa_to_nt_applied') else 'no',
+                            'aa_to_nt_mode_competitor': c_badge.get('aa_to_nt_mode',''),
+                            'structure_features': 'on' if struct_feats_on else 'off'
                         }
 
-                        # attach provenance once per row to keep CSV self-auditable
                         row.update({
                             'prov_model_path': PROVENANCE.get('model_path'),
                             'prov_model_sha256': PROVENANCE.get('model_sha256'),
@@ -1331,9 +1357,7 @@ def process_job(job_id: str,
                         jobs[job_id]["results"].append(row)
                         jobs[job_id]["completed"] += 1
 
-        # Job completed — write compact sorted JSON to disk for fast /download
         try:
-            # sort by baseline affinity descending (best at top)
             def _safe_float(x):
                 try:
                     return float(x)
@@ -1357,9 +1381,7 @@ def process_job(job_id: str,
         jobs[job_id]["status"] = "error"
         jobs[job_id]["error"] = str(e)[:500]
     finally:
-        # NOTE: we deliberately do NOT delete tmp_paths immediately to allow later viewer/structure use during TTL.
-        # A background janitor will clean them up after expiry.
-        start_janitor()  # ensure janitor thread is running
+        start_janitor()
 
 
 @app.route('/progress/<job_id>', methods=['GET'])
@@ -1372,25 +1394,23 @@ def get_progress(job_id):
         "completed": job["completed"],
         "total": job["total"],
         "error": job["error"],
+        "warnings": job.get("warnings", []),  # NEW
         "results": job["results"] if job["status"] == "completed" else []
     })
 
 
 @app.route('/download/<job_id>', methods=['GET'])
 def download_results(job_id):
-    """Fast JSON download: stream prewritten results.json when available."""
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
 
-    # Prefer prewritten file for speed (avoids heavy in-request serialization)
     results_path = job.get("results_json_path")
     if results_path and os.path.exists(results_path):
         return send_file(results_path, mimetype="application/json", as_attachment=False)
 
-    # Fallback: serialize on the fly (still efficient via _to_py and gzip)
     try:
         def _safe_float(x):
             try:
@@ -1405,9 +1425,6 @@ def download_results(job_id):
     return Response(json.dumps(payload, default=_to_py, ensure_ascii=False, separators=(',', ':')), mimetype="application/json")
 
 
-# -------------------------
-# Quick heuristic visual map (renamed to /explain_fast to avoid route collision)
-# -------------------------
 @app.post("/explain_fast")
 def explain_fast():
     try:
@@ -1459,7 +1476,7 @@ def explain_fast():
 
 
 # =========================
-# CSV + Heatmap Download Endpoints
+# CSV + Heatmap Downloads
 # =========================
 
 def _results_df(job_id: str) -> pd.DataFrame:
@@ -1475,6 +1492,7 @@ def _results_df(job_id: str) -> pd.DataFrame:
         'seed_best_type','seed_best_start','seed_best_end','seed_best_wobble','seed_best_mismatches',
         'seed_hits_json',
         'primary_seq_used','target_seq_used','competitor_seq_used',
+        'pdb_target_used','pdb_competitor_used','aa_to_nt_applied_target','aa_to_nt_mode_target','aa_to_nt_applied_competitor','aa_to_nt_mode_competitor','structure_features',
         'prov_model_path','prov_model_sha256','prov_scaler_path','prov_scaler_sha256',
         'prov_explain_method','prov_explain_steps','prov_seed_rules'
     ]
@@ -1529,20 +1547,15 @@ def download_single_csv(job_id, interaction_id):
     )
 
 
-# ---- NEW: seed-hits exploded CSVs (per-row and all-rows) with optional flags ----
-
 def _explode_seed_hits(row: Dict, allow_gu: Optional[bool] = None, max_mm: Optional[int] = None) -> List[Dict]:
-    """Return exploded seed hits. If allow_gu/max_mm provided, recompute from sequences using those flags."""
     out = []
     hits = []
     if allow_gu is None and max_mm is None:
-        # use stored hits
         try:
             hits = json.loads(row.get('seed_hits_json') or "[]")
         except Exception:
             hits = []
     else:
-        # recompute to align with UI settings
         mseq = row.get('primary_seq_used') or ''
         tseq = row.get('target_seq_used') or ''
         hits = _scan_seeds_for_pair(mseq, tseq, allow_gu=bool(allow_gu), max_mismatch=int(max_mm or 0))
@@ -1572,7 +1585,6 @@ def download_seeds_all(job_id):
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
 
-    # Optional query flags to force recompute to match UI settings
     allow_gu_q = request.args.get('allow_gu')
     max_mm_q = request.args.get('max_mm')
     allow_gu = None if allow_gu_q is None else (allow_gu_q.lower() == 'true')
@@ -1608,7 +1620,6 @@ def download_seeds_one(job_id, interaction_id):
     if not row:
         return jsonify({"error": "Invalid interaction_id"}), 404
 
-    # Optional query flags to match UI
     allow_gu_q = request.args.get('allow_gu')
     max_mm_q = request.args.get('max_mm')
     allow_gu = None if allow_gu_q is None else (allow_gu_q.lower() == 'true')
@@ -1635,8 +1646,6 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
                    include_struct: Dict[str, bool],
                    model_inputs: Optional[Dict[str, Tuple[Optional[int], ...]]] = None) -> Dict[str, np.ndarray]:
     model_inputs = model_inputs or _keras_inputs_map()
-
-    # sequences (always present in this model family)
     pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...].astype(np.float32)
     tgt_enc = one_hot_encode_sequence(tseq, Lt)[None, ...].astype(np.float32)
 
@@ -1649,7 +1658,6 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
         cmp_enc = one_hot_encode_sequence(cseq or '', Lc)[None, ...].astype(np.float32)
         feed['competitor_sequence_input'] = cmp_enc
 
-    # numeric features if present
     if 'numerical_features_input' in model_inputs:
         if hasattr(scaler, 'feature_names_in_'):
             z = np.zeros((1, len(scaler.feature_names_in_)), dtype=np.float32)
@@ -1658,7 +1666,6 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
             scaled_num = scaler.transform([[0.5, 0.0, 0.0]]).astype(np.float32)
         feed['numerical_features_input'] = scaled_num
 
-    # structure channels if expected
     if include_struct.get('primary_structure_input', False):
         feed['primary_structure_input'] = np.zeros((1, Lp, 1), dtype=np.float32)
     if include_struct.get('target_structure_input', False):
@@ -1671,13 +1678,6 @@ def _build_ig_feed(pseq: str, tseq: str, cseq: str,
 
 @app.route('/download/<job_id>/<interaction_id>/heatmap.png', methods=['GET'])
 def download_heatmap_png(job_id, interaction_id):
-    """
-    Export a PNG heatmap for a single interaction.
-
-    Query params:
-      mode=ig_target | ig_competitor | seed_density   (default=ig_target)
-      steps=<int>    (IG steps, default=50)
-    """
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
@@ -1705,7 +1705,6 @@ def download_heatmap_png(job_id, interaction_id):
         'competitor_structure_input': 'competitor_structure_input' in model_inputs,
     }
 
-    # Build feed & compute data
     if mode.startswith('ig'):
         feed = _build_ig_feed(pseq, tseq, cseq, Lp, Lt, Lc, include_struct, model_inputs)
         if mode == 'ig_target':
@@ -1720,7 +1719,7 @@ def download_heatmap_png(job_id, interaction_id):
             L = Lc
         else:
             return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, or seed_density."}), 400
-        data = np.array(values[:L], dtype=np.float32)[None, :]  # shape (1, L)
+        data = np.array(values[:L], dtype=np.float32)[None, :]
         ytick = ['IG magnitude']
     elif mode == 'seed_density':
         hits = json.loads(row.get('seed_hits_json') or "[]")
@@ -1732,13 +1731,12 @@ def download_heatmap_png(job_id, interaction_id):
             vec[s:e] += 1.0
         if L == 0:
             vec = np.zeros(1, dtype=np.float32)
-        data = vec[None, :]  # (1, L)
+        data = vec[None, :]
         title = f"Seed-hit density — {row.get('mirna_id')} on {row.get('target_id')}"
         ytick = ['hit count']
     else:
         return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, or seed_density."}), 400
 
-    # Plot heatmap
     fig, ax = plt.subplots(figsize=(max(6, data.shape[1] / 20.0), 1.8))
     im = ax.imshow(data, aspect='auto')
     ax.set_yticks([0])
@@ -1758,7 +1756,6 @@ def download_heatmap_png(job_id, interaction_id):
                      download_name=f"{interaction_id}_{mode}.png")
 
 
-# NEW: per-row bundle (CSV + seed CSV + heatmaps)
 @app.route('/download/<job_id>/<interaction_id>/bundle.zip', methods=['GET'])
 def download_bundle_zip(job_id, interaction_id):
     job = jobs.get(job_id)
@@ -1773,12 +1770,10 @@ def download_bundle_zip(job_id, interaction_id):
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-        # interaction CSV
         df = pd.DataFrame([row])
         csv_io = io.StringIO(); df.to_csv(csv_io, index=False); csv_io.seek(0)
         zf.writestr(f"interaction_{interaction_id}.csv", csv_io.getvalue())
 
-        # seeds CSV
         seeds = _explode_seed_hits(row, allow_gu=None, max_mm=None)
         s_io = io.StringIO()
         (pd.DataFrame(seeds) if seeds else pd.DataFrame(columns=[
@@ -1786,7 +1781,6 @@ def download_bundle_zip(job_id, interaction_id):
         ])).to_csv(s_io, index=False); s_io.seek(0)
         zf.writestr(f"seed_hits_{interaction_id}.csv", s_io.getvalue())
 
-        # heatmaps
         try:
             zf.writestr(f"{interaction_id}_ig_target.png", _build_heatmap_bytes_for_row(job, row, 'ig_target', steps=50))
         except Exception:
@@ -1806,7 +1800,6 @@ def download_bundle_zip(job_id, interaction_id):
                      download_name=f"interaction_{interaction_id}.zip")
 
 
-# NEW: job-level archive (results + seeds + provenance)
 @app.route('/download/<job_id>/all.zip', methods=['GET'])
 def download_all_zip(job_id):
     job = jobs.get(job_id)
@@ -1819,32 +1812,27 @@ def download_all_zip(job_id):
     if df.empty:
         return jsonify({"error": "No results available"}), 400
 
-    # seeds for all
     rows = []
     for r in job["results"]:
         rows.extend(_explode_seed_hits(r, allow_gu=None, max_mm=None))
     seeds_df = pd.DataFrame(rows)
 
-    # results JSON (prewritten if available)
     results_json_path = job.get("results_json_path")
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-        # CSVs
         csv_all = io.StringIO(); df.to_csv(csv_all, index=False); csv_all.seek(0)
         zf.writestr(f"mirna_results_{job_id}.csv", csv_all.getvalue())
 
         csv_seeds = io.StringIO(); seeds_df.to_csv(csv_seeds, index=False); csv_seeds.seek(0)
         zf.writestr(f"seed_hits_{job_id}.csv", csv_seeds.getvalue())
 
-        # JSON results
         if results_json_path and os.path.exists(results_json_path):
             with open(results_json_path, 'rb') as f:
                 zf.writestr("results.json", f.read())
         else:
             zf.writestr("results.json", json.dumps({"results": job["results"]}, default=_to_py, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
 
-        # provenance
         prov = {
             "provenance": PROVENANCE,
             "config": {
@@ -1852,7 +1840,8 @@ def download_all_zip(job_id):
                 "mature_trim_enabled": MATURE_TRIM_ENABLED,
                 "mature_window": MATURE_TRIM_WINDOW,
                 "aa_convert_allowed": AA_CONVERT_ALLOWED
-            }
+            },
+            "warnings": job.get("warnings", [])
         }
         zf.writestr("provenance.json", json.dumps(prov, indent=2).encode('utf-8'))
 
@@ -1862,16 +1851,11 @@ def download_all_zip(job_id):
                      download_name=f"mirna_job_{job_id}_all.zip")
 
 
-
 # =========================
-# Public structure artifact getters (for 3D viewer)
+# Public structure artifacts (3D viewer)
 # =========================
 @app.route('/structure/<job_id>/<kind>', methods=['GET'])
 def get_structure_artifact(job_id, kind):
-    """
-    kind: target | competitor
-    Optional query: ?id=<FASTA header to match> (tolerant)
-    """
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
@@ -1892,7 +1876,6 @@ def get_structure_artifact(job_id, kind):
 
 @app.route('/structure/<job_id>/miRNA/<mirna_id>', methods=['GET'])
 def get_structure_mirna(job_id, mirna_id):
-    """Serve the uploaded miRNA structure file that best matches the given ID."""
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
@@ -1910,18 +1893,9 @@ def get_structure_mirna(job_id, mirna_id):
 
 
 # =========================
-# Contacts (miRNA↔Target / miRNA↔Competitor) for 3D overlay
+# Contacts (3D overlay)
 # =========================
-
 def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
-    """
-    Fast contact heuristics using Bio.PDB NeighborSearch.
-    Returns atoms pairs with distance and coarse type labels:
-      - close (<= cutoff)
-      - hbond_like (N/O pairs <= 3.5 Å)
-      - salt_bridge_like (basic N vs phosphate O/P <= 4.0 Å)
-      - pi_stacking_like (nucleobase centroid distance <= 4.5 Å)
-    """
     try:
         from Bio.PDB import PDBParser, MMCIFParser, NeighborSearch, Selection
     except Exception as e:
@@ -1953,7 +1927,6 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
     hbonds = 0
     salts = 0
     for x, y in pairs:
-        # ensure x from A, y from B (order)
         in_a = x in atoms_a
         in_b = y in atoms_b
         if not (in_a and in_b) and not (y in atoms_a and x in atoms_b):
@@ -1962,7 +1935,6 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
         d = (a1.coord - a2.coord)
         dist = float(np.sqrt(np.dot(d, d)))
 
-        # type inference
         n1 = a1.element.upper()
         n2 = a2.element.upper()
         nm1 = a1.get_name().upper()
@@ -1971,10 +1943,8 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
         rn2 = a2.get_parent().get_resname().upper()
 
         ctype = "close"
-        # H-bond like: N/O within 3.5 Å
         if (n1 in {"N","O"} and n2 in {"N","O"} and dist <= 3.5):
             ctype = "hbond_like"; hbonds += 1
-        # Salt-bridge like: basic N (LYS/ARG/HIS) vs phosphate O/P in nucleic acid
         basic = (rn1 in {"LYS","ARG","HIS"} and n1 == "N") or (rn2 in {"LYS","ARG","HIS"} and n2 == "N")
         phosphate = (rn1 in {"A","U","G","C","T"} and (nm1.startswith("OP") or nm1 in {"O1P","O2P","O3*","P"})) or \
                     (rn2 in {"A","U","G","C","T"} and (nm2.startswith("OP") or nm2 in {"O1P","O2P","O3*","P"}))
@@ -1988,7 +1958,6 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
             "type": ctype
         })
 
-    # very coarse π-stacking heuristic (centroid distance of base heavy atoms)
     def _base_centroids(struct):
         cents = []
         for model in struct:
@@ -2022,12 +1991,6 @@ def _compute_contacts(path_a: str, path_b: str, cutoff: float = 4.0) -> Dict:
 
 @app.route('/contacts/<job_id>/<mirna_id>', methods=['GET'])
 def get_contacts(job_id, mirna_id):
-    """
-    Return contact map between miRNA structure and target/competitor.
-    query:
-      with=target|competitor (default=target)
-      cutoff=4.0
-    """
     job = jobs.get(job_id)
     if not job:
         return jsonify({"error": "Invalid job ID"}), 404
@@ -2068,7 +2031,28 @@ def get_contacts(job_id, mirna_id):
 
 
 # =========================
-# Janitor: clean expired artifacts & old job files
+# Manifest (one-click run summary)
+# =========================
+@app.get("/manifest/<job_id>")
+def get_manifest(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Invalid job ID"}), 404
+    m = {
+        "status": job.get("status"),
+        "total": job.get("total"),
+        "completed": job.get("completed"),
+        "warnings": job.get("warnings", []),
+        "model_input_shapes": job.get("model_input_shapes", {}),
+        "provenance": PROVENANCE,
+        "target_meta": job.get("target_meta", {}),
+        "competitor_meta": job.get("competitor_meta", {})
+    }
+    return jsonify(m)
+
+
+# =========================
+# Janitor
 # =========================
 _janitor_started = False
 
@@ -2086,69 +2070,43 @@ def start_janitor():
                     art = job.get("artifacts") or {}
                     exp = float(art.get("expiry", 0))
                     if exp and now > exp:
-                        # try cleaning files
-
-                        # single-path artifacts
                         for key in ('target_3d_path', 'competitor_3d_path'):
                             p = art.get(key)
                             if p and os.path.exists(p):
-                                try:
-                                    os.unlink(p)
-                                except Exception:
-                                    pass
-
-                        # NEW: clean multi-indexed target/competitor files
+                                try: os.unlink(p)
+                                except Exception: pass
                         try:
                             tidx = art.get('target_3d_index') or {}
-                            # de-dup paths in case multiple keys point to same file
                             for p in set(tidx.values()):
                                 if p and os.path.exists(p):
-                                    try:
-                                        os.unlink(p)
-                                    except Exception:
-                                        pass
+                                    try: os.unlink(p)
+                                    except Exception: pass
                         except Exception:
                             pass
-
                         try:
                             cidx = art.get('competitor_3d_index') or {}
                             for p in set(cidx.values()):
                                 if p and os.path.exists(p):
-                                    try:
-                                        os.unlink(p)
-                                    except Exception:
-                                        pass
+                                    try: os.unlink(p)
+                                    except Exception: pass
                         except Exception:
                             pass
-
-                        # miRNA index artifacts (tuple: (kind, seq, path))
                         idx = art.get('mirna_3d_index') or {}
                         for _, (_, __, p) in idx.items():
                             if p and os.path.exists(p):
-                                try:
-                                    os.unlink(p)
-                                except Exception:
-                                    pass
-
-                        # results.json (keep for a bit longer if needed)
+                                try: os.unlink(p)
+                                except Exception: pass
                         rjp = job.get("results_json_path")
                         if rjp and os.path.exists(rjp):
-                            try:
-                                os.unlink(rjp)
-                            except Exception:
-                                pass
-
-                        # remove job dir if empty
+                            try: os.unlink(rjp)
+                            except Exception: pass
                         jdir = job.get("job_dir")
                         try:
                             if jdir and os.path.isdir(jdir) and not os.listdir(jdir):
                                 os.rmdir(jdir)
                         except Exception:
                             pass
-
-                        # prevent re-clean
                         job["artifacts"]["expiry"] = 0
-
                 time.sleep(120)
             except Exception:
                 time.sleep(120)
@@ -2162,19 +2120,6 @@ def start_janitor():
 @app.route('/seed_scan', methods=['POST'])
 @limiter.limit("30 per 15 minutes")
 def seed_scan():
-    """
-    JSON body:
-    {
-      "mirna_seq": "UGAGGUAGUAGGUUGUAUAGUU",
-      "targets": {"target1": "ACGU..."},
-      "competitors": {"comp1": "ACGU..."},
-      "allow_gu": true,
-      "max_mismatch": 0,
-      "convert_aa_to_nt": false   # NEW (if AA input is provided)
-    }
-    Returns { "hits": [ {molecule, id, start, end, seed_len, seed_type, mismatches, wobble} ... ] }
-    Coordinates are 1-based on the provided target/competitor sequences.
-    """
     try:
         data = request.get_json(force=True, silent=True) or {}
         mirna = (data.get('mirna_seq') or '').strip()
@@ -2182,12 +2127,11 @@ def seed_scan():
         competitors = data.get('competitors') or {}
         allow_gu = bool(data.get('allow_gu', True))
         max_mism = int(data.get('max_mismatch', 0))
-        convert_aa = bool(data.get('convert_aa_to_nt', False))  # NEW
+        convert_aa = bool(data.get('convert_aa_to_nt', False))
 
         if not mirna or not targets:
             return jsonify({'error': 'Provide mirna_seq and at least one target'}), 400
 
-        # Helper: normalize AA/NT → RNA (U) string; AA allowed only if convert_aa or policy disabled
         def _normalize_to_rna(seq: str) -> str:
             s = (seq or '').strip()
             if not s:
@@ -2203,7 +2147,6 @@ def seed_scan():
 
         m = (mirna or '').upper().replace('T','U')
 
-        # Normalize all target/competitor sequences
         norm_targets: Dict[str, str] = {}
         for sid, sseq in targets.items():
             try:
@@ -2220,13 +2163,11 @@ def seed_scan():
 
         hits: List[Dict] = []
 
-        # Prepare seeds: 2–8 (7 nt) and 2–7 (6 nt)
         seed_2_8 = m[1:8] if len(m) >= 8 else m[1:]
         seed_2_7 = m[1:7] if len(m) >= 7 else m[1:]
         seeds = [(seed_2_8, 7), (seed_2_7, 6)]
         seeds = [(s, L) for (s, L) in seeds if len(s) == L and L in (6,7)]
 
-        # Scan function
         def scan_one(label: str, seq_map: Dict[str, str]):
             for sid, t in seq_map.items():
                 for seed, L in seeds:
@@ -2267,19 +2208,6 @@ def seed_scan():
 @app.route('/explain', methods=['POST'])
 @limiter.limit("20 per 15 minutes")
 def explain():
-    """
-    JSON body:
-    {
-      "mirna_seq": "UGAGGUAGUAGGUUGUAUAGUU",
-      "target_seq": "ACGU...",
-      "competitor_seq": "ACGU..."   # optional
-    }
-    Returns:
-    {
-      "target_attrib": [ ... per-position magnitude ... ],
-      "competitor_attrib": [ ... ] | null
-    }
-    """
     try:
         if model is None or scaler is None:
             return jsonify({"error": "Model or scaler not loaded on server."}), 500
@@ -2292,7 +2220,6 @@ def explain():
         if not mirna or not target:
             return jsonify({'error': 'Provide mirna_seq and target_seq'}), 400
 
-        # Shapes & inputs that model expects
         model_inputs = _keras_inputs_map()
         Lp = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
         Lt = int((model_inputs.get('target_sequence_input')  or (None,200))[1] or 200)
@@ -2304,7 +2231,6 @@ def explain():
         has_t_struct   = 'target_structure_input' in model_inputs
         has_c_struct   = 'competitor_structure_input' in model_inputs
 
-        # Process through your processor to get features & structure vectors
         def ensure_dict(data):
             if isinstance(data, tuple):
                 return {
@@ -2321,12 +2247,10 @@ def explain():
         else:
             cdat = {'sequence': ''}
 
-        # Optionally mature-trim primary for consistency with /predict
         pseq = pdat.get('sequence','')
         if MATURE_TRIM_ENABLED and len(pseq) > 30:
             pseq = choose_mature_window(pseq, window=MATURE_TRIM_WINDOW)
 
-        # Encode sequences
         pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...].astype(np.float32)
         tgt_enc = one_hot_encode_sequence(tdat.get('sequence',''), Lt)[None, ...].astype(np.float32)
         if has_comp_input:
@@ -2335,7 +2259,6 @@ def explain():
             else:
                 cmp_enc = one_hot_encode_sequence('', Lc)[None, ...].astype(np.float32)
 
-        # Numeric features (scaled) – using primary features for consistency
         feed: Dict[str, np.ndarray] = {
             'primary_sequence_input': pri_enc,
             'target_sequence_input':  tgt_enc,
@@ -2351,7 +2274,6 @@ def explain():
                 scaled_num = scaler.transform(num_list)
             feed['numerical_features_input'] = scaled_num.astype(np.float32)
 
-        # Structure vectors (zeros fallback if missing)
         if has_p_struct:
             feed['primary_structure_input'] = structure_vector_from_processed_json(pdat.get('structure_vector','[]'), Lp)[None, ...].astype(np.float32)
         if has_t_struct:
@@ -2362,7 +2284,6 @@ def explain():
             else:
                 feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
 
-        # Compute IG for target (+ competitor if present)
         tgt_attr = integrated_gradients(model, feed, 'target_sequence_input', steps=50)
         cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if (has_comp_input and competitor) else None
 
@@ -2376,7 +2297,7 @@ def explain():
 
 
 # =========================
-# Health check (quick diagnostics)
+# Health & Startup
 # =========================
 @app.get("/healthz")
 def healthz():
@@ -2390,21 +2311,12 @@ def healthz():
     }), (200 if ok else 503)
 
 
-# =========================
-# Startup
-# =========================
-
 def main():
     port = int(os.environ.get("PORT", 8080))
-    # ensure janitor alive for artifact cleanup (don’t crash if it can’t start)
     try:
         start_janitor()
     except Exception as e:
         app.logger.warning("Janitor failed to start: %s", e)
-
-    # Single-process, multithreaded server:
-    # - debug=False + use_reloader=False prevents the duplicate worker that causes 0/N progress stalls
-    # - threaded=True allows /progress and /heatmap to run concurrently
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=True)
 
 

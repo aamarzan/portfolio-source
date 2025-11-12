@@ -1,11 +1,17 @@
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
 // persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
-// progress stall detector, and a 3D viewer with plain-text guidance.
+// progress stall detector, 3D viewer, and precise UX around optional/visualization-only PDB usage.
 // + 2025-11-11: multi-PDB upload (target/competitor), per-row bundle download, global “Download All”,
-//   and perfectly leveled Heatmap controls.
-// + 2025-11-12: FIX #1 — AA→NT conversion applied before any seed/IG analysis & UI (no AA letters in alignments)
-//                FIX #2 — Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
+//   perfectly leveled Heatmap controls, and AA→NT before any analysis (no AA letters in alignments).
+// + 2025-11-12: Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
+// + 2025-11-12 (this build):
+//   • PDB is optional/non-blocking; PDB-only and FASTA-only supported; protein→AA→NT auto (mode selectable)
+//   • Staging basket for target/competitor structures (pick multiple times; accumulate chips; remove)
+//   • Pre-validation “Use/Skip” table (best-effort; graceful if /precheck is unavailable)
+//   • Tolerant chain hints in FASTA header (e.g., >TP53_3UTR|chain=A)
+//   • Result badges (“PDB used”, “AA→NT mode”, “Structure-features on/off”) and “Run Manifest” download
+//   • Progress errors with PDB mismatches try to fetch & render results with warnings instead of hard fail
 
 // =====================================================
 // Global state
@@ -27,9 +33,18 @@ const CURRENT_INPUTS = {
   competitors: {}  // id -> sequence (as typed)
 };
 
+// Staged 3D files accumulated across multiple selections
+const STAGED = {
+  target3dFiles: [],      // File[]
+  competitor3dFiles: []   // File[]
+};
+
 // Last analysis cache (for exports)
 let LAST_SEED_HITS = null;   // Array of hits
 let LAST_SEED_META = null;   // { mirnaId, targetId, compId }
+
+// Run manifest (augmented as the run proceeds)
+let RUN_MANIFEST = null;
 
 // Guards to prevent duplicate injections/bindings
 const GUARDS = {
@@ -41,7 +56,8 @@ const GUARDS = {
   modalInjected: false,
   styleInjected: false,
   nglLoaded: false,
-  threeDToolbarInjected: false
+  threeDToolbarInjected: false,
+  stagingDone: false
 };
 
 // =====================================================
@@ -55,6 +71,7 @@ const isLocal =
 const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
 const API_URL        = `${BASE_URL}/predict`;
+const PRECHECK_URL   = `${BASE_URL}/precheck`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
 const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON (unprotected)
 const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
@@ -191,29 +208,29 @@ function injectPremiumStyles(){
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, max-content));
       gap:12px;
-      align-items:center;           /* keep labels & boxes level */
+      align-items:center;
       justify-content:center;
       margin:8px 0 12px;
     }
     .controls-grid .ctrl{
       display:flex;
-      align-items:center;           /* vertically center */
+      align-items:center;
       gap:8px;
       justify-content:center;
       white-space:nowrap;
     }
     .controls-grid .ctrl span{
       font-weight:700;
-      line-height:40px;             /* match input/select line-height */
+      line-height:40px;
     }
     .controls-grid .ctrl input[type="number"],
     .controls-grid .ctrl select{
       padding:6px 10px;
       border:1px solid #d8dee9;
       border-radius:8px;
-      min-height:40px;              /* equal height */
-      height:40px;                  /* enforce equal height */
-      line-height:40px;             /* align text baseline */
+      min-height:40px;
+      height:40px;
+      line-height:40px;
     }
     .controls-grid .ctrl input[type="checkbox"]{ transform: translateY(1px); }
 
@@ -224,7 +241,19 @@ function injectPremiumStyles(){
       gap:8px;
     }
     .action-grid .btn-action{ width:100%; }
-    .action-grid .action-spacer{ display:block; } /* empty cell to center the 3D row */
+    .action-grid .action-spacer{ display:block; }
+
+    /* Staging baskets */
+    .staging-box{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-top:8px;background:#fafbff;}
+    .staging-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+    .chipfile{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:9999px;border:1px solid #e2e8f0;background:#fff;margin:4px 6px 0 0;font-size:12px;}
+    .chipfile button{border:none;background:transparent;cursor:pointer;font-weight:700;}
+    .badge{display:inline-block;border-radius:9999px;padding:2px 8px;font-size:11px;border:1px solid #e5e7eb;background:#f8fafc;margin:2px 4px;color:#334155;}
+    .badge.ok{background:#ecfdf5;border-color:#bbf7d0;color:#065f46;}
+    .badge.warn{background:#fff7ed;border-color:#fed7aa;color:#7c2d12;}
+    .badge.off{background:#f1f5f9;border-color:#cbd5e1;color:#475569;}
+    .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
+    .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
   `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
@@ -347,7 +376,7 @@ function exactKeyExists(pool, anyId){
 }
 
 // =====================================================
-// NEW: AA ↔ NT helpers (FIX #1)
+// NEW: AA ↔ NT helpers
 // =====================================================
 const NUCLEOTIDE_CHARS = new Set(['A','C','G','U','T','N','R','Y','K','M','S','W','B','D','H','V']);
 function isLikelyAA(seq){
@@ -359,27 +388,39 @@ function isLikelyAA(seq){
 }
 function toRNA(seq){
   return String(seq||'').toUpperCase().replace(/T/g,'U').replace(/[^ACGU]/g, (ch)=>{
-    // keep N and ambiguity letters that map to NT; drop others
     return NUCLEOTIDE_CHARS.has(ch) ? ch : '';
   });
 }
 // Canonical RNA codon picks per amino acid (lossy but stable and deterministic)
-const AA2RNA = {
+const AA2RNA_CANON = {
   A:'GCU', R:'CGU', N:'AAU', D:'GAU', C:'UGU',
   Q:'CAA', E:'GAA', G:'GGU', H:'CAU', I:'AUU',
   L:'UUA', K:'AAA', M:'AUG', F:'UUU', P:'CCU',
   S:'UCU', T:'ACU', W:'UGG', Y:'UAU', V:'GUU',
-  U:'UGA', // selenocysteine (placeholder)
-  O:'UAG', // pyrrolysine (placeholder)
-  B:'AAN', // Asx ambiguous (N/D)
-  Z:'CAN', // Glx ambiguous (Q/E)
-  X:'NNN', '*':'NNN'
+  U:'UGA', O:'UAG', B:'AAN', Z:'CAN', X:'NNN', '*':'NNN'
 };
-function aaToRNA(aaSeq){
+// GC-balanced (rough heuristic)
+const AA2RNA_GC = {
+  A:'GCC', R:'CGC', N:'AAC', D:'GAC', C:'UGC',
+  Q:'CAG', E:'GAG', G:'GGC', H:'CAC', I:'AUC',
+  L:'CUG', K:'AAG', M:'AUG', F:'UUC', P:'CCC',
+  S:'UCC', T:'ACC', W:'UGG', Y:'UAC', V:'GUG',
+  U:'UGA', O:'UAG', B:'AAN', Z:'CAN', X:'NNN', '*':'NNN'
+};
+// NNK degenerate (keeps codon length; visualization-safe)
+const AA2RNA_NNK = {
+  A:'NNK', R:'NNK', N:'NNK', D:'NNK', C:'NNK',
+  Q:'NNK', E:'NNK', G:'NNK', H:'NNK', I:'NNK',
+  L:'NNK', K:'NNK', M:'AUG', F:'NNK', P:'NNK',
+  S:'NNK', T:'NNK', W:'UGG', Y:'NNK', V:'NNK',
+  U:'UGA', O:'UAG', B:'NNK', Z:'NNK', X:'NNK', '*':'NNN'
+};
+function aaToRNAWithMode(aaSeq, mode='canonical'){
   const s = String(aaSeq||'').replace(/\s+/g,'').toUpperCase();
+  const table = mode === 'gc_balanced' ? AA2RNA_GC : (mode === 'nnk' ? AA2RNA_NNK : AA2RNA_CANON);
   let out = '';
   for(const ch of s){
-    if(AA2RNA[ch]) out += AA2RNA[ch];
+    if(table[ch]) out += table[ch];
     else if(NUCLEOTIDE_CHARS.has(ch)) out += ch; // if already NT-ish, keep
     else out += 'NNN';
   }
@@ -391,25 +432,24 @@ function aaToRNA(aaSeq){
  *  - the sequence looks like amino acids, AND
  *  - server allows AA conversion, AND
  *  - the user toggled the AA conversion flag ON.
- * Returns {seq, converted:boolean, note:string}
+ * Returns {seq, converted:boolean, note:string, mode:string}
  */
 function resolveSeqWithAAHandling(anyId, pool){
   const raw = tolerantGetAnySeqForId(anyId, pool);
-  if(!raw) return { seq:'', converted:false, note:'' };
+  if(!raw) return { seq:'', converted:false, note:'', mode:'' };
 
-  // Respect UI toggle & server allow
   const uiFlag = $('aa-convert-flag')?.checked ?? CONFIG.aa_convert_allowed;
+  const mode = (byQS('#aa-nt-mode')?.value || 'canonical').toLowerCase();
   const canConvert = CONFIG.aa_convert_allowed && uiFlag;
 
   if(isLikelyAA(raw)){
     if(!canConvert){
-      return { seq:'', converted:false, note:'Target appears to be amino acids; enable AA→NT conversion or supply nucleotides.' };
+      return { seq:'', converted:false, note:'Target appears to be amino acids; enable AA→NT conversion or supply nucleotides.', mode:'' };
     }
-    const nt = aaToRNA(raw);
-    return { seq: toRNA(nt), converted:true, note:'AA→NT conversion applied (canonical codons).' };
+    const nt = aaToRNAWithMode(raw, mode);
+    return { seq: toRNA(nt), converted:true, note:`AA→NT conversion applied (${mode}).`, mode };
   }
-  // Already nucleotide-ish → normalize to RNA alphabet
-  return { seq: toRNA(raw), converted:false, note:'' };
+  return { seq: toRNA(raw), converted:false, note:'', mode:'' };
 }
 
 // =====================================================
@@ -480,6 +520,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 
+  // Build staging baskets for 3D files
+  setupStagingBaskets();
+
   // Form submit
   const form = $('prediction-form');
   if(form && !GUARDS.formBindingDone){
@@ -523,7 +566,7 @@ function injectAdvancedOnce(){
     advTab
   );
 
-  // Flags
+  // Flags + AA→NT mode
   const flagsWrapperId = 'advanced-flags-wrapper';
   ensureSingleton(
     flagsWrapperId,
@@ -536,10 +579,18 @@ function injectAdvancedOnce(){
         </label>
         <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
           <input type="checkbox" id="aa-convert-flag" ${CONFIG.aa_convert_allowed ? 'checked' : 'disabled'}/>
-          <span>Convert AA → NT (lossy; for target/competitor)</span>
+          <span>Convert protein AA → NT for targets/competitors (lossy)</span>
+        </label>
+        <label style="display:flex;gap:8px;align-items:center;">
+          <span>AA→NT mode</span>
+          <select id="aa-nt-mode" ${CONFIG.aa_convert_allowed ? '' : 'disabled'}>
+            <option value="canonical" selected>Most-common human codon</option>
+            <option value="gc_balanced">GC-balanced</option>
+            <option value="nnk">NNK (degenerate)</option>
+          </select>
         </label>
       </div>
-      <small style="color:#555;">If conversion is disabled server-side, this checkbox has no effect.</small>
+      <small style="color:#555;">PDB is optional and never blocks scoring. If a PDB is protein-only, we’ll auto back-translate for scanning/visualization.</small>
     </div>
     `,
     advTab
@@ -550,14 +601,17 @@ function injectAdvancedOnce(){
   if(aaFlag && !CONFIG.aa_convert_allowed){
     aaFlag.disabled = true;
     aaFlag.checked = false;
+    const modeSel = $('aa-nt-mode');
+    if(modeSel){ modeSel.disabled = true; }
   }
 
   GUARDS.advancedInjected = true;
 }
 
 // =====================================================
-// Utility: extract PDB IDs from FASTA headers (FIX #2)
+// Utility: extract PDB IDs and chain hints from FASTA headers
 // Accepts patterns like "PDB:7YTW", "rcsb=2ABC", "pdb 1XYZ_A"
+// Chain hint: '>TP53_3UTR|chain=A' (also tolerantly reads 'chain = A')
 // =====================================================
 function extractPdbIdsFromFasta(text){
   const ids = [];
@@ -575,6 +629,114 @@ function extractPdbIdsFromFasta(text){
     }
   }
   return Array.from(new Set(ids));
+}
+function extractChainHintsFromFasta(text){
+  const hints = {};
+  if(!text) return hints;
+  const lines = text.split(/\r?\n/);
+  for(const ln of lines){
+    if(!ln.trim().startsWith('>')) continue;
+    const header = ln.slice(1).trim();
+    const id = header.replace(/\|.*$/,'').trim(); // before first pipe
+    const m = header.match(/\bchain\b\s*=\s*([A-Za-z0-9])/i);
+    if(m && id){ hints[id] = m[1].toUpperCase(); }
+  }
+  return hints; // { headerId: 'A' }
+}
+
+// =====================================================
+// Staging baskets (accumulate 3D files across selections)
+// =====================================================
+function setupStagingBaskets(){
+  if(GUARDS.stagingDone) return;
+
+  setupOneBasket('target');
+  setupOneBasket('competitor');
+
+  GUARDS.stagingDone = true;
+}
+
+function setupOneBasket(kind){
+  const legacyInput = $(`${kind}-file`); // existing <input type="file" multiple>
+  if(!legacyInput || !legacyInput.parentElement) return;
+
+  // Hide legacy input but keep it as fallback (we still read its files on submit)
+  legacyInput.style.display = 'none';
+
+  // Create staging box
+  const boxId = `${kind}-staging-box`;
+  const chipsId = `${kind}-staged-chips`;
+  const pickId = `${kind}-staged-picker`;
+
+  const html = `
+    <div id="${boxId}" class="staging-box">
+      <div class="staging-head">
+        <div><strong>${kind === 'target' ? 'Target' : 'Competitor'} 3D files</strong>
+          <span class="badge off" id="${kind}-staged-count">0 staged</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="${kind}-staged-add" class="btn-action">Add PDB/mmCIF</button>
+          <button id="${kind}-staged-clear" class="btn-action">Clear</button>
+        </div>
+      </div>
+      <div id="${chipsId}" style="display:flex;flex-wrap:wrap;"></div>
+      <input id="${pickId}" type="file" accept=".pdb,.cif,.mmcif" multiple style="display:none"/>
+    </div>
+  `;
+  legacyInput.insertAdjacentHTML('afterend', html);
+
+  const pick = $(pickId);
+  const addBtn = $(`${kind}-staged-add`);
+  const clrBtn = $(`${kind}-staged-clear`);
+
+  if(addBtn && pick){
+    bindOnce(addBtn, 'click', () => pick.click(), `${kind}-stage-add`);
+  }
+  if(pick){
+    bindOnce(pick, 'change', () => {
+      const list = Array.from(pick.files || []);
+      if(list.length){
+        for(const f of list){
+          if(!validateFileSize(f)) continue;
+          STAGED[`${kind}3dFiles`].push(f);
+        }
+        renderStagedChips(kind);
+      }
+      pick.value = ''; // reset
+    }, `${kind}-stage-change`);
+  }
+  if(clrBtn){
+    bindOnce(clrBtn, 'click', () => {
+      STAGED[`${kind}3dFiles`] = [];
+      renderStagedChips(kind);
+    }, `${kind}-stage-clear`);
+  }
+  renderStagedChips(kind);
+}
+
+function renderStagedChips(kind){
+  const area = $(`${kind}-staged-chips`);
+  const countLbl = $(`${kind}-staged-count`);
+  if(!area) return;
+  area.innerHTML = '';
+  const arr = STAGED[`${kind}3dFiles`];
+  arr.forEach((f, idx) => {
+    const chip = document.createElement('span');
+    chip.className = 'chipfile';
+    chip.innerHTML = `${escapeHTML(f.name)} <button title="Remove">×</button>`;
+    const btn = chip.querySelector('button');
+    if(btn){
+      bindOnce(btn, 'click', () => {
+        STAGED[`${kind}3dFiles`].splice(idx,1);
+        renderStagedChips(kind);
+      }, `${kind}-rm-${idx}-${Date.now()}`);
+    }
+    area.appendChild(chip);
+  });
+  if(countLbl){
+    countLbl.textContent = `${arr.length} staged`;
+    countLbl.className = `badge ${arr.length ? 'ok' : 'off'}`;
+  }
 }
 
 // =====================================================
@@ -595,6 +757,34 @@ async function handleSubmit(event){
   CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
   CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
 
+  // Reset run manifest
+  RUN_MANIFEST = {
+    created_at: new Date().toISOString(),
+    client: 'mirna.js',
+    config: {
+      mirna_max: CONFIG.mirna_max,
+      mature_trim_enabled: CONFIG.mature_trim_enabled,
+      mature_window: CONFIG.mature_window,
+      aa_convert_allowed: CONFIG.aa_convert_allowed
+    },
+    aa_nt_mode: (byQS('#aa-nt-mode')?.value || 'canonical'),
+    flags: {
+      mature_trim: $('mature-trim-flag')?.checked ?? CONFIG.mature_trim_enabled,
+      aa_convert: $('aa-convert-flag')?.checked ?? CONFIG.aa_convert_allowed
+    },
+    inputs: {
+      mirna_count: Object.keys(CURRENT_INPUTS.mirnas).length,
+      target_count: Object.keys(CURRENT_INPUTS.targets).length,
+      competitor_count: Object.keys(CURRENT_INPUTS.competitors).length,
+      target_pdb_ids: extractPdbIdsFromFasta(targetSeq),
+      competitor_pdb_ids: extractPdbIdsFromFasta(competitorSeq),
+      target_chain_hints: extractChainHintsFromFasta(targetSeq),
+      competitor_chain_hints: extractChainHintsFromFasta(competitorSeq),
+      staged_target_files: STAGED.target3dFiles.map(f => f.name),
+      staged_competitor_files: STAGED.competitor3dFiles.map(f => f.name)
+    }
+  };
+
   // Clear results view
   if(resultsContainer) setHTML(resultsContainer, '');
   predictionResults = [];
@@ -613,25 +803,25 @@ async function handleSubmit(event){
     return;
   }
 
-  // Count records for ETA hint
+  // Count records for ETA hint (targets/competitors may be filled by PDB-only later; we allow 0 here)
   const mirnaCount = countFastaRecords(primarySeqs);
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
   // Friendly info + estimated total pairs (centered)
-  const estTotal = (mirnaCount || 0) * (tgtCount || 0) * (compCount || 1);
+  const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
   prependHTML(resultsContainer, formatInfo(
-    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s). Estimated evaluations: ${estTotal}.`
+    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${STAGED.target3dFiles.length}, competitor=${STAGED.competitor3dFiles.length}. Estimated evaluations: ${estTotal}.`
   ));
 
-  // Non-blocking tips (backend enforces)
+  // Non-blocking tips (backend enforces), FASTA-only/PDB-only allowed
   const MIN_TARGET_LEN = 30;
   const MIN_COMP_LEN   = 15;
-  if ((targetSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_TARGET_LEN){
-    appendHTML(resultsContainer, formatWarn(`Tip: Target should be at least ${MIN_TARGET_LEN} nt. Your input looks shorter.`));
+  if (targetSeq && (targetSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_TARGET_LEN){
+    appendHTML(resultsContainer, formatWarn(`Tip: Target should be at least ${MIN_TARGET_LEN} nt if provided. PDB-only runs are also supported.`));
   }
-  if(competitorSeq.trim() && (competitorSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_COMP_LEN){
-    appendHTML(resultsContainer, formatWarn(`Tip: Competitor should be at least ${MIN_COMP_LEN} nt or leave it blank.`));
+  if(competitorSeq && (competitorSeq.replace(/^>.*$/gm,'').replace(/\s+/g,'')).length < MIN_COMP_LEN){
+    appendHTML(resultsContainer, formatWarn(`Tip: Competitor should be at least ${MIN_COMP_LEN} nt or leave it blank. PDB-only runs are supported.`));
   }
   if(mirnaCount > CONFIG.mirna_max){
     setHTML(resultsContainer, formatError(
@@ -640,7 +830,7 @@ async function handleSubmit(event){
     return;
   }
   if(tgtCount >= 1 && !hasFastaHeaders(targetSeq)){
-    prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to targets (e.g., >target1) for clean labels in results.'));
+    prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to targets (e.g., >target1) for clean labels in results. PDB can still be used for visualization.'));
   }
   if(competitorSeq && !hasFastaHeaders(competitorSeq)){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
@@ -671,37 +861,55 @@ async function handleSubmit(event){
   // Flags
   const matureTrimFlag = $('mature-trim-flag')?.checked ?? CONFIG.mature_trim_enabled;
   const aaConvertFlag  = $('aa-convert-flag')?.checked ?? false;
+  const aaMode         = (byQS('#aa-nt-mode')?.value || 'canonical').toLowerCase();
   formData.append('mature_trim', matureTrimFlag ? 'true' : 'false');
   formData.append('convert_aa_to_nt', aaConvertFlag ? 'true' : 'false');
+  formData.append('aa_nt_mode', aaMode);
 
-  // NEW (FIX #2): PDB IDs in FASTA headers → pass through so backend can fetch structures
+  // NEW: PDB IDs & chain hints in FASTA headers → pass through
   const targetPdbIds = extractPdbIdsFromFasta(targetSeq);
   const compPdbIds   = extractPdbIdsFromFasta(competitorSeq);
   targetPdbIds.forEach(id => formData.append('target_pdb_id', id));
   compPdbIds.forEach(id   => formData.append('competitor_pdb_id', id));
 
-  // --- Optional 3D files (multiple allowed) ---
+  const targetChainHints = extractChainHintsFromFasta(targetSeq);
+  const compChainHints   = extractChainHintsFromFasta(competitorSeq);
+  if(Object.keys(targetChainHints).length){
+    formData.append('target_chain_hints_json', JSON.stringify(targetChainHints));
+  }
+  if(Object.keys(compChainHints).length){
+    formData.append('competitor_chain_hints_json', JSON.stringify(compChainHints));
+  }
+
+  // --- Optional 3D files (multiple allowed; include STAGED first) ---
+  for (const f of STAGED.target3dFiles) { if(!validateFileSize(f)) { continue; } formData.append('target_3d_file', f); }
+  for (const f of STAGED.competitor3dFiles) { if(!validateFileSize(f)) { continue; } formData.append('competitor_3d_file', f); }
+
+  // Also include any legacy one-off selections still present (compat)
+  const legacyTargetFiles = $('target-file')?.files;
+  if (legacyTargetFiles?.length) {
+    for (const f of legacyTargetFiles) {
+      if (!validateFileSize(f)) { $('target-file').value=''; break; }
+      formData.append('target_3d_file', f);
+    }
+  }
+  const legacyCompFiles = $('competitor-file')?.files;
+  if (legacyCompFiles?.length) {
+    for (const f of legacyCompFiles) {
+      if (!validateFileSize(f)) { $('competitor-file').value=''; break; }
+      formData.append('competitor_3d_file', f);
+    }
+  }
   const mirnaFileInput = $('mirna-file');
   if (mirnaFileInput?.files?.length) {
     for (const f of mirnaFileInput.files) {
-      if (!validateFileSize(f)) { mirnaFileInput.value=''; return; }
+      if (!validateFileSize(f)) { mirnaFileInput.value=''; break; }
       formData.append('mirna_3d_file', f);
     }
   }
-  const targetFiles = $('target-file')?.files;
-  if (targetFiles?.length) {
-    for (const f of targetFiles) {
-      if (!validateFileSize(f)) { $('target-file').value=''; return; }
-      formData.append('target_3d_file', f);      // repeat key, backend loops
-    }
-  }
-  const competitorFiles = $('competitor-file')?.files;
-  if (competitorFiles?.length) {
-    for (const f of competitorFiles) {
-      if (!validateFileSize(f)) { $('competitor-file').value=''; return; }
-      formData.append('competitor_3d_file', f); // repeat key, backend loops
-    }
-  }
+
+  // Fire a non-blocking precheck (if supported). Show Use/Skip table.
+  tryPrecheck(formData).catch(()=>{ /* silent */ });
 
   try{
     const authHeaders = await getNonceOrKeyHeaders();
@@ -722,6 +930,7 @@ async function handleSubmit(event){
     const { job_id } = await startRes.json();
     if(!job_id) throw new Error('No job ID returned from server.');
     CURRENT_JOB_ID = job_id;
+    RUN_MANIFEST.job_id = job_id;
 
     // 2) Poll progress (with stall detection)
     let lastCompleted = -1;
@@ -774,7 +983,27 @@ async function handleSubmit(event){
       }
 
       if(data.status === 'error'){
+        // Soft-handle PDB type mismatches: try to fetch results anyway
         const rw = resultsContainer.querySelector('.reload-warning'); if(rw) rw.remove();
+        const maybePdbWarning = /pdb|structure|polymer|chain|back-translate/i.test(data.error || '');
+        try{
+          if(loader) text(loader, "Attempting to fetch partial results...");
+          const dr = await fetch(DOWNLOAD_URL(job_id), { method:'GET' });
+          if(dr.ok){
+            const finalDataSoft = await dr.json();
+            const rows = finalDataSoft.results || [];
+            if(rows.length){
+              predictionResults = rows;
+              displayResults(predictionResults, finalDataSoft);
+              if(maybePdbWarning){
+                prependHTML(resultsContainer, formatWarn('Structure warning encountered. PDB files were kept for visualization; scoring continued using nucleotide sequences.'));
+              }
+              if(loader){ text(loader, "✅ Prediction completed with warnings."); setTimeout(()=>hide(loader), 3000); }
+              return;
+            }
+          }
+        }catch(_){}
+        // If nothing could be recovered, show error
         throw new Error(data.error || 'We encountered a technical issue while processing your request.');
       }
 
@@ -787,7 +1016,7 @@ async function handleSubmit(event){
         const finalData = await dr.json();
 
         predictionResults = finalData.results || [];
-        displayResults(predictionResults);
+        displayResults(predictionResults, finalData);
 
         if(loader){
           text(loader, "✅ Prediction completed. Results are shown below.");
@@ -810,10 +1039,101 @@ async function handleSubmit(event){
 }
 
 // =====================================================
-// Display results (sorted by baseline; gradient by baseline)
-// + injects analysis controls + filter chips + per-row action buttons
+// Precheck (best-effort; shows Use/Skip table if backend supports /precheck)
 // =====================================================
-function displayResults(results){
+async function tryPrecheck(formData){
+  // clone FormData (can reuse same files safely)
+  const fd = new FormData();
+  for (const [k,v] of formData.entries()) { fd.append(k, v); }
+
+  const headers = await getNonceOrKeyHeaders();
+  let res;
+  try{
+    res = await fetchWithTimeout(PRECHECK_URL, { method:'POST', headers, body: fd }, 20000);
+  }catch(_){ /* ignore */ }
+  if(!res || !res.ok){
+    const rc = $('results-container');
+    if(rc){
+      appendHTML(rc, formatInfo('Pre-validation skipped (not available). We’ll auto-handle PDB-only, FASTA-only, and protein back-translation. PDB never blocks scoring.'));
+    }
+    return;
+  }
+  const data = await res.json();
+  renderPrecheckPanel(data);
+}
+
+function renderPrecheckPanel(data){
+  const rc = $('results-container');
+  if(!rc) return;
+
+  const rows = [];
+  const add = (arr, label) => {
+    (arr || []).forEach(o => {
+      rows.push({
+        kind: label,
+        id: o.id || o.header || o.filename || '(unknown)',
+        chain: o.chain || o.chain_id || '',
+        polymer: o.polymer || o.polymer_type || 'unknown',
+        length: o.length || o.seq_len || '',
+        used_scoring: !!o.used_for_scoring,
+        used_viz: !!o.used_for_viz || !!o.present_for_viz,
+        back_tx: !!o.back_translated,
+        note: o.note || ''
+      });
+    });
+  };
+  add(data.targets, 'Target');
+  add(data.competitors, 'Competitor');
+
+  let html = `
+    <div class="staging-box" style="background:#f8fffb;border-color:#bbf7d0;">
+      <div class="staging-head">
+        <div><strong>Pre-validation</strong> <span class="badge ok">non-blocking</span></div>
+        <div class="badge off">PDB optional</div>
+      </div>
+      <table class="precheck-table">
+        <thead><tr>
+          <th>Role</th><th>ID / File</th><th>Chain</th><th>Polymer</th><th>Len</th>
+          <th>Used for scoring?</th><th>Used for viz?</th><th>AA→NT</th><th>Note</th>
+        </tr></thead>
+        <tbody>
+  `;
+  if(rows.length === 0){
+    html += `<tr><td colspan="9">No structures detected to pre-validate. This is fine — runs can be FASTA-only.</td></tr>`;
+  }else{
+    rows.forEach(r=>{
+      const bScore = r.used_scoring ? `<span class="badge ok">yes</span>` : `<span class="badge off">no</span>`;
+      const bViz   = r.used_viz ? `<span class="badge ok">yes</span>` : `<span class="badge off">no</span>`;
+      const bBT    = r.back_tx ? `<span class="badge warn">yes</span>` : `<span class="badge off">no</span>`;
+      html += `<tr>
+        <td>${escapeHTML(r.kind)}</td>
+        <td>${escapeHTML(r.id)}</td>
+        <td>${escapeHTML(r.chain)}</td>
+        <td>${escapeHTML(r.polymer)}</td>
+        <td>${escapeHTML(r.length)}</td>
+        <td>${bScore}</td>
+        <td>${bViz}</td>
+        <td>${bBT}</td>
+        <td>${escapeHTML(r.note)}</td>
+      </tr>`;
+    });
+  }
+  html += `</tbody></table>
+      <small style="color:#475569;">If a PDB isn’t nucleotide or doesn’t match the FASTA, it’s kept for visualization with a “not used in scoring” note. Protein chains are auto back-translated for seed/IG scanning when enabled.</small>
+    </div>
+  `;
+  prependHTML(rc, html);
+
+  // merge some info into manifest if provided
+  RUN_MANIFEST = RUN_MANIFEST || {};
+  RUN_MANIFEST.precheck = { targets: data.targets || [], competitors: data.competitors || [] };
+}
+
+// =====================================================
+// Display results (sorted by baseline; gradient by baseline)
+// + injects analysis controls + filter chips + per-row action buttons + row badges + manifest download
+// =====================================================
+function displayResults(results, finalData=null){
   const container = $('results-container');
   if(!container) return;
 
@@ -826,6 +1146,22 @@ function displayResults(results){
 
   // Inject analysis controls (singleton)
   injectAnalysisControls(container);
+
+  // Update RUN_MANIFEST with any server-side manifest/meta if present
+  if(finalData && finalData.manifest){
+    RUN_MANIFEST = { ...(RUN_MANIFEST || {}), server_manifest: finalData.manifest };
+  }
+
+  // Top badges about run
+  const runBadgesId = 'run-badges';
+  const topBadges = `
+    <div id="${runBadgesId}" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0 8px;">
+      <span class="badge ${hasAnyStructure() ? 'ok':'off'}">PDB present: ${hasAnyStructure() ? 'yes':'no'}</span>
+      <span class="badge ${($('aa-convert-flag')?.checked ? 'warn':'off')}">AA→NT: ${$('aa-convert-flag')?.checked ? 'yes':'no'} (mode: ${(byQS('#aa-nt-mode')?.value || 'canonical')})</span>
+      <span class="badge off">Seed/IG computed on NT</span>
+    </div>
+  `;
+  appendHTML(container, topBadges);
 
   // Sort by baseline desc
   results.sort((a,b) =>
@@ -853,7 +1189,7 @@ function displayResults(results){
     return `rgba(${r},${g},${b},0.3)`;
   }
 
-  // C) Legend (chips removed & centered)
+  // Legend
   const legendId = 'affinity-legend';
   const legendHTML = `
   <div id="${legendId}" class="affinity-legend" style="margin-bottom:10px;text-align:center;">
@@ -870,15 +1206,27 @@ function displayResults(results){
   </div>
   `;
 
-  // Download + Copy buttons
+  // Download + Copy + Manifest buttons
   const buttonsHTML = `<div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
     <button id="download-all-server-csv" class="btn-premium">Download Results (CSV)</button>
     <button id="download-all-bundles" class="btn-premium">Download All</button>
     <button id="copy-results-btn" class="btn-premium btn-accent">Copy Results (TSV)</button>
+    <button id="download-manifest" class="btn-premium">Run Manifest (JSON)</button>
   </div>`;
 
   appendHTML(container, legendHTML);
   appendHTML(container, buttonsHTML);
+
+  // Manifest button
+  bindOnce($('download-manifest'), 'click', () => {
+    const manifest = RUN_MANIFEST || {};
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `mirna_run_manifest_${CURRENT_JOB_ID || 'NA'}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 'dlManifestOnce');
 
   bindOnce($('download-all-server-csv'), 'click', async () => {
     if(!CURRENT_JOB_ID){ alert('No active job.'); return; }
@@ -899,7 +1247,7 @@ function displayResults(results){
     }catch(err){ alert('Could not download CSV.'); }
   }, 'dlAllCsvOnce');
 
-  // NEW: Download All (zip of all artifacts)
+  // Download All (zip of all artifacts)
   bindOnce($('download-all-bundles'), 'click', async () => {
     if (!CURRENT_JOB_ID) { alert('No active job.'); return; }
     try {
@@ -935,7 +1283,7 @@ function displayResults(results){
     navigator.clipboard.writeText(lines.join('\n')).then(() => alert('Results copied to clipboard.'));
   }, 'copyResultsClick');
 
-  // Table with optional Target/Competitor columns + Analysis col
+  // Table with optional Target/Competitor columns + Badges + Analysis col
   const hasTargetCol = (results || []).some(r => typeof r.target_id !== 'undefined');
   const hasCompCol   = (results || []).some(r => (r.competitor_id ?? '') !== '');
 
@@ -946,6 +1294,7 @@ function displayResults(results){
     '<th>Predicted Affinity (Baseline)</th>' +
     '<th>Predicted Affinity (With Competitor)</th>' +
     '<th>Competitive Effect (higher is better)</th>' +
+    '<th>Notes</th>' +
     '<th>Analysis</th>' +
     '</tr></thead><tbody>';
 
@@ -964,6 +1313,25 @@ function displayResults(results){
     const tolC = cid ? (!exactKeyExists(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid) && !!lookupTolerant(CURRENT_INPUTS.competitors, parseIdRange(cid)?.baseId || cid)) : false;
     const isTol = tolT || tolC;
 
+    // Row badges (best-effort from server fields if present)
+    const badgeBits = [];
+    if (typeof item.pdb_used !== 'undefined'){
+      badgeBits.push(`<span class="badge ${item.pdb_used ? 'ok':'off'}">PDB used: ${item.pdb_used ? 'yes':'no'}</span>`);
+    }else if (hasAnyStructure()){
+      badgeBits.push(`<span class="badge off">PDB used: —</span>`);
+    }
+    if (typeof item.aa_to_nt_mode !== 'undefined' || typeof item.aa_to_nt !== 'undefined'){
+      const yn = item.aa_to_nt || !!item.aa_to_nt_mode;
+      const mode = (item.aa_to_nt_mode || (byQS('#aa-nt-mode')?.value || 'canonical')).toString();
+      badgeBits.push(`<span class="badge ${yn ? 'warn':'off'}">AA→NT: ${yn ? 'yes':'no'}${yn ? ` (${escapeHTML(mode)})` : ''}</span>`);
+    }
+    if (typeof item.structure_features_on !== 'undefined'){
+      badgeBits.push(`<span class="badge ${item.structure_features_on ? 'ok':'off'}">Structure-features: ${item.structure_features_on ? 'on':'off'}</span>`);
+    }
+
+    const badgesHTML = badgeBits.length ? badgeBits.join(' ') :
+      `<span class="badge off">Notes unavailable</span>`;
+
     const seedBtn    = `<button class="seed-btn btn-action" data-row="${idx}">Seed Sites</button>`;
     const heatBtn    = `<button class="heatmap-btn btn-action" data-row="${idx}">Heatmap</button>`;
     const csvBtn     = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
@@ -971,7 +1339,7 @@ function displayResults(results){
     const c3dBtn     = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
     const bundleBtn  = `<button class="bundle-btn btn-action" data-row="${idx}">Download</button>`;
 
-    // D) two-line action block; spacer centers the second row (3D buttons)
+    // two-line action block
     const actionBlock = `
       <div class="action-grid">
         ${seedBtn}
@@ -990,6 +1358,7 @@ function displayResults(results){
       `<td>${escapeHTML(baseline)}</td>
        <td>${escapeHTML(withComp)}</td>
        <td>${escapeHTML(compEff)}</td>
+       <td>${badgesHTML}</td>
        <td>${actionBlock}</td>
     </tr>`;
   });
@@ -1026,6 +1395,11 @@ function displayResults(results){
       }
     }, 'resultsActions');
   }
+}
+
+function hasAnyStructure(){
+  return STAGED.target3dFiles.length + STAGED.competitor3dFiles.length > 0 ||
+         !!$('target-file')?.files?.length || !!$('competitor-file')?.files?.length;
 }
 
 // === Inject range/tolerant filter chips (toggle behavior) ===
@@ -1225,7 +1599,7 @@ async function clientExplainHeatmapFallback(item, forcedMode){
 
     const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
     const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
-    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:''};
+    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:'', mode:''};
 
     const targetSeq= tRes.seq;
     const compSeq  = cRes.seq;
@@ -1284,7 +1658,8 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
     }
     if(tRes.converted || cRes.converted){
-      html += `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (canonical codons) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
+      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
+      html += `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
     }
 
     setHTML($('modal-content'), html);
@@ -1386,7 +1761,7 @@ async function handleSeedSitesClick(item){
 
     const mirnaSeq = toRNA(lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId));
     const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
-    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:''};
+    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:'', mode:''};
 
     const targetSeq= tRes.seq;
     const compSeq  = cRes.seq;
@@ -1451,7 +1826,8 @@ async function handleSeedSitesClick(item){
 
     let html = `<div style="margin-bottom:8px;">Found <b>${hits.length}</b> seed-site hit(s). Coordinates are 1-based on the displayed sequence${showGlobalCols ? ' and global positions are shown when a :start-end range was applied' : ''}.</div>`;
     if(tRes.converted || cRes.converted){
-      html += `<div style="margin:6px 0;color:#333;"><small><em>AA→NT conversion applied (canonical codons) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
+      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
+      html += `<div style="margin:6px 0;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
     }
     html += `<table style="width:100%;border-collapse:collapse;">
       <thead>

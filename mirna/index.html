@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-12 r4: AA→NT auto-detect + auto-toggle, optional PDB ID fields added, keep prior dev intact -->
+  <!-- v2025-11-12 r7: Staging baskets, Use/Skip pre-check, PDB optional flow, PDB-only allowed, AA→NT banners, fetch wrapper to pass PDB IDs + staged files -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -33,12 +33,13 @@
     :root{
       --btn-bg:#f7f9fc; --btn-bg-hover:#eef3fb; --btn-br:#d0d7de; --btn-fg:#0b1426;
       --panel-bg:#ffffff; --panel-br:#e5eaf0; --panel-shadow:0 10px 30px rgba(0,0,0,0.08);
+      --chip-bg:#f0f6ff; --chip-br:#bcd4ff; --chip-fg:#163b66;
     }
     /* Global improvements */
     .tabs{ position: sticky; top: 64px; z-index: 7; background: var(--panel-bg); padding-top: 6px; border-bottom: 1px solid var(--panel-br); }
     .card{ background: var(--panel-bg); box-shadow: var(--panel-shadow); border: 1px solid var(--panel-br); }
 
-    /* Action buttons (Load Sample, Clear Inputs, Submit) */
+    /* Action buttons */
     .btn-premium,
     #load-sample-btn,
     #clear-inputs-btn{
@@ -57,9 +58,8 @@
     }
     .btn-premium:hover, #load-sample-btn:hover, #clear-inputs-btn:hover{ background: var(--btn-bg-hover) !important; }
 
-    /* Per-row analysis buttons (Seed Sites, Heatmap) created by JS */
-    .seed-btn, .heatmap-btn,
-    .btn-seed, .btn-heatmap{
+    /* Result action buttons made in JS */
+    .seed-btn, .heatmap-btn, .btn-action{
       padding: 10px 16px !important;
       border-radius: 10px !important;
       font-size: 0.95rem !important;
@@ -75,19 +75,12 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .seed-btn:hover, .heatmap-btn:hover,
-    .btn-seed:hover, .btn-heatmap:hover{ background: var(--btn-bg-hover) !important; }
+    .seed-btn:hover, .heatmap-btn:hover, .btn-action:hover{ background: var(--btn-bg-hover) !important; }
 
-    /* Sticky analysis controls (injected by JS above the results table) */
+    /* Sticky analysis controls */
     #analysis-controls{
       position: sticky; top: 8px; z-index: 6; background: #fbfdff; border: 1px solid #e0e8f5; border-left: 4px solid #1e5a9c;
       padding: 10px 12px; border-radius: 9px; box-shadow: 0 3px 8px rgba(0,0,0,0.03);
-    }
-    #analysis-controls .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-    #analysis-controls label{ font-size:.9rem; color:#0b1426; }
-    #analysis-controls select, #analysis-controls input[type="number"]{
-      padding:6px 8px; border:1px solid #d0d7de; border-radius:8px; min-height:36px; font-size:.95rem;
-      background:#fff; color:#0b1426;
     }
 
     /* Results table polish */
@@ -116,16 +109,31 @@
     #heatmap-body img{ max-width:100%; height:auto; display:block; margin:auto; }
     #heatmap-foot{ display:flex; gap:10px; justify-content:flex-end; padding:10px 12px; border-top:1px solid #eef2f7; }
 
-    /* Brand tweaks */
-    #main-header .main-nav a.brand-name { text-transform: none !important; letter-spacing: normal; }
-    #main-header .main-nav a.brand-name sup { font-size: 65%; vertical-align: super; line-height: 0; }
-
     /* AA detect banners */
     .aa-detect{
       margin:6px 0 8px; padding:8px 10px; border:1px solid #ffd7a8; background:#fff7e6;
       color:#7a4a00; border-left:4px solid #ff9900; border-radius:8px; display:none;
     }
     .aa-detect strong{ color:#7a4a00; }
+
+    /* Staging baskets */
+    .basket{ border:1px dashed #cfe0ff; background:#f7fbff; padding:8px; border-radius:10px; margin:6px 0 10px; }
+    .basket h5{ margin:0 0 8px 0; font-size:0.95rem; color:#163b66; }
+    .chips{ display:flex; flex-wrap:wrap; gap:6px; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--chip-bg); border:1px solid var(--chip-br); color:var(--chip-fg); font-size:12px; }
+    .chip button{ border:none; background:transparent; cursor:pointer; padding:0 2px; font-weight:900; color:#305089; }
+
+    /* Use/Skip table */
+    #precheck{ border:1px solid #e6eefc; background:#fbfdff; padding:10px; border-radius:10px; }
+    #precheck table{ width:100%; border-collapse:collapse; font-size:0.95rem; }
+    #precheck th, #precheck td{ padding:6px 8px; border-bottom:1px solid #eef4ff; }
+    #precheck .warn{ color:#7a4a00; }
+    #precheck .ok{ color:#066c28; }
+    #precheck .note{ color:#334155; font-size:0.9em; }
+
+    /* Badge legend */
+    .badge-legend{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 0; }
+    .badge{ display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #e2e8f0; background:#f8fafc; color:#0b1426; }
   </style>
 
   <!-- Icons -->
@@ -139,6 +147,64 @@
     function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-2YNVQSMXTM');
+  </script>
+
+  <!-- Lightweight nonce helper (front-door) -->
+  <script>
+    (function(){
+      const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
+      async function fetchNonce(){
+        try{
+          const r = await fetch('/nonce');
+          if(!r.ok) return null;
+          const j = await r.json();
+          return j && j.nonce ? j.nonce : null;
+        }catch(_){ return null; }
+      }
+      window.acquireNonce = async function(){
+        const token = await fetchNonce();
+        if(token){
+          window.__MIRNA_NONCE__ = token;
+          document.dispatchEvent(new CustomEvent('nonce-ready',{detail:{nonce:token}}));
+        }
+        return token;
+      };
+    })();
+  </script>
+
+  <!-- Fetch wrapper: inject staged files + typed PDB IDs into /predict FormData without touching mirna.js -->
+  <script>
+    (function(){
+      const origFetch = window.fetch;
+      window.__BASKET__ = { mirna:[], target:[], competitor:[] };
+      window.__MIRNA_PDB_IDS__ = { target:[], competitor:[] };
+
+      function addBasket(formData){
+        try{
+          (window.__BASKET__.mirna||[]).forEach(f => formData.append('mirna_3d_file', f));
+          (window.__BASKET__.target||[]).forEach(f => formData.append('target_3d_file', f));
+          (window.__BASKET__.competitor||[]).forEach(f => formData.append('competitor_3d_file', f));
+        }catch(_){}
+      }
+      function addTypedPdbIds(formData){
+        try{
+          (window.__MIRNA_PDB_IDS__.target||[]).forEach(id => formData.append('target_pdb_id', id));
+          (window.__MIRNA_PDB_IDS__.competitor||[]).forEach(id => formData.append('competitor_pdb_id', id));
+        }catch(_){}
+      }
+
+      window.fetch = async function(resource, init={}){
+        try{
+          const url = (typeof resource === 'string' ? resource : (resource && resource.url)) || '';
+          const isPredict = /\/predict(?:\?|$)/.test(url);
+          if(isPredict && init && init.body && (init.body instanceof FormData)){
+            addBasket(init.body);
+            addTypedPdbIds(init.body);
+          }
+        }catch(_){}
+        return origFetch(resource, init);
+      };
+    })();
   </script>
 </head>
 
@@ -177,40 +243,12 @@
         <h2>SeedScope™</h2>
       </header> 
 
-      <!-- Tabs directly under header -->
+      <!-- Tabs -->
       <div class="tabs" role="tablist" aria-label="Prediction workflow tabs">
-        <button class="tab-btn active"
-                role="tab"
-                aria-selected="true"
-                aria-controls="intro-tab"
-                id="tab-Workflow"
-                onclick="openTab(this, 'intro-tab')">
-          Workflow
-        </button>
-        <button class="tab-btn"
-                role="tab"
-                aria-selected="false"
-                aria-controls="input-tab"
-                id="tab-inputs"
-                onclick="openTab(this, 'input-tab')">
-          Inputs
-        </button>
-        <button class="tab-btn"
-                role="tab"
-                aria-selected="false"
-                aria-controls="advanced-tab"
-                id="tab-advanced"
-                onclick="openTab(this, 'advanced-tab')">
-          Advanced Options
-        </button>
-        <button class="tab-btn"
-                role="tab"
-                aria-selected="false"
-                aria-controls="results-tab"
-                id="tab-results"
-                onclick="openTab(this, 'results-tab')">
-          Results
-        </button>
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="intro-tab" id="tab-Workflow" onclick="openTab(this, 'intro-tab')">Workflow</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="input-tab" id="tab-inputs" onclick="openTab(this, 'input-tab')">Inputs</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="advanced-tab" id="tab-advanced" onclick="openTab(this, 'advanced-tab')">Advanced Options</button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="results-tab" id="tab-results" onclick="openTab(this, 'results-tab')">Results</button>
       </div>
 
       <!-- Workflow (About + Workflow + Tips unified) -->
@@ -228,28 +266,33 @@
           <ul>
             <li>Input your miRNA(s) as multi-FASTA. You may also provide one or more targets (multi-FASTA) and zero or more competitors (multi-FASTA).</li>
             <li>The analysis iterates: competitor1 → all targets → all miRNAs, then competitor2 → all targets → all miRNAs, and so on.</li>
-            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and **lossy AA→NT back-translation** (where enabled).</li>
+            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and <b>lossy AA→NT back-translation</b> (where enabled).</li>
             <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
           </ul>
         </section>
 
-        <section aria-label="Workflow overview" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
-          <strong>Workflow overview:</strong>
+        <section aria-label="Key rules" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
+          <strong>Key rules & guarantees</strong>
           <ol style="margin:6px 0 0 18px;">
-            <li>You can paste <b>multiple miRNAs</b> (multi-FASTA), <b>multiple targets</b> (multi-FASTA), and <b>zero or more competitors</b> (multi-FASTA).</li>
-            <li>For each <b>competitor</b>, the tool iterates over all <b>targets</b>; for each target, it evaluates all <b>miRNAs</b>.</li>
-            <li>Two conditions are scored per miRNA: <b>Baseline</b> and <b>With Competitor</b> (if provided).</li>
-            <li><b>Seed Sites</b> & Heatmaps use **nucleotides**. If you paste **protein (AA)**, the UI auto-enables AA→NT so seed-level views reflect the converted NT, not AA letters.</li>
+            <li><b>PDB is optional and never blocks</b>. If a PDB can’t be used for scoring (e.g., protein only), the job still runs on nucleotide sequence; the PDB remains for 3D viewing with a “not used in scoring” note.</li>
+            <li><b>PDB-only is allowed</b>. If the PDB contains nucleic acid, we extract NT and run; if it contains protein, we auto back-translate AA→NT (deterministic codons).</li>
+            <li><b>FASTA-only works</b>. PDB is only needed for 3D viewing / optional structure features.</li>
+            <li><b>Both FASTA + PDB</b>: FASTA is trusted for scoring; matched NT in PDB may enrich features; mismatches just fall back to visualization—no hard fail.</li>
           </ol>
+          <div class="badge-legend">
+            <span class="badge">PDB used: yes/no</span>
+            <span class="badge">AA→NT: yes/no (mode)</span>
+            <span class="badge">Structure-features: on/off</span>
+          </div>
         </section>
 
         <section aria-label="Formatting tips" style="font-size:0.92em; color:#444; border-left:3px solid #1e5a9c; padding:8px 12px; margin-bottom:14px;">
           <div><strong>Formatting tips</strong></div>
           <ul style="margin:6px 0 0 18px;">
             <li><b>miRNA:</b> multi-FASTA required (each sequence needs a header like <code>&gt;hsa-let-7a-5p</code>). Full header text is preserved.</li>
-            <li><b>Targets &amp; Competitors:</b> multi-FASTA supported. You may paste **RNA/DNA** or **protein** (AA). Protein will be back-translated if enabled.</li>
-            <li><b>Range-aware IDs:</b> Use <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites show local and global coordinates.</li>
-            <li><b>3D (PDB/mmCIF):</b> optional files or **PDB IDs**. Filenames (or IDs) should match the base FASTA header (e.g., <code>&gt;TP53_3UTR</code> ↔ <code>TP53_3UTR.pdb</code> or PDB ID list).</li>
+            <li><b>Targets &amp; Competitors:</b> multi-FASTA supported. Paste RNA/DNA or protein (AA). Protein is back-translated if enabled.</li>
+            <li><b>Range-aware IDs:</b> Use <code>Header:Start-End</code> (e.g., <code>TP53_3UTR:90-150</code>). Seed Sites show <u>local</u> and <u>global</u> coordinates.</li>
+            <li><b>3D (PDB/mmCIF):</b> upload files or provide <b>PDB IDs</b>. Filenames/IDs are matched to FASTA headers with tolerant rules. Chain hint supported: <code>&gt;TP53_3UTR|chain=A</code>.</li>
           </ul>
         </section>
 
@@ -257,7 +300,7 @@
           <h3 style="margin:0 0 6px 0;">Results interpretation</h3>
           <ul>
             <li><b>Baseline affinity:</b> predicted binding strength without competitor.</li>
-            <li><b>With competitor:</b> predicted binding strength considering the provided competitor.</li>
+            <li><b>With competitor:</b> predicted binding strength considering the competitor.</li>
             <li><b>Competitive effect:</b> Baseline − With-competitor (higher implies stronger competitive interference).</li>
           </ul>
         </section>
@@ -270,6 +313,7 @@
           <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
             <button type="button" id="load-sample-btn" class="btn-premium" aria-label="Load example sequences">Load Sample</button>
             <button type="button" id="clear-inputs-btn" class="btn-premium" aria-label="Clear all inputs">Clear Inputs</button>
+            <button type="button" id="download-manifest-btn" class="btn-premium" aria-label="Download run manifest (client)">Download Run Manifest (JSON)</button>
           </div>
 
           <!-- Primary miRNA -->
@@ -363,31 +407,45 @@
             <label>Upload 3D Structure Files (Optional, PDB/mmCIF):</label>
             <br />
             <label for="mirna-file">miRNA 3D file(s):</label>
-            <input
-              type="file"
-              id="mirna-file"
-              accept=".pdb,.cif"
-              multiple
-              aria-label="Upload miRNA structure files"
-            />
-            <br />
+            <input type="file" id="mirna-file" accept=".pdb,.cif" multiple aria-label="Upload miRNA structure files"/>
+            <div class="basket" id="mirna-basket">
+              <h5>Staged miRNA 3D files</h5>
+              <div class="chips" id="mirna-chips"></div>
+            </div>
+
             <label for="target-file">Target 3D file(s):</label>
-            <input
-              type="file"
-              id="target-file"
-              accept=".pdb,.cif"
-              multiple aria-label="Upload target structure file"
-            />
-            <br />
+            <input type="file" id="target-file" accept=".pdb,.cif" multiple aria-label="Upload target structure file"/>
+            <div class="basket" id="target-basket">
+              <h5>Staged target 3D files</h5>
+              <div class="chips" id="target-chips"></div>
+            </div>
+
             <label for="competitor-file">Competitor 3D file(s):</label>
-            <input
-              type="file"
-              id="competitor-file"
-              accept=".pdb,.cif"
-              multiple aria-label="Upload competitor structure file"
-            />
+            <input type="file" id="competitor-file" accept=".pdb,.cif" multiple aria-label="Upload competitor structure file"/>
+            <div class="basket" id="competitor-basket">
+              <h5>Staged competitor 3D files</h5>
+              <div class="chips" id="competitor-chips"></div>
+            </div>
+
+            <small class="note">
+              Selecting files multiple times adds to the basket; they won’t replace earlier selections. All staged files are sent on submit.
+            </small>
           </div>
 
+          <!-- Pre-validation Use/Skip summary -->
+          <div id="precheck" style="margin-top:12px;">
+            <strong>Use/Skip Preview</strong>
+            <div class="note" style="margin:6px 0 8px;">
+              This preview is heuristic. <b>FASTA wins for scoring.</b> PDB is used for 3D (and optional features). If only PDB is supplied: nucleic acid runs as-is; protein runs via AA→NT back-translation.
+            </div>
+            <div id="precheck-table-wrap"></div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <em class="note">Seed sites & heatmaps always compute on <u>nucleotide</u> sequences (direct FASTA or back-translated from AA/PDB).</em>
+          </div>
+
+          <br />
           <button type="submit" class="btn-premium" aria-label="Run prediction">Run Prediction</button>
         </form>
       </div>
@@ -395,25 +453,13 @@
       <!-- Advanced options -->
       <div id="advanced-tab" class="card" role="tabpanel" aria-labelledby="tab-advanced">
         <label for="target-start">Target Region Start (1-based):</label>
-        <input
-          type="number"
-          id="target-start"
-          placeholder="e.g., 90"
-          aria-describedby="target-region-desc"
-        />
-
+        <input type="number" id="target-start" placeholder="e.g., 90" aria-describedby="target-region-desc"/>
         <label for="target-end">Target Region End (1-based):</label>
-        <input
-          type="number"
-          id="target-end"
-          placeholder="e.g., 150"
-        />
+        <input type="number" id="target-end" placeholder="e.g., 150"/>
         <small id="target-region-desc">
           Optionally analyze a specific sub-region for every target. If left blank, the full target sequence is used.
         </small>
-
-        <!-- Advanced flags container: mirna.js injects #server-config-note and #advanced-flags-wrapper here -->
-        <!-- Note: AA→NT toggle (injected here) will be auto-enabled if protein is detected in Target/Competitor. -->
+        <!-- mirna.js injects server-config-note and aa-convert flag here -->
       </div>
 
       <!-- Results -->
@@ -448,7 +494,7 @@
         </div>
         <br />
 
-        <!-- Static gradient scale for context; dynamic legend + table injected per run -->
+        <!-- Static gradient scale -->
         <details class="legend-toggle" open>
           <summary>Show/Hide Gradient Legend</summary>
           <div class="gradient-scale-container">
@@ -527,47 +573,35 @@
   <!-- Fixed relative path from /mirna/ -->
   <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=2" preload="auto"></audio>
 
-  <!-- Lightweight nonce helper for gated endpoints (/predict, /seed_scan, /explain, /download/...) -->
-  <script>
-    (function(){
-      const NONCE_KEY = '__MIRNA_NONCE_CACHE__';
-      async function fetchNonce(){
-        try{
-          const r = await fetch('/nonce');
-          if(!r.ok) return null;
-          const j = await r.json();
-          return j && j.nonce ? j.nonce : null;
-        }catch(_){ return null; }
-      }
-      window.acquireNonce = async function(){
-        const token = await fetchNonce();
-        if(token){
-          window.__MIRNA_NONCE__ = token;
-          document.dispatchEvent(new CustomEvent('nonce-ready',{detail:{nonce:token}}));
-        }
-        return token;
-      };
-    })();
-  </script>
-
-  <!-- UI helpers: click sound, sample/clear, heatmap modal hook, AA detection & PDB-ID shim -->
+  <!-- UI helpers: click sound, sample/clear, heatmap modal hook, AA detection & PDB-ID shim, staging baskets, Use/Skip precheck, manifest -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const runBtn = document.querySelector('#prediction-form button[type="submit"]');
       const clickSound = document.getElementById('click-sound');
+      const runBtn = document.querySelector('#prediction-form button[type="submit"]');
       if (runBtn && clickSound) {
-        runBtn.addEventListener('click', function () {
-          try { clickSound.currentTime = 0; clickSound.play(); } catch(_){}
-        });
+        runBtn.addEventListener('click', () => { try { clickSound.currentTime = 0; clickSound.play(); } catch(_){ } });
       }
 
       // ---- Load Sample & Clear Inputs ----
       const btnSample = document.getElementById('load-sample-btn');
       const btnClear  = document.getElementById('clear-inputs-btn');
+      const btnManifest = document.getElementById('download-manifest-btn');
 
       const SAMPLE_MIRNA  = `>hsa-miR-1-3p\nUGGAAUGUAAAGAAGUAUGUAU`;
-      const SAMPLE_TARGET = `>target1\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
+      const SAMPLE_TARGET = `>TP53_3UTR\nGGGCUUAACAUUCCGGAUCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUA`;
       const SAMPLE_COMP   = `>comp1\nAUGCUAUGCUAUGCUAUGCUAUGCUAUGCUAUGCU`;
+
+      function resetFileInputs() {
+        ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
+          .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      }
+      function clearBaskets(){
+        window.__BASKET__.mirna.length = 0;
+        window.__BASKET__.target.length = 0;
+        window.__BASKET__.competitor.length = 0;
+        renderChips('mirna'); renderChips('target'); renderChips('competitor');
+        renderPrecheck();
+      }
 
       if (btnSample) {
         btnSample.addEventListener('click', () => {
@@ -577,18 +611,15 @@
           if (p) p.value = SAMPLE_MIRNA;
           if (t) t.value = SAMPLE_TARGET;
           if (c) c.value = SAMPLE_COMP;
-
-          ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
-            .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-
+          resetFileInputs();
+          clearBaskets();
           if (typeof openTab === 'function') {
             const inputsBtn = document.getElementById('tab-inputs');
             openTab(inputsBtn, 'input-tab');
           }
-
-          // reset banners
           hideAADetect('target-aa-note');
           hideAADetect('competitor-aa-note');
+          renderPrecheck();
         });
       }
 
@@ -598,20 +629,17 @@
             const el = document.getElementById(id);
             if (el) el.value = '';
           });
-          ['mirna-seq-file','target-seq-file','competitor-seq-file','mirna-file','target-file','competitor-file']
-            .forEach(id => {
-              const el = document.getElementById(id);
-              if (el) el.value = '';
-            });
-          ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{
-            const el = document.getElementById(id); if(el) el.value = '';
-          });
+          ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+          resetFileInputs();
+          clearBaskets();
           const s = document.getElementById('target-start');
           const e = document.getElementById('target-end');
           if (s) s.value = '';
           if (e) e.value = '';
           hideAADetect('target-aa-note');
           hideAADetect('competitor-aa-note');
+          window.__MIRNA_PDB_IDS__ = { target:[], competitor:[] };
+          renderPrecheck();
         });
       }
 
@@ -627,46 +655,28 @@
         if(dlg && typeof dlg.showModal === 'function') dlg.showModal();
       });
 
-      // ===== AA detection + auto-toggle AA→NT (works with mirna.js-injected checkbox) =====
+      // ===== AA detection + auto-toggle AA→NT (mirna.js will inject #aa-convert-flag) =====
       const targetTA = document.getElementById('target-seq');
       const compTA   = document.getElementById('competitor-seq');
 
       function isLikelyAA(text){
         if(!text) return false;
-        // Strip headers and whitespace
         const body = String(text).replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase();
         if(!body) return false;
-        // Allowed NT set (DNA/RNA with ambiguity codes)
         const ntSet = new Set('AUGCTNWSMKRYBDHV-'.split(''));
-        let nt=0, aa=0;
-        for(const ch of body){
-          if(ntSet.has(ch)) nt++; else aa++;
-        }
-        // Heuristic: if >15% characters are non-NT AND we see clear AA letters, treat as AA
+        let nt=0, aa=0; for(const ch of body){ if(ntSet.has(ch)) nt++; else aa++; }
         const ratio = aa / (nt+aa);
-        const aaLetters = /[EFILPQZMWVHKRDCSTYGNX]/; // typical AA alphabet
+        const aaLetters = /[EFILPQZMWVHKRDCSTYGNX]/;
         return ratio > 0.15 && aaLetters.test(body);
       }
-
       function waitForAAFlag(cb){
-        // mirna.js injects #aa-convert-flag into Advanced tab; wait for it
         const el = document.getElementById('aa-convert-flag');
         if(el) return cb(el);
-        const mo = new MutationObserver((_muts, obs)=>{
-          const x = document.getElementById('aa-convert-flag');
-          if(x){ obs.disconnect(); cb(x); }
-        });
+        const mo = new MutationObserver((_m, obs)=>{ const x=document.getElementById('aa-convert-flag'); if(x){ obs.disconnect(); cb(x); }});
         mo.observe(document.body, { childList:true, subtree:true });
       }
-
-      function showAADetect(id){
-        const el = document.getElementById(id);
-        if(el){ el.style.display = 'block'; }
-      }
-      function hideAADetect(id){
-        const el = document.getElementById(id);
-        if(el){ el.style.display = 'none'; }
-      }
+      function showAADetect(id){ const el=document.getElementById(id); if(el) el.style.display='block'; }
+      function hideAADetect(id){ const el=document.getElementById(id); if(el) el.style.display='none'; }
 
       function handleAAHint(textareaId, bannerId){
         const ta = document.getElementById(textareaId);
@@ -675,47 +685,214 @@
           const aa = isLikelyAA(ta.value);
           if(aa){
             showAADetect(bannerId);
-            waitForAAFlag(flag=>{
-              // Only auto-check if user hasn't manually toggled off before
-              if(!flag.dataset.userTouched){
-                flag.checked = true; // enable AA→NT
-              }
-            });
+            waitForAAFlag(flag=>{ if(!flag.dataset.userTouched){ flag.checked = true; } });
           }else{
             hideAADetect(bannerId);
-            // do not auto-uncheck; respect user toggle
           }
+          renderPrecheck();
         };
         ta.addEventListener('input', apply);
         apply();
       }
-
-      // track user interaction with AA→NT flag so we don't override it later
-      document.addEventListener('change', (e)=>{
-        const t = e.target;
-        if(t && t.id === 'aa-convert-flag'){
-          t.dataset.userTouched = '1';
-        }
-      });
-
+      document.addEventListener('change', (e)=>{ const t=e.target; if(t && t.id==='aa-convert-flag'){ t.dataset.userTouched='1'; renderPrecheck(); }});
       handleAAHint('target-seq','target-aa-note');
       handleAAHint('competitor-seq','competitor-aa-note');
 
-      // ===== PDB ID shim: expose values so frontend/backend can use when ready =====
+      // ===== PDB ID shim: store values globally & re-render Use/Skip =====
       function collectPdbIds(){
         const t = (document.getElementById('target-pdb-ids')||{}).value || '';
         const c = (document.getElementById('competitor-pdb-ids')||{}).value || '';
-        // Make them visible to page scripts (mirna.js can read if implemented)
         window.__MIRNA_PDB_IDS__ = {
-          target: t.split(',').map(s=>s.trim()).filter(Boolean),
-          competitor: c.split(',').map(s=>s.trim()).filter(Boolean)
+          target: t.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean),
+          competitor: c.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean)
         };
+        renderPrecheck();
       }
       collectPdbIds();
       ['target-pdb-ids','competitor-pdb-ids'].forEach(id=>{
         const el = document.getElementById(id);
         if(el){ el.addEventListener('input', collectPdbIds); }
       });
+
+      // ===== Staging baskets for 3D files (accumulate across selections) =====
+      ['mirna','target','competitor'].forEach(kind=>{
+        const input = document.getElementById(kind+'-file');
+        if(!input) return;
+        input.addEventListener('change', ()=>{
+          const files = Array.from(input.files || []);
+          files.forEach(f => {
+            // de-dup by name+size
+            const exists = (window.__BASKET__[kind]||[]).some(x => x.name===f.name && x.size===f.size);
+            if(!exists) window.__BASKET__[kind].push(f);
+          });
+          input.value = ''; // allow re-selecting same file later
+          renderChips(kind);
+          renderPrecheck();
+        });
+      });
+
+      function renderChips(kind){
+        const wrap = document.getElementById(kind+'-chips');
+        if(!wrap) return;
+        wrap.innerHTML = '';
+        (window.__BASKET__[kind]||[]).forEach((f, idx)=>{
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.innerHTML = `<span title="${f.name}">${f.name.length>28? (f.name.slice(0,25)+'...') : f.name}</span> <span>${(f.size/1024).toFixed(0)} KB</span> <button aria-label="Remove ${f.name}" data-kind="${kind}" data-idx="${idx}">×</button>`;
+          wrap.appendChild(chip);
+        });
+        wrap.querySelectorAll('button[data-kind]').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const k=btn.getAttribute('data-kind'); const i=parseInt(btn.getAttribute('data-idx'),10);
+            window.__BASKET__[k].splice(i,1);
+            renderChips(k);
+            renderPrecheck();
+          });
+        });
+      }
+      function getSeqBody(id){
+        const el=document.getElementById(id);
+        if(!el) return '';
+        return el.value.replace(/^>.*$/gm,'').replace(/\s+/g,'').toUpperCase();
+      }
+      function looksLikeNT(s){ return !!s && /^[ACGUTNWSMKRYBDHV-]+$/.test(s); }
+
+      // ===== Use/Skip pre-validation (heuristic) =====
+      async function sniffPDB(file){
+        // Read first ~200KB for quick heuristics
+        const slice = file.slice(0, 200*1024);
+        const text = await slice.text();
+        // Very rough heuristics:
+        const hasPDB = /^(ATOM|HETATM)/m.test(text) || /_atom_site\./.test(text);
+        const ntResid = /\b(?: DA| DC| DG| DT|  A|  C|  G|  U)\b/.test(text) || /\b(?:DA|DC|DG|DT|A|C|G|U)\b/.test(text);
+        const aaResid = /\b(?:ALA|ARG|ASN|ASP|CYS|GLN|GLU|GLY|HIS|ILE|LEU|LYS|MET|PHE|PRO|SER|THR|TRP|TYR|VAL)\b/.test(text);
+        let polymer = 'unknown';
+        if (ntResid && aaResid) polymer = 'mixed';
+        else if (ntResid) polymer = 'nucleic acid';
+        else if (aaResid) polymer = 'protein';
+
+        // crude length approx: count atom lines for main residues
+        const len = (text.match(/^ATOM/mg) || []).length || (text.match(/_atom_site\.id/mg) || []).length || 0;
+        return { name:file.name, size:file.size, polymer, length:len };
+      }
+
+      async function renderPrecheck(){
+        const wrap = document.getElementById('precheck-table-wrap');
+        if(!wrap) return;
+        const mi = getSeqBody('primary-seqs');
+        const tg = getSeqBody('target-seq');
+        const cp = getSeqBody('competitor-seq');
+
+        const aaFlagEl = document.getElementById('aa-convert-flag');
+        const aaOn = !!(aaFlagEl && aaFlagEl.checked);
+
+        // Decide scoring sources
+        const hasTargetFASTA = !!tg;
+        const hasCompFASTA   = !!cp;
+
+        const rows = [];
+
+        // Sequences (always show)
+        rows.push({ kind:'miRNA FASTA', name:'primary-seqs', polymer:'nucleic acid', length: mi.length, scoring:'Yes', viz:'n/a', note:'' });
+
+        // Target choice
+        if (hasTargetFASTA){
+          rows.push({ kind:'Target FASTA', name:'target-seq', polymer: looksLikeNT(tg)?'nucleic acid':'protein (AA → NT)', length: tg.length, scoring:'Yes', viz:'If PDB present', note: looksLikeNT(tg)?'':'AA→NT will be applied' });
+        } else {
+          rows.push({ kind:'Target FASTA', name:'(none)', polymer:'—', length: 0, scoring:'No', viz:'—', note:'PDB-only allowed' });
+        }
+
+        // Competitor choice
+        if (hasCompFASTA){
+          rows.push({ kind:'Competitor FASTA', name:'competitor-seq', polymer: looksLikeNT(cp)?'nucleic acid':'protein (AA → NT)', length: cp.length, scoring: 'Yes (with-comp)', viz:'If PDB present', note: looksLikeNT(cp)?'':'AA→NT will be applied' });
+        } else {
+          rows.push({ kind:'Competitor FASTA', name:'(none)', polymer:'—', length: 0, scoring:'No', viz:'—', note:'Baseline-only unless PDB-only path is used' });
+        }
+
+        // Staged PDB/mmCIF files (sniff)
+        async function addFileRows(label, arr){
+          for (const f of arr){
+            const sniff = await sniffPDB(f);
+            let scoring = 'No (FASTA wins)';
+            if (!hasTargetFASTA && label==='Target 3D') {
+              scoring = (sniff.polymer==='nucleic acid' ? 'Yes (extract NT)' : (sniff.polymer==='protein' ? (aaOn?'Yes (AA→NT)':'No (enable AA→NT)') : 'Maybe'));
+            }
+            if (!hasCompFASTA && label==='Competitor 3D') {
+              scoring = (sniff.polymer==='nucleic acid' ? 'Yes (extract NT)' : (sniff.polymer==='protein' ? (aaOn?'Yes (AA→NT)':'No (enable AA→NT)') : 'Maybe'));
+            }
+            const note = (sniff.polymer==='protein' && !aaOn) ? 'Enable AA→NT to allow scoring on proteins' : (sniff.polymer==='mixed' ? 'Mixed polymers: largest relevant chain auto-chosen' : '');
+            rows.push({ kind:label, name:sniff.name, polymer:sniff.polymer, length:sniff.length, scoring, viz:'Yes', note });
+          }
+        }
+        await addFileRows('miRNA 3D', window.__BASKET__.mirna||[]);
+        await addFileRows('Target 3D', window.__BASKET__.target||[]);
+        await addFileRows('Competitor 3D', window.__BASKET__.competitor||[]);
+
+        // PDB IDs
+        (window.__MIRNA_PDB_IDS__.target||[]).forEach(id=>{
+          rows.push({ kind:'Target PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasTargetFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Chain selection is tolerant; chain hints supported via header' });
+        });
+        (window.__MIRNA_PDB_IDS__.competitor||[]).forEach(id=>{
+          rows.push({ kind:'Competitor PDB ID', name:id, polymer:'(server will detect)', length:'—', scoring: hasCompFASTA?'No (FASTA wins)':'Maybe (NA→Yes, protein→AA→NT)', viz:'Yes', note:'Largest relevant chain will be auto-chosen' });
+        });
+
+        // Render table
+        let html = '<table aria-label="Pre-validation Use/Skip summary"><thead><tr><th>Source</th><th>Name / ID</th><th>Polymer</th><th>Extracted length</th><th>Used for scoring?</th><th>Used for viz?</th><th>Notes</th></tr></thead><tbody>';
+        rows.forEach(r=>{
+          const scoreClass = /Yes/.test(r.scoring)?'ok':(/No/.test(r.scoring)?'warn':'');
+          html += `<tr>
+            <td>${r.kind}</td>
+            <td>${r.name}</td>
+            <td>${r.polymer}</td>
+            <td>${r.length}</td>
+            <td class="${scoreClass}">${r.scoring}</td>
+            <td>${r.viz}</td>
+            <td class="note">${r.note||''}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      }
+      renderPrecheck();
+
+      // ---- Manifest (client-side) ----
+      if (btnManifest){
+        btnManifest.addEventListener('click', ()=>{
+          const manifest = {
+            timestamp: new Date().toISOString(),
+            aa_to_nt_enabled: !!document.getElementById('aa-convert-flag')?.checked,
+            mature_trim: !!document.getElementById('mature-trim-flag')?.checked,
+            target_region: {
+              start: document.getElementById('target-start')?.value || null,
+              end: document.getElementById('target-end')?.value || null
+            },
+            inputs: {
+              mirna_records: (document.getElementById('primary-seqs')?.value.match(/^>/mg)||[]).length || (document.getElementById('primary-seqs')?.value.trim()?1:0),
+              target_records:(document.getElementById('target-seq')?.value.match(/^>/mg)||[]).length || (document.getElementById('target-seq')?.value.trim()?1:0),
+              competitor_records:(document.getElementById('competitor-seq')?.value.match(/^>/mg)||[]).length || (document.getElementById('competitor-seq')?.value.trim()?1:0),
+              target_pdb_ids: window.__MIRNA_PDB_IDS__.target||[],
+              competitor_pdb_ids: window.__MIRNA_PDB_IDS__.competitor||[],
+              staged_files:{
+                mirna:(window.__BASKET__.mirna||[]).map(f=>({name:f.name,size:f.size})),
+                target:(window.__BASKET__.target||[]).map(f=>({name:f.name,size:f.size})),
+                competitor:(window.__BASKET__.competitor||[]).map(f=>({name:f.name,size:f.size}))
+              }
+            },
+            declarations:[
+              "PDB is optional and never blocks scoring.",
+              "If both FASTA and PDB are present, FASTA is trusted for scoring.",
+              "Seed/IG are always computed on nucleotide sequences (direct or AA→NT).",
+              "AA→NT is heuristic (deterministic codon mapping)."
+            ]
+          };
+          const blob = new Blob([JSON.stringify(manifest,null,2)], {type:'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `run_manifest_${Date.now()}.json`;
+          document.body.appendChild(a); a.click(); a.remove();
+          URL.revokeObjectURL(url);
+        });
+      }
     });
   </script>
 
@@ -724,15 +901,13 @@
     (function tidyActionCells(){
       const root = document.getElementById('results-container');
       if(!root) return;
-
       const clean = (scope) => {
         scope.querySelectorAll('#results-container td').forEach(td => {
-          if (td.querySelector('.seed-btn') || td.querySelector('.heatmap-btn') || td.querySelector('.btn-action')) {
+          if (td.querySelector('.btn-action')) {
             td.querySelectorAll('br').forEach(br => br.remove());
           }
         });
       };
-
       const mo = new MutationObserver(muts => muts.forEach(m => clean(m.target)));
       mo.observe(root, { childList: true, subtree: true });
       clean(root);
