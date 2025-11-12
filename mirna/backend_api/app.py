@@ -207,9 +207,10 @@ def _check_auth() -> bool:
     if APP_CFG["USE_NONCE"]:
         n = request.headers.get("X-Nonce")
         if n and n in nonce_store and time.time() <= nonce_store[n]:
-            nonce_store.pop(n, None)  # consume once
+            # nonce_store.pop(n, None)   # <-- REMOVE this line
             return True
         return False
+
 
     # Open if neither API key nor nonce required
     return not api_key
