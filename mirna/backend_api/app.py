@@ -1570,22 +1570,29 @@ def download_results(job_id):
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
 
-    results_path = job.get("results_json_path")
-    if results_path and os.path.exists(results_path):
-        return send_file(results_path, mimetype="application/json", as_attachment=False)
-
+    # Pagination + "light" projection (defaults: light=1, limit=500)
     try:
-        def _safe_float(x):
-            try:
-                return float(x)
-            except Exception:
-                return -math.inf
-        job["results"].sort(key=lambda r: _safe_float(r.get('predicted_affinity_baseline', -1)), reverse=True)
+        limit = int(request.args.get('limit') or 500)
+        offset = int(request.args.get('offset') or 0)
     except Exception:
-        pass
+        limit, offset = 500, 0
+    light = (request.args.get('light', '1') != '0')
 
-    payload = {"results": job["results"]}
-    return Response(json.dumps(payload, default=_to_py, ensure_ascii=False, separators=(',', ':')), mimetype="application/json")
+    rows = job["results"]
+    total = len(rows)
+    page = rows[offset:offset+limit]
+
+    if light:
+        keep = (
+            "interaction_id","mirna_id","target_id","competitor_id",
+            "predicted_affinity_baseline","predicted_affinity_with_competitor",
+            "competitive_effect (higher_is_better)",
+            "seed_best_type","seed_best_start","seed_best_end",
+            "pdb_target_used","pdb_competitor_used","structure_features"
+        )
+        page = [{k: r.get(k) for k in keep} for r in page]
+
+    return jsonify({"results": page, "total": total, "offset": offset, "limit": limit})
 
 
 @app.post("/explain_fast")
@@ -1671,19 +1678,17 @@ def download_all_csv(job_id):
     if job["status"] != "completed":
         return jsonify({"error": "Job not completed yet"}), 400
 
-    df = _results_df(job_id)
-    if df.empty:
-        return jsonify({"error": "No results available"}), 400
-
+    import io
+    df = pd.DataFrame(job["results"])
     buf = io.StringIO()
     df.to_csv(buf, index=False)
     buf.seek(0)
-    send_ga_event("download_all_csv", {"job_id": job_id, "rows": len(df)})
     return Response(
         buf.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename=mirna_results_{job_id}.csv"}
     )
+
 
 
 @app.route('/download/<job_id>/<interaction_id>.csv', methods=['GET'])
