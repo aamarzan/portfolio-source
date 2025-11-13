@@ -5,15 +5,12 @@
 // + 2025-11-11: multi-PDB upload (target/competitor), per-row bundle download, global “Download All”,
 //   perfectly leveled Heatmap controls, and AA→NT before any analysis (no AA letters in alignments).
 // + 2025-11-12: Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
-// + 2025-11-12 (this build):
-//   • Harmonized with HTML baskets & PDB-ID shim: relies on window.__BASKET__ and window.__MIRNA_PDB_IDS__
-//   • No duplicate staging UI: keeps the HTML chips/baskets; no hiding/replacing inputs
-//   • Uses existing #analysis-controls (adds GU/mismatch + global buttons instead of re-injecting a second block)
-//   • PDB is optional/non-blocking; PDB-only and FASTA-only supported; protein→AA→NT auto (mode selectable)
-//   • Pre-validation “Use/Skip” table (best-effort; graceful if /precheck is unavailable)
-//   • Tolerant chain hints in FASTA header (e.g., >TP53_3UTR|chain=A)
-//   • Result badges + Run Manifest; soft recovery on structure errors
-//   • FIX: final results fetch uses nonce/API-key headers + timeout + graceful fallback link
+// + 2025-11-13:
+//   • Multi-file 3D viewer with chain/role panel (miRNA, Target, Competitor) + combined view
+//   • Seed-site highlight in 3D (best-effort) + residue offset
+//   • Extra actions in Results table: 3D miRNA + 3D All
+//   • Robust extension inference from server responses; staged/legacy 3D files merged
+//   • “Structure-features” badge; manifest preserved
 
 // =====================================================
 // Global state
@@ -71,7 +68,8 @@ const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            //
 const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
 const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
 const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
-const STRUCTURE_URL   = (jobId, kind) => `${BASE_URL}/structure/${jobId}/${kind}`; // kind: target|competitor
+// NOTE: 'kind' now accepts 'target' | 'competitor' | 'mirna'
+const STRUCTURE_URL   = (jobId, kind) => `${BASE_URL}/structure/${jobId}/${kind}`;
 
 const NONCE_URL      = `${BASE_URL}/nonce`;
 const CONFIG_URL     = `${BASE_URL}/config`;
@@ -79,6 +77,15 @@ const SEED_SCAN_URL  = `${BASE_URL}/seed_scan`;
 const EXPLAIN_URL    = `${BASE_URL}/explain`;
 
 const MAX_FILE_SIZE_MB = 100;
+
+// ================= NEW: tiny util to infer extension from headers ==============
+function inferExtFromResponse(res){
+  const ctype = (res.headers.get('Content-Type') || '').toLowerCase();
+  const dispo = (res.headers.get('Content-Disposition') || '').toLowerCase();
+  if(/cif|mmcif/.test(ctype) || /\.mm?cif\b/.test(dispo)) return 'cif';
+  if(/pdb|x-pdb|ent/.test(ctype) || /\.pdb\b/.test(dispo)) return 'pdb';
+  return 'pdb';
+}
 
 // =====================================================
 // Helpers: DOM, UI, utils
@@ -435,6 +442,31 @@ function getBasketFiles(kind){
     if(window.__BASKET__ && Array.isArray(window.__BASKET__[kind])) return window.__BASKET__[kind];
   }catch(_){}
   return [];
+}
+
+// ================= NEW: gather additional sources for multi-PDB ===============
+function getLegacyInputFiles(kind){
+  const map = {
+    target: $('target-file'),
+    competitor: $('competitor-file'),
+    mirna: $('mirna-file')
+  };
+  const el = map[kind];
+  if (!el?.files?.length) return [];
+  return Array.from(el.files);
+}
+function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
+  const sources = [];
+  if (primaryBlob) {
+    sources.push({label:`server_${kind}.${primaryExt}`, type:'server', payload: primaryBlob, ext: primaryExt});
+  }
+  // staged via HTML basket (lives across the run)
+  const staged = getBasketFiles(kind);
+  staged.forEach((f,i)=> sources.push({label:`staged_${i+1}_${f.name}`, type:'basket', payload: f, ext: (f.name.split('.').pop()||'pdb').toLowerCase()}));
+  // legacy inputs (if any still in the inputs)
+  const legacy = getLegacyInputFiles(kind);
+  legacy.forEach((f,i)=> sources.push({label:`legacy_${i+1}_${f.name}`, type:'legacy', payload: f, ext: (f.name.split('.').pop()||'pdb').toLowerCase()}));
+  return sources;
 }
 
 // =====================================================
@@ -988,6 +1020,7 @@ function renderPrecheckPanel(data){
 // =====================================================
 // Display results (sorted by baseline; gradient by baseline)
 // + wires existing analysis controls + per-row action buttons + row badges + manifest/buttons
+// (UPDATED: adds 3D miRNA + 3D All, structure-features badge, rowItem passthrough)
 // =====================================================
 function displayResults(results, finalData=null){
   const container = $('results-container');
@@ -1188,6 +1221,8 @@ function displayResults(results, finalData=null){
     const csvBtn     = `<button class="rowcsv-btn btn-action" data-row="${idx}">Row CSV</button>`;
     const t3dBtn     = `<button class="t3d-btn btn-action" data-row="${idx}">3D Target</button>`;
     const c3dBtn     = `<button class="c3d-btn btn-action" data-row="${idx}">3D Comp</button>`;
+    const m3dBtn     = `<button class="m3d-btn btn-action" data-row="${idx}">3D miRNA</button>`;
+    const all3dBtn   = `<button class="x3d-btn btn-action" data-row="${idx}">3D All</button>`;
     const bundleBtn  = `<button class="bundle-btn btn-action" data-row="${idx}">Download</button>`;
 
     const actionBlock = `
@@ -1197,6 +1232,8 @@ function displayResults(results, finalData=null){
         ${csvBtn}
         ${t3dBtn}
         ${c3dBtn}
+        ${m3dBtn}
+        ${all3dBtn}
         ${bundleBtn}
       </div>
     `;
@@ -1237,9 +1274,13 @@ function displayResults(results, finalData=null){
       }else if(t.classList.contains('rowcsv-btn')){
         await handleRowCsvClick(item);
       }else if(t.classList.contains('t3d-btn')){
-        await open3DOrExplain(item.target_id || '', 'target');
+        await open3DOrExplain(item.target_id || '', 'target', item);
       }else if(t.classList.contains('c3d-btn')){
-        await open3DOrExplain(item.competitor_id || '', 'competitor');
+        await open3DOrExplain(item.competitor_id || '', 'competitor', item);
+      }else if(t.classList.contains('m3d-btn')){
+        await open3DOrExplain(item.primary_molecule_id || item.mirna_id || '', 'mirna', item);
+      }else if(t.classList.contains('x3d-btn')){
+        await open3DCombined(item);
       }else if(t.classList.contains('bundle-btn')){
         await handleBundleClick(item);
       }
@@ -1250,8 +1291,12 @@ function displayResults(results, finalData=null){
 function hasAnyStructure(){
   const tgt = getBasketFiles('target').length;
   const cmp = getBasketFiles('competitor').length;
-  const legacy = ($('target-file')?.files?.length || 0) + ($('competitor-file')?.files?.length || 0);
-  return (tgt + cmp + legacy) > 0;
+  const mir = getBasketFiles('mirna').length || 0;
+  const legacy =
+    ($('target-file')?.files?.length || 0) +
+    ($('competitor-file')?.files?.length || 0) +
+    ($('mirna-file')?.files?.length || 0);
+  return (tgt + cmp + mir + legacy) > 0;
 }
 
 // === Inject range/tolerant filter chips (toggle behavior) ===
@@ -1757,7 +1802,7 @@ function downloadSeedCSV(){
 }
 
 // =====================================================
-// 3D Viewer — friendly plain-text message if missing; viewer if present
+// 3D Viewer — Multi-file support + Chain/Role panel + Seed highlights
 // =====================================================
 async function ensureNGL(){
   if(GUARDS.nglLoaded) return true;
@@ -1775,83 +1820,446 @@ async function ensureNGL(){
   }catch(_){ return false; }
 }
 
-async function open3DOrExplain(anyId, kind /* 'target' | 'competitor' */){
-  if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
-
-  const baseId = (parseIdRange(anyId)?.baseId || anyId || '').trim();
-  let res;
+async function fetchStructureBlob(kind){
+  if(!CURRENT_JOB_ID) return null;
   try{
     const headers = await getNonceOrKeyHeaders();
-    res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
-  }catch(e){
-    openModalText('3D Viewer', `Could not contact the server for ${kind} structure.`); 
-    return;
-  }
-
-  if(!res.ok){
-    const code = res.status;
-    if(code === 404){
-      openModalText('3D Viewer', `No 3D structure found for “${baseId || kind}”. Upload a PDB/mmCIF or embed a PDB ID in the FASTA header (e.g., “PDB:7YTW”) and re-run.`);
-    }else if(code === 403){
-      openModalText('3D Viewer', 'Access denied while fetching structure. If your backend uses nonce/API-key, ensure it’s enabled and reachable from this page.');
-    }else{
-      openModalText('3D Viewer', `Server returned ${code} while fetching the structure.`);
-    }
-    return;
-  }
-
-  const ctype = (res.headers.get('Content-Type') || '').toLowerCase();
-  const dispo = (res.headers.get('Content-Disposition') || '').toLowerCase();
-  let ext = 'pdb';
-  if(/cif|mmcif/.test(ctype) || /\.mm?cif\b/.test(dispo)) ext = 'cif';
-  if(/pdb|x-pdb|ent/.test(ctype) || /\.pdb\b/.test(dispo)) ext = 'pdb';
-
-  try{
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    if(!res.ok) return null;
+    const ext = inferExtFromResponse(res);
     const blob = await res.blob();
-    await open3DStageFromBlob(kind, blob, anyId, ext);
-  }catch(err){
-    openModalText('3D Viewer', err?.message || '3D viewer error.');
-  }
+    return { blob, ext };
+  }catch(_){ return null; }
 }
 
-async function open3DStageFromBlob(kind, blob, anyId, ext){
+async function open3DCombined(rowItem){
+  // Try to fetch each kind from server; add staged+legacy files for all kinds
   const ok = await ensureNGL();
   if(!ok){ openModalText('3D Viewer', 'Could not load the 3D engine (NGL).'); return; }
 
-  const title = `3D Viewer — ${kind === 'target' ? 'Target' : 'Competitor'}${anyId ? ' • ' + anyId : ''}`;
-  const toolbar = `
+  const title = `3D Viewer — Combined (miRNA + Target + Competitor)`;
+  const html = `
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:10px;max-height:86vh;">
+      <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
+        <div style="font-weight:700;margin-bottom:6px;">Chains & Roles</div>
+        <div id="chain-list"></div>
+        <hr/>
+        <div style="display:grid;gap:6px;">
+          <label>miRNA chain<select id="role-mirna"></select></label>
+          <label>Target chain<select id="role-target"></select></label>
+          <label>Competitor chain<select id="role-competitor"></select></label>
+          <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
+          <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
+          <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
+          <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
+          <hr/>
+          <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
+          <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
+        </div>
+      </div>
+      <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
+    </div>
+  `;
+  const tools = `
     <button id="ngl-center" class="toolbar-btn">Center</button>
     <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
-    <button id="ngl-open" class="toolbar-btn">Open raw file</button>
+    <button id="ngl-openraw" class="toolbar-btn">Open raw (server)</button>
   `;
-  const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
-  openModal(title, html, toolbar);
+  openModal(title, html, tools);
 
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
 
-  // IMPORTANT: pass the Blob with an explicit extension so NGL knows how to parse it
-  const comp = await stage.loadFile(blob, { ext });
-  comp.addRepresentation('cartoon', { colorScheme: 'chainid' });
-  comp.addRepresentation('ball+stick', { multipleBond: true });
+  const compInfos = [];   // {comp, id, label, kind, chains:[{name, polymerType, length, rep}]}
+  const highlightReps = [];
+
+  // Helper: load a single source (File or Blob)
+  async function loadSource(src, kind){
+    const comp = await stage.loadFile(src.payload, { ext: src.ext || 'pdb' });
+    const info = { comp, id: `${kind}:${src.label}`, label: src.label, kind, chains: [] };
+
+    // create per-chain cartoon reps so they can be toggled individually
+    comp.structure.eachChain((cp)=>{
+      const cname = cp.chainname || cp.modelIndex + ':' + cp.index;
+      const poly  = cp.polymerType || 'unknown';
+      const len   = cp.residueCount;
+      const rep = comp.addRepresentation('cartoon', { sele: `:${cname}`, colorScheme: 'chainname' });
+      info.chains.push({ name: cname, polymerType: poly, length: len, rep });
+    });
+
+    // hetero / ligands visibility
+    comp.addRepresentation('ball+stick', { sele: 'hetero', multipleBond: true });
+
+    compInfos.push(info);
+  }
+
+  // Build all sources (server + staged + legacy) for the three kinds
+  const kinds = ['mirna','target','competitor'];
+  for (const k of kinds){
+    const s = await fetchStructureBlob(k);
+    const extra = collectStructureSources(k, s?.blob || null, s?.ext || 'pdb');
+    for (const src of extra){
+      await loadSource(src, k);
+    }
+  }
+
+  if (compInfos.length === 0){
+    setHTML($('modal-content'), formatError('No 3D structures were found for miRNA/Target/Competitor. Upload PDB/mmCIF or add PDB IDs in FASTA and re-run.'));
+    return;
+  }
+
   stage.autoView();
 
-  bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter');
+  // UI: chain list + role selects
+  function rebuildUI(){
+    const chainList = $('chain-list');
+    if(!chainList) return;
+    const opts = [];
+    let html = '';
+    compInfos.forEach((ci, ciIdx)=>{
+      html += `<div style="margin:6px 0 2px 0;font-weight:600;">${escapeHTML(ci.kind.toUpperCase())} — ${escapeHTML(ci.label)}</div>`;
+      ci.chains.forEach((ch, chIdx)=>{
+        html += `
+          <label style="display:flex;align-items:center;gap:6px;margin:2px 0;">
+            <input type="checkbox" data-ci="${ciIdx}" data-ch="${chIdx}" checked />
+            <span style="font-family:ui-monospace;">${escapeHTML(ch.name)}</span>
+            <small class="chip">${escapeHTML(ch.polymerType||'')}</small>
+            <small class="chip">${ch.length || ''}</small>
+          </label>`;
+        opts.push({label:`${ci.kind}:${ch.name}`, ciIdx, chIdx});
+      });
+    });
+    chainList.innerHTML = html;
+
+    const sM = $('role-mirna'), sT = $('role-target'), sC = $('role-competitor');
+    [sM,sT,sC].forEach(sel=>{
+      if(!sel) return;
+      sel.innerHTML = '<option value="">— select —</option>' + opts.map(o=>`<option value="${o.ciIdx}:${o.chIdx}">${escapeHTML(o.label)}</option>`).join('');
+    });
+
+    // naive auto-guess: shortest nucleic as miRNA; longer nucleic as target; another as competitor
+    const nucChains = opts.filter(o=>{
+      const ch = compInfos[o.ciIdx].chains[o.chIdx];
+      return (ch.polymerType || '').toLowerCase().includes('nuc');
+    }).sort((a,b)=>{
+      const la = compInfos[a.ciIdx].chains[a.chIdx].length||0;
+      const lb = compInfos[b.ciIdx].chains[b.chIdx].length||0;
+      return la - lb;
+    });
+    if (nucChains.length){
+      const short = nucChains[0];
+      sM.value = `${short.ciIdx}:${short.chIdx}`;
+      if (nucChains.length > 1){
+        sT.value = `${nucChains[nucChains.length-1].ciIdx}:${nucChains[nucChains.length-1].chIdx}`;
+      }
+      if (nucChains.length > 2){
+        sC.value = `${nucChains[1].ciIdx}:${nucChains[1].chIdx}`;
+      }
+    }
+
+    // wire chain toggles
+    byQSA('#chain-list input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const ci = parseInt(cb.dataset.ci,10);
+        const ch = parseInt(cb.dataset.ch,10);
+        const rep = compInfos[ci].chains[ch].rep;
+        rep.setVisibility(cb.checked);
+      });
+    });
+  }
+  rebuildUI();
+
+  function getSelChain(which){ // 'mirna'|'target'|'competitor'
+    const map = { mirna:'role-mirna', target:'role-target', competitor:'role-competitor' };
+    const el = $(map[which]); if(!el || !el.value) return null;
+    const [ciIdx, chIdx] = el.value.split(':').map(x=>parseInt(x,10));
+    const ci = compInfos[ciIdx]; if(!ci) return null;
+    const ch = ci.chains[chIdx]; if(!ch) return null;
+    return { ciIdx, chIdx, comp: ci.comp, name: ch.name, rep: ch.rep };
+  }
+
+  function focusChain(which){
+    const sel = getSelChain(which); if(!sel) return;
+    stage.setFocus( sel.comp.structure.getView(new window.NGL.Selection(`:${sel.name}`)) );
+  }
+
+  // Seed highlight (best-effort: assumes residue numbering ~ 1..N)
+  function clearHighlights(){
+    while (highlightReps.length){
+      const r = highlightReps.pop();
+      try{ r.component.removeRepresentation(r.rep); }catch(_){}
+    }
+  }
+  function highlightSeedSites(){
+    clearHighlights();
+    const targetSel = getSelChain('target');
+    if(!targetSel){
+      alert('Pick a Target chain first.');
+      return;
+    }
+    const offset = parseInt(($('role-offset')?.value||'0'),10) || 0;
+    const hits = Array.isArray(LAST_SEED_HITS) ? LAST_SEED_HITS.filter(h => h.molecule === 'target' && (!LAST_SEED_META || !LAST_SEED_META.targetId || h.id === LAST_SEED_META.targetId)) : [];
+    if(!hits.length){
+      alert('No cached seed hits for this row. Run “Seed Sites” first.');
+      return;
+    }
+    hits.forEach(h=>{
+      const start = (h.global_start || h.start) + offset;
+      const end   = (h.global_end   || h.end)   + offset;
+      const rep = targetSel.comp.addRepresentation('spacefill', { sele: `:${targetSel.name} and resno ${start}-${end}` });
+      highlightReps.push({ component: targetSel.comp, rep });
+    });
+    stage.autoView();
+  }
+
+  bindOnce($('role-focus-m'), 'click', ()=>focusChain('mirna'),'rfm');
+  bindOnce($('role-focus-t'), 'click', ()=>focusChain('target'),'rft');
+  bindOnce($('role-focus-c'), 'click', ()=>focusChain('competitor'),'rfc');
+  bindOnce($('seed-highlight'), 'click', highlightSeedSites, 'seedhl');
+  bindOnce($('clear-highlights'), 'click', clearHighlights, 'seedcl');
+
+  bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter2');
   bindOnce($('ngl-snap'), 'click', async () => {
-    const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
-    const a = document.createElement('a');
-    a.href = img.toDataURL('image/png'); a.download = `structure_${kind}.png`; a.click();
-  }, 'nglsnap');
-  bindOnce($('ngl-open'), 'click', () => {
-    const url = URL.createObjectURL(blob);
-    const w = window.open(url, '_blank'); if(w) w.opener = null;
-  }, 'nglopen');
+    try{
+      const canvas = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; a.download = `structure_combined.png`;
+      if (typeof a.download === 'string'){
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      } else {
+        const w = window.open(url, '_blank'); if(w) w.opener = null;
+      }
+    }catch(e){ alert('Snapshot failed.'); }
+  }, 'nglsnap2');
+  bindOnce($('ngl-openraw'), 'click', () => {
+    if(!CURRENT_JOB_ID) return;
+    const w = window.open(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, '_blank'); if(w) w.opener = null;
+  }, 'nglraw2');
 }
 
-// Legacy helper (kept): text only message if structure missing
+async function open3DOrExplain(anyId, kind /* 'target'|'competitor'|'mirna' */, rowItem=null){
+  if(!CURRENT_JOB_ID){
+    openModalText('3D Viewer', 'Run a prediction first.');
+    return;
+  }
+
+  // Try server structure for the kind
+  let primaryBlob = null, primaryExt = 'pdb';
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    if(res.ok){
+      primaryExt = inferExtFromResponse(res);
+      primaryBlob = await res.blob();
+    }
+  }catch(_){ /* ignore, we’ll fallback to staged/legacy */ }
+
+  await open3DStageManager(kind, anyId, { blob: primaryBlob, ext: primaryExt }, rowItem);
+}
+
+async function open3DStageManager(kind, anyId, primary, rowItem){
+  const ok = await ensureNGL();
+  if(!ok){ openModalText('3D Viewer', 'Could not load the 3D engine (NGL).'); return; }
+
+  const prettyKind = kind === 'mirna' ? 'miRNA' : (kind === 'target' ? 'Target' : 'Competitor');
+  const title = `3D Viewer — ${prettyKind}${anyId ? ' • ' + anyId : ''}`;
+  const html = `
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:10px;max-height:86vh;">
+      <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
+        <div style="font-weight:700;margin-bottom:6px;">Chains & Roles</div>
+        <div id="chain-list"></div>
+        <hr/>
+        <div style="display:grid;gap:6px;">
+          <label>miRNA chain<select id="role-mirna"></select></label>
+          <label>Target chain<select id="role-target"></select></label>
+          <label>Competitor chain<select id="role-competitor"></select></label>
+          <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
+          <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
+          <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
+          <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
+          <hr/>
+          <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
+          <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
+        </div>
+      </div>
+      <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
+    </div>
+  `;
+  const tools = `
+    <button id="ngl-center" class="toolbar-btn">Center</button>
+    <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
+    <button id="ngl-open" class="toolbar-btn">Open raw file(s)</button>
+  `;
+  openModal(title, html, tools);
+
+  const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
+  window.addEventListener('resize', () => stage.handleResize(), { passive:true });
+
+  const sources = collectStructureSources(kind, primary?.blob || null, primary?.ext || 'pdb');
+  if (sources.length === 0){
+    setHTML($('modal-content'), formatError(`No 3D structures found for ${prettyKind}. Upload PDB/mmCIF or add a PDB ID in FASTA and re-run.`));
+    return;
+  }
+
+  const compInfos = []; // same structure as in combined
+  const highlightReps = [];
+
+  async function loadSource(src){
+    const comp = await stage.loadFile(src.payload, { ext: src.ext || 'pdb' });
+    const info = { comp, id: `${kind}:${src.label}`, label: src.label, kind, chains: [] };
+
+    comp.structure.eachChain((cp)=>{
+      const cname = cp.chainname || cp.modelIndex + ':' + cp.index;
+      const poly  = cp.polymerType || 'unknown';
+      const len   = cp.residueCount;
+      const rep = comp.addRepresentation('cartoon', { sele: `:${cname}`, colorScheme: 'chainname' });
+      info.chains.push({ name: cname, polymerType: poly, length: len, rep });
+    });
+
+    comp.addRepresentation('ball+stick', { sele: 'hetero', multipleBond: true });
+
+    compInfos.push(info);
+  }
+
+  for (const src of sources){ await loadSource(src); }
+  stage.autoView();
+
+  function rebuildUI(){
+    const chainList = $('chain-list');
+    if(!chainList) return;
+    const opts = [];
+    let html = '';
+    compInfos.forEach((ci, ciIdx)=>{
+      html += `<div style="margin:6px 0 2px 0;font-weight:600;">${escapeHTML(ci.label)}</div>`;
+      ci.chains.forEach((ch, chIdx)=>{
+        html += `
+          <label style="display:flex;align-items:center;gap:6px;margin:2px 0;">
+            <input type="checkbox" data-ci="${ciIdx}" data-ch="${chIdx}" checked />
+            <span style="font-family:ui-monospace;">${escapeHTML(ch.name)}</span>
+            <small class="chip">${escapeHTML(ch.polymerType||'')}</small>
+            <small class="chip">${ch.length || ''}</small>
+          </label>`;
+        opts.push({label:`${ci.kind||prettyKind}:${ch.name}`, ciIdx, chIdx});
+      });
+    });
+    chainList.innerHTML = html;
+
+    const sM = $('role-mirna'), sT = $('role-target'), sC = $('role-competitor');
+    [sM,sT,sC].forEach(sel=>{
+      if(!sel) return;
+      sel.innerHTML = '<option value="">— select —</option>' + opts.map(o=>`<option value="${o.ciIdx}:${o.chIdx}">${escapeHTML(o.label)}</option>`).join('');
+    });
+
+    // simple guess for roles
+    const nucChains = opts.filter(o=>{
+      const ch = compInfos[o.ciIdx].chains[o.chIdx];
+      return (ch.polymerType || '').toLowerCase().includes('nuc');
+    }).sort((a,b)=>{
+      const la = compInfos[a.ciIdx].chains[a.chIdx].length||0;
+      const lb = compInfos[b.ciIdx].chains[b.chIdx].length||0;
+      return la - lb;
+    });
+    if (nucChains.length){
+      sM.value = `${nucChains[0].ciIdx}:${nucChains[0].chIdx}`;
+      if (nucChains.length > 1){
+        sT.value = `${nucChains[nucChains.length-1].ciIdx}:${nucChains[nucChains.length-1].chIdx}`;
+      }
+      if (nucChains.length > 2){
+        sC.value = `${nucChains[1].ciIdx}:${nucChains[1].chIdx}`;
+      }
+    }
+
+    byQSA('#chain-list input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const ci = parseInt(cb.dataset.ci,10);
+        const ch = parseInt(cb.dataset.ch,10);
+        const rep = compInfos[ci].chains[ch].rep;
+        rep.setVisibility(cb.checked);
+      });
+    });
+  }
+  rebuildUI();
+
+  function getSelChain(which){
+    const map = { mirna:'role-mirna', target:'role-target', competitor:'role-competitor' };
+    const el = $(map[which]); if(!el || !el.value) return null;
+    const [ciIdx, chIdx] = el.value.split(':').map(x=>parseInt(x,10));
+    const ci = compInfos[ciIdx]; if(!ci) return null;
+    const ch = ci.chains[chIdx]; if(!ch) return null;
+    return { ciIdx, chIdx, comp: ci.comp, name: ch.name, rep: ch.rep };
+  }
+  function focusChain(which){
+    const sel = getSelChain(which); if(!sel) return;
+    stage.setFocus( sel.comp.structure.getView(new window.NGL.Selection(`:${sel.name}`)) );
+  }
+  function clearHighlights(){
+    while (highlightReps.length){
+      const r = highlightReps.pop();
+      try{ r.component.removeRepresentation(r.rep); }catch(_){}
+    }
+  }
+  function highlightSeedSites(){
+    clearHighlights();
+    const targetSel = getSelChain('target');
+    if(!targetSel){
+      alert('Pick a Target chain first.');
+      return;
+    }
+    const offset = parseInt(($('role-offset')?.value||'0'),10) || 0;
+
+    // Only highlight seeds relevant to this row when available; else fall back to any cached target seeds.
+    let hits = Array.isArray(LAST_SEED_HITS) ? LAST_SEED_HITS.filter(h => h.molecule === 'target') : [];
+    if (rowItem?.target_id){
+      hits = hits.filter(h => h.id === rowItem.target_id);
+    }
+    if(!hits.length){
+      alert('No cached seed hits for this row. Run “Seed Sites” first.');
+      return;
+    }
+    hits.forEach(h=>{
+      const start = (h.global_start || h.start) + offset;
+      const end   = (h.global_end   || h.end)   + offset;
+      const rep = targetSel.comp.addRepresentation('spacefill', { sele: `:${targetSel.name} and resno ${start}-${end}` });
+      highlightReps.push({ component: targetSel.comp, rep });
+    });
+    stage.autoView();
+  }
+
+  bindOnce($('role-focus-m'), 'click', ()=>focusChain('mirna'),'rfm_s');
+  bindOnce($('role-focus-t'), 'click', ()=>focusChain('target'),'rft_s');
+  bindOnce($('role-focus-c'), 'click', ()=>focusChain('competitor'),'rfc_s');
+  bindOnce($('seed-highlight'), 'click', highlightSeedSites, 'seedhl_s');
+  bindOnce($('clear-highlights'), 'click', clearHighlights, 'seedcl_s');
+
+  bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter_s');
+  bindOnce($('ngl-snap'), 'click', async () => {
+    try{
+      const canvas = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; a.download = `structure_${kind}.png`;
+      if (typeof a.download === 'string'){
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      } else {
+        const w = window.open(url, '_blank'); if(w) w.opener = null;
+      }
+    }catch(e){ alert('Snapshot failed.'); }
+  }, 'nglsnap_s');
+  bindOnce($('ngl-open'), 'click', () => {
+    // Open all local sources if possible; otherwise give the job zip.
+    if (sources.some(s => s.type !== 'server')){
+      alert('Local/staged files cannot be opened directly; use the Snapshot to export an image. For server artifacts, use “Download All”.');
+    } else if (CURRENT_JOB_ID){
+      const w = window.open(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, '_blank'); if(w) w.opener = null;
+    }
+  }, 'nglopen_s');
+}
+
+// Legacy minimal viewer (kept for compatibility; unused by new flows)
 async function open3DViewer(kind){
   if(!CURRENT_JOB_ID){ openModalText('3D Viewer', 'Run a prediction first.'); return; }
-  if(!['target','competitor'].includes(kind)){ openModalText('3D Viewer', 'Invalid molecule kind.'); return; }
+  if(!['target','competitor','mirna'].includes(kind)){ openModalText('3D Viewer', 'Invalid molecule kind.'); return; }
   const ok = await ensureNGL();
   if(!ok){ openModalText('3D Viewer', 'Could not load 3D engine.'); return; }
 
@@ -1863,7 +2271,7 @@ async function open3DViewer(kind){
       return;
     }
     const blob = await res.blob();
-    await open3DStageFromBlob(kind, blob, '');
+    await open3DStageManager(kind, '', { blob, ext: inferExtFromResponse(res) }, null);
   }catch(err){
     openModalText('3D Viewer', err?.message || '3D viewer error.');
   }
