@@ -4453,3 +4453,29 @@ subprocess.TimeoutExpired: Command '['C:/Program Files (x86)/ViennaRNA Package/R
 2025-11-13 23:02:49,805 | INFO | 127.0.0.1 - - [13/Nov/2025 23:02:49] "OPTIONS /predict HTTP/1.1" 200 -
 2025-11-13 23:02:49,826 | INFO | 127.0.0.1 - - [13/Nov/2025 23:02:49] "POST /precheck HTTP/1.1" 200 -
 2025-11-13 23:02:49,842 | INFO | 127.0.0.1 - - [13/Nov/2025 23:02:49] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-13 23:19:15,517 | INFO | 127.0.0.1 - - [13/Nov/2025 23:19:15] "GET /config HTTP/1.1" 200 -
+2025-11-13 23:19:59,242 | INFO | 127.0.0.1 - - [13/Nov/2025 23:19:59] "GET /config HTTP/1.1" 200 -
+2025-11-13 23:20:08,290 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 23:20:08,296 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 23:20:08,336 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 23:20:08,345 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 23:20:08,352 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 23:20:08,690 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:08] "GET /config HTTP/1.1" 200 -
+2025-11-13 23:20:11,226 | INFO | 127.0.0.1 - - [13/Nov/2025 23:20:11] "POST /predict HTTP/1.1" 200 -
+2025-11-13 23:36:24,503 | ERROR | CID 75023d8a | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-11-13 23:36:24,657 | INFO | 127.0.0.1 - - [13/Nov/2025 23:36:24] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
