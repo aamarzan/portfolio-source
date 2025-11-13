@@ -188,7 +188,7 @@ function injectPremiumStyles(){
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
-    table#results-table thead th{position:static;top:0;background:#fff;z-index:1}
+    table#results-table thead th{position:sticky;top:0;background:#fff;z-index:1}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
     .info-note{ text-align:center; margin:8px 0; }
@@ -1001,7 +1001,7 @@ function displayResults(results, finalData=null){
   }
 
   // Wire up existing analysis controls (in HTML) and show them
-  injectAnalysisControls(container);
+  wireExistingAnalysisControls();
 
   // Update RUN_MANIFEST with any server-side manifest/meta if present
   if(finalData && finalData.manifest){
@@ -1298,29 +1298,27 @@ function injectResultFilters(){
 // Wire existing analysis controls (HTML block) once
 // Adds Allow G:U, Max mismatches, and two global buttons.
 // =====================================================
-function injectAnalysisControls(container){
-  if(GUARDS.analysisControlsInjected) return;
+function wireExistingAnalysisControls(){
+  const ac = $('analysis-controls');
+  if(!ac || GUARDS.analysisControlsWired) return;
 
-  const html = `
-  <div id="analysis-controls" class="controls-grid">
-    <label class="ctrl"><input type="checkbox" id="allow-gu" checked /><span>Allow G:U wobble</span></label>
-    <label class="ctrl"><span>Max mismatches</span><input id="max-mm" type="number" value="0" min="0" max="3" step="1"></label>
-    <label class="ctrl"><span>Heatmap</span>
-      <select id="heatmap-mode">
-        <option value="ig_target" selected>IG → Target</option>
-        <option value="ig_competitor">IG → Competitor</option>
-        <option value="seed_density">Seed density (fast)</option>
-      </select>
-    </label>
-    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
+  // Ensure visible
+  ac.classList.remove('hidden');
 
-    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
-  </div>
-  `;
+  // Add GU wobble + max mismatches if missing
+  if(!$('allow-gu') || !$('max-mm') || !$('seed-scan-global-btn') || !$('explain-global-btn')){
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;"><input type="checkbox" id="allow-gu" checked /> <strong>Allow G:U wobble</strong></label>
+      <label style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;"><strong>Max mismatches</strong> <input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="width:72px;"></label>
+      <button id="seed-scan-global-btn" class="btn-premium" style="margin-right:6px;">Seed Sites (top row)</button>
+      <button id="explain-global-btn" class="btn-premium btn-accent">Heatmap (top row)</button>
+    `;
+    ac.appendChild(row);
+  }
 
-  prependHTML(container, html);
-
+  // Bind global buttons
   const seedBtn = $('seed-scan-global-btn');
   const hmBtn   = $('explain-global-btn');
 
@@ -1340,9 +1338,8 @@ function injectAnalysisControls(container){
     await handleHeatmapClick(predictionResults[0]);
   }, 'hmGlobalOnce');
 
-  GUARDS.analysisControlsInjected = true;
+  GUARDS.analysisControlsWired = true;
 }
-
 
 // =====================================================
 // CSV & bundles
