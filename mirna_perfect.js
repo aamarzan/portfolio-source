@@ -11,12 +11,6 @@
 //   • Extra actions in Results table: 3D miRNA + 3D All
 //   • Robust extension inference from server responses; staged/legacy 3D files merged
 //   • “Structure-features” badge; manifest preserved
-// + 2025-11-14:
-//   • Tab buttons snap to section top (with premium sticky gap)
-//   • Results table headers centered
-//   • NGL snapshot robust to Blob/canvas return
-//   • Removed “Open raw file(s)” from 3D viewer toolbars
-//   • Premium sticky gap between site header and sticky tab bar
 
 // =====================================================
 // Global state
@@ -54,8 +48,7 @@ const GUARDS = {
   analysisControlsWired: false,
   modalInjected: false,
   styleInjected: false,
-  nglLoaded: false,
-  analysisControlsInjected: false
+  nglLoaded: false
 };
 
 // =====================================================
@@ -196,22 +189,19 @@ function ensureSingleton(id, html, parent){
 function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
   const css = `
-    :root{ --sticky-gap: 12px; }
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
     .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
-    table#results-table thead th{position:static;top:0;background:#fff;z-index:1;text-align:center;}
+    table#results-table thead th{position:static;top:0;background:#fff;z-index:1}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
     .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
-    /* When we detect the sticky nav container, we add this class */
-    .is-sticky-gap{ top: calc(var(--sticky-offset-main) + var(--sticky-gap)) !important; }
   `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
@@ -487,8 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadConfig();
   ensureModal(); // make sure modal exists early
   syncStickyOffset(); // keep sticky headers perfect
-  ensureStickyGapForTabs(); // add premium gap to sticky nav
-  window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); }, { passive:true });
+  window.addEventListener('resize', syncStickyOffset, { passive:true });
 
   const loader = $('loader');
   if(loader){
@@ -719,12 +708,12 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
-  // Switch to results tab & scroll to top of results (sticky aware)
+  // Switch to results tab & scroll to top
   const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
     openTab(resultsTabButton, 'results-tab');
-    scrollToCardTop('results-tab');
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }
 
   // Show loader
@@ -1848,38 +1837,35 @@ async function open3DCombined(rowItem){
   const ok = await ensureNGL();
   if(!ok){ openModalText('3D Viewer', 'Could not load the 3D engine (NGL).'); return; }
 
-    const title = `3D Viewer — Combined (miRNA + Target + Competitor)`;
-    const html = `
+  const title = `3D Viewer — Combined (miRNA + Target + Competitor)`;
+  const html = `
     <div style="display:grid;grid-template-columns:280px 1fr;gap:10px;max-height:86vh;">
-        <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
+      <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
         <div style="font-weight:700;margin-bottom:6px;">Chains & Roles</div>
         <div id="chain-list"></div>
         <hr/>
         <div style="display:grid;gap:6px;">
-            <label>miRNA chain<select id="role-mirna"></select></label>
-            <label>Target chain<select id="role-target"></select></label>
-            <label>Competitor chain<select id="role-competitor"></select></label>
-            <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
-            <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
-            <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
-            <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
-            <hr/>
-            <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
-            <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
-            <!-- NEW: per-hit focus -->
-            <button id="focus-hit" class="toolbar-btn">Focus Selected Hit</button>
-            <select id="hit-select"></select>
+          <label>miRNA chain<select id="role-mirna"></select></label>
+          <label>Target chain<select id="role-target"></select></label>
+          <label>Competitor chain<select id="role-competitor"></select></label>
+          <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
+          <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
+          <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
+          <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
+          <hr/>
+          <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
+          <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
         </div>
-        </div>
-        <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
+      </div>
+      <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
     </div>
-    `;
-    const tools = `
+  `;
+  const tools = `
     <button id="ngl-center" class="toolbar-btn">Center</button>
     <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
-    `;
-    openModal(title, html, tools);
-
+    <button id="ngl-openraw" class="toolbar-btn">Open raw (server)</button>
+  `;
+  openModal(title, html, tools);
 
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
@@ -1983,52 +1969,6 @@ async function open3DCombined(rowItem){
   }
   rebuildUI();
 
-    function rebuildHitSelect(rowScoped=false){
-    const sel = $('hit-select'); if(!sel) return;
-    let hits = Array.isArray(LAST_SEED_HITS) ? [...LAST_SEED_HITS] : [];
-
-    if (rowScoped && rowItem) {
-        hits = hits.filter(h =>
-        (rowItem.target_id && h.molecule === 'target' && h.id === rowItem.target_id) ||
-        (rowItem.competitor_id && h.molecule === 'competitor' && h.id === rowItem.competitor_id)
-        );
-    }
-
-    if (!hits.length){
-        sel.innerHTML = '<option value="">— no cached hits —</option>';
-        return;
-    }
-    sel.innerHTML = hits.map((h, i) =>
-        `<option value="${i}">${h.molecule}:${h.id} • ${h.start}-${h.end}${h.global_start?` (g${h.global_start}-${h.global_end})`:''} • seed${h.seed_len}</option>`
-    ).join('');
-    }
-
-    rebuildHitSelect(true); // combined view is opened from a specific row
-
-    bindOnce($('focus-hit'), 'click', () => {
-    const selBox = $('hit-select');
-    if (!selBox) return;
-    const idx = parseInt(selBox.value||'-1',10);
-    if (isNaN(idx) || !Array.isArray(LAST_SEED_HITS) || !LAST_SEED_HITS[idx]) {
-        alert('No hit selected. Run Seed Sites first.'); return;
-    }
-    const h = LAST_SEED_HITS[idx];
-    const which = (h.molecule === 'competitor') ? 'competitor' : 'target';
-    const selChain = getSelChain(which);
-    if (!selChain){ alert(`Pick a ${which} chain first.`); return; }
-
-    const offset = parseInt(($('role-offset')?.value||'0'),10) || 0;
-    const start  = (h.global_start || h.start) + offset;
-    const end    = (h.global_end   || h.end)   + offset;
-
-    stage.setFocus(
-        selChain.comp.structure.getView(
-        new window.NGL.Selection(`:${selChain.name} and resno ${start}-${end}`)
-        )
-    );
-    }, 'focusHitOnce_combined');
-
-
   function getSelChain(which){ // 'mirna'|'target'|'competitor'
     const map = { mirna:'role-mirna', target:'role-target', competitor:'role-competitor' };
     const el = $(map[which]); if(!el || !el.value) return null;
@@ -2079,49 +2019,23 @@ async function open3DCombined(rowItem){
   bindOnce($('clear-highlights'), 'click', clearHighlights, 'seedcl');
 
   bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter2');
-    bindOnce($('ngl-snap'), 'click', async () => {
+  bindOnce($('ngl-snap'), 'click', async () => {
     try{
-        const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
-
-        if (img instanceof Blob) {
-        const url = URL.createObjectURL(img);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `structure_combined.png`;
+      const canvas = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; a.download = `structure_combined.png`;
+      if (typeof a.download === 'string'){
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return;
-        }
-
-        if (img && typeof img.toDataURL === 'function') {
-        const url = img.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = url; a.download = `structure_combined.png`;
-        if (typeof a.download === 'string'){
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        } else {
-            const w = window.open(url, '_blank'); if(w) w.opener = null;
-        }
-        return;
-        }
-
-        if (stage.viewer && typeof stage.viewer.makeImage === 'function') {
-        stage.viewer.makeImage({ factor: 2, antialias: true, trim: false, transparent: false })
-            .then((blob) => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `structure_combined.png`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            });
-        return;
-        }
-
-        alert('Snapshot failed: unsupported return type.');
-    }catch(e){
-        alert('Snapshot failed.');
-    }
-    }, 'nglsnap2');
+      } else {
+        const w = window.open(url, '_blank'); if(w) w.opener = null;
+      }
+    }catch(e){ alert('Snapshot failed.'); }
+  }, 'nglsnap2');
+  bindOnce($('ngl-openraw'), 'click', () => {
+    if(!CURRENT_JOB_ID) return;
+    const w = window.open(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, '_blank'); if(w) w.opener = null;
+  }, 'nglraw2');
 }
 
 async function open3DOrExplain(anyId, kind /* 'target'|'competitor'|'mirna' */, rowItem=null){
@@ -2149,37 +2063,35 @@ async function open3DStageManager(kind, anyId, primary, rowItem){
   if(!ok){ openModalText('3D Viewer', 'Could not load the 3D engine (NGL).'); return; }
 
   const prettyKind = kind === 'mirna' ? 'miRNA' : (kind === 'target' ? 'Target' : 'Competitor');
-    const title = `3D Viewer — ${prettyKind}${anyId ? ' • ' + anyId : ''}`;
-    const html = `
+  const title = `3D Viewer — ${prettyKind}${anyId ? ' • ' + anyId : ''}`;
+  const html = `
     <div style="display:grid;grid-template-columns:280px 1fr;gap:10px;max-height:86vh;">
-        <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
+      <div id="ngl-side" style="overflow:auto;border:1px solid #e5e7eb;border-radius:10px;padding:10px;">
         <div style="font-weight:700;margin-bottom:6px;">Chains & Roles</div>
         <div id="chain-list"></div>
         <hr/>
         <div style="display:grid;gap:6px;">
-            <label>miRNA chain<select id="role-mirna"></select></label>
-            <label>Target chain<select id="role-target"></select></label>
-            <label>Competitor chain<select id="role-competitor"></select></label>
-            <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
-            <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
-            <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
-            <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
-            <hr/>
-            <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
-            <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
-            <!-- NEW: per-hit focus -->
-            <button id="focus-hit" class="toolbar-btn">Focus Selected Hit</button>
-            <select id="hit-select"></select>
+          <label>miRNA chain<select id="role-mirna"></select></label>
+          <label>Target chain<select id="role-target"></select></label>
+          <label>Competitor chain<select id="role-competitor"></select></label>
+          <label>Residue offset<input id="role-offset" type="number" value="0" step="1" style="width:100%;"></label>
+          <button id="role-focus-m" class="toolbar-btn">Focus miRNA</button>
+          <button id="role-focus-t" class="toolbar-btn">Focus Target</button>
+          <button id="role-focus-c" class="toolbar-btn">Focus Competitor</button>
+          <hr/>
+          <button id="seed-highlight" class="toolbar-btn">Highlight Seed Sites (best-effort)</button>
+          <button id="clear-highlights" class="toolbar-btn">Clear Highlights</button>
         </div>
-        </div>
-        <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
+      </div>
+      <div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>
     </div>
-    `;
-    const tools = `
+  `;
+  const tools = `
     <button id="ngl-center" class="toolbar-btn">Center</button>
     <button id="ngl-snap" class="toolbar-btn">Snapshot PNG</button>
-    `;
-    openModal(title, html, tools);
+    <button id="ngl-open" class="toolbar-btn">Open raw file(s)</button>
+  `;
+  openModal(title, html, tools);
 
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
@@ -2269,53 +2181,6 @@ async function open3DStageManager(kind, anyId, primary, rowItem){
   }
   rebuildUI();
 
-  function rebuildHitSelect(rowScoped=false){
-    const sel = $('hit-select'); if(!sel) return;
-    let hits = Array.isArray(LAST_SEED_HITS) ? [...LAST_SEED_HITS] : [];
-
-    if (rowScoped && rowItem) {
-        hits = hits.filter(h =>
-        (rowItem.target_id && h.molecule === 'target' && h.id === rowItem.target_id) ||
-        (rowItem.competitor_id && h.molecule === 'competitor' && h.id === rowItem.competitor_id)
-        );
-    }
-
-    if (!hits.length){
-        sel.innerHTML = '<option value="">— no cached hits —</option>';
-        return;
-    }
-    sel.innerHTML = hits.map((h, i) =>
-        `<option value="${i}">${h.molecule}:${h.id} • ${h.start}-${h.end}${h.global_start?` (g${h.global_start}-${h.global_end})`:''} • seed${h.seed_len}</option>`
-    ).join('');
-    }
-
-    rebuildHitSelect(!!rowItem); // single viewer also knows the row
-
-    bindOnce($('focus-hit'), 'click', () => {
-    const selBox = $('hit-select');
-    if (!selBox) return;
-    const idx = parseInt(selBox.value||'-1',10);
-    if (isNaN(idx) || !Array.isArray(LAST_SEED_HITS) || !LAST_SEED_HITS[idx]) {
-        alert('No hit selected. Run Seed Sites first.'); return;
-    }
-    const h = LAST_SEED_HITS[idx];
-    const which = (h.molecule === 'competitor') ? 'competitor' : 'target';
-    const selChain = getSelChain(which);
-    if (!selChain){ alert(`Pick a ${which} chain first.`); return; }
-
-    const offset = parseInt(($('role-offset')?.value||'0'),10) || 0;
-    const start  = (h.global_start || h.start) + offset;
-    const end    = (h.global_end   || h.end)   + offset;
-
-    stage.setFocus(
-        selChain.comp.structure.getView(
-        new window.NGL.Selection(`:${selChain.name} and resno ${start}-${end}`)
-        )
-    );
-    }, 'focusHitOnce_single');
-    
-
-
   function getSelChain(which){
     const map = { mirna:'role-mirna', target:'role-target', competitor:'role-competitor' };
     const el = $(map[which]); if(!el || !el.value) return null;
@@ -2368,51 +2233,19 @@ async function open3DStageManager(kind, anyId, primary, rowItem){
   bindOnce($('clear-highlights'), 'click', clearHighlights, 'seedcl_s');
 
   bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter_s');
-    bindOnce($('ngl-snap'), 'click', async () => {
+  bindOnce($('ngl-snap'), 'click', async () => {
     try{
-        const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
-
-        if (img instanceof Blob) {
-        const url = URL.createObjectURL(img);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `structure_combined.png`;
+      const canvas = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; a.download = `structure_${kind}.png`;
+      if (typeof a.download === 'string'){
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        return;
-        }
-
-        if (img && typeof img.toDataURL === 'function') {
-        const url = img.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = url; a.download = `structure_combined.png`;
-        if (typeof a.download === 'string'){
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        } else {
-            const w = window.open(url, '_blank'); if(w) w.opener = null;
-        }
-        return;
-        }
-
-        if (stage.viewer && typeof stage.viewer.makeImage === 'function') {
-        stage.viewer.makeImage({ factor: 2, antialias: true, trim: false, transparent: false })
-            .then((blob) => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `structure_combined.png`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            });
-        return;
-        }
-
-        alert('Snapshot failed: unsupported return type.');
-    }catch(e){
-        alert('Snapshot failed.');
-    }
-    }, 'nglsnap2');
-
-
+      } else {
+        const w = window.open(url, '_blank'); if(w) w.opener = null;
+      }
+    }catch(e){ alert('Snapshot failed.'); }
+  }, 'nglsnap_s');
   bindOnce($('ngl-open'), 'click', () => {
     // Open all local sources if possible; otherwise give the job zip.
     if (sources.some(s => s.type !== 'server')){
