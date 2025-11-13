@@ -4169,3 +4169,57 @@ subprocess.TimeoutExpired: Command '['C:/Program Files (x86)/ViennaRNA Package/R
 2025-11-13 01:54:38,985 | INFO | 127.0.0.1 - - [13/Nov/2025 01:54:38] "GET /download/6c7ecd62-0c32-417c-9370-0e5c20d087cf/I0000001/heatmap.png?mode=ig_target&steps=50 HTTP/1.1" 200 -
 2025-11-13 05:02:31,109 | INFO | 127.0.0.1 - - [13/Nov/2025 05:02:31] "POST /explain HTTP/1.1" 200 -
 2025-11-13 05:28:37,450 | INFO | 127.0.0.1 - - [13/Nov/2025 05:28:37] "POST /explain HTTP/1.1" 200 -
+2025-11-13 21:12:29,229 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-13 21:12:29,791 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.3.0.2:8080
+2025-11-13 21:12:29,792 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-13 21:30:54,419 | INFO | 127.0.0.1 - - [13/Nov/2025 21:30:54] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:31:20,161 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:31:20,177 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:31:20,256 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:31:20,266 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:31:20,286 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:31:20,291 | INFO | 127.0.0.1 - - [13/Nov/2025 21:31:20] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-13 21:41:27,022 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:27] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:41:39,220 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:41:39,224 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:41:39,261 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:41:39,264 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:41:39,272 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:41:39,277 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:39] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-13 21:41:57,836 | INFO | 127.0.0.1 - - [13/Nov/2025 21:41:57] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:42:06,597 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:42:06,604 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:42:06,643 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:06] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:42:06,646 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:06] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:42:06,653 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:06] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:42:07,461 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:07] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:42:09,410 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:09] "POST /predict HTTP/1.1" 200 -
+2025-11-13 21:42:09,673 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:09] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:42:10,685 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:10] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:42:21,635 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:42:21,712 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:42:21,759 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:21] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:42:21,771 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:42:21,775 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:21] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:42:22,048 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:22] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:42:23,807 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:23] "POST /predict HTTP/1.1" 200 -
+2025-11-13 21:42:35,701 | INFO | 127.0.0.1 - - [13/Nov/2025 21:42:35] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:43:10,770 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:10] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:43:10,808 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:10] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:43:10,812 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:10] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:43:10,816 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:10] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:43:11,003 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:11] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:43:11,644 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:11] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:43:14,968 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:14] "POST /predict HTTP/1.1" 200 -
+2025-11-13 21:43:24,012 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:43:24,053 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "GET /nonce HTTP/1.1" 200 -
+2025-11-13 21:43:24,056 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-13 21:43:24,062 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-13 21:43:24,070 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "POST /precheck HTTP/1.1" 200 -
+2025-11-13 21:43:24,471 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:24] "GET /config HTTP/1.1" 200 -
+2025-11-13 21:43:26,434 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:26] "POST /predict HTTP/1.1" 200 -
+2025-11-13 21:43:26,642 | INFO | 127.0.0.1 - - [13/Nov/2025 21:43:26] "GET /config HTTP/1.1" 200 -

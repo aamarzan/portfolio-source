@@ -455,13 +455,13 @@ function getBasketFiles(kind){
 }
 
 // =====================================================
-// Initialization
+// Initialization (robust to late script load)
 // =====================================================
-document.addEventListener('DOMContentLoaded', async () => {
+function initUI(){
   injectPremiumStyles();
-  await loadConfig();
-  ensureModal(); // make sure modal exists early
-  syncStickyOffset(); // keep sticky headers perfect
+  loadConfig().catch(()=>{});
+  ensureModal();
+  syncStickyOffset();
   window.addEventListener('resize', syncStickyOffset, { passive:true });
 
   const loader = $('loader');
@@ -470,28 +470,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     show(loader);
   }
 
-  // Link file pickers → textareas (sequence FASTA inputs)
   bindFileToTextarea('mirna-seq-file', 'primary-seqs');
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 
-  // Form submit
   const form = $('prediction-form');
   if(form && !GUARDS.formBindingDone){
+    // neutralize native navigation
+    form.setAttribute('novalidate','novalidate');
+    form.setAttribute('action','');
     bindOnce(form, 'submit', handleSubmit, 'submitGuard');
+
+    // safety: also intercept the submit button click in case the submit event handler didn’t bind
+    const runBtn = form.querySelector('button[type="submit"],input[type="submit"]');
+    if(runBtn){
+      bindOnce(runBtn, 'click', (e)=>{ e.preventDefault(); e.stopPropagation(); handleSubmit(e); }, 'runBtnGuard');
+    }
     GUARDS.formBindingDone = true;
   }
 
-  // Premium look for primary buttons if present
+  // Premium look
   ['load-sample-btn','clear-btn','clear-inputs-btn','seed-scan-global-btn','explain-global-btn'].forEach(id=>{
-    const el = $(id);
-    if(el) el.classList.add('btn-premium');
+    const el = $(id); if(el) el.classList.add('btn-premium');
   });
 
-  // Advanced options + tabs
   injectAdvancedOnce();
   wireTabButtonsOnce();
-});
+}
+
+// Call immediately if DOM is ready; otherwise wait.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initUI, { once:true });
+} else {
+  initUI();
+}
 
 // =====================================================
 // Advanced options injection (singleton)
@@ -903,13 +915,12 @@ async function handleSubmit(event){
 
     await poll();
 
-  }catch(error){
+  } catch (error){
     const rw = resultsContainer?.querySelector('.reload-warning'); if(rw) rw.remove();
-
-    const friendly = error?.message && !/server error/i.test(error.message)
-      ? error.message
-      : 'Something went wrong while processing your request. Please try again later.';
-    setHTML(resultsContainer, formatError(friendly));
+    const msg = (error?.name === 'AbortError')
+      ? 'Request timed out. Please try again.'
+      : 'Network/CORS error or server unreachable. If you’re on https://aamarzan.com but API is on https://mirna.aamarzan.com, ensure CORS is enabled on the API.';
+    setHTML(resultsContainer, formatError(msg));
     if(loader) hide(loader);
   }
 }
@@ -1442,9 +1453,6 @@ async function handleHeatmapClick(item){
     const html = `<img id="hm-img" class="heatmap-img" alt="Heatmap" src="${url}"/>`;
     openModal(title, html, toolbar);
     
-    appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
-    ensureHeatmapSeedSummary(item);
-    
     const openBtn = $('hm-open');
     const saveBtn = $('hm-save');
     if(openBtn) bindOnce(openBtn, 'click', () => {
@@ -1960,9 +1968,6 @@ async function open3DStageFromBlob(kind, blob, anyId, ext){
   `;
   const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
   openModal(title, html, toolbar);
-
-  appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
-  ensureHeatmapSeedSummary(item);
 
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
