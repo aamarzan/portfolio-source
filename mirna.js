@@ -195,7 +195,24 @@ function injectPremiumStyles(){
     .reload-warning{ text-align:center; margin:8px 0; }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
     .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
-  `;
+    .heatmap-img{
+    max-width:100%; height:auto; display:block; margin:0 auto;
+    border:1px solid #e5e7eb; border-radius:8px; image-rendering:auto;
+    }
+    .seed-summary{
+      margin-top:10px; padding:10px; border:1px solid #e5e7eb; border-radius:12px;
+      background:#f8fafc;
+    }
+    .seed-summary .title{
+      font-weight:700; margin-bottom:6px; text-align:left;
+    }
+    .seed-chip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; margin:4px 6px 0 0;
+      border-radius:999px; border:1px solid #cfe0ff; background:#eef5ff; color:#163b66;
+      font-size:12px; font-weight:600;
+    }
+    `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
   style.textContent = css;
@@ -1422,9 +1439,12 @@ async function handleHeatmapClick(item){
       <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
       <button id="hm-save"  class="toolbar-btn">Download PNG</button>
     `;
-    const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+    const html = `<img id="hm-img" class="heatmap-img" alt="Heatmap" src="${url}"/>`;
     openModal(title, html, toolbar);
-
+    
+    appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
+    ensureHeatmapSeedSummary(item);
+    
     const openBtn = $('hm-open');
     const saveBtn = $('hm-save');
     if(openBtn) bindOnce(openBtn, 'click', () => {
@@ -1441,6 +1461,115 @@ async function handleHeatmapClick(item){
     await clientExplainHeatmapFallback(item, mode);
   }
 }
+
+// === Premium seed-summary under heatmap (auto) ===
+async function ensureHeatmapSeedSummary(item){
+  const box = document.getElementById('seed-summary');
+  if(!box) return;
+
+  // show a tiny progress text
+  box.innerHTML = `<small style="color:#475569;">Fetching seed sites…</small>`;
+
+  // 1) try cache from LAST_SEED_HITS (if user already ran Seed Sites)
+  let hits = (Array.isArray(LAST_SEED_HITS) ? LAST_SEED_HITS : [])
+    .filter(h => h.molecule === 'target' && h.id === (item.target_id || ''));
+
+  // 2) if none, query backend quickly (same logic as handleSeedSitesClick, but silent)
+  if(hits.length === 0){
+    try { hits = await fetchSeedHitsForSummary(item); } catch(_) { hits = []; }
+  }
+
+  if(!hits.length){
+    box.innerHTML = `<small style="color:#666;">No seed matches under current settings.</small>`;
+    return;
+  }
+
+  const top = rankSeedHits(hits, item.target_id || '');
+  box.innerHTML = `
+    <div class="title">Top seed sites</div>
+    ${renderSeedChips(top, item.target_id || '')}
+  `;
+}
+
+async function fetchSeedHitsForSummary(item){
+  const allowGU = byQS('#allow-gu')?.checked ?? true;
+  const maxMM   = parseInt(byQS('#max-mm')?.value ?? '0', 10);
+
+  const mirnaId  = item.primary_molecule_id ?? item.mirna_id;
+  const targetId = item.target_id ?? '';
+  const compId   = item.competitor_id ?? '';
+
+  const mirnaSeq = toRNA(lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId));
+  const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
+  const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:'', mode:''};
+
+  const targetSeq = tRes.seq;
+  const compSeq   = cRes.seq;
+
+  if(!mirnaSeq || !targetSeq) return [];
+
+  const payload = {
+    mirna_seq: mirnaSeq,
+    targets: { [targetId]: targetSeq },
+    competitors: compSeq ? { [compId]: compSeq } : {},
+    allow_gu: !!allowGU,
+    max_mismatch: Number.isFinite(maxMM) ? maxMM : 0
+  };
+
+  const headers = await getNonceOrKeyHeaders();
+  const res = await fetch(SEED_SCAN_URL, {
+    method:'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(payload)
+  });
+
+  if(!res.ok) return [];
+  let hits = (await res.json()).hits || [];
+  // make results range-aware for display
+  const tRange = parseIdRange(targetId);
+  const cRange = compId ? parseIdRange(compId) : null;
+  hits = hits.map(h => {
+    if(h.molecule === 'target' && tRange){
+      const g = globalCoordForId(targetId, h.start, h.end);
+      return { ...h, global_start: g.globalStart, global_end: g.globalEnd };
+    }
+    if(h.molecule === 'competitor' && cRange){
+      const g = globalCoordForId(compId, h.start, h.end);
+      return { ...h, global_start: g.globalStart, global_end: g.globalEnd };
+    }
+    return h;
+  });
+
+  // cache for later “Seed Sites” modal as well
+  LAST_SEED_HITS = hits;
+  LAST_SEED_META = { mirnaId, targetId, compId };
+
+  return hits;
+}
+
+function rankSeedHits(hits, targetId){
+  const arr = hits.filter(h => h.molecule === 'target' && h.id === targetId);
+  // Sort: longest seed first → least mismatches → least wobble → earliest start
+  arr.sort((a,b)=>
+    (b.seed_len - a.seed_len) ||
+    ((a.mismatches||0) - (b.mismatches||0)) ||
+    ((a.wobble||0) - (b.wobble||0)) ||
+    (a.start - b.start)
+  );
+  return arr.slice(0, 3);
+}
+
+function renderSeedChips(hits, targetId){
+  return hits.map(h => {
+    const pos = `${h.start}-${h.end}`;
+    const typ = h.seed_type || `${h.seed_len}-mer`;
+    const mm  = (h.mismatches ?? 0);
+    const wb  = (typeof h.wobble !== 'undefined') ? `, wob=${h.wobble}` : '';
+    const g   = (typeof h.global_start !== 'undefined') ? ` • global ${h.global_start}-${h.global_end}` : '';
+    return `<span class="seed-chip">target ${escapeHTML(targetId)} • ${pos}${g} • ${escapeHTML(typ)} • mm=${mm}${wb}</span>`;
+  }).join('');
+}
+
 
 async function clientExplainHeatmapFallback(item, forcedMode){
   try{
@@ -1468,6 +1597,8 @@ async function clientExplainHeatmapFallback(item, forcedMode){
       setHTML($('modal-content'), html);
       return;
     }
+    appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
+    ensureHeatmapSeedSummary(item);
 
     setHTML($('modal-content'), smallSpinner('Computing attributions...'));
 
@@ -1514,6 +1645,9 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     }
 
     setHTML($('modal-content'), html);
+
+    appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
+    ensureHeatmapSeedSummary(item);
 
   }catch(err){
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
@@ -1826,6 +1960,9 @@ async function open3DStageFromBlob(kind, blob, anyId, ext){
   `;
   const html = `<div id="ngl-stage" style="width:100%;height:70vh;background:#0b1020;border-radius:10px;"></div>`;
   openModal(title, html, toolbar);
+
+  appendHTML($('modal-content'), `<div id="seed-summary" class="seed-summary"></div>`);
+  ensureHeatmapSeedSummary(item);
 
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
