@@ -260,6 +260,26 @@ function fetchWithTimeout(url, options={}, ms=30000){
     .finally(()=>clearTimeout(timer));
 }
 
+// --- robust fetch with retries & backoff (uses fetchWithTimeout) ---
+async function fetchRetry(url, options={}, ms=30000, retries=2, backoffMs=600){
+  let lastErr = null;
+  for (let attempt = 0; attempt <= retries; attempt++){
+    try{
+      const res = await fetchWithTimeout(url, options, ms);
+      if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res;
+    }catch(e){
+      lastErr = e;
+      if (attempt < retries){
+        await new Promise(r => setTimeout(r, backoffMs * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+  throw lastErr;
+}
+
+
 // --- JSON helper with timeout + no-store cache ---
 async function fetchJSONWithTimeout(url, opts={}, ms=60000){
   const c = new AbortController();
@@ -1639,7 +1659,7 @@ async function handleBundleClick(item){
 }
 
 // =====================================================
-// Heatmap (server PNG first; fallback to client IG; fallback-fallback to seed density)
+// Heatmap (server PNG → retry; then /explain → client PNG; else seed-density PNG)
 // =====================================================
 async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
@@ -1649,58 +1669,47 @@ async function handleHeatmapClick(item){
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
-  if(!CURRENT_JOB_ID){
-    return clientExplainHeatmapFallback(item, mode);
-  }
-
-  const interactionId = item.interaction_id || null;
-  if(!interactionId){
-    return clientExplainHeatmapFallback(item, mode);
-  }
-
+  // If competitor mode chosen but row has no competitor, switch to target
   if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
     setHTML($('modal-content'), formatWarn('This row has no competitor. Showing IG for target instead.') + smallSpinner());
-    return clientExplainHeatmapFallback(item, 'ig_target');
   }
 
-  try{
-    const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(
-      HEATMAP_PNG_URL(CURRENT_JOB_ID, interactionId, mode, steps),
-      { method:'GET', headers },
-      30000
-    );
+  const effMode = (mode === 'ig_competitor' && !(item.competitor_id||'').trim()) ? 'ig_target' : mode;
 
-    if(!res.ok){ throw new Error('PNG fetch failed'); }
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
+  // 1) Try server PNG (fastest & prettiest) with retries
+  if(CURRENT_JOB_ID && item.interaction_id){
+    try{
+      const headers = await getNonceOrKeyHeaders();
+      const res = await fetchRetry(
+        HEATMAP_PNG_URL(CURRENT_JOB_ID, item.interaction_id, effMode, steps),
+        { method:'GET', headers },
+        45000,        // timeout per attempt
+        2,            // retries
+        700           // backoff
+      );
 
-    const title = `Heatmap (${mode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
-    const toolbar = `
-      <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
-      <button id="hm-save"  class="toolbar-btn">Download PNG</button>
-    `;
-    const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
-    openModal(title, html, toolbar);
-
-    const openBtn = $('hm-open');
-    const saveBtn = $('hm-save');
-    if(openBtn) bindOnce(openBtn, 'click', () => {
-      const w = window.open(url, '_blank');
-      if(w) w.opener = null;
-    }, 'hmOpenOnce');
-    if(saveBtn) bindOnce(saveBtn, 'click', () => {
-      const a = document.createElement('a');
-      a.href = url; a.download = `${interactionId}_${mode}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }, 'hmSaveOnce');
-
-  }catch(_){
-    await clientExplainHeatmapFallback(item, mode);
+      // Success → show server PNG with buttons
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const title = `Heatmap (${effMode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
+      const toolbar = `
+        <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
+        <button id="hm-save"  class="toolbar-btn">Download PNG</button>
+      `;
+      const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+      openModal(title, html, toolbar);
+      bindOnce($('hm-open'),'click',()=>{ const w = window.open(url,'_blank'); if(w) w.opener = null; }, 'hmOpenOnce');
+      bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = url; a.download = `${item.interaction_id}_${effMode}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveOnce');
+      return;
+    }catch(_){ /* fall through to client path */ }
   }
+
+  // 2) Client path: call /explain and render to PNG on canvas
+  await clientExplainHeatmapFallback(item, effMode, true); // true = force canvas-PNG
 }
 
-async function clientExplainHeatmapFallback(item, forcedMode){
+async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=false){
   try{
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
@@ -1721,68 +1730,98 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
     const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
 
+    // Special case: seed density requested
     if(uiMode === 'seed_density'){
-      const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      setHTML($('modal-content'), html);
+      const density = computeSeedDensityArray(targetId, targetSeq);
+      const vals = normalizeArray(density);
+      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density', `${(item.interaction_id || 'local')}_seed_density.png`);
       return;
     }
 
     setHTML($('modal-content'), smallSpinner('Computing attributions...'));
 
+    // Try /explain with retry
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(EXPLAIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({
-        mirna_seq: toRNA(mirnaSeq),
-        target_seq: targetSeq,
-        competitor_seq: compSeq || undefined,
-        steps: uiSteps,
-        mode: uiMode
-      })
-    }, 30000);
+    const body = JSON.stringify({
+      mirna_seq: toRNA(mirnaSeq),
+      target_seq: targetSeq,
+      competitor_seq: compSeq || undefined,
+      steps: uiSteps,
+      mode: uiMode
+    });
 
-    if(!res.ok){
-      const fallback = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      const aaNote = (tRes.converted || cRes.converted)
-        ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
-      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${aaNote}${fallback}</div>`);
+    let data = null;
+    try{
+      const res = await fetchRetry(EXPLAIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body
+      }, 45000, 1, 700);
+      data = await res.json();
+    }catch(_){ data = null; }
+
+    if(data && (Array.isArray(data.target_attrib) || Array.isArray(data.attribution))){
+      const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : data.attribution;
+      const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+
+      const targVals = normalizeArray(targAttr.slice(0, targetSeq.length));
+      const titleT = `IG → Target — ${targetId}`;
+      const cnvT = makeHeatCanvas(targetSeq, targVals, titleT);
+
+      // If competitor IG requested and available, show that one; else show target
+      if(uiMode === 'ig_competitor' && compSeq && Array.isArray(compAttr)){
+        const cVals = normalizeArray(compAttr.slice(0, compSeq.length));
+        const titleC = `IG → Competitor — ${compId}`;
+        const cnvC = makeHeatCanvas(compSeq, cVals, titleC);
+        // stack both canvases vertically into one PNG
+        const stack = document.createElement('canvas');
+        const pad = 12;
+        const W = Math.max(cnvT.width, cnvC.width);
+        const H = cnvT.height + cnvC.height + pad;
+        stack.width = W; stack.height = H;
+        const g = stack.getContext('2d');
+        g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+        g.drawImage(cnvT, 0, 0);
+        g.drawImage(cnvC, 0, cnvT.height + pad/2);
+        showCanvasAsModalPNG(stack, 'Heatmap — IG (target + competitor)', `${(item.interaction_id||'local')}_ig_both.png`);
+      }else{
+        showCanvasAsModalPNG(cnvT, 'Heatmap — IG → Target', `${(item.interaction_id||'local')}_ig_target.png`);
+      }
+
+      // AA→NT note (informational)
+      if(tRes.converted || cRes.converted){
+        const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
+        appendHTML($('modal-content'),
+          `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`
+        );
+      }
       return;
     }
 
-    const data = await res.json();
-    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : (Array.isArray(data.attribution) ? data.attribution : []);
-    const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
-
-    const targAttrTrim = targAttr.slice(0, targetSeq.length);
-    const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
-
-    let html = '';
-
-    if(uiMode === 'ig_target'){
-      html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
-    }
-    if((uiMode === 'ig_competitor') && compSeq){
-      html += `<div style="height:12px;"></div>`;
-      html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
-    }
-    if(tRes.converted || cRes.converted){
-      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-      html += `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
-    }
-
-    setHTML($('modal-content'), html);
+    // 3) Final fallback — seed density but still as a PNG image
+    const density = computeSeedDensityArray(targetId, targetSeq);
+    const vals = normalizeArray(density);
+    const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+    const aaNote = (tRes.converted || cRes.converted)
+      ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
+    showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
+    appendHTML($('modal-content'), aaNote);
 
   }catch(err){
+    // absolute last resort: textual message + density if possible
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
-    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
     const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
     const targetSeq= tRes.seq;
-    const html = (mirnaSeq && targetSeq)
-      ? `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq)}</div>`
-      : formatError(err?.message || 'Unexpected error during explanation.');
-    setHTML($('modal-content'), html);
+    if (mirnaId && targetSeq){
+      const density = computeSeedDensityArray(targetId, targetSeq);
+      const vals = normalizeArray(density);
+      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
+    }else{
+      setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
+    }
   }
 }
 
@@ -1855,6 +1894,86 @@ function viridisColor(t, alpha=1.0){
   const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
   return `rgba(${r},${g},${b},${alpha})`;
 }
+
+// ============ Canvas heatmap helpers (guarantee a PNG) ============
+
+// Normalize an array of numbers to 0..1 (abs)
+function normalizeArray(arr){
+  const max = Math.max(1e-12, ...arr.map(v => Math.abs(v || 0)));
+  return arr.map(v => Math.abs(v || 0) / max);
+}
+
+// Draw a letter-strip heatmap to canvas (Viridis blocks + base letters)
+function makeHeatCanvas(seq, values01, titleText){
+  const pad = 14, bw = 12, gap = 2, bh = 22;
+  const W = pad*2 + (bw + gap) * seq.length;
+  const H = pad*2 + bh + 26;
+
+  const c = document.createElement('canvas');
+  c.width = Math.max(200, W);
+  c.height = H;
+  const g = c.getContext('2d');
+
+  // background
+  g.fillStyle = '#ffffff'; g.fillRect(0,0,c.width,c.height);
+
+  // title
+  if (titleText){
+    g.fillStyle = '#111';
+    g.font = '600 14px ui-monospace, Menlo, Consolas, monospace';
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(titleText, pad, 6);
+  }
+
+  // strip
+  const y = pad + 14;
+  g.font = 'bold 12px ui-monospace, Menlo, Consolas, monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+
+  for (let i=0;i<seq.length;i++){
+    const x = pad + i*(bw + gap);
+    const v = Math.max(0, Math.min(1, values01[i] || 0));
+    g.fillStyle = viridisColor(v, 0.95);
+    g.fillRect(x, y, bw, bh);
+    g.fillStyle = '#000';
+    g.fillText(seq[i] || '', x + bw/2, y + bh/2);
+  }
+
+  // border
+  g.strokeStyle = '#e5e7eb';
+  g.strokeRect(0.5, 0.5, c.width-1, c.height-1);
+
+  return c;
+}
+
+// Show a canvas as PNG in the modal with “Open” & “Download”
+function showCanvasAsModalPNG(canvas, title, filename){
+  const data = canvas.toDataURL('image/png');
+  const img  = `<img id="hm-img" src="${data}" alt="Heatmap" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+  const tools = `
+    <button id="hm-open" class="toolbar-btn">Open in new tab</button>
+    <button id="hm-save" class="toolbar-btn">Download PNG</button>
+  `;
+  openModal(title, img, tools);
+  bindOnce($('hm-open'),'click',()=>{ const w = window.open(data,'_blank'); if(w) w.opener = null; }, 'hmOpenCanvas');
+  bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = data; a.download = filename||'heatmap.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
+}
+
+// Compute seed-density array (0..max counts) for a target
+function computeSeedDensityArray(targetId, targetSeq){
+  const L = targetSeq.length;
+  const density = new Array(L).fill(0);
+  if(Array.isArray(LAST_SEED_HITS)){
+    LAST_SEED_HITS
+      .filter(h => h.molecule === 'target' && h.id === targetId)
+      .forEach(h=>{
+        for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
+      });
+  }
+  return density;
+}
+
 
 // =====================================================
 // Seed Sites (exact base-level coordinates) — RANGE-AWARE + tolerant lookup + CSV export
