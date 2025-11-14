@@ -6777,3 +6777,60 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-15 03:29:43,856 | INFO | 127.0.0.1 - - [15/Nov/2025 03:29:43] "GET /config HTTP/1.1" 200 -
 2025-11-15 03:29:44,442 | INFO | 127.0.0.1 - - [15/Nov/2025 03:29:44] "GET /config HTTP/1.1" 200 -
 2025-11-15 03:30:11,383 | INFO | 127.0.0.1 - - [15/Nov/2025 03:30:11] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:30:29,805 | INFO | 127.0.0.1 - - [15/Nov/2025 03:30:29] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:38:15,415 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-15 03:38:15,865 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.5.0.2:8080
+2025-11-15 03:38:15,865 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-15 03:59:07,856 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:07] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:59:45,064 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:45] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:59:56,577 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:56] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 03:59:58,308 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:58] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:59:58,780 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:58] "GET /config HTTP/1.1" 200 -
+2025-11-15 03:59:58,851 | INFO | 127.0.0.1 - - [15/Nov/2025 03:59:58] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:00:04,576 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:04] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:00:12,232 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:12] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:00:12,632 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:12] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:00:13,130 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:13] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:00:14,012 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:14] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:00:56,999 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:56] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:00:57,774 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:57] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:00:58,302 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:58] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:00:59,780 | INFO | 127.0.0.1 - - [15/Nov/2025 04:00:59] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:01:16,607 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:16] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:21,731 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:21] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:01:22,089 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:22] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:22,543 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:22] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:23,876 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:23] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:01:48,366 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:48] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:48,682 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:48] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:49,154 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:49] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:01:49,804 | INFO | 127.0.0.1 - - [15/Nov/2025 04:01:49] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:02:04,989 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:04] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:02:05,454 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:05] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:02:05,998 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:05] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:02:09,510 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:09] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:02:58,932 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:58] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:02:59,713 | INFO | 127.0.0.1 - - [15/Nov/2025 04:02:59] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:02,278 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:02] "POST /predict HTTP/1.1" 200 -
+2025-11-15 04:03:10,738 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:10] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:11,173 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:11] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:11,745 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:11] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:37,874 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:37] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:48,243 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:48] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:03:49,157 | INFO | 127.0.0.1 - - [15/Nov/2025 04:03:49] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:04:02,282 | INFO | 127.0.0.1 - - [15/Nov/2025 04:04:02] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:04:02,591 | INFO | 127.0.0.1 - - [15/Nov/2025 04:04:02] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:04:06,258 | INFO | 127.0.0.1 - - [15/Nov/2025 04:04:06] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:04:08,990 | WARNING | Failed to send GA event: HTTPSConnectionPool(host='www.google-analytics.com', port=443): Read timed out. (read timeout=2)
+2025-11-15 04:04:30,918 | INFO | 127.0.0.1 - - [15/Nov/2025 04:04:30] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:04:31,463 | INFO | 127.0.0.1 - - [15/Nov/2025 04:04:31] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:05:12,158 | INFO | 127.0.0.1 - - [15/Nov/2025 04:05:12] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:07:55,763 | INFO | 127.0.0.1 - - [15/Nov/2025 04:07:55] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:10:12,661 | INFO | 127.0.0.1 - - [15/Nov/2025 04:10:12] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:11:00,010 | INFO | 127.0.0.1 - - [15/Nov/2025 04:11:00] "GET /config HTTP/1.1" 200 -
+2025-11-15 04:11:37,670 | INFO | 127.0.0.1 - - [15/Nov/2025 04:11:37] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 04:11:39,552 | INFO | 127.0.0.1 - - [15/Nov/2025 04:11:39] "POST /predict HTTP/1.1" 200 -
