@@ -504,6 +504,38 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   return sources;
 }
 
+// --- ultra-smooth scroll animator (cubic ease, cancelable) ---
+let __scrollAnim = null;
+function cancelScrollAnim(){
+  if (__scrollAnim){ cancelAnimationFrame(__scrollAnim.rafId); __scrollAnim = null; }
+}
+function animateScrollTo(targetY, duration = 450){
+  cancelScrollAnim();
+  const startY = window.pageYOffset;
+  const dist   = targetY - startY;
+  const start  = performance.now();
+  const ease = t => (t < 0.5) ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; // easeInOutCubic
+
+  function step(now){
+    const p = Math.min(1, (now - start) / duration);
+    const y = Math.round(startY + dist * ease(p));
+    window.scrollTo(0, y);
+    if (p < 1 && __scrollAnim) {
+      __scrollAnim.rafId = requestAnimationFrame(step);
+    } else {
+      __scrollAnim = null;
+      // snap exactly to the pixel-perfect final target (no visible jump)
+      window.scrollTo(0, targetY);
+    }
+  }
+  __scrollAnim = { rafId: requestAnimationFrame(step) };
+
+  // If the user interacts, stop the animation so it feels native
+  ['wheel','touchstart','keydown','mousedown'].forEach(ev =>
+    window.addEventListener(ev, cancelScrollAnim, { once:true, passive:true })
+  );
+}
+
 // Apply premium sticky gap ONLY to the tab bar, and paint the gap white (solid)
 function ensureStickyGapForTabs(){
   // Never apply sticky-gap to nav/header
@@ -555,29 +587,26 @@ function ensureStickyGapForTabs(){
 
 // Smooth scroll so the *first heading inside the section* sits exactly under
 // the sticky header + white gap + tabbar height (no extra lines).
-function scrollToCardTop(id, smooth = true){
+function scrollToCardTop(id){
   const el = document.getElementById(id);
   if(!el) return;
 
-  // Ignore any accidental scroll-margin on the element
+  // zero out any element scroll-margin so math is exact
   const prevSM = el.style.scrollMarginTop;
   el.style.scrollMarginTop = '0px';
 
-  const desired = getStickySum(true); // header + white gap + tab bar height
-  const absTop  = window.pageYOffset + el.getBoundingClientRect().top;
-  const targetY = Math.max(0, Math.round(absTop - desired));
+  // ensure layout is stable before measuring
+  requestAnimationFrame(() => {
+    const desired = getStickySum(true); // header + white gap + tab bar height
+    const absTop  = window.pageYOffset + el.getBoundingClientRect().top;
+    const targetY = Math.max(0, Math.round(absTop - desired));
 
-  window.scrollTo({ top: targetY, left: 0, behavior: smooth ? 'smooth' : 'auto' });
-
-  // One verification pass after layout settles
-  setTimeout(() => {
-    const delta = Math.round(el.getBoundingClientRect().top) - desired;
-    if (Math.abs(delta) > 1){
-      window.scrollBy({ top: delta, behavior: 'auto' });
-    }
-    el.style.scrollMarginTop = prevSM;
-  }, 120);
+    animateScrollTo(targetY, 480);  // smooth as butter
+    // restore
+    setTimeout(() => { el.style.scrollMarginTop = prevSM; }, 0);
+  });
 }
+
 
 
 // =====================================================
