@@ -62,21 +62,29 @@ const GUARDS = {
 // =====================================================
 // API routing and auth
 // =====================================================
-const LOCAL_BASE = "http://127.0.0.1:5500";
-const PROD_BASE  = window.location.origin.replace(/\/$/, "") + "/mirna";
+
+// ⬇️ This is the FLASK API in development (NOT the front-end)
+// If your app.py runs on 5000, change 8080 → 5000.
+const LOCAL_BASE = "http://127.0.0.1:8080";
+
+// ⬇️ This is the FLASK API in production.
+// If your backend is on some other URL, put that exact base here.
+const PROD_BASE  = "https://mirna.aamarzan.com";
+
 const isLocal =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
+
 const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
 const API_URL        = `${BASE_URL}/predict`;
 const PRECHECK_URL   = `${BASE_URL}/precheck`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
-const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;            // JSON
+const DOWNLOAD_URL   = (jobId) => `${BASE_URL}/download/${jobId}`;
 const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
 const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
-const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
-// NOTE: 'kind' now accepts 'target' | 'competitor' | 'mirna'
+const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) =>
+  `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
 const STRUCTURE_URL   = (jobId, kind) => `${BASE_URL}/structure/${jobId}/${kind}`;
 
 const NONCE_URL      = `${BASE_URL}/nonce`;
