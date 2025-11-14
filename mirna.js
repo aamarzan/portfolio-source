@@ -619,6 +619,11 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   return sources;
 }
 
+function scrollPageToAbsoluteTop(){
+  cancelScrollAnim();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // --- ultra-smooth scroll animator (cubic ease, cancelable) ---
 let __scrollAnim = null;
 function cancelScrollAnim(){
@@ -650,6 +655,16 @@ function animateScrollTo(targetY, duration = 450){
     window.addEventListener(ev, cancelScrollAnim, { once:true, passive:true })
   );
 }
+
+document.addEventListener('click', (e)=>{
+  const a = e.target && e.target.closest && e.target.closest('a');
+  if(!a) return;
+  const label = (a.textContent || '').toLowerCase();
+  const href  = a.getAttribute('href') || '';
+  if (/affinity predictor/i.test(label) || /\/mirna\b/i.test(href)){
+    setTimeout(scrollPageToAbsoluteTop, 0);
+  }
+}, true);
 
 // Apply premium sticky gap ONLY to the tab bar, and paint the gap white (solid)
 function ensureStickyGapForTabs(){
@@ -1628,6 +1643,14 @@ function hasAnyStructure(){
   return (tgt + cmp + mir + legacy) > 0;
 }
 
+function adaptiveStepsFor(seqLen){
+  if(!Number.isFinite(seqLen) || seqLen<=0) return 48;
+  if(seqLen <= 60)  return 48;
+  if(seqLen <= 120) return 40;
+  if(seqLen <= 240) return 32;
+  return 24;
+}
+
 // === Inject range/tolerant filter chips (toggle behavior) ===
 function injectResultFilters(){
   if($('result-filters')) return;
@@ -1686,7 +1709,7 @@ function injectAnalysisControls(container){
         <option value="seed_density">Seed density (fast)</option>
       </select>
     </label>
-    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
+    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="48" min="24" max="128" step="2"></label>
 
     <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
     <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
@@ -1761,7 +1784,13 @@ async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
-  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64));
+  let steps = parseInt(stepsInp?.value || '', 10);
+  if(!Number.isFinite(steps)){
+    const tId   = item.target_id || '';
+    const tSeq  = lookupTolerant(CURRENT_INPUTS.targets, tId) || '';
+    steps = adaptiveStepsFor((tSeq || '').length);
+  }
+  steps = Math.max(24, Math.min(128, steps));
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
@@ -1824,7 +1853,11 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
     }
 
     const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-    const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
+    let uiSteps = parseInt(byQS('#heatmap-steps')?.value || '', 10);
+    if(!Number.isFinite(uiSteps)){
+      uiSteps = adaptiveStepsFor(targetSeq.length);
+    }
+    uiSteps = Math.max(24, Math.min(128, uiSteps));
 
     // Special case: seed density requested
     if(uiMode === 'seed_density'){
@@ -1844,7 +1877,8 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
       target_seq: targetSeq,
       competitor_seq: compSeq || undefined,
       steps: uiSteps,
-      mode: uiMode
+      mode: uiMode,
+      fast: uiSteps <= 32   // <— harmless hint for server
     });
 
     let data = null;
@@ -2952,7 +2986,7 @@ function wireTabButtonsOnce(){
           setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
         }
       }
-      if(name.includes('workflow')){ if(loader) hide(loader); }
+      if(name.includes('workflow')){ scrollPageToAbsoluteTop(); if(loader) hide(loader); }
     }, 'tabClickSnap');
   });
 
