@@ -991,8 +991,9 @@ def precheck():
 @app.route('/predict', methods=['POST'])
 @limiter.limit("1000 per 15 minutes")
 def start_prediction():
-    # Strict Content-Type check
-    if request.mimetype != 'multipart/form-data':
+    # Tolerant Content-Type check
+    ctype = request.content_type or ""
+    if not ctype.lower().startswith('multipart/form-data'):
         return jsonify({"error": "Bad request"}), 400
 
     # Inputs

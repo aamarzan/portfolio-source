@@ -388,7 +388,7 @@ function injectPremiumStyles(){
 
 // Map a tab button → target card id (robust: data- attrs, aria-controls, text label, href)
 function targetIdFromButton(btn){
-  if(!btn) return null;
+  if (!btn) return null;
   const byAttr = btn.getAttribute('data-target') || btn.dataset?.target || btn.getAttribute('aria-controls');
   if (byAttr && document.getElementById(byAttr)) return byAttr;
 
@@ -396,8 +396,8 @@ function targetIdFromButton(btn){
   if (href && href.startsWith('#') && document.getElementById(href.slice(1))) return href.slice(1);
 
   const label = (btn.textContent || '').toLowerCase().trim();
-  if (/^work(\s*flow)?$/.test(label)) return 'workflow-tab';
-  if (/^inputs?$/.test(label))        return 'inputs-tab';
+  if (/^work(\s*flow)?$/.test(label)) return 'intro-tab';
+  if (/^inputs?$/.test(label))        return 'input-tab';
   if (/advanced/.test(label))         return 'advanced-tab';
   if (/results?/.test(label))         return 'results-tab';
   return null;
@@ -411,12 +411,14 @@ function smallSpinner(text='Working...'){
 }
 
 // --- fetch with AbortController timeout (works for GET/POST) ---
-function fetchWithTimeout(url, options={}, ms=30000){
+function fetchWithTimeout(url, options = {}, ms = 30000) {
   const ac = new AbortController();
-  const timer = setTimeout(()=>ac.abort(), ms);
-  return fetch(url, { ...options, signal: ac.signal })
-    .finally(()=>clearTimeout(timer));
+  const timer = setTimeout(() => ac.abort(), ms);
+  // merge options + our signal
+  const merged = Object.assign({}, options || {}, { signal: ac.signal });
+  return fetch(url, merged).finally(() => clearTimeout(timer));
 }
+
 
 function isCrossOrigin(url){
   try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
@@ -923,6 +925,100 @@ function sanitizeAnchorsAndHashes(){
   }, true);
 }
 
+// --- GLOBAL NAV SANITIZER + LATE DOM PATCHING ---
+function globalNavSanitizer(){
+  // kill any anchors that would navigate to '?' or '#workflow' or bare '#'
+  document.addEventListener('click', (e) => {
+    const a = e.target?.closest?.('a[href]');
+    if(!a) return;
+    const href = (a.getAttribute('href')||'').trim();
+    if (href === '?' || href === '#' || /^#workflow/i.test(href) || /^\?/.test(href)){
+      e.preventDefault(); e.stopPropagation();
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, true);
+
+  // strip accidental query/hash immediately on load
+  if (window.location.search || window.location.hash){
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // MutationObserver: scrub anchors/forms added later with troublesome targets
+  const scrubNode = (node) => {
+    if(node.nodeType !== 1) return;
+    // anchors
+    if(node.matches?.('a[href]')){
+      const href = (node.getAttribute('href')||'').trim();
+      if (href === '?' || href === '#' || /^#workflow/i.test(href) || /^\?/.test(href)){
+        node.removeAttribute('href');
+        node.setAttribute('role','button');
+      }
+    }
+    // submit buttons with formaction
+    if(node.matches?.('button[formaction],input[formaction]')){
+      const fa = (node.getAttribute('formaction')||'').trim();
+      if (fa === '?' || /^\?/.test(fa) || /^#/.test(fa)) node.removeAttribute('formaction');
+    }
+    // forms with "action" set to '?' (or only a query/hash)
+    if(node.matches?.('form[action]')){
+      const act = (node.getAttribute('action')||'').trim();
+      if (act === '?' || /^\?/.test(act) || /^#/.test(act)) node.removeAttribute('action');
+    }
+    // recurse a little: handle descendants in batch
+    node.querySelectorAll?.('a[href],button[formaction],input[formaction],form[action]').forEach(scrubNode);
+  };
+
+  const mo = new MutationObserver((muts)=>{
+    muts.forEach(m=>{
+      m.addedNodes.forEach(scrubNode);
+      if (m.target) scrubNode(m.target);
+    });
+  });
+  mo.observe(document.documentElement, { subtree:true, childList:true, attributes:true, attributeFilter:['href','action','formaction'] });
+
+  // first pass
+  document.querySelectorAll('a[href],button[formaction],input[formaction],form[action]').forEach(scrubNode);
+}
+
+// --- SUPER-ROBUST SUBMIT INTERCEPTOR (not tied to #prediction-form) ---
+function interceptAnyPredictionSubmit(){
+  window.addEventListener('submit', (ev) => {
+    const form = ev.target;
+    if(!(form instanceof HTMLFormElement)) return;
+
+    // Heuristic: treat as prediction form if it contains the primary miRNA textarea
+    const hasPrimary = !!form.querySelector?.('#primary-seqs, textarea[name="primary-seqs"]');
+    if(!hasPrimary) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation?.();
+
+    // neutralize any leftover action/formaction
+    form.removeAttribute('action');
+    form.querySelectorAll('[formaction]').forEach(el=>el.removeAttribute('formaction'));
+
+    // clean URL now, then run our flow
+    history.replaceState(null, '', window.location.pathname);
+    handleSubmit(ev);
+  }, true);
+}
+
+// --- GUARANTEED RESULTS SNAP (if tab ids differ, still scroll to results) ---
+function forceResultsView(){
+  const resultsBtn = Array.from(document.querySelectorAll('.tab-btn, button, a'))
+    .find(b => /result/i.test(b.textContent||'') && (b.id||'').toLowerCase() !== 'run-prediction');
+  if (resultsBtn){
+    const id = (resultsBtn.getAttribute('data-target') || resultsBtn.getAttribute('aria-controls') || '').trim();
+    if (id && document.getElementById(id)) { openTab(resultsBtn, id); }
+  }
+  const rc = document.getElementById('results-container');
+  if (rc){
+    rc.scrollIntoView({ block:'start', behavior:'smooth' });
+    // hard snap to exact top after smooth scroll settles
+    requestAnimationFrame(()=> rc.scrollIntoView({ block:'start', behavior:'auto' }));
+  }
+}
 
 // =====================================================
 // Initialization
@@ -935,6 +1031,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   ensureStickyGapForTabs(); // add premium gap to sticky nav
   upgradeFastaPickers();
   sanitizeAnchorsAndHashes();
+  globalNavSanitizer();
+  interceptAnyPredictionSubmit();
+
   window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');
@@ -1241,14 +1340,26 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
+  //previous resultsTabButton
   // Switch to results tab & scroll to top of results (sticky aware)
-  const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
+  //const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
+  //  .find(b => /results/i.test(b.textContent || ''));
+  //if (resultsTabButton) {
+  //  openTab(resultsTabButton, 'results-tab');
+    // OLD: scrollToCardTop('results-tab');
+  //  scrollTabsToTop(); // NEW: snap the tabs to the exact top
+  //}
+
+  //forceResultsView();
+
+  // simplified flow inside handleSubmit
+  const resultsTabButton = [...document.querySelectorAll('button.tab-btn')]
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
     openTab(resultsTabButton, 'results-tab');
-    // OLD: scrollToCardTop('results-tab');
-    scrollTabsToTop(); // NEW: snap the tabs to the exact top
+    scrollTabsToTop();
   }
+  forceResultsView(); // ensures scrolling into results card
 
   // Show loader
   if(loader){
@@ -3192,8 +3303,6 @@ function getStickySum(includeTabs = true){
   const tabs = includeTabs ? getTabsBarHeight() : 0;
   return off + gap + tabs;
 }
-
-
 
 // =====================================================
 // Modal (singleton)
