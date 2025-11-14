@@ -69,6 +69,22 @@ const isLocal =
   window.location.hostname === "127.0.0.1";
 const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
 
+// ---- SAME-ORIGIN FALLBACKS (handles aamarzan.com ↔ mirna.aamarzan.com)
+const BASE_CANDIDATES = Array.from(new Set([
+  BASE_URL,
+  window.location.origin,                           // same-origin proxy / reverse-proxy
+].filter(Boolean)));
+
+function rebaseTo(url, base){
+  try{
+    const u = new URL(url, window.location.href);
+    return base.replace(/\/+$/,'') + u.pathname + u.search + u.hash;
+  }catch(_){
+    // if relative, leave as-is
+    return url;
+  }
+}
+
 const API_URL        = `${BASE_URL}/predict`;
 const PRECHECK_URL   = `${BASE_URL}/precheck`;
 const PROGRESS_URL   = (jobId) => `${BASE_URL}/progress/${jobId}`;
@@ -260,6 +276,105 @@ function fetchWithTimeout(url, options={}, ms=30000){
     .finally(()=>clearTimeout(timer));
 }
 
+// Detect the browser's generic CORS/network failure
+function isNetworkFetchError(e){
+  return e && (e.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(e.message||''));
+}
+function isCrossOrigin(url){
+  try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
+  catch(_){ return false; }
+}
+
+// --- fetch with AbortController timeout (works for GET/POST) ---
+function fetchWithTimeout(url, options={}, ms=30000){
+  const ac = new AbortController();
+  const timer = setTimeout(()=>ac.abort(), ms);
+  return fetch(url, { ...options, signal: ac.signal })
+    .finally(()=>clearTimeout(timer));
+}
+
+// Detect the browser's generic CORS/network failure
+function isNetworkFetchError(e){
+  return e && (
+    e.name === 'TypeError' ||
+    e.name === 'AbortError' ||
+    /Failed to fetch|NetworkError|The operation was aborted/i.test(e.message||'')
+  );
+}
+function isCrossOrigin(url){
+  try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
+  catch(_){ return false; }
+}
+
+// One path to rule them all:
+// 1) try as-is;
+// 2) if CORS/network fail and custom headers present, retry w/o custom headers;
+// 3) if still failing, try same-origin BASE_CANDIDATES (with and without custom headers).
+async function smartFetch(url, options={}, ms=30000){
+  const hasCustom = !!((options.headers||{})['X-API-KEY'] || (options.headers||{})['X-Nonce']);
+  const stripAuth = (opts) => {
+    const o = { ...opts, headers: { ...(opts.headers||{}) } };
+    delete o.headers['X-API-KEY']; delete o.headers['X-Nonce'];
+    return o;
+  };
+  const tryOnce = (u, opts) => fetchWithTimeout(u, opts, ms);
+
+  // 1) try as-is
+  try{ return await tryOnce(url, options); }
+  catch(e1){
+    if (!isNetworkFetchError(e1)) throw e1;
+
+    // 2) cross-origin + custom headers → retry without them
+    if (isCrossOrigin(url) && hasCustom){
+      try{ return await tryOnce(url, stripAuth(options)); }catch(e2){ /* continue */ }
+    }
+
+    // 3) rebase to alternative bases (same-origin first), both with and w/o custom headers
+    for (const base of BASE_CANDIDATES){
+      const alt = rebaseTo(url, base);
+      if (alt === url) continue;
+
+      try{ return await tryOnce(alt, options); }catch(e3){ /* try stripped */ }
+      if (hasCustom){
+        try{ return await tryOnce(alt, stripAuth(options)); }catch(e4){ /* keep looping */ }
+      }
+    }
+
+    // nothing worked
+    throw e1;
+  }
+}
+
+// JSON helpers using smartFetch
+async function robustJSON(url, opts={}, ms=60000){
+  const r = await smartFetch(url, opts, ms);
+  if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return await r.json();
+}
+
+// Retry helper now uses smartFetch so it inherits header removal + base rebasing
+async function fetchRetry(url, options={}, ms=30000, retries=2, backoffMs=600){
+  let lastErr = null;
+  for (let attempt = 0; attempt <= retries; attempt++){
+    try{
+      const res = await smartFetch(url, options, ms);
+      if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res;
+    }catch(e){
+      lastErr = e;
+      if (attempt < retries) await new Promise(r => setTimeout(r, backoffMs * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+// JSON + timeout + no-store (but through smartFetch)
+async function fetchJSONWithTimeout(url, opts={}, ms=60000){
+  const r = await smartFetch(url, { ...opts, cache:'no-store' }, ms);
+  if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return await r.json();
+}
+
 // --- JSON helper with timeout + no-store cache ---
 async function fetchJSONWithTimeout(url, opts={}, ms=60000){
   const c = new AbortController();
@@ -429,7 +544,7 @@ function resolveSeqWithAAHandling(anyId, pool){
 // =====================================================
 async function loadConfig(){
   try{
-    const res = await fetch(CONFIG_URL, { method:'GET' });
+    const res = await smartFetch(CONFIG_URL, { method:'GET' });
     if(res.ok){
       const cfg = await res.json();
       CONFIG = { ...CONFIG, ...cfg };
@@ -444,7 +559,7 @@ async function getNonceOrKeyHeaders() {
   const h = {};
   try {
     if (CONFIG && CONFIG.use_nonce) {
-      const r = await fetch(NONCE_URL, { method: 'GET', cache: 'no-store' });
+      const r = await smartFetch(NONCE_URL, { method: 'GET', cache: 'no-store' });
       if (r.ok) {
         const j = await r.json();
         if (j && j.nonce) h['X-Nonce'] = j.nonce;
@@ -999,7 +1114,7 @@ async function handleSubmit(event){
 
     // 1) Start
     if(loader) text(loader, "Job started. Preparing batches...");
-    const startRes = await fetch(API_URL, { method:'POST', headers:authHeaders, body:formData });
+    const startRes = await smartFetch(API_URL, { method:'POST', headers:authHeaders, body:formData }, 60000);
 
     if(!startRes.ok){
       let errorMsg;
@@ -1020,7 +1135,7 @@ async function handleSubmit(event){
     let lastTick = Date.now();
 
     const poll = async () => {
-      const res = await fetch(PROGRESS_URL(job_id), { method:'GET' });
+      const res = await smartFetch(PROGRESS_URL(job_id), { method:'GET' }, 30000);
       if(!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
@@ -1074,12 +1189,13 @@ async function handleSubmit(event){
           const headers = await getNonceOrKeyHeaders();
           let finalDataSoft = null;
           try {
-            finalDataSoft = await fetchJSONWithTimeout(
+            finalDataSoft = await robustJSON(
               DOWNLOAD_URL(job_id),
               { method:'GET', headers },
               60000
             );
           } catch(_){}
+
           if(finalDataSoft){
             const rows = finalDataSoft.results || [];
             if(rows.length){
@@ -1103,7 +1219,7 @@ async function handleSubmit(event){
         if(loader) text(loader, "Fetching final results...");
         try {
           const headers = await getNonceOrKeyHeaders();
-          const finalData = await fetchJSONWithTimeout(
+          const finalData = await robustJSON(
             DOWNLOAD_URL(job_id),
             { method:'GET', headers },
             60000
@@ -1152,7 +1268,7 @@ async function tryPrecheck(formData){
   const headers = await getNonceOrKeyHeaders();
   let res;
   try{
-    res = await fetchWithTimeout(PRECHECK_URL, { method:'POST', headers, body: fd }, 20000);
+    res = await smartFetch(PRECHECK_URL, { method:'POST', headers, body: fd }, 20000);
   }catch(_){ /* ignore */ }
   if(!res || !res.ok){
     const rc = $('results-container');
@@ -1337,7 +1453,7 @@ function displayResults(results, finalData=null){
       const headers = await getNonceOrKeyHeaders();
       const url = DOWNLOAD_ALL_CSV_URL(CURRENT_JOB_ID) +
         `?allow_gu=${allowGU ? 1 : 0}&max_mismatch=${Number.isFinite(maxMM)?maxMM:0}&range_aware=1&tolerant=1`;
-      const res = await fetch(url, { method:'GET', headers });
+      const res = await smartFetch(url, { method:'GET', headers });
       if(!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const dl  = URL.createObjectURL(blob);
@@ -1353,7 +1469,7 @@ function displayResults(results, finalData=null){
     if (!CURRENT_JOB_ID) { alert('No active job.'); return; }
     try {
       const headers = await getNonceOrKeyHeaders();
-      const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, { method:'GET', headers });
+      const res = await smartFetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, { method:'GET', headers });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
@@ -1611,7 +1727,7 @@ async function handleRowCsvClick(item){
   if(!interactionId){ alert('Row is missing interaction_id.'); return; }
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(DOWNLOAD_ROW_CSV_URL(CURRENT_JOB_ID, interactionId), { method:'GET', headers });
+    const res = await smartFetch(DOWNLOAD_ROW_CSV_URL(CURRENT_JOB_ID, interactionId), { method:'GET', headers });
     if(!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -1627,7 +1743,7 @@ async function handleBundleClick(item){
   if(!interactionId){ alert('Row is missing interaction_id.'); return; }
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/${interactionId}/bundle.zip`, { method:'GET', headers });
+    const res = await smartFetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/${interactionId}/bundle.zip`, { method:'GET', headers });
     if(!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -1639,7 +1755,7 @@ async function handleBundleClick(item){
 }
 
 // =====================================================
-// Heatmap (server PNG first; fallback to client IG; fallback-fallback to seed density)
+// Heatmap (server PNG → retry; then /explain → client PNG; else seed-density PNG)
 // =====================================================
 async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
@@ -1649,58 +1765,47 @@ async function handleHeatmapClick(item){
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
-  if(!CURRENT_JOB_ID){
-    return clientExplainHeatmapFallback(item, mode);
-  }
-
-  const interactionId = item.interaction_id || null;
-  if(!interactionId){
-    return clientExplainHeatmapFallback(item, mode);
-  }
-
+  // If competitor mode chosen but row has no competitor, switch to target
   if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
     setHTML($('modal-content'), formatWarn('This row has no competitor. Showing IG for target instead.') + smallSpinner());
-    return clientExplainHeatmapFallback(item, 'ig_target');
   }
 
-  try{
-    const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(
-      HEATMAP_PNG_URL(CURRENT_JOB_ID, interactionId, mode, steps),
-      { method:'GET', headers },
-      30000
-    );
+  const effMode = (mode === 'ig_competitor' && !(item.competitor_id||'').trim()) ? 'ig_target' : mode;
 
-    if(!res.ok){ throw new Error('PNG fetch failed'); }
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
+  // 1) Try server PNG (fastest & prettiest) with retries
+  if(CURRENT_JOB_ID && item.interaction_id){
+    try{
+      const headers = await getNonceOrKeyHeaders();
+      const res = await fetchRetry(
+        HEATMAP_PNG_URL(CURRENT_JOB_ID, item.interaction_id, effMode, steps),
+        { method:'GET', headers },
+        45000,        // timeout per attempt
+        2,            // retries
+        700           // backoff
+      );
 
-    const title = `Heatmap (${mode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
-    const toolbar = `
-      <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
-      <button id="hm-save"  class="toolbar-btn">Download PNG</button>
-    `;
-    const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
-    openModal(title, html, toolbar);
-
-    const openBtn = $('hm-open');
-    const saveBtn = $('hm-save');
-    if(openBtn) bindOnce(openBtn, 'click', () => {
-      const w = window.open(url, '_blank');
-      if(w) w.opener = null;
-    }, 'hmOpenOnce');
-    if(saveBtn) bindOnce(saveBtn, 'click', () => {
-      const a = document.createElement('a');
-      a.href = url; a.download = `${interactionId}_${mode}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }, 'hmSaveOnce');
-
-  }catch(_){
-    await clientExplainHeatmapFallback(item, mode);
+      // Success → show server PNG with buttons
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const title = `Heatmap (${effMode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
+      const toolbar = `
+        <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
+        <button id="hm-save"  class="toolbar-btn">Download PNG</button>
+      `;
+      const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+      openModal(title, html, toolbar);
+      bindOnce($('hm-open'),'click',()=>{ const w = window.open(url,'_blank'); if(w) w.opener = null; }, 'hmOpenOnce');
+      bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = url; a.download = `${item.interaction_id}_${effMode}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveOnce');
+      return;
+    }catch(_){ /* fall through to client path */ }
   }
+
+  // 2) Client path: call /explain and render to PNG on canvas
+  await clientExplainHeatmapFallback(item, effMode, true); // true = force canvas-PNG
 }
 
-async function clientExplainHeatmapFallback(item, forcedMode){
+async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=false){
   try{
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
@@ -1721,68 +1826,98 @@ async function clientExplainHeatmapFallback(item, forcedMode){
     const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
     const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
 
+    // Special case: seed density requested
     if(uiMode === 'seed_density'){
-      const html = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      setHTML($('modal-content'), html);
+      const density = computeSeedDensityArray(targetId, targetSeq);
+      const vals = normalizeArray(density);
+      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density', `${(item.interaction_id || 'local')}_seed_density.png`);
       return;
     }
 
     setHTML($('modal-content'), smallSpinner('Computing attributions...'));
 
+    // Try /explain with retry
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(EXPLAIN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({
-        mirna_seq: toRNA(mirnaSeq),
-        target_seq: targetSeq,
-        competitor_seq: compSeq || undefined,
-        steps: uiSteps,
-        mode: uiMode
-      })
-    }, 30000);
+    const body = JSON.stringify({
+      mirna_seq: toRNA(mirnaSeq),
+      target_seq: targetSeq,
+      competitor_seq: compSeq || undefined,
+      steps: uiSteps,
+      mode: uiMode
+    });
 
-    if(!res.ok){
-      const fallback = renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq);
-      const aaNote = (tRes.converted || cRes.converted)
-        ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
-      setHTML($('modal-content'), `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${aaNote}${fallback}</div>`);
+    let data = null;
+    try{
+      const res = await fetchRetry(EXPLAIN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body
+      }, 45000, 1, 700);
+      data = await res.json();
+    }catch(_){ data = null; }
+
+    if(data && (Array.isArray(data.target_attrib) || Array.isArray(data.attribution))){
+      const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : data.attribution;
+      const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+
+      const targVals = normalizeArray(targAttr.slice(0, targetSeq.length));
+      const titleT = `IG → Target — ${targetId}`;
+      const cnvT = makeHeatCanvas(targetSeq, targVals, titleT);
+
+      // If competitor IG requested and available, show that one; else show target
+      if(uiMode === 'ig_competitor' && compSeq && Array.isArray(compAttr)){
+        const cVals = normalizeArray(compAttr.slice(0, compSeq.length));
+        const titleC = `IG → Competitor — ${compId}`;
+        const cnvC = makeHeatCanvas(compSeq, cVals, titleC);
+        // stack both canvases vertically into one PNG
+        const stack = document.createElement('canvas');
+        const pad = 12;
+        const W = Math.max(cnvT.width, cnvC.width);
+        const H = cnvT.height + cnvC.height + pad;
+        stack.width = W; stack.height = H;
+        const g = stack.getContext('2d');
+        g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+        g.drawImage(cnvT, 0, 0);
+        g.drawImage(cnvC, 0, cnvT.height + pad/2);
+        showCanvasAsModalPNG(stack, 'Heatmap — IG (target + competitor)', `${(item.interaction_id||'local')}_ig_both.png`);
+      }else{
+        showCanvasAsModalPNG(cnvT, 'Heatmap — IG → Target', `${(item.interaction_id||'local')}_ig_target.png`);
+      }
+
+      // AA→NT note (informational)
+      if(tRes.converted || cRes.converted){
+        const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
+        appendHTML($('modal-content'),
+          `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`
+        );
+      }
       return;
     }
 
-    const data = await res.json();
-    const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : (Array.isArray(data.attribution) ? data.attribution : []);
-    const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
-
-    const targAttrTrim = targAttr.slice(0, targetSeq.length);
-    const compAttrTrim = compSeq && compAttr ? compAttr.slice(0, compSeq.length) : null;
-
-    let html = '';
-
-    if(uiMode === 'ig_target'){
-      html += renderAttributionPanel('Target', targetSeq, targAttrTrim);
-    }
-    if((uiMode === 'ig_competitor') && compSeq){
-      html += `<div style="height:12px;"></div>`;
-      html += renderAttributionPanel('Competitor', compSeq, compAttrTrim || []);
-    }
-    if(tRes.converted || cRes.converted){
-      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-      html += `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`;
-    }
-
-    setHTML($('modal-content'), html);
+    // 3) Final fallback — seed density but still as a PNG image
+    const density = computeSeedDensityArray(targetId, targetSeq);
+    const vals = normalizeArray(density);
+    const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+    const aaNote = (tRes.converted || cRes.converted)
+      ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
+    showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
+    appendHTML($('modal-content'), aaNote);
 
   }catch(err){
+    // absolute last resort: textual message + density if possible
     const mirnaId = item.primary_molecule_id ?? item.mirna_id;
     const targetId= item.target_id ?? '';
-    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
     const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
     const targetSeq= tRes.seq;
-    const html = (mirnaSeq && targetSeq)
-      ? `<div>${formatWarn('Attribution failed. Showing seed density instead.')}${renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq)}</div>`
-      : formatError(err?.message || 'Unexpected error during explanation.');
-    setHTML($('modal-content'), html);
+    if (mirnaId && targetSeq){
+      const density = computeSeedDensityArray(targetId, targetSeq);
+      const vals = normalizeArray(density);
+      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
+    }else{
+      setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
+    }
   }
 }
 
@@ -1855,6 +1990,86 @@ function viridisColor(t, alpha=1.0){
   const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
   return `rgba(${r},${g},${b},${alpha})`;
 }
+
+// ============ Canvas heatmap helpers (guarantee a PNG) ============
+
+// Normalize an array of numbers to 0..1 (abs)
+function normalizeArray(arr){
+  const max = Math.max(1e-12, ...arr.map(v => Math.abs(v || 0)));
+  return arr.map(v => Math.abs(v || 0) / max);
+}
+
+// Draw a letter-strip heatmap to canvas (Viridis blocks + base letters)
+function makeHeatCanvas(seq, values01, titleText){
+  const pad = 14, bw = 12, gap = 2, bh = 22;
+  const W = pad*2 + (bw + gap) * seq.length;
+  const H = pad*2 + bh + 26;
+
+  const c = document.createElement('canvas');
+  c.width = Math.max(200, W);
+  c.height = H;
+  const g = c.getContext('2d');
+
+  // background
+  g.fillStyle = '#ffffff'; g.fillRect(0,0,c.width,c.height);
+
+  // title
+  if (titleText){
+    g.fillStyle = '#111';
+    g.font = '600 14px ui-monospace, Menlo, Consolas, monospace';
+    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.fillText(titleText, pad, 6);
+  }
+
+  // strip
+  const y = pad + 14;
+  g.font = 'bold 12px ui-monospace, Menlo, Consolas, monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+
+  for (let i=0;i<seq.length;i++){
+    const x = pad + i*(bw + gap);
+    const v = Math.max(0, Math.min(1, values01[i] || 0));
+    g.fillStyle = viridisColor(v, 0.95);
+    g.fillRect(x, y, bw, bh);
+    g.fillStyle = '#000';
+    g.fillText(seq[i] || '', x + bw/2, y + bh/2);
+  }
+
+  // border
+  g.strokeStyle = '#e5e7eb';
+  g.strokeRect(0.5, 0.5, c.width-1, c.height-1);
+
+  return c;
+}
+
+// Show a canvas as PNG in the modal with “Open” & “Download”
+function showCanvasAsModalPNG(canvas, title, filename){
+  const data = canvas.toDataURL('image/png');
+  const img  = `<img id="hm-img" src="${data}" alt="Heatmap" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+  const tools = `
+    <button id="hm-open" class="toolbar-btn">Open in new tab</button>
+    <button id="hm-save" class="toolbar-btn">Download PNG</button>
+  `;
+  openModal(title, img, tools);
+  bindOnce($('hm-open'),'click',()=>{ const w = window.open(data,'_blank'); if(w) w.opener = null; }, 'hmOpenCanvas');
+  bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = data; a.download = filename||'heatmap.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
+}
+
+// Compute seed-density array (0..max counts) for a target
+function computeSeedDensityArray(targetId, targetSeq){
+  const L = targetSeq.length;
+  const density = new Array(L).fill(0);
+  if(Array.isArray(LAST_SEED_HITS)){
+    LAST_SEED_HITS
+      .filter(h => h.molecule === 'target' && h.id === targetId)
+      .forEach(h=>{
+        for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
+      });
+  }
+  return density;
+}
+
 
 // =====================================================
 // Seed Sites (exact base-level coordinates) — RANGE-AWARE + tolerant lookup + CSV export
@@ -2037,7 +2252,7 @@ async function fetchStructureBlob(kind){
   if(!CURRENT_JOB_ID) return null;
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
     if(!res.ok) return null;
     const ext = inferExtFromResponse(res);
     const blob = await res.blob();
@@ -2336,7 +2551,7 @@ async function open3DOrExplain(anyId, kind /* 'target'|'competitor'|'mirna' */, 
   let primaryBlob = null, primaryExt = 'pdb';
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
     if(res.ok){
       primaryExt = inferExtFromResponse(res);
       primaryBlob = await res.blob();
@@ -2625,7 +2840,7 @@ async function open3DViewer(kind){
 
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await fetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
+    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
     if(!res.ok){
       openModalText('3D Viewer', 'No 3D structure available (maybe not uploaded or expired).');
       return;

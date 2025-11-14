@@ -5802,3 +5802,17 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-14 15:46:28,435 | INFO | 127.0.0.1 - - [14/Nov/2025 15:46:28] "OPTIONS /predict HTTP/1.1" 200 -
 2025-11-14 15:46:28,469 | INFO | 127.0.0.1 - - [14/Nov/2025 15:46:28] "POST /precheck HTTP/1.1" 200 -
 2025-11-14 15:46:28,481 | INFO | 127.0.0.1 - - [14/Nov/2025 15:46:28] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-14 16:26:28,925 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-14 16:26:29,620 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.5.0.2:8080
+2025-11-14 16:26:29,620 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-14 16:27:13,607 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-14 16:27:14,215 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.5.0.2:8080
+2025-11-14 16:27:14,215 | INFO | [33mPress CTRL+C to quit[0m
