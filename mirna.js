@@ -479,6 +479,31 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   return sources;
 }
 
+// Keep sticky gap between site header and sticky tab bar perfect
+function ensureStickyGapForTabs(){
+  const cands = document.querySelectorAll(
+    'nav, header, .tabbar, .tabs, .sticky, .sticky-top, .sticky-tabs, .tab-bar-sticky'
+  );
+  cands.forEach(el=>{
+    const pos = window.getComputedStyle(el).position;
+    if (pos === 'sticky') el.classList.add('is-sticky-gap');
+  });
+}
+
+// Smooth scroll to top of a card/section, accounting for sticky header + gap
+function scrollToCardTop(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const hVar = getComputedStyle(document.documentElement)
+                .getPropertyValue('--sticky-offset-main').trim();
+  const headerOffset = parseInt(hVar || '96', 10) || 96;
+  const gap = 12; // matches --sticky-gap
+  const y = el.getBoundingClientRect().top + window.scrollY - headerOffset - gap;
+  window.scrollTo({ top: y, behavior: 'smooth' });
+}
+
+
+
 // =====================================================
 // Initialization
 // =====================================================
@@ -495,6 +520,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     text(loader, "Please input your sequences to start a prediction.");
     show(loader);
   }
+
+  // --- HARDEN SUBMIT so the page never navigates or adds '?'
+  (function hardenSubmit(){
+    const form = $('prediction-form');
+
+    // 1) Force safe form config at runtime
+    if (form) {
+      form.method = 'post';                           // avoid GET ?
+      if (form.getAttribute('action') === '?' || form.getAttribute('action') === '#') {
+        form.setAttribute('action', '');              // neutral action
+      }
+    }
+
+    // 2) Capture-level safety net: even if our normal binding failed, we intercept submit
+    window.addEventListener('submit', (ev) => {
+      const f = ev.target;
+      if (f && f.id === 'prediction-form') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        handleSubmit(ev);
+        // Clean any accidental '?'
+        if (window.location.search) {
+          history.replaceState(null, '', window.location.pathname + window.location.hash);
+        }
+      }
+    }, true);
+
+    // 3) If "Run Prediction" is an <a> (common when styled as button), neutralize its href
+    const runBtn = document.querySelector('[data-run="prediction"], #run-prediction');
+    if (runBtn && runBtn.tagName.toLowerCase() === 'a') {
+      runBtn.setAttribute('href', 'javascript:void(0)');
+      bindOnce(runBtn, 'click', (e) => {
+        e.preventDefault();
+        const f = $('prediction-form');
+        if (f) (f.requestSubmit ? f.requestSubmit()
+                                : f.dispatchEvent(new Event('submit', { cancelable: true })));
+      }, 'runClickGuard');
+    }
+
+    // 4) If you ever landed here with a stray '?', clean it immediately
+    if (window.location.search === '?') {
+      history.replaceState(null, '', window.location.pathname + window.location.hash);
+    }
+  })();
 
   // Link file pickers → textareas (sequence FASTA inputs)
   bindFileToTextarea('mirna-seq-file', 'primary-seqs');
@@ -2368,59 +2437,50 @@ async function open3DStageManager(kind, anyId, primary, rowItem){
   bindOnce($('clear-highlights'), 'click', clearHighlights, 'seedcl_s');
 
   bindOnce($('ngl-center'), 'click', () => stage.autoView(), 'nglcenter_s');
-    bindOnce($('ngl-snap'), 'click', async () => {
+  bindOnce($('ngl-snap'), 'click', async () => {
     try{
-        const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
+      const img = await stage.makeImage({ factor: 2, antialias: true, trim: false, transparent: false });
 
-        if (img instanceof Blob) {
+      const fname = `structure_${kind}.png`;
+
+      if (img instanceof Blob) {
         const url = URL.createObjectURL(img);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `structure_combined.png`;
+        a.href = url; a.download = fname;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
         return;
-        }
+      }
 
-        if (img && typeof img.toDataURL === 'function') {
+      if (img && typeof img.toDataURL === 'function') {
         const url = img.toDataURL('image/png');
         const a = document.createElement('a');
-        a.href = url; a.download = `structure_combined.png`;
+        a.href = url; a.download = fname;
         if (typeof a.download === 'string'){
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
         } else {
-            const w = window.open(url, '_blank'); if(w) w.opener = null;
+          const w = window.open(url, '_blank'); if(w) w.opener = null;
         }
         return;
-        }
+      }
 
-        if (stage.viewer && typeof stage.viewer.makeImage === 'function') {
+      if (stage.viewer && typeof stage.viewer.makeImage === 'function') {
         stage.viewer.makeImage({ factor: 2, antialias: true, trim: false, transparent: false })
-            .then((blob) => {
+          .then((blob) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `structure_combined.png`;
+            a.href = url; a.download = fname;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            });
+          });
         return;
-        }
+      }
 
-        alert('Snapshot failed: unsupported return type.');
+      alert('Snapshot failed: unsupported return type.');
     }catch(e){
-        alert('Snapshot failed.');
+      alert('Snapshot failed.');
     }
-    }, 'nglsnap2');
-
-
-  bindOnce($('ngl-open'), 'click', () => {
-    // Open all local sources if possible; otherwise give the job zip.
-    if (sources.some(s => s.type !== 'server')){
-      alert('Local/staged files cannot be opened directly; use the Snapshot to export an image. For server artifacts, use “Download All”.');
-    } else if (CURRENT_JOB_ID){
-      const w = window.open(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, '_blank'); if(w) w.opener = null;
-    }
-  }, 'nglopen_s');
+  }, 'nglsnap_s'); // (optional) distinct bind key for single-viewer
 }
 
 // Legacy minimal viewer (kept for compatibility; unused by new flows)
