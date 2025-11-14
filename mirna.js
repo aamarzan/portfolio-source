@@ -284,6 +284,36 @@ function injectPremiumStyles(){
       appearance:none;padding:8px 12px;border:1px solid #d8dee9;border-radius:10px;
       background:linear-gradient(180deg,#fff,#f8fafc);font-weight:600;min-width:220px;
     }
+    #sticky-gap-shim{
+      position:fixed;
+      left:0; right:0;
+      top: calc(var(--sticky-offset-main));
+      height: var(--sticky-gap);
+      background:#fff;
+      z-index:10;
+      display:none;
+    }
+    .loader-spinner{
+      display:inline-block; width:16px; height:16px;
+      border:2px solid #e5e7eb; border-top-color:#1e5a9c;
+      border-radius:50%; margin-right:8px;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg) } }
+
+    .badge{
+      display:inline-block; padding:2px 8px; border-radius:999px;
+      font-size:12px; border:1px solid #e5e7eb; background:#f8fafc; color:#334155;
+    }
+    .badge.ok{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+    .badge.warn{ background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+    .badge.off{ background:#f1f5f9; border-color:#e2e8f0; color:#334155; }
+
+    .controls-grid{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:10px; align-items:center; margin-bottom:10px;
+    }
+
     .select-premium:focus{outline:none;box-shadow:0 0 0 3px rgba(2,132,199,.15);}
     input[type="checkbox"]{
       accent-color:#1e5a9c;width:18px;height:18px;
@@ -340,21 +370,9 @@ function fetchWithTimeout(url, options={}, ms=30000){
     .finally(()=>clearTimeout(timer));
 }
 
-// Detect the browser's generic CORS/network failure
-function isNetworkFetchError(e){
-  return e && (e.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(e.message||''));
-}
 function isCrossOrigin(url){
   try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
   catch(_){ return false; }
-}
-
-// --- fetch with AbortController timeout (works for GET/POST) ---
-function fetchWithTimeout(url, options={}, ms=30000){
-  const ac = new AbortController();
-  const timer = setTimeout(()=>ac.abort(), ms);
-  return fetch(url, { ...options, signal: ac.signal })
-    .finally(()=>clearTimeout(timer));
 }
 
 // Detect the browser's generic CORS/network failure
@@ -364,10 +382,6 @@ function isNetworkFetchError(e){
     e.name === 'AbortError' ||
     /Failed to fetch|NetworkError|The operation was aborted/i.test(e.message||'')
   );
-}
-function isCrossOrigin(url){
-  try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
-  catch(_){ return false; }
 }
 
 // One path to rule them all:
@@ -432,11 +446,32 @@ async function fetchRetry(url, options={}, ms=30000, retries=2, backoffMs=600){
   throw lastErr;
 }
 
-// JSON + timeout + no-store (but through smartFetch)
-async function fetchJSONWithTimeout(url, opts={}, ms=60000){
-  const r = await smartFetch(url, { ...opts, cache:'no-store' }, ms);
-  if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-  return await r.json();
+async function populateHitsIfMissing(mirnaSeq, targetId, targetSeq, compId, compSeq){
+  if (Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length) return;
+
+  const allowGU = byQS('#allow-gu')?.checked ?? true;
+  const maxMM   = parseInt(byQS('#max-mm')?.value ?? '0', 10);
+  const headers = await getNonceOrKeyHeaders();
+  const payload = {
+    mirna_seq: toRNA(mirnaSeq),
+    targets: { [targetId]: targetSeq },
+    competitors: compSeq ? { [compId]: compSeq } : {},
+    allow_gu: !!allowGU,
+    max_mismatch: Number.isFinite(maxMM) ? maxMM : 0
+  };
+  try{
+    const res = await fetch(SEED_SCAN_URL, {
+      method:'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) return;
+    const data = await res.json();
+    if(Array.isArray(data.hits)){
+      LAST_SEED_HITS = data.hits;
+      LAST_SEED_META = { mirnaId: (payload.mirna_id||''), targetId, compId };
+    }
+  }catch(_){ /* silent */ }
 }
 
 // --- JSON helper with timeout + no-store cache ---
@@ -953,7 +988,6 @@ function injectAdvancedOnce(){
         <li>Mature trimming enabled: <code>${CONFIG.mature_trim_enabled ? 'yes' : 'no'}</code> (window: ${CONFIG.mature_window})</li>
         <li>AA→NT conversion allowed: <code>${CONFIG.aa_convert_allowed ? 'yes' : 'no'}</code></li>
         <li>Auth mode: <code>${CONFIG.use_nonce ? 'nonce' : 'open'}</code></li>
-        <select id="aa-nt-mode" class="select-premium" ${CONFIG.aa_convert_allowed ? '' : 'disabled'}>
         </ul>
     </div>
     `,
@@ -1951,6 +1985,7 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
 
     // Special case: seed density requested
     if(uiMode === 'seed_density'){
+      await populateHitsIfMissing(mirnaSeq, targetId, targetSeq, compId, compSeq);
       const density = computeSeedDensityArray(targetId, targetSeq);
       const vals = normalizeArray(density);
       const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
