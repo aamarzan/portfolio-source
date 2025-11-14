@@ -55,7 +55,8 @@ const GUARDS = {
   modalInjected: false,
   styleInjected: false,
   nglLoaded: false,
-  analysisControlsInjected: false
+  analysisControlsInjected: false,
+  stickyShimWired: false
 };
 
 // =====================================================
@@ -197,6 +198,7 @@ function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
   const css = `
     :root{ --sticky-gap: 12px; }
+    nav.is-sticky-gap, header.is-sticky-gap { top: 0 !important; }
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
     .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
@@ -479,16 +481,56 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   return sources;
 }
 
-// Keep sticky gap between site header and sticky tab bar perfect
+// Apply premium sticky gap ONLY to the tab bar, and paint the gap white (solid)
 function ensureStickyGapForTabs(){
-  const cands = document.querySelectorAll(
-    'nav, header, .tabbar, .tabs, .sticky, .sticky-top, .sticky-tabs, .tab-bar-sticky'
-  );
-  cands.forEach(el=>{
-    const pos = window.getComputedStyle(el).position;
-    if (pos === 'sticky') el.classList.add('is-sticky-gap');
-  });
+  // Never apply sticky-gap to nav/header
+  document.querySelectorAll('nav.is-sticky-gap, header.is-sticky-gap')
+    .forEach(el => el.classList.remove('is-sticky-gap'));
+
+  // Find your tab buttons container
+  const tabbar = document.querySelector('.tab-bar-sticky, .sticky-tabs, .tabbar, .tabs');
+  if (!tabbar) return;
+
+  // Make sure the tabbar is sticky and uses the premium offset + gap
+  const cs = window.getComputedStyle(tabbar);
+  if (cs.position !== 'sticky') {
+    tabbar.style.position = 'sticky';
+  }
+  tabbar.classList.add('is-sticky-gap');
+  tabbar.style.top = `calc(var(--sticky-offset-main) + var(--sticky-gap))`;
+  tabbar.style.zIndex = '11';     // above white shim
+  if (!tabbar.style.background || tabbar.style.background === 'initial') {
+    tabbar.style.background = '#fff'; // solid background under the buttons themselves
+  }
+
+  // Create a single fixed white shim (the visible "gap") just below the nav
+  let shim = document.getElementById('sticky-gap-shim');
+  if (!shim) {
+    shim = document.createElement('div');
+    shim.id = 'sticky-gap-shim';
+    document.body.appendChild(shim);
+  }
+
+  // Toggle shim only when the tabbar is actually "stuck" at its top position
+  const updateShim = () => {
+    const topPx = parseInt(getComputedStyle(tabbar).top || '0', 10) || 0;
+    const rectTop = Math.round(tabbar.getBoundingClientRect().top);
+    const stuck = rectTop <= topPx + 1; // allow a 1px tolerance
+    shim.style.display = stuck ? 'block' : 'none';
+  };
+
+  // Wire once
+  if (!GUARDS.stickyShimWired){
+    window.addEventListener('scroll', updateShim, { passive:true });
+    window.addEventListener('resize', () => { updateShim(); }, { passive:true });
+    GUARDS.stickyShimWired = true;
+  }
+
+  // Initial evaluation
+  updateShim();
 }
+
+
 
 // Smooth scroll to top of a card/section, accounting for sticky header + gap
 function scrollToCardTop(id){
@@ -521,49 +563,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     show(loader);
   }
 
-  // --- HARDEN SUBMIT so the page never navigates or adds '?'
+  // --- HARDEN SUBMIT so the page never navigates, changes hash, or adds '?'
   (function hardenSubmit(){
     const form = $('prediction-form');
 
-    // 1) Force safe form config at runtime
+    // Force safe form config at runtime
     if (form) {
-      form.method = 'post';                           // avoid GET ?
-      if (form.getAttribute('action') === '?' || form.getAttribute('action') === '#') {
-        form.setAttribute('action', '');              // neutral action
-      }
+      form.method = 'post';
+      // Neutralize any action that is a hash or non-empty URL (prevents #workflow jumps)
+      form.setAttribute('action', '');
+      form.removeAttribute('action');
+      form.setAttribute('novalidate', 'novalidate');
     }
 
-    // 2) Capture-level safety net: even if our normal binding failed, we intercept submit
+    // Intercept the form submit at capture phase (wins over other listeners)
     window.addEventListener('submit', (ev) => {
       const f = ev.target;
       if (f && f.id === 'prediction-form') {
         ev.preventDefault();
         ev.stopPropagation();
+        if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
         handleSubmit(ev);
-        // Clean any accidental '?'
-        if (window.location.search) {
-          history.replaceState(null, '', window.location.pathname + window.location.hash);
+
+        // Clean any accidental query/hash immediately
+        const cleanUrl = window.location.pathname + window.location.search.replace(/^\?$/, '');
+        if (window.location.hash) {
+          history.replaceState(null, '', cleanUrl); // remove #anything
+        } else if (window.location.search === '?') {
+          history.replaceState(null, '', cleanUrl);
         }
       }
     }, true);
 
-    // 3) If "Run Prediction" is an <a> (common when styled as button), neutralize its href
-    const runBtn = document.querySelector('[data-run="prediction"], #run-prediction');
-    if (runBtn && runBtn.tagName.toLowerCase() === 'a') {
-      runBtn.setAttribute('href', 'javascript:void(0)');
-      bindOnce(runBtn, 'click', (e) => {
-        e.preventDefault();
-        const f = $('prediction-form');
-        if (f) (f.requestSubmit ? f.requestSubmit()
-                                : f.dispatchEvent(new Event('submit', { cancelable: true })));
-      }, 'runClickGuard');
-    }
+    // Neutralize every possible "Run" trigger (anchors, buttons with formaction, etc.)
+    const runSelectors = [
+      '#run-prediction',
+      '[data-run="prediction"]',
+      'form#prediction-form button[type="submit"]',
+      'form#prediction-form input[type="submit"]',
+      'form#prediction-form button[formaction]',
+      'form#prediction-form [type="submit"][formaction]',
+      'form#prediction-form a[href*="#"]'
+    ];
+    document.querySelectorAll(runSelectors.join(',')).forEach((el) => {
+      // Remove any navigation attributes that could hijack the flow
+      el.removeAttribute('href');
+      el.removeAttribute('formaction');
+      el.removeAttribute('formtarget');
 
-    // 4) If you ever landed here with a stray '?', clean it immediately
-    if (window.location.search === '?') {
-      history.replaceState(null, '', window.location.pathname + window.location.hash);
-    }
+      bindOnce(el, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        const f = $('prediction-form');
+        if (!f) return;
+        // Trigger OUR submit path
+        (f.requestSubmit ? f.requestSubmit()
+                        : f.dispatchEvent(new Event('submit', { cancelable: true })));
+      }, 'runClickGuard2');
+    });
+
+    // If something else still manages to push #workflow, snap it back instantly
+    window.addEventListener('hashchange', (ev) => {
+      if (window.location.hash && /workflow/i.test(window.location.hash)) {
+        ev.preventDefault?.();
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }, true);
   })();
+
 
   // Link file pickers → textareas (sequence FASTA inputs)
   bindFileToTextarea('mirna-seq-file', 'primary-seqs');

@@ -950,3 +950,18 @@ body.mirna-page .tabs .tab-btn.active::after {
   gap:8px;
 }
 .action-grid .btn-action{ width:100%; }
+
+/* Solid white gap between nav and sticky tab bar (shown only when tabs are stuck) */
+#sticky-gap-shim{
+  position: fixed;
+  left: 0; right: 0;
+  top: var(--sticky-offset-main);
+  height: var(--sticky-gap);
+  background: #fff;        /* <— the white you asked for */
+  z-index: 10;             /* under tabbar (11), under nav in most stacks */
+  pointer-events: none;    /* don't block clicks */
+  display: none;           /* toggled on when sticky */
+}
+
+/* Safety: nav/header must never get the sticky-gap by mistake */
+nav.is-sticky-gap, header.is-sticky-gap { top: 0 !important; }
