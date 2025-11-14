@@ -260,6 +260,42 @@ function fetchWithTimeout(url, options={}, ms=30000){
     .finally(()=>clearTimeout(timer));
 }
 
+// Detect the browser's generic CORS/network failure
+function isNetworkFetchError(e){
+  return e && (e.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(e.message||''));
+}
+function isCrossOrigin(url){
+  try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
+  catch(_){ return false; }
+}
+// Try once; on CORS/network failure, retry without custom auth headers
+async function smartFetch(url, options={}, ms=30000){
+  try{
+    return await fetchWithTimeout(url, options, ms);
+  }catch(e){
+    const h = (options && options.headers) || {};
+    const hadCustom = !!(h['X-API-KEY'] || h['X-Nonce']);
+    if (isNetworkFetchError(e) && hadCustom && isCrossOrigin(url)){
+      const clean = { ...options, headers: { ...(options.headers||{}) } };
+      delete clean.headers['X-API-KEY'];
+      delete clean.headers['X-Nonce'];
+      return await fetchWithTimeout(url, clean, ms);
+    }
+    throw e;
+  }
+}
+// JSON helper with the same retry idea
+async function robustJSON(url, opts={}, ms=60000){
+  try{
+    const r = await smartFetch(url, opts, ms);
+    if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    return await r.json();
+  }catch(e){
+    // if we already removed custom headers above and still failed, bubble up
+    throw e;
+  }
+}
+
 // --- robust fetch with retries & backoff (uses fetchWithTimeout) ---
 async function fetchRetry(url, options={}, ms=30000, retries=2, backoffMs=600){
   let lastErr = null;
@@ -1019,7 +1055,7 @@ async function handleSubmit(event){
 
     // 1) Start
     if(loader) text(loader, "Job started. Preparing batches...");
-    const startRes = await fetch(API_URL, { method:'POST', headers:authHeaders, body:formData });
+    const startRes = await smartFetch(API_URL, { method:'POST', headers:authHeaders, body:formData }, 60000);
 
     if(!startRes.ok){
       let errorMsg;
@@ -1040,7 +1076,7 @@ async function handleSubmit(event){
     let lastTick = Date.now();
 
     const poll = async () => {
-      const res = await fetch(PROGRESS_URL(job_id), { method:'GET' });
+      const res = await smartFetch(PROGRESS_URL(job_id), { method:'GET' }, 30000);
       if(!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
@@ -1094,12 +1130,13 @@ async function handleSubmit(event){
           const headers = await getNonceOrKeyHeaders();
           let finalDataSoft = null;
           try {
-            finalDataSoft = await fetchJSONWithTimeout(
+            finalDataSoft = await robustJSON(
               DOWNLOAD_URL(job_id),
               { method:'GET', headers },
               60000
             );
           } catch(_){}
+
           if(finalDataSoft){
             const rows = finalDataSoft.results || [];
             if(rows.length){
@@ -1123,7 +1160,7 @@ async function handleSubmit(event){
         if(loader) text(loader, "Fetching final results...");
         try {
           const headers = await getNonceOrKeyHeaders();
-          const finalData = await fetchJSONWithTimeout(
+          const finalData = await robustJSON(
             DOWNLOAD_URL(job_id),
             { method:'GET', headers },
             60000
