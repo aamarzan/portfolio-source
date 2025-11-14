@@ -231,38 +231,86 @@ function ensureSingleton(id, html, parent){
   }
 
 function upgradeFastaPickers(){
-  const pairs = [
-    {fileId:'mirna-seq-file',      taId:'primary-seqs'},
-    {fileId:'target-seq-file',     taId:'target-seq'},
-    {fileId:'competitor-seq-file', taId:'competitor-seq'}
-  ];
-  pairs.forEach(({fileId, taId})=>{
-    const fi = $(fileId), ta = $(taId);
-    if(!fi || !ta) return;
-    fi.setAttribute('multiple','multiple');   // allow multiple FASTA files
-    fi.classList.add('hidden');
+  // Helper: find the file input that belongs to a given textarea, even if IDs differ
+  function resolvePickerPair(taId, explicitHints){
+    const ta = $(taId);
+    if(!ta) return null;
 
+    // 1) Try explicit ID hints first
+    for(const hid of (explicitHints || [])){
+      const el = $(hid);
+      if(el && el.tagName === 'INPUT' && el.type === 'file') return { fileInput: el, textarea: ta };
+    }
+
+    // 2) Search nearest file input in the same "group" (form/card/section)
+    const scope = ta.closest('.form-group, .field, .card, section, form') || document;
+    let candidates = Array.from(scope.querySelectorAll('input[type="file"]'));
+
+    // Prefer by semantic hint in id/name
+    const tag = taId.includes('primary') || taId.includes('mirna') ? 'mirna'
+              : taId.includes('competitor') ? 'compet'
+              : 'target';
+
+    const scored = candidates.map(el=>{
+      const idn = (el.id + ' ' + el.name).toLowerCase();
+      let score = 0;
+      if (/mirna|primary/.test(idn) && tag === 'mirna') score += 3;
+      if (/compet|comp/.test(idn)   && tag === 'compet') score += 3;
+      if (/target|targ/.test(idn)   && tag === 'target') score += 3;
+      // slight bias if element is spatially close
+      try{
+        const d = Math.abs(el.getBoundingClientRect().top - ta.getBoundingClientRect().top);
+        score += (d<50?2:(d<150?1:0));
+      }catch(_){}
+      return { el, score };
+    }).sort((a,b)=>b.score-a.score);
+
+    const chosen = (scored[0] && scored[0].score>0) ? scored[0].el : (candidates[0] || null);
+    if(!chosen) return null;
+    return { fileInput: chosen, textarea: ta };
+  }
+
+  const pairs = [
+    resolvePickerPair('primary-seqs', ['mirna-seq-file','mirna_fasta','mirna-file']),
+    resolvePickerPair('target-seq',   ['target-seq-file','target_fasta','target-file']),
+    resolvePickerPair('competitor-seq',['competitor-seq-file','competitor_fasta','competitor-file'])
+  ].filter(Boolean);
+
+  pairs.forEach(({fileInput, textarea})=>{
+    // Skip if already upgraded
+    if (fileInput.closest('.file-uploader-premium')) return;
+
+    // Allow multiple files and hide the native input
+    fileInput.setAttribute('multiple','multiple');
+    fileInput.classList.add('hidden');
+
+    // Build premium wrapper
+    const wid = fileInput.id || `${textarea.id || 'fasta'}-file`;
     const wrap = document.createElement('div');
     wrap.className = 'file-uploader-premium';
     wrap.innerHTML = `
-      <button class="btn-premium" data-pick="${fileId}">Choose FASTA files</button>
-      <button class="btn-premium" data-clear="${fileId}">Clear</button>
-      <span class="file-chip" id="${fileId}-chip">No file chosen</span>
+      <button class="btn-premium" data-pick="${wid}">Choose FASTA files</button>
+      <button class="btn-premium" data-clear="${wid}">Clear</button>
+      <span class="file-chip" id="${wid}-chip">No file chosen</span>
     `;
-    fi.parentNode.insertBefore(wrap, fi);
 
-    bindOnce(wrap.querySelector(`[data-pick="${fileId}"]`), 'click', ()=> fi.click(), fileId+'_pick');
-    bindOnce(fi, 'change', async ()=>{
-      const files = Array.from(fi.files||[]);
-      const chip  = $(`${fileId}-chip`);
-      if(!files.length){ if(chip) chip.textContent='No file chosen'; return; }
+    // Insert wrapper just before the native input (keeps layout intact)
+    fileInput.parentNode.insertBefore(wrap, fileInput);
+
+    // Wire buttons
+    bindOnce(wrap.querySelector(`[data-pick="${wid}"]`), 'click', ()=> fileInput.click(), wid+'_pick');
+    bindOnce(fileInput, 'change', async ()=>{
+      const files = Array.from(fileInput.files||[]);
+      const chip  = $(`${wid}-chip`);
+      if(!files.length){ if(chip) chip.textContent='No file chosen'; textarea.value=''; return; }
       if(chip) chip.textContent = files.map(f=>f.name).join(', ');
       const texts = await Promise.all(files.map(f=>f.text()));
-      ta.value = texts.map(t => t.endsWith('\n') ? t : t+'\n').join('\n');
-    }, fileId+'_change');
-    bindOnce(wrap.querySelector(`[data-clear="${fileId}"]`), 'click', ()=>{
-      fi.value=''; ta.value=''; const chip = $(`${fileId}-chip`); if(chip) chip.textContent='No file chosen';
-    }, fileId+'_clear');
+      textarea.value = texts.map(t => t.endsWith('\n') ? t : t+'\n').join('\n');
+    }, wid+'_change');
+    bindOnce(wrap.querySelector(`[data-clear="${wid}"]`), 'click', ()=>{
+      fileInput.value=''; textarea.value='';
+      const chip = $(`${wid}-chip`); if(chip) chip.textContent='No file chosen';
+    }, wid+'_clear');
   });
 }
 
@@ -855,6 +903,25 @@ function scrollToCardTop(id){
   });
 }
 
+function sanitizeAnchorsAndHashes(){
+  // Hard-block anchors that would create '?' or '#workflow' jumps
+  document.addEventListener('click', (e)=>{
+    const a = e.target && e.target.closest && e.target.closest('a[href]');
+    if(!a) return;
+    const href = (a.getAttribute('href') || '').trim();
+    if (href === '?' || href === '#' || /^#workflow/i.test(href)){
+      e.preventDefault(); e.stopPropagation();
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, true);
+
+  // If anything still sneaks a '?' or '#', scrub it immediately
+  const scrub = ()=> history.replaceState(null, '', window.location.pathname);
+  window.addEventListener('hashchange', scrub, true);
+  window.addEventListener('popstate',  ()=> {
+    if (window.location.search || window.location.hash) scrub();
+  }, true);
+}
 
 
 // =====================================================
@@ -867,6 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   syncStickyOffset(); // keep sticky headers perfect
   ensureStickyGapForTabs(); // add premium gap to sticky nav
   upgradeFastaPickers();
+  sanitizeAnchorsAndHashes();
   window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');
@@ -898,12 +966,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleSubmit(ev);
 
         // Clean any accidental query/hash immediately
-        const cleanUrl = window.location.pathname + window.location.search.replace(/^\?$/, '');
-        if (window.location.hash) {
-          history.replaceState(null, '', cleanUrl); // remove #anything
-        } else if (window.location.search === '?') {
-          history.replaceState(null, '', cleanUrl);
-        }
+        history.replaceState(null, '', window.location.pathname); // scrub '?' and '#...' always
       }
     }, true);
 
@@ -915,8 +978,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       'form#prediction-form input[type="submit"]',
       'form#prediction-form button[formaction]',
       'form#prediction-form [type="submit"][formaction]',
-      'form#prediction-form a[href*="#"]'
+      'form#prediction-form a[href*="#"]',
+      'form#prediction-form a[href="?"]',
+      'form#prediction-form a[href^="?"]',
+      'form#prediction-form a[href^="#"]'
     ];
+
     document.querySelectorAll(runSelectors.join(',')).forEach((el) => {
       // Remove any navigation attributes that could hijack the flow
       el.removeAttribute('href');
