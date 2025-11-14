@@ -1983,7 +1983,6 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
     }
     uiSteps = Math.max(24, Math.min(128, uiSteps));
 
-    
     // Special case: seed density requested
     if(uiMode === 'seed_density'){
       await populateHitsIfMissing(mirnaSeq, targetId, targetSeq, compId, compSeq);
