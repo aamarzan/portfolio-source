@@ -909,7 +909,7 @@ def _build_heatmap_bytes_for_row(job: Dict, row: Dict, mode: str = 'ig_target', 
 # =========================
 # Prediction & analysis endpoints
 # =========================
-limiter = Limiter(app, key_func=get_remote_address, default_limits=[])
+limiter = Limiter(key_func=get_remote_address)
 limiter.init_app(app)
 
 

@@ -56,7 +56,9 @@ const GUARDS = {
   styleInjected: false,
   nglLoaded: false,
   analysisControlsInjected: false,
-  stickyShimWired: false
+  stickyShimWired: false,
+  urlWatchdogWired: false,        // NEW
+  globalTabInterceptWired: false  // NEW
 };
 
 // =====================================================
@@ -925,6 +927,49 @@ function sanitizeAnchorsAndHashes(){
   }, true);
 }
 
+// --- GLOBAL TAB INTERCEPTOR: own all .tab-btn clicks, no #workflow jumps ---
+function attachGlobalTabInterceptor(){
+  if (GUARDS.globalTabInterceptWired) return;
+  GUARDS.globalTabInterceptWired = true;
+
+  const loader = $('loader');
+
+  window.addEventListener('click', (ev) => {
+    const btn = ev.target && ev.target.closest && ev.target.closest('.tab-btn');
+    if (!btn) return;
+
+    const targetId = targetIdFromButton(btn);
+    if (!targetId) return;
+
+    // Kill all default behaviour and other handlers (capture-phase)
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+
+    // Our own tab switching + premium snap
+    openTab(btn, targetId);
+    ensureStickyGapForTabs();
+
+    const name = (btn.textContent || '').toLowerCase();
+
+    if (name.includes('inputs')){
+      if (loader){
+        text(loader, "Please input your sequences to start a prediction.");
+        show(loader);
+      }
+    } else if (name.includes('results')){
+      const rc = $('results-container');
+      if (rc && !rc.innerHTML.trim()){
+        setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
+      }
+    } else if (name.includes('workflow')){
+      // Show the "workflow"/intro card, but DO NOT scroll to the full page top
+      if (loader) hide(loader);
+      // openTab already calls scrollToCardTop, so card stays nicely under sticky header
+    }
+  }, true); // capture = true so we win over theme scripts
+}
+
 // --- GLOBAL NAV SANITIZER + LATE DOM PATCHING ---
 function globalNavSanitizer(){
   // kill any anchors that would navigate to '?' or '#workflow' or bare '#'
@@ -980,6 +1025,44 @@ function globalNavSanitizer(){
   document.querySelectorAll('a[href],button[formaction],input[formaction],form[action]').forEach(scrubNode);
 }
 
+// --- HARD URL SCRUBBER: never allow ? or # to stick on /mirna --- 
+function attachUrlWatchdog(){
+  if (GUARDS.urlWatchdogWired) return;
+  GUARDS.urlWatchdogWired = true;
+
+  // Base path for this tool (no query / hash)
+  const basePath = window.location.pathname.replace(/\/+$/, '') || '/mirna';
+
+  const scrub = () => {
+    if (window.location.search || window.location.hash){
+      history.replaceState(null, '', basePath);
+    }
+  };
+
+  // Initial scrub on load
+  scrub();
+
+  // Also scrub on hashchange/popstate
+  window.addEventListener('hashchange', scrub, true);
+  window.addEventListener('popstate', scrub, true);
+
+  // Wrap history methods so any pushState/replaceState from other scripts gets cleaned
+  const origPush = history.pushState.bind(history);
+  const origReplace = history.replaceState.bind(history);
+
+  history.pushState = function(state, title, url){
+    origPush(state, title, url);
+    scrub();
+  };
+  history.replaceState = function(state, title, url){
+    origReplace(state, title, url);
+    scrub();
+  };
+
+  // Extra safety: periodic scrub in case something slips through
+  setInterval(scrub, 1500);
+}
+
 // --- SUPER-ROBUST SUBMIT INTERCEPTOR (not tied to #prediction-form) ---
 function interceptAnyPredictionSubmit(){
   window.addEventListener('submit', (ev) => {
@@ -1032,8 +1115,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   upgradeFastaPickers();
   sanitizeAnchorsAndHashes();
   globalNavSanitizer();
+  attachUrlWatchdog();
   interceptAnyPredictionSubmit();
-
+  attachGlobalTabInterceptor();
+  
   window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');

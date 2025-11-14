@@ -6690,3 +6690,36 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-15 02:01:57,498 | INFO | 127.0.0.1 - - [15/Nov/2025 02:01:57] "GET /config HTTP/1.1" 200 -
 2025-11-15 02:02:03,613 | INFO | 127.0.0.1 - - [15/Nov/2025 02:02:03] "GET /config HTTP/1.1" 200 -
 2025-11-15 02:02:09,900 | INFO | 127.0.0.1 - - [15/Nov/2025 02:02:09] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:05:06,184 | INFO | 127.0.0.1 - - [15/Nov/2025 02:05:06] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:05:15,400 | INFO | 127.0.0.1 - - [15/Nov/2025 02:05:15] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:05:22,981 | INFO | 127.0.0.1 - - [15/Nov/2025 02:05:22] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:05:37,483 | INFO | 127.0.0.1 - - [15/Nov/2025 02:05:37] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:05:44,737 | INFO | 127.0.0.1 - - [15/Nov/2025 02:05:44] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:06:12,586 | INFO | 127.0.0.1 - - [15/Nov/2025 02:06:12] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:06:18,945 | INFO | 127.0.0.1 - - [15/Nov/2025 02:06:18] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:06:25,394 | INFO | 127.0.0.1 - - [15/Nov/2025 02:06:25] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:06:44,143 | INFO | 127.0.0.1 - - [15/Nov/2025 02:06:44] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:07:30,826 | INFO | 127.0.0.1 - - [15/Nov/2025 02:07:30] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:08:47,556 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-15 02:09:36,044 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-15 02:28:50,301 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-15 02:28:50,637 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://10.5.0.2:8080
+2025-11-15 02:28:50,637 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-15 02:29:32,833 | INFO | 127.0.0.1 - - [15/Nov/2025 02:29:32] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:29:49,378 | INFO | 127.0.0.1 - - [15/Nov/2025 02:29:49] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:30:02,904 | INFO | 127.0.0.1 - - [15/Nov/2025 02:30:02] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:31:45,947 | INFO | 127.0.0.1 - - [15/Nov/2025 02:31:45] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:31:49,201 | INFO | 127.0.0.1 - - [15/Nov/2025 02:31:49] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:32:08,622 | INFO | 127.0.0.1 - - [15/Nov/2025 02:32:08] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:45:59,887 | INFO | 127.0.0.1 - - [15/Nov/2025 02:45:59] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:50:34,784 | INFO | 127.0.0.1 - - [15/Nov/2025 02:50:34] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:52:14,262 | INFO | 127.0.0.1 - - [15/Nov/2025 02:52:14] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:54:13,155 | INFO | 127.0.0.1 - - [15/Nov/2025 02:54:13] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:55:45,499 | INFO | 127.0.0.1 - - [15/Nov/2025 02:55:45] "GET /config HTTP/1.1" 200 -
+2025-11-15 02:55:49,515 | INFO | 127.0.0.1 - - [15/Nov/2025 02:55:49] "GET /config HTTP/1.1" 200 -
