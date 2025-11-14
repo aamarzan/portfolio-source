@@ -210,6 +210,7 @@ function injectPremiumStyles(){
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
+    .card{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
     .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
     /* When we detect the sticky nav container, we add this class */
@@ -220,6 +221,23 @@ function injectPremiumStyles(){
   style.textContent = css;
   document.head.appendChild(style);
   GUARDS.styleInjected = true;
+}
+
+// Map a tab button → target card id (robust: data- attrs, aria-controls, text label, href)
+function targetIdFromButton(btn){
+  if(!btn) return null;
+  const byAttr = btn.getAttribute('data-target') || btn.dataset?.target || btn.getAttribute('aria-controls');
+  if (byAttr && document.getElementById(byAttr)) return byAttr;
+
+  const href = btn.getAttribute('href');
+  if (href && href.startsWith('#') && document.getElementById(href.slice(1))) return href.slice(1);
+
+  const label = (btn.textContent || '').toLowerCase().trim();
+  if (/^work(\s*flow)?$/.test(label)) return 'workflow-tab';
+  if (/^inputs?$/.test(label))        return 'inputs-tab';
+  if (/advanced/.test(label))         return 'advanced-tab';
+  if (/results?/.test(label))         return 'results-tab';
+  return null;
 }
 
 function smallSpinner(text='Working...'){
@@ -530,18 +548,25 @@ function ensureStickyGapForTabs(){
   updateShim();
 }
 
-
-
 // Smooth scroll to top of a card/section, accounting for sticky header + gap
-function scrollToCardTop(id){
+function scrollToCardTop(id, smooth=true){
   const el = document.getElementById(id);
   if(!el) return;
-  const hVar = getComputedStyle(document.documentElement)
-                .getPropertyValue('--sticky-offset-main').trim();
-  const headerOffset = parseInt(hVar || '96', 10) || 96;
-  const gap = 12; // matches --sticky-gap
-  const y = el.getBoundingClientRect().top + window.scrollY - headerOffset - gap;
-  window.scrollTo({ top: y, behavior: 'smooth' });
+
+  // Primary: use scrollIntoView with a CSS scroll-margin-top (set below)
+  el.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+
+  // Micro-correction pass (handles browsers that ignore scroll-margin on first frame)
+  requestAnimationFrame(() => {
+    const cs = window.getComputedStyle(el);
+    const mt = parseFloat(cs.marginTop) || 0;             // account for top margin
+    const desired = getStickySum();                       // sticky header + white gap
+    const rectTop = el.getBoundingClientRect().top;       // border box top
+    const adjust = (rectTop - mt) - desired;              // move so margin start hits desired
+    if (Math.abs(adjust) > 1) {
+      window.scrollBy({ top: adjust, left: 0, behavior: 'auto' });
+    }
+  });
 }
 
 
@@ -2578,10 +2603,17 @@ async function open3DViewer(kind){
 function openTab(element, tabId){
   const targetCard = $(tabId);
   if(!targetCard) return;
+
   byQSA('.card').forEach(card => card.classList.remove('active'));
-  byQSA('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  byQSA('.tab-btn').forEach(btn  => btn.classList.remove('active'));
   targetCard.classList.add('active');
   if(element && element.classList) element.classList.add('active');
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scrollToCardTop(tabId); // now truly snaps to the very top
+    });
+  });
 }
 
 function makeTableSortable(tableId){
@@ -2613,13 +2645,19 @@ function wireTabButtonsOnce(){
   const loader = $('loader');
 
   tabs.forEach(btn => {
-    bindOnce(btn, 'click', () => {
+    bindOnce(btn, 'click', (ev) => {
+      // Prevent default anchor jumps — we do a precise sticky-aware snap instead
+      ev.preventDefault();
+
+      const targetId = targetIdFromButton(btn);
+      if (targetId) {
+        openTab(btn, targetId);               // switches + snaps to top
+        ensureStickyGapForTabs();             // keeps the white gap logic in sync
+      }
+
       const name = (btn.textContent || '').toLowerCase();
       if(name.includes('inputs')){
-        if(loader){
-          text(loader, "Please input your sequences to start a prediction.");
-          show(loader);
-        }
+        if(loader){ text(loader, "Please input your sequences to start a prediction."); show(loader); }
       }
       if(name.includes('results')){
         const rc = $('results-container');
@@ -2627,12 +2665,20 @@ function wireTabButtonsOnce(){
           setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
         }
       }
-      if (name.includes('workflow')) { if (loader) hide(loader); }
-    }, 'tabClick');
+      if(name.includes('workflow')){ if(loader) hide(loader); }
+    }, 'tabClickSnap');
   });
 
   GUARDS.tabWiringDone = true;
 }
+
+function getStickySum(){
+  const root = getComputedStyle(document.documentElement);
+  const off  = parseInt(root.getPropertyValue('--sticky-offset-main') || '96', 10) || 96;
+  const gap  = parseInt(root.getPropertyValue('--sticky-gap') || '12', 10) || 12;
+  return off + gap;
+}
+
 
 // =====================================================
 // Modal (singleton)
