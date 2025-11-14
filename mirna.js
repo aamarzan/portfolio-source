@@ -205,6 +205,7 @@ function injectPremiumStyles(){
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
+    #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     table#results-table thead th{position:static;top:0;background:#fff;z-index:1;text-align:center;}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
@@ -580,7 +581,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ensureModal(); // make sure modal exists early
   syncStickyOffset(); // keep sticky headers perfect
   ensureStickyGapForTabs(); // add premium gap to sticky nav
-  window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); }, { passive:true });
+  window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');
   if(loader){
@@ -679,6 +680,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Advanced options + tabs
   injectAdvancedOnce();
   wireTabButtonsOnce();
+  scrollTabsToTop();
 });
 
 // =====================================================
@@ -886,7 +888,8 @@ async function handleSubmit(event){
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
     openTab(resultsTabButton, 'results-tab');
-    scrollToCardTop('results-tab');
+    // OLD: scrollToCardTop('results-tab');
+    scrollTabsToTop(); // NEW: snap the tabs to the exact top
   }
 
   // Show loader
@@ -2638,6 +2641,33 @@ function makeTableSortable(tableId){
     });
   });
 }
+
+// ---- Find the tabs bar (your 4 buttons) & create a scroll anchor just before it
+function getTabsBarEl(){
+  return document.querySelector('#tabs-bar, .tabs-bar, .tabbar, .tabs, .sticky-tabs, .tab-bar-sticky');
+}
+
+function ensureTabsAnchor(){
+  const tabsBar = getTabsBarEl();
+  if(!tabsBar) return;
+  if(document.getElementById('tabs-anchor')) return;
+
+  const a = document.createElement('div');
+  a.id = 'tabs-anchor';
+  // This makes the browser stop with the tabs exactly under the sticky header + white gap.
+  a.style.cssText = 'height:0;margin:0;padding:0;scroll-margin-top:calc(var(--sticky-offset-main) + var(--sticky-gap));';
+  tabsBar.parentNode.insertBefore(a, tabsBar);
+}
+
+// Smooth, “exact top” snap (double-tap to defeat tiny layout jitters)
+function scrollTabsToTop(){
+  ensureTabsAnchor();
+  const a = document.getElementById('tabs-anchor');
+  if(!a) return;
+  a.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  requestAnimationFrame(() => a.scrollIntoView({ block: 'start', behavior: 'auto' }));
+}
+
 
 function wireTabButtonsOnce(){
   if(GUARDS.tabWiringDone) return;
