@@ -137,16 +137,17 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 if Compress:
     Compress(app)
 
-CORS(app,
-     origins=[
-       "https://aamarzan.com",
-       "https://www.aamarzan.com",
-       "https://mirna.aamarzan.com",
-       re.compile(r"http://localhost(:\d+)?$"),
-       re.compile(r"http://127\.0\.0\.1(:\d+)?$")
-     ],
-     methods=["GET","POST","OPTIONS"],
-     allow_headers=["Content-Type","X-Nonce","X-API-KEY"])
+from flask_cors import CORS
+
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Nonce", "X-API-KEY"],
+    expose_headers=["Content-Disposition", "Content-Type"],
+    supports_credentials=False,  # keep False so "*" is valid
+)
+
 
 
 
@@ -159,7 +160,9 @@ def _to_bool(v, default=True):
 @app.after_request
 def _nocache(resp):
     resp.headers['Cache-Control'] = 'no-store'
+    resp.headers['Access-Control-Allow-Private-Network'] = 'true'  # helps localhost from https origin
     return resp
+
 
 
 @app.errorhandler(RequestEntityTooLarge)
@@ -171,16 +174,16 @@ def handle_large_file(e):
 # Security: API Key + Nonce (optional safer flow)
 # =========================
 
-# New config wrapper (non-breaking, mirrors existing flags) [ADDED]
 APP_CFG = {
     "MIRNA_MAX": MIRNA_MAX,
     "MATURE_TRIM_ENABLED": MATURE_TRIM_ENABLED,
     "MATURE_WINDOW": MATURE_TRIM_WINDOW,
     "AA_CONVERT_ALLOWED": AA_CONVERT_ALLOWED,
-    "USE_NONCE": USE_NONCE,
-    "API_KEY": os.getenv("MIRNA_API_KEY", "").strip() or None,
+    "USE_NONCE": False,   
+    "API_KEY": None,      
     "ENABLE_HEATMAPS": True
 }
+
 
 # Single-use, token-keyed nonce store (no IP collisions)
 nonce_store: Dict[str, float] = {}  # {nonce: expiry_ts}
@@ -240,13 +243,6 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
     return endpoint_name in protected
 
 
-@app.before_request
-def require_nonce_or_key():
-    if request.method == "OPTIONS":
-        return '', 200
-    if _nonce_protected(request.endpoint):
-        if not _check_auth():  # [UPDATED] now accepts API key OR nonce according to APP_CFG
-            return jsonify({"error": "Invalid or missing authorization"}), 403
 
 @app.before_request
 def _sweep_expired_nonces():
@@ -913,7 +909,7 @@ def _build_heatmap_bytes_for_row(job: Dict, row: Dict, mode: str = 'ig_target', 
 # =========================
 # Prediction & analysis endpoints
 # =========================
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(app, key_func=get_remote_address, default_limits=[])
 limiter.init_app(app)
 
 
@@ -993,7 +989,7 @@ def precheck():
 
 
 @app.route('/predict', methods=['POST'])
-@limiter.limit("10 per 15 minutes")
+@limiter.limit("1000 per 15 minutes")
 def start_prediction():
     # Strict Content-Type check
     if request.mimetype != 'multipart/form-data':
@@ -2288,7 +2284,7 @@ def start_janitor():
 # Seed-scan endpoint (public API)
 # =========================
 @app.route('/seed_scan', methods=['POST'])
-@limiter.limit("30 per 15 minutes")
+@limiter.limit("1000 per 15 minutes")
 def seed_scan():
     try:
         data = request.get_json(force=True, silent=True) or {}
@@ -2376,7 +2372,7 @@ def seed_scan():
 # Explain (Integrated Gradients) endpoint (public API)
 # =========================
 @app.route('/explain', methods=['POST'])
-@limiter.limit("20 per 15 minutes")
+@limiter.limit("1000 per 15 minutes")
 def explain():
     try:
         if model is None or scaler is None:

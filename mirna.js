@@ -1135,7 +1135,7 @@ async function handleSubmit(event){
     let lastTick = Date.now();
 
     const poll = async () => {
-      const res = await smartFetch(PROGRESS_URL(job_id), { method:'GET' }, 30000);
+      const res = await smartFetch(PROGRESS_URL(job_id) + `?t=${Date.now()}`, { method:'GET' }, 30000);
       if(!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
