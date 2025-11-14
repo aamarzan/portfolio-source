@@ -177,6 +177,11 @@ function countFastaRecords(seqText){
   return count;
 }
 
+function getTabbarHeight(){
+  const t = getTabsBarEl();
+  return t ? Math.round(t.getBoundingClientRect().height) : 0;
+}
+
 function hasFastaHeaders(text){
   if(!text || !text.trim()) return false;
   return text.split(/\r?\n/).some(line => line.trim().startsWith('>'));
@@ -211,7 +216,6 @@ function injectPremiumStyles(){
     .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
-    .card{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
     .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
     /* When we detect the sticky nav container, we add this class */
@@ -549,27 +553,31 @@ function ensureStickyGapForTabs(){
   updateShim();
 }
 
-// Smooth scroll to top of a card/section, accounting for sticky header + gap
-function scrollToCardTop(id, smooth=true){
+// Smooth scroll so the *first heading inside the section* sits exactly under
+// the sticky header + white gap + tabbar height (no extra lines).
+function scrollToCardTop(id, smooth = true){
   const el = document.getElementById(id);
   if(!el) return;
 
-  // Primary: use scrollIntoView with a CSS scroll-margin-top (set below)
-  el.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+  // Ignore any accidental scroll-margin on the element
+  const prevSM = el.style.scrollMarginTop;
+  el.style.scrollMarginTop = '0px';
 
-  // Micro-correction pass (handles browsers that ignore scroll-margin on first frame)
-  requestAnimationFrame(() => {
-    const cs = window.getComputedStyle(el);
-    const mt = parseFloat(cs.marginTop) || 0;             // account for top margin
-    const desired = getStickySum();                       // sticky header + white gap
-    const rectTop = el.getBoundingClientRect().top;       // border box top
-    const adjust = (rectTop - mt) - desired;              // move so margin start hits desired
-    if (Math.abs(adjust) > 1) {
-      window.scrollBy({ top: adjust, left: 0, behavior: 'auto' });
+  const desired = getStickySum(true); // header + white gap + tab bar height
+  const absTop  = window.pageYOffset + el.getBoundingClientRect().top;
+  const targetY = Math.max(0, Math.round(absTop - desired));
+
+  window.scrollTo({ top: targetY, left: 0, behavior: smooth ? 'smooth' : 'auto' });
+
+  // One verification pass after layout settles
+  setTimeout(() => {
+    const delta = Math.round(el.getBoundingClientRect().top) - desired;
+    if (Math.abs(delta) > 1){
+      window.scrollBy({ top: delta, behavior: 'auto' });
     }
-  });
+    el.style.scrollMarginTop = prevSM;
+  }, 120);
 }
-
 
 
 // =====================================================
@@ -2647,6 +2655,11 @@ function getTabsBarEl(){
   return document.querySelector('#tabs-bar, .tabs-bar, .tabbar, .tabs, .sticky-tabs, .tab-bar-sticky');
 }
 
+function getTabsBarHeight(){
+  const el = getTabsBarEl();
+  return el ? Math.round(el.getBoundingClientRect().height) || 0 : 0;
+}
+
 function ensureTabsAnchor(){
   const tabsBar = getTabsBarEl();
   if(!tabsBar) return;
@@ -2702,12 +2715,14 @@ function wireTabButtonsOnce(){
   GUARDS.tabWiringDone = true;
 }
 
-function getStickySum(){
+function getStickySum(includeTabs = true){
   const root = getComputedStyle(document.documentElement);
   const off  = parseInt(root.getPropertyValue('--sticky-offset-main') || '96', 10) || 96;
   const gap  = parseInt(root.getPropertyValue('--sticky-gap') || '12', 10) || 12;
-  return off + gap;
+  const tabs = includeTabs ? getTabsBarHeight() : 0;
+  return off + gap + tabs;
 }
+
 
 
 // =====================================================
