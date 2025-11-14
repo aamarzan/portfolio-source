@@ -63,7 +63,7 @@ const GUARDS = {
 // API routing and auth
 // =====================================================
 const LOCAL_BASE = "http://127.0.0.1:5500";
-const PROD_BASE  = "https://aamarzan.com/mirna";
+const PROD_BASE  = window.location.origin.replace(/\/$/, "") + "/mirna";
 const isLocal =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
