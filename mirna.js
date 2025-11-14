@@ -214,6 +214,43 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
+function upgradeFastaPickers(){
+  const pairs = [
+    {fileId:'mirna-seq-file',      taId:'primary-seqs'},
+    {fileId:'target-seq-file',     taId:'target-seq'},
+    {fileId:'competitor-seq-file', taId:'competitor-seq'}
+  ];
+  pairs.forEach(({fileId, taId})=>{
+    const fi = $(fileId), ta = $(taId);
+    if(!fi || !ta) return;
+    fi.setAttribute('multiple','multiple');   // allow multiple FASTA files
+    fi.classList.add('hidden');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'file-uploader-premium';
+    wrap.innerHTML = `
+      <button class="btn-premium" data-pick="${fileId}">Choose FASTA files</button>
+      <button class="btn-premium" data-clear="${fileId}">Clear</button>
+      <span class="file-chip" id="${fileId}-chip">No file chosen</span>
+    `;
+    fi.parentNode.insertBefore(wrap, fi);
+
+    bindOnce(wrap.querySelector(`[data-pick="${fileId}"]`), 'click', ()=> fi.click(), fileId+'_pick');
+    bindOnce(fi, 'change', async ()=>{
+      const files = Array.from(fi.files||[]);
+      const chip  = $(`${fileId}-chip`);
+      if(!files.length){ if(chip) chip.textContent='No file chosen'; return; }
+      if(chip) chip.textContent = files.map(f=>f.name).join(', ');
+      const texts = await Promise.all(files.map(f=>f.text()));
+      ta.value = texts.map(t => t.endsWith('\n') ? t : t+'\n').join('\n');
+    }, fileId+'_change');
+    bindOnce(wrap.querySelector(`[data-clear="${fileId}"]`), 'click', ()=>{
+      fi.value=''; ta.value=''; const chip = $(`${fileId}-chip`); if(chip) chip.textContent='No file chosen';
+    }, fileId+'_clear');
+  });
+}
+
+
 // Inject premium styles and small utility classes (drop-in)
 function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
@@ -223,6 +260,8 @@ function injectPremiumStyles(){
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
     .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
+    .file-uploader-premium{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+    .file-chip{display:inline-block;padding:4px 8px;border:1px solid #e5e7eb;border-radius:999px;background:#f8fafc;color:#334155;font-size:12px;}
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
@@ -575,6 +614,25 @@ async function getNonceOrKeyHeaders() {
   return h;
 }
 
+function validateRequired(){
+  const primarySeqs = $('primary-seqs')?.value?.trim() ?? '';
+  const problems = [];
+  if(!primarySeqs) problems.push('• miRNA FASTA is empty.');
+  if(primarySeqs && !hasFastaHeaders(primarySeqs)) problems.push('• miRNA FASTA must include headers (lines starting with ">").');
+
+  if(problems.length){
+    openModal('Before running prediction', `
+      <div style="padding:6px 0;">
+        ${problems.map(p=>`<div>${escapeHTML(p)}</div>`).join('')}
+        <div style="margin-top:8px;"><small>Tip: use “Load Sample” or paste FASTA with headers (e.g., &gt;hsa-let-7a-5p).</small></div>
+      </div>
+    `);
+    return false;
+  }
+  return true;
+}
+
+
 // =====================================================
 // Safe event binding (prevent duplicates)
 // =====================================================
@@ -748,6 +806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ensureModal(); // make sure modal exists early
   syncStickyOffset(); // keep sticky headers perfect
   ensureStickyGapForTabs(); // add premium gap to sticky nav
+  upgradeFastaPickers();
   window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');
@@ -953,6 +1012,8 @@ function extractChainHintsFromFasta(text){
   return hints;
 }
 
+if(!validateRequired()) return;
+
 // =====================================================
 // Submit handler
 // =====================================================
@@ -961,7 +1022,7 @@ async function handleSubmit(event){
 
   const loader = $('loader');
   const resultsContainer = $('results-container');
-
+  
   const primarySeqs   = $('primary-seqs')?.value?.trim() ?? '';
   const targetSeq     = $('target-seq')?.value?.trim() ?? '';
   const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
