@@ -56,9 +56,7 @@ const GUARDS = {
   styleInjected: false,
   nglLoaded: false,
   analysisControlsInjected: false,
-  stickyShimWired: false,
-  urlWatchdogWired: false,        // NEW
-  globalTabInterceptWired: false  // NEW
+  stickyShimWired: false
 };
 
 // =====================================================
@@ -70,22 +68,6 @@ const isLocal =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
 const BASE_URL = isLocal ? LOCAL_BASE : PROD_BASE;
-
-// ---- SAME-ORIGIN FALLBACKS (handles aamarzan.com ↔ mirna.aamarzan.com)
-const BASE_CANDIDATES = Array.from(new Set([
-  BASE_URL,
-  window.location.origin,                           // same-origin proxy / reverse-proxy
-].filter(Boolean)));
-
-function rebaseTo(url, base){
-  try{
-    const u = new URL(url, window.location.href);
-    return base.replace(/\/+$/,'') + u.pathname + u.search + u.hash;
-  }catch(_){
-    // if relative, leave as-is
-    return url;
-  }
-}
 
 const API_URL        = `${BASE_URL}/predict`;
 const PRECHECK_URL   = `${BASE_URL}/precheck`;
@@ -216,107 +198,6 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
-  function normalizeIdForSet(x){
-    return String(x||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9_\-\.]/g,'');
-  }
-  function baseNameNoExt(name){
-    return String(name||'').split(/[\\/]/).pop().replace(/\.(fasta|fa|fna|pdb|cif|mmcif)$/i,'');
-  }
-  function computeUniqueCounts(){
-    const mirnaIds = new Set(Object.keys(CURRENT_INPUTS.mirnas).map(normalizeIdForSet));
-    const targetIds= new Set(Object.keys(CURRENT_INPUTS.targets).map(normalizeIdForSet));
-    const compIds  = new Set(Object.keys(CURRENT_INPUTS.competitors).map(normalizeIdForSet));
-    getBasketFiles('mirna').forEach(f=> mirnaIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
-    getBasketFiles('target').forEach(f=> targetIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
-    getBasketFiles('competitor').forEach(f=> compIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
-    return { mirnas: mirnaIds.size, targets: targetIds.size, competitors: compIds.size };
-  }
-
-function upgradeFastaPickers(){
-  // Helper: find the file input that belongs to a given textarea, even if IDs differ
-  function resolvePickerPair(taId, explicitHints){
-    const ta = $(taId);
-    if(!ta) return null;
-
-    // 1) Try explicit ID hints first
-    for(const hid of (explicitHints || [])){
-      const el = $(hid);
-      if(el && el.tagName === 'INPUT' && el.type === 'file') return { fileInput: el, textarea: ta };
-    }
-
-    // 2) Search nearest file input in the same "group" (form/card/section)
-    const scope = ta.closest('.form-group, .field, .card, section, form') || document;
-    let candidates = Array.from(scope.querySelectorAll('input[type="file"]'));
-
-    // Prefer by semantic hint in id/name
-    const tag = taId.includes('primary') || taId.includes('mirna') ? 'mirna'
-              : taId.includes('competitor') ? 'compet'
-              : 'target';
-
-    const scored = candidates.map(el=>{
-      const idn = (el.id + ' ' + el.name).toLowerCase();
-      let score = 0;
-      if (/mirna|primary/.test(idn) && tag === 'mirna') score += 3;
-      if (/compet|comp/.test(idn)   && tag === 'compet') score += 3;
-      if (/target|targ/.test(idn)   && tag === 'target') score += 3;
-      // slight bias if element is spatially close
-      try{
-        const d = Math.abs(el.getBoundingClientRect().top - ta.getBoundingClientRect().top);
-        score += (d<50?2:(d<150?1:0));
-      }catch(_){}
-      return { el, score };
-    }).sort((a,b)=>b.score-a.score);
-
-    const chosen = (scored[0] && scored[0].score>0) ? scored[0].el : (candidates[0] || null);
-    if(!chosen) return null;
-    return { fileInput: chosen, textarea: ta };
-  }
-
-  const pairs = [
-    resolvePickerPair('primary-seqs', ['mirna-seq-file','mirna_fasta','mirna-file']),
-    resolvePickerPair('target-seq',   ['target-seq-file','target_fasta','target-file']),
-    resolvePickerPair('competitor-seq',['competitor-seq-file','competitor_fasta','competitor-file'])
-  ].filter(Boolean);
-
-  pairs.forEach(({fileInput, textarea})=>{
-    // Skip if already upgraded
-    if (fileInput.closest('.file-uploader-premium')) return;
-
-    // Allow multiple files and hide the native input
-    fileInput.setAttribute('multiple','multiple');
-    fileInput.classList.add('hidden');
-
-    // Build premium wrapper
-    const wid = fileInput.id || `${textarea.id || 'fasta'}-file`;
-    const wrap = document.createElement('div');
-    wrap.className = 'file-uploader-premium';
-    wrap.innerHTML = `
-      <button class="btn-premium" data-pick="${wid}">Choose FASTA files</button>
-      <button class="btn-premium" data-clear="${wid}">Clear</button>
-      <span class="file-chip" id="${wid}-chip">No file chosen</span>
-    `;
-
-    // Insert wrapper just before the native input (keeps layout intact)
-    fileInput.parentNode.insertBefore(wrap, fileInput);
-
-    // Wire buttons
-    bindOnce(wrap.querySelector(`[data-pick="${wid}"]`), 'click', ()=> fileInput.click(), wid+'_pick');
-    bindOnce(fileInput, 'change', async ()=>{
-      const files = Array.from(fileInput.files||[]);
-      const chip  = $(`${wid}-chip`);
-      if(!files.length){ if(chip) chip.textContent='No file chosen'; textarea.value=''; return; }
-      if(chip) chip.textContent = files.map(f=>f.name).join(', ');
-      const texts = await Promise.all(files.map(f=>f.text()));
-      textarea.value = texts.map(t => t.endsWith('\n') ? t : t+'\n').join('\n');
-    }, wid+'_change');
-    bindOnce(wrap.querySelector(`[data-clear="${wid}"]`), 'click', ()=>{
-      fileInput.value=''; textarea.value='';
-      const chip = $(`${wid}-chip`); if(chip) chip.textContent='No file chosen';
-    }, wid+'_clear');
-  });
-}
-
-
 // Inject premium styles and small utility classes (drop-in)
 function injectPremiumStyles(){
   if(GUARDS.styleInjected) return;
@@ -326,49 +207,8 @@ function injectPremiumStyles(){
     .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
       font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
     .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
-    .file-uploader-premium{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0;}
-    .file-chip{display:inline-block;padding:4px 8px;border:1px solid #e5e7eb;border-radius:999px;background:#f8fafc;color:#334155;font-size:12px;}
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
-    .select-premium{
-      appearance:none;padding:8px 12px;border:1px solid #d8dee9;border-radius:10px;
-      background:linear-gradient(180deg,#fff,#f8fafc);font-weight:600;min-width:220px;
-    }
-    #sticky-gap-shim{
-      position:fixed;
-      left:0; right:0;
-      top: calc(var(--sticky-offset-main));
-      height: var(--sticky-gap);
-      background:#fff;
-      z-index:10;
-      display:none;
-    }
-    .loader-spinner{
-      display:inline-block; width:16px; height:16px;
-      border:2px solid #e5e7eb; border-top-color:#1e5a9c;
-      border-radius:50%; margin-right:8px;
-      animation:spin .8s linear infinite;
-    }
-    @keyframes spin{ to{ transform: rotate(360deg) } }
-
-    .badge{
-      display:inline-block; padding:2px 8px; border-radius:999px;
-      font-size:12px; border:1px solid #e5e7eb; background:#f8fafc; color:#334155;
-    }
-    .badge.ok{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
-    .badge.warn{ background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
-    .badge.off{ background:#f1f5f9; border-color:#e2e8f0; color:#334155; }
-
-    .controls-grid{
-      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:10px; align-items:center; margin-bottom:10px;
-    }
-
-    .select-premium:focus{outline:none;box-shadow:0 0 0 3px rgba(2,132,199,.15);}
-    input[type="checkbox"]{
-      accent-color:#1e5a9c;width:18px;height:18px;
-    }
-
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     table#results-table thead th{position:static;top:0;background:#fff;z-index:1;text-align:center;}
@@ -390,7 +230,7 @@ function injectPremiumStyles(){
 
 // Map a tab button → target card id (robust: data- attrs, aria-controls, text label, href)
 function targetIdFromButton(btn){
-  if (!btn) return null;
+  if(!btn) return null;
   const byAttr = btn.getAttribute('data-target') || btn.dataset?.target || btn.getAttribute('aria-controls');
   if (byAttr && document.getElementById(byAttr)) return byAttr;
 
@@ -398,8 +238,8 @@ function targetIdFromButton(btn){
   if (href && href.startsWith('#') && document.getElementById(href.slice(1))) return href.slice(1);
 
   const label = (btn.textContent || '').toLowerCase().trim();
-  if (/^work(\s*flow)?$/.test(label)) return 'intro-tab';
-  if (/^inputs?$/.test(label))        return 'input-tab';
+  if (/^work(\s*flow)?$/.test(label)) return 'workflow-tab';
+  if (/^inputs?$/.test(label))        return 'inputs-tab';
   if (/advanced/.test(label))         return 'advanced-tab';
   if (/results?/.test(label))         return 'results-tab';
   return null;
@@ -413,118 +253,32 @@ function smallSpinner(text='Working...'){
 }
 
 // --- fetch with AbortController timeout (works for GET/POST) ---
-function fetchWithTimeout(url, options = {}, ms = 30000) {
+function fetchWithTimeout(url, options={}, ms=30000){
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), ms);
-  // merge options + our signal
-  const merged = Object.assign({}, options || {}, { signal: ac.signal });
-  return fetch(url, merged).finally(() => clearTimeout(timer));
+  const timer = setTimeout(()=>ac.abort(), ms);
+  return fetch(url, { ...options, signal: ac.signal })
+    .finally(()=>clearTimeout(timer));
 }
 
-
-function isCrossOrigin(url){
-  try{ const u = new URL(url, window.location.href); return u.origin !== window.location.origin; }
-  catch(_){ return false; }
-}
-
-// Detect the browser's generic CORS/network failure
-function isNetworkFetchError(e){
-  return e && (
-    e.name === 'TypeError' ||
-    e.name === 'AbortError' ||
-    /Failed to fetch|NetworkError|The operation was aborted/i.test(e.message||'')
-  );
-}
-
-// One path to rule them all:
-// 1) try as-is;
-// 2) if CORS/network fail and custom headers present, retry w/o custom headers;
-// 3) if still failing, try same-origin BASE_CANDIDATES (with and without custom headers).
-async function smartFetch(url, options={}, ms=30000){
-  const hasCustom = !!((options.headers||{})['X-API-KEY'] || (options.headers||{})['X-Nonce']);
-  const stripAuth = (opts) => {
-    const o = { ...opts, headers: { ...(opts.headers||{}) } };
-    delete o.headers['X-API-KEY']; delete o.headers['X-Nonce'];
-    return o;
-  };
-  const tryOnce = (u, opts) => fetchWithTimeout(u, opts, ms);
-
-  // 1) try as-is
-  try{ return await tryOnce(url, options); }
-  catch(e1){
-    if (!isNetworkFetchError(e1)) throw e1;
-
-    // 2) cross-origin + custom headers → retry without them
-    if (isCrossOrigin(url) && hasCustom){
-      try{ return await tryOnce(url, stripAuth(options)); }catch(e2){ /* continue */ }
-    }
-
-    // 3) rebase to alternative bases (same-origin first), both with and w/o custom headers
-    for (const base of BASE_CANDIDATES){
-      const alt = rebaseTo(url, base);
-      if (alt === url) continue;
-
-      try{ return await tryOnce(alt, options); }catch(e3){ /* try stripped */ }
-      if (hasCustom){
-        try{ return await tryOnce(alt, stripAuth(options)); }catch(e4){ /* keep looping */ }
-      }
-    }
-
-    // nothing worked
-    throw e1;
-  }
-}
-
-// JSON helpers using smartFetch
-async function robustJSON(url, opts={}, ms=60000){
-  const r = await smartFetch(url, opts, ms);
-  if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-  return await r.json();
-}
-
-// Retry helper now uses smartFetch so it inherits header removal + base rebasing
+// --- robust fetch with retries & backoff (uses fetchWithTimeout) ---
 async function fetchRetry(url, options={}, ms=30000, retries=2, backoffMs=600){
   let lastErr = null;
   for (let attempt = 0; attempt <= retries; attempt++){
     try{
-      const res = await smartFetch(url, options, ms);
+      const res = await fetchWithTimeout(url, options, ms);
       if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res;
     }catch(e){
       lastErr = e;
-      if (attempt < retries) await new Promise(r => setTimeout(r, backoffMs * (attempt + 1)));
+      if (attempt < retries){
+        await new Promise(r => setTimeout(r, backoffMs * (attempt + 1)));
+        continue;
+      }
     }
   }
   throw lastErr;
 }
 
-async function populateHitsIfMissing(mirnaSeq, targetId, targetSeq, compId, compSeq){
-  if (Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length) return;
-
-  const allowGU = byQS('#allow-gu')?.checked ?? true;
-  const maxMM   = parseInt(byQS('#max-mm')?.value ?? '0', 10);
-  const headers = await getNonceOrKeyHeaders();
-  const payload = {
-    mirna_seq: toRNA(mirnaSeq),
-    targets: { [targetId]: targetSeq },
-    competitors: compSeq ? { [compId]: compSeq } : {},
-    allow_gu: !!allowGU,
-    max_mismatch: Number.isFinite(maxMM) ? maxMM : 0
-  };
-  try{
-    const res = await fetch(SEED_SCAN_URL, {
-      method:'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok) return;
-    const data = await res.json();
-    if(Array.isArray(data.hits)){
-      LAST_SEED_HITS = data.hits;
-      LAST_SEED_META = { mirnaId: (payload.mirna_id||''), targetId, compId };
-    }
-  }catch(_){ /* silent */ }
-}
 
 // --- JSON helper with timeout + no-store cache ---
 async function fetchJSONWithTimeout(url, opts={}, ms=60000){
@@ -695,7 +449,7 @@ function resolveSeqWithAAHandling(anyId, pool){
 // =====================================================
 async function loadConfig(){
   try{
-    const res = await smartFetch(CONFIG_URL, { method:'GET' });
+    const res = await fetch(CONFIG_URL, { method:'GET' });
     if(res.ok){
       const cfg = await res.json();
       CONFIG = { ...CONFIG, ...cfg };
@@ -710,7 +464,7 @@ async function getNonceOrKeyHeaders() {
   const h = {};
   try {
     if (CONFIG && CONFIG.use_nonce) {
-      const r = await smartFetch(NONCE_URL, { method: 'GET', cache: 'no-store' });
+      const r = await fetch(NONCE_URL, { method: 'GET', cache: 'no-store' });
       if (r.ok) {
         const j = await r.json();
         if (j && j.nonce) h['X-Nonce'] = j.nonce;
@@ -725,25 +479,6 @@ async function getNonceOrKeyHeaders() {
   }
   return h;
 }
-
-function validateRequired(){
-  const primarySeqs = $('primary-seqs')?.value?.trim() ?? '';
-  const problems = [];
-  if(!primarySeqs) problems.push('• miRNA FASTA is empty.');
-  if(primarySeqs && !hasFastaHeaders(primarySeqs)) problems.push('• miRNA FASTA must include headers (lines starting with ">").');
-
-  if(problems.length){
-    openModal('Before running prediction', `
-      <div style="padding:6px 0;">
-        ${problems.map(p=>`<div>${escapeHTML(p)}</div>`).join('')}
-        <div style="margin-top:8px;"><small>Tip: use “Load Sample” or paste FASTA with headers (e.g., &gt;hsa-let-7a-5p).</small></div>
-      </div>
-    `);
-    return false;
-  }
-  return true;
-}
-
 
 // =====================================================
 // Safe event binding (prevent duplicates)
@@ -789,11 +524,6 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   return sources;
 }
 
-function scrollPageToAbsoluteTop(){
-  cancelScrollAnim();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 // --- ultra-smooth scroll animator (cubic ease, cancelable) ---
 let __scrollAnim = null;
 function cancelScrollAnim(){
@@ -825,16 +555,6 @@ function animateScrollTo(targetY, duration = 450){
     window.addEventListener(ev, cancelScrollAnim, { once:true, passive:true })
   );
 }
-
-document.addEventListener('click', (e)=>{
-  const a = e.target && e.target.closest && e.target.closest('a');
-  if(!a) return;
-  const label = (a.textContent || '').toLowerCase();
-  const href  = a.getAttribute('href') || '';
-  if (/affinity predictor/i.test(label) || /\/mirna\b/i.test(href)){
-    setTimeout(scrollPageToAbsoluteTop, 0);
-  }
-}, true);
 
 // Apply premium sticky gap ONLY to the tab bar, and paint the gap white (solid)
 function ensureStickyGapForTabs(){
@@ -907,201 +627,7 @@ function scrollToCardTop(id){
   });
 }
 
-function sanitizeAnchorsAndHashes(){
-  // Hard-block anchors that would create '?' or '#workflow' jumps
-  document.addEventListener('click', (e)=>{
-    const a = e.target && e.target.closest && e.target.closest('a[href]');
-    if(!a) return;
-    const href = (a.getAttribute('href') || '').trim();
-    if (href === '?' || href === '#' || /^#workflow/i.test(href)){
-      e.preventDefault(); e.stopPropagation();
-      history.replaceState(null, '', window.location.pathname);
-    }
-  }, true);
 
-  // If anything still sneaks a '?' or '#', scrub it immediately
-  const scrub = ()=> history.replaceState(null, '', window.location.pathname);
-  window.addEventListener('hashchange', scrub, true);
-  window.addEventListener('popstate',  ()=> {
-    if (window.location.search || window.location.hash) scrub();
-  }, true);
-}
-
-// --- GLOBAL TAB INTERCEPTOR: own all .tab-btn clicks, no #workflow jumps ---
-function attachGlobalTabInterceptor(){
-  if (GUARDS.globalTabInterceptWired) return;
-  GUARDS.globalTabInterceptWired = true;
-
-  const loader = $('loader');
-
-  window.addEventListener('click', (ev) => {
-    const btn = ev.target && ev.target.closest && ev.target.closest('.tab-btn');
-    if (!btn) return;
-
-    const targetId = targetIdFromButton(btn);
-    if (!targetId) return;
-
-    // Kill all default behaviour and other handlers (capture-phase)
-    ev.preventDefault();
-    ev.stopPropagation();
-    if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
-
-    // Our own tab switching + premium snap
-    openTab(btn, targetId);
-    ensureStickyGapForTabs();
-
-    const name = (btn.textContent || '').toLowerCase();
-
-    if (name.includes('inputs')){
-      if (loader){
-        text(loader, "Please input your sequences to start a prediction.");
-        show(loader);
-      }
-    } else if (name.includes('results')){
-      const rc = $('results-container');
-      if (rc && !rc.innerHTML.trim()){
-        setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
-      }
-    } else if (name.includes('workflow')){
-      // Show the "workflow"/intro card, but DO NOT scroll to the full page top
-      if (loader) hide(loader);
-      // openTab already calls scrollToCardTop, so card stays nicely under sticky header
-    }
-  }, true); // capture = true so we win over theme scripts
-}
-
-// --- GLOBAL NAV SANITIZER + LATE DOM PATCHING ---
-function globalNavSanitizer(){
-  // kill any anchors that would navigate to '?' or '#workflow' or bare '#'
-  document.addEventListener('click', (e) => {
-    const a = e.target?.closest?.('a[href]');
-    if(!a) return;
-    const href = (a.getAttribute('href')||'').trim();
-    if (href === '?' || href === '#' || /^#workflow/i.test(href) || /^\?/.test(href)){
-      e.preventDefault(); e.stopPropagation();
-      history.replaceState(null, '', window.location.pathname);
-    }
-  }, true);
-
-  // strip accidental query/hash immediately on load
-  if (window.location.search || window.location.hash){
-    history.replaceState(null, '', window.location.pathname);
-  }
-
-  // MutationObserver: scrub anchors/forms added later with troublesome targets
-  const scrubNode = (node) => {
-    if(node.nodeType !== 1) return;
-    // anchors
-    if(node.matches?.('a[href]')){
-      const href = (node.getAttribute('href')||'').trim();
-      if (href === '?' || href === '#' || /^#workflow/i.test(href) || /^\?/.test(href)){
-        node.removeAttribute('href');
-        node.setAttribute('role','button');
-      }
-    }
-    // submit buttons with formaction
-    if(node.matches?.('button[formaction],input[formaction]')){
-      const fa = (node.getAttribute('formaction')||'').trim();
-      if (fa === '?' || /^\?/.test(fa) || /^#/.test(fa)) node.removeAttribute('formaction');
-    }
-    // forms with "action" set to '?' (or only a query/hash)
-    if(node.matches?.('form[action]')){
-      const act = (node.getAttribute('action')||'').trim();
-      if (act === '?' || /^\?/.test(act) || /^#/.test(act)) node.removeAttribute('action');
-    }
-    // recurse a little: handle descendants in batch
-    node.querySelectorAll?.('a[href],button[formaction],input[formaction],form[action]').forEach(scrubNode);
-  };
-
-  const mo = new MutationObserver((muts)=>{
-    muts.forEach(m=>{
-      m.addedNodes.forEach(scrubNode);
-      if (m.target) scrubNode(m.target);
-    });
-  });
-  mo.observe(document.documentElement, { subtree:true, childList:true, attributes:true, attributeFilter:['href','action','formaction'] });
-
-  // first pass
-  document.querySelectorAll('a[href],button[formaction],input[formaction],form[action]').forEach(scrubNode);
-}
-
-// --- HARD URL SCRUBBER: never allow ? or # to stick on /mirna --- 
-function attachUrlWatchdog(){
-  if (GUARDS.urlWatchdogWired) return;
-  GUARDS.urlWatchdogWired = true;
-
-  // Base path for this tool (no query / hash)
-  const basePath = window.location.pathname.replace(/\/+$/, '') || '/mirna';
-
-  const scrub = () => {
-    if (window.location.search || window.location.hash){
-      history.replaceState(null, '', basePath);
-    }
-  };
-
-  // Initial scrub on load
-  scrub();
-
-  // Also scrub on hashchange/popstate
-  window.addEventListener('hashchange', scrub, true);
-  window.addEventListener('popstate', scrub, true);
-
-  // Wrap history methods so any pushState/replaceState from other scripts gets cleaned
-  const origPush = history.pushState.bind(history);
-  const origReplace = history.replaceState.bind(history);
-
-  history.pushState = function(state, title, url){
-    origPush(state, title, url);
-    scrub();
-  };
-  history.replaceState = function(state, title, url){
-    origReplace(state, title, url);
-    scrub();
-  };
-
-  // Extra safety: periodic scrub in case something slips through
-  setInterval(scrub, 1500);
-}
-
-// --- SUPER-ROBUST SUBMIT INTERCEPTOR (not tied to #prediction-form) ---
-function interceptAnyPredictionSubmit(){
-  window.addEventListener('submit', (ev) => {
-    const form = ev.target;
-    if(!(form instanceof HTMLFormElement)) return;
-
-    // Heuristic: treat as prediction form if it contains the primary miRNA textarea
-    const hasPrimary = !!form.querySelector?.('#primary-seqs, textarea[name="primary-seqs"]');
-    if(!hasPrimary) return;
-
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation?.();
-
-    // neutralize any leftover action/formaction
-    form.removeAttribute('action');
-    form.querySelectorAll('[formaction]').forEach(el=>el.removeAttribute('formaction'));
-
-    // clean URL now, then run our flow
-    history.replaceState(null, '', window.location.pathname);
-    handleSubmit(ev);
-  }, true);
-}
-
-// --- GUARANTEED RESULTS SNAP (if tab ids differ, still scroll to results) ---
-function forceResultsView(){
-  const resultsBtn = Array.from(document.querySelectorAll('.tab-btn, button, a'))
-    .find(b => /result/i.test(b.textContent||'') && (b.id||'').toLowerCase() !== 'run-prediction');
-  if (resultsBtn){
-    const id = (resultsBtn.getAttribute('data-target') || resultsBtn.getAttribute('aria-controls') || '').trim();
-    if (id && document.getElementById(id)) { openTab(resultsBtn, id); }
-  }
-  const rc = document.getElementById('results-container');
-  if (rc){
-    rc.scrollIntoView({ block:'start', behavior:'smooth' });
-    // hard snap to exact top after smooth scroll settles
-    requestAnimationFrame(()=> rc.scrollIntoView({ block:'start', behavior:'auto' }));
-  }
-}
 
 // =====================================================
 // Initialization
@@ -1112,13 +638,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   ensureModal(); // make sure modal exists early
   syncStickyOffset(); // keep sticky headers perfect
   ensureStickyGapForTabs(); // add premium gap to sticky nav
-  upgradeFastaPickers();
-  sanitizeAnchorsAndHashes();
-  globalNavSanitizer();
-  attachUrlWatchdog();
-  interceptAnyPredictionSubmit();
-  attachGlobalTabInterceptor();
-  
   window.addEventListener('resize', () => { syncStickyOffset(); ensureStickyGapForTabs(); ensureTabsAnchor();}, { passive:true });
 
   const loader = $('loader');
@@ -1150,7 +669,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleSubmit(ev);
 
         // Clean any accidental query/hash immediately
-        history.replaceState(null, '', window.location.pathname); // scrub '?' and '#...' always
+        const cleanUrl = window.location.pathname + window.location.search.replace(/^\?$/, '');
+        if (window.location.hash) {
+          history.replaceState(null, '', cleanUrl); // remove #anything
+        } else if (window.location.search === '?') {
+          history.replaceState(null, '', cleanUrl);
+        }
       }
     }, true);
 
@@ -1162,12 +686,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       'form#prediction-form input[type="submit"]',
       'form#prediction-form button[formaction]',
       'form#prediction-form [type="submit"][formaction]',
-      'form#prediction-form a[href*="#"]',
-      'form#prediction-form a[href="?"]',
-      'form#prediction-form a[href^="?"]',
-      'form#prediction-form a[href^="#"]'
+      'form#prediction-form a[href*="#"]'
     ];
-
     document.querySelectorAll(runSelectors.join(',')).forEach((el) => {
       // Remove any navigation attributes that could hijack the flow
       el.removeAttribute('href');
@@ -1239,7 +759,7 @@ function injectAdvancedOnce(){
         <li>Mature trimming enabled: <code>${CONFIG.mature_trim_enabled ? 'yes' : 'no'}</code> (window: ${CONFIG.mature_window})</li>
         <li>AA→NT conversion allowed: <code>${CONFIG.aa_convert_allowed ? 'yes' : 'no'}</code></li>
         <li>Auth mode: <code>${CONFIG.use_nonce ? 'nonce' : 'open'}</code></li>
-        </ul>
+      </ul>
     </div>
     `,
     advTab
@@ -1327,12 +847,11 @@ function extractChainHintsFromFasta(text){
 // Submit handler
 // =====================================================
 async function handleSubmit(event){
-  if(!validateRequired()) return;
   event.preventDefault();
 
   const loader = $('loader');
   const resultsContainer = $('results-container');
-  
+
   const primarySeqs   = $('primary-seqs')?.value?.trim() ?? '';
   const targetSeq     = $('target-seq')?.value?.trim() ?? '';
   const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
@@ -1394,14 +913,10 @@ async function handleSubmit(event){
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
   // Friendly info
-  const uniques = computeUniqueCounts();
-  const estEval = Math.max(uniques.mirnas,1) * Math.max(uniques.targets||1,1) * Math.max(uniques.competitors||1,1);
+  const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
   prependHTML(resultsContainer, formatInfo(
-    `Detected: ${Object.keys(CURRENT_INPUTS.mirnas).length} miRNA(s), ${Object.keys(CURRENT_INPUTS.targets).length} target(s) and ${Object.keys(CURRENT_INPUTS.competitors).length} competitor(s) from FASTA. ` +
-    `Staged 3D files: mirna=${getBasketFiles('mirna').length}, target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. ` +
-    `Estimated evaluations: ${estEval}.`
+    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
   ));
-
 
   // Non-blocking tips
   const MIN_TARGET_LEN = 30;
@@ -1425,26 +940,14 @@ async function handleSubmit(event){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
   }
 
-  //previous resultsTabButton
   // Switch to results tab & scroll to top of results (sticky aware)
-  //const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
-  //  .find(b => /results/i.test(b.textContent || ''));
-  //if (resultsTabButton) {
-  //  openTab(resultsTabButton, 'results-tab');
-    // OLD: scrollToCardTop('results-tab');
-  //  scrollTabsToTop(); // NEW: snap the tabs to the exact top
-  //}
-
-  //forceResultsView();
-
-  // simplified flow inside handleSubmit
-  const resultsTabButton = [...document.querySelectorAll('button.tab-btn')]
+  const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
     openTab(resultsTabButton, 'results-tab');
-    scrollTabsToTop();
+    // OLD: scrollToCardTop('results-tab');
+    scrollTabsToTop(); // NEW: snap the tabs to the exact top
   }
-  forceResultsView(); // ensures scrolling into results card
 
   // Show loader
   if(loader){
@@ -1516,7 +1019,7 @@ async function handleSubmit(event){
 
     // 1) Start
     if(loader) text(loader, "Job started. Preparing batches...");
-    const startRes = await smartFetch(API_URL, { method:'POST', headers:authHeaders, body:formData }, 60000);
+    const startRes = await fetch(API_URL, { method:'POST', headers:authHeaders, body:formData });
 
     if(!startRes.ok){
       let errorMsg;
@@ -1537,7 +1040,7 @@ async function handleSubmit(event){
     let lastTick = Date.now();
 
     const poll = async () => {
-      const res = await smartFetch(PROGRESS_URL(job_id) + `?t=${Date.now()}`, { method:'GET' }, 30000);
+      const res = await fetch(PROGRESS_URL(job_id), { method:'GET' });
       if(!res.ok) throw new Error('Failed to check job progress.');
       const data = await res.json();
 
@@ -1591,13 +1094,12 @@ async function handleSubmit(event){
           const headers = await getNonceOrKeyHeaders();
           let finalDataSoft = null;
           try {
-            finalDataSoft = await robustJSON(
+            finalDataSoft = await fetchJSONWithTimeout(
               DOWNLOAD_URL(job_id),
               { method:'GET', headers },
               60000
             );
           } catch(_){}
-
           if(finalDataSoft){
             const rows = finalDataSoft.results || [];
             if(rows.length){
@@ -1621,7 +1123,7 @@ async function handleSubmit(event){
         if(loader) text(loader, "Fetching final results...");
         try {
           const headers = await getNonceOrKeyHeaders();
-          const finalData = await robustJSON(
+          const finalData = await fetchJSONWithTimeout(
             DOWNLOAD_URL(job_id),
             { method:'GET', headers },
             60000
@@ -1670,7 +1172,7 @@ async function tryPrecheck(formData){
   const headers = await getNonceOrKeyHeaders();
   let res;
   try{
-    res = await smartFetch(PRECHECK_URL, { method:'POST', headers, body: fd }, 20000);
+    res = await fetchWithTimeout(PRECHECK_URL, { method:'POST', headers, body: fd }, 20000);
   }catch(_){ /* ignore */ }
   if(!res || !res.ok){
     const rc = $('results-container');
@@ -1855,7 +1357,7 @@ function displayResults(results, finalData=null){
       const headers = await getNonceOrKeyHeaders();
       const url = DOWNLOAD_ALL_CSV_URL(CURRENT_JOB_ID) +
         `?allow_gu=${allowGU ? 1 : 0}&max_mismatch=${Number.isFinite(maxMM)?maxMM:0}&range_aware=1&tolerant=1`;
-      const res = await smartFetch(url, { method:'GET', headers });
+      const res = await fetch(url, { method:'GET', headers });
       if(!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const dl  = URL.createObjectURL(blob);
@@ -1871,7 +1373,7 @@ function displayResults(results, finalData=null){
     if (!CURRENT_JOB_ID) { alert('No active job.'); return; }
     try {
       const headers = await getNonceOrKeyHeaders();
-      const res = await smartFetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, { method:'GET', headers });
+      const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/all.zip`, { method:'GET', headers });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
@@ -2030,14 +1532,6 @@ function hasAnyStructure(){
   return (tgt + cmp + mir + legacy) > 0;
 }
 
-function adaptiveStepsFor(seqLen){
-  if(!Number.isFinite(seqLen) || seqLen<=0) return 48;
-  if(seqLen <= 60)  return 48;
-  if(seqLen <= 120) return 40;
-  if(seqLen <= 240) return 32;
-  return 24;
-}
-
 // === Inject range/tolerant filter chips (toggle behavior) ===
 function injectResultFilters(){
   if($('result-filters')) return;
@@ -2096,7 +1590,7 @@ function injectAnalysisControls(container){
         <option value="seed_density">Seed density (fast)</option>
       </select>
     </label>
-    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="48" min="24" max="128" step="2"></label>
+    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
 
     <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
     <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
@@ -2137,7 +1631,7 @@ async function handleRowCsvClick(item){
   if(!interactionId){ alert('Row is missing interaction_id.'); return; }
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await smartFetch(DOWNLOAD_ROW_CSV_URL(CURRENT_JOB_ID, interactionId), { method:'GET', headers });
+    const res = await fetch(DOWNLOAD_ROW_CSV_URL(CURRENT_JOB_ID, interactionId), { method:'GET', headers });
     if(!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -2153,7 +1647,7 @@ async function handleBundleClick(item){
   if(!interactionId){ alert('Row is missing interaction_id.'); return; }
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await smartFetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/${interactionId}/bundle.zip`, { method:'GET', headers });
+    const res = await fetch(`${BASE_URL}/download/${CURRENT_JOB_ID}/${interactionId}/bundle.zip`, { method:'GET', headers });
     if(!res.ok) throw new Error('Download failed');
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -2171,13 +1665,7 @@ async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
-  let steps = parseInt(stepsInp?.value || '', 10);
-  if(!Number.isFinite(steps)){
-    const tId   = item.target_id || '';
-    const tSeq  = lookupTolerant(CURRENT_INPUTS.targets, tId) || '';
-    steps = adaptiveStepsFor((tSeq || '').length);
-  }
-  steps = Math.max(24, Math.min(128, steps));
+  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64));
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
@@ -2240,15 +1728,10 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
     }
 
     const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-    let uiSteps = parseInt(byQS('#heatmap-steps')?.value || '', 10);
-    if(!Number.isFinite(uiSteps)){
-      uiSteps = adaptiveStepsFor(targetSeq.length);
-    }
-    uiSteps = Math.max(24, Math.min(128, uiSteps));
+    const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
 
     // Special case: seed density requested
     if(uiMode === 'seed_density'){
-      await populateHitsIfMissing(mirnaSeq, targetId, targetSeq, compId, compSeq);
       const density = computeSeedDensityArray(targetId, targetSeq);
       const vals = normalizeArray(density);
       const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
@@ -2265,8 +1748,7 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
       target_seq: targetSeq,
       competitor_seq: compSeq || undefined,
       steps: uiSteps,
-      mode: uiMode,
-      fast: uiSteps <= 32   // <— harmless hint for server
+      mode: uiMode
     });
 
     let data = null;
@@ -2674,7 +2156,7 @@ async function fetchStructureBlob(kind){
   if(!CURRENT_JOB_ID) return null;
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
     if(!res.ok) return null;
     const ext = inferExtFromResponse(res);
     const blob = await res.blob();
@@ -2973,7 +2455,7 @@ async function open3DOrExplain(anyId, kind /* 'target'|'competitor'|'mirna' */, 
   let primaryBlob = null, primaryExt = 'pdb';
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
     if(res.ok){
       primaryExt = inferExtFromResponse(res);
       primaryBlob = await res.blob();
@@ -3262,7 +2744,7 @@ async function open3DViewer(kind){
 
   try{
     const headers = await getNonceOrKeyHeaders();
-    const res = await smartFetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
+    const res = await fetch(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers });
     if(!res.ok){
       openModalText('3D Viewer', 'No 3D structure available (maybe not uploaded or expired).');
       return;
@@ -3374,7 +2856,7 @@ function wireTabButtonsOnce(){
           setHTML(rc, formatInfo('Results will appear here after you run a prediction.'));
         }
       }
-      if(name.includes('workflow')){ scrollPageToAbsoluteTop(); if(loader) hide(loader); }
+      if(name.includes('workflow')){ if(loader) hide(loader); }
     }, 'tabClickSnap');
   });
 
@@ -3388,6 +2870,8 @@ function getStickySum(includeTabs = true){
   const tabs = includeTabs ? getTabsBarHeight() : 0;
   return off + gap + tabs;
 }
+
+
 
 // =====================================================
 // Modal (singleton)
