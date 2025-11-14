@@ -214,6 +214,22 @@ function ensureSingleton(id, html, parent){
   return created;
 }
 
+  function normalizeIdForSet(x){
+    return String(x||'').toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9_\-\.]/g,'');
+  }
+  function baseNameNoExt(name){
+    return String(name||'').split(/[\\/]/).pop().replace(/\.(fasta|fa|fna|pdb|cif|mmcif)$/i,'');
+  }
+  function computeUniqueCounts(){
+    const mirnaIds = new Set(Object.keys(CURRENT_INPUTS.mirnas).map(normalizeIdForSet));
+    const targetIds= new Set(Object.keys(CURRENT_INPUTS.targets).map(normalizeIdForSet));
+    const compIds  = new Set(Object.keys(CURRENT_INPUTS.competitors).map(normalizeIdForSet));
+    getBasketFiles('mirna').forEach(f=> mirnaIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
+    getBasketFiles('target').forEach(f=> targetIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
+    getBasketFiles('competitor').forEach(f=> compIds.add(normalizeIdForSet(baseNameNoExt(f.name))));
+    return { mirnas: mirnaIds.size, targets: targetIds.size, competitors: compIds.size };
+  }
+
 function upgradeFastaPickers(){
   const pairs = [
     {fileId:'mirna-seq-file',      taId:'primary-seqs'},
@@ -264,6 +280,15 @@ function injectPremiumStyles(){
     .file-chip{display:inline-block;padding:4px 8px;border:1px solid #e5e7eb;border-radius:999px;background:#f8fafc;color:#334155;font-size:12px;}
     .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
+    .select-premium{
+      appearance:none;padding:8px 12px;border:1px solid #d8dee9;border-radius:10px;
+      background:linear-gradient(180deg,#fff,#f8fafc);font-weight:600;min-width:220px;
+    }
+    .select-premium:focus{outline:none;box-shadow:0 0 0 3px rgba(2,132,199,.15);}
+    input[type="checkbox"]{
+      accent-color:#1e5a9c;width:18px;height:18px;
+    }
+
     .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     table#results-table thead th{position:static;top:0;background:#fff;z-index:1;text-align:center;}
@@ -928,7 +953,8 @@ function injectAdvancedOnce(){
         <li>Mature trimming enabled: <code>${CONFIG.mature_trim_enabled ? 'yes' : 'no'}</code> (window: ${CONFIG.mature_window})</li>
         <li>AA→NT conversion allowed: <code>${CONFIG.aa_convert_allowed ? 'yes' : 'no'}</code></li>
         <li>Auth mode: <code>${CONFIG.use_nonce ? 'nonce' : 'open'}</code></li>
-      </ul>
+        <select id="aa-nt-mode" class="select-premium" ${CONFIG.aa_convert_allowed ? '' : 'disabled'}>
+        </ul>
     </div>
     `,
     advTab
@@ -1083,10 +1109,14 @@ async function handleSubmit(event){
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
   // Friendly info
-  const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
+  const uniques = computeUniqueCounts();
+  const estEval = Math.max(uniques.mirnas,1) * Math.max(uniques.targets||1,1) * Math.max(uniques.competitors||1,1);
   prependHTML(resultsContainer, formatInfo(
-    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
+    `Detected: ${Object.keys(CURRENT_INPUTS.mirnas).length} miRNA(s), ${Object.keys(CURRENT_INPUTS.targets).length} target(s) and ${Object.keys(CURRENT_INPUTS.competitors).length} competitor(s) from FASTA. ` +
+    `Staged 3D files: mirna=${getBasketFiles('mirna').length}, target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. ` +
+    `Estimated evaluations: ${estEval}.`
   ));
+
 
   // Non-blocking tips
   const MIN_TARGET_LEN = 30;
