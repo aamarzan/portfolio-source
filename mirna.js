@@ -1012,12 +1012,11 @@ function extractChainHintsFromFasta(text){
   return hints;
 }
 
-if(!validateRequired()) return;
-
 // =====================================================
 // Submit handler
 // =====================================================
 async function handleSubmit(event){
+  if(!validateRequired()) return;
   event.preventDefault();
 
   const loader = $('loader');
