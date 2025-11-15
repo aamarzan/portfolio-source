@@ -483,19 +483,30 @@
         </p>
 
         <!-- Sticky analysis controls (mirna.js will populate & read values) -->
-        <div id="analysis-controls" class="hidden" aria-live="polite">
-          <div class="row">
-            <label for="heatmap-mode"><strong>Heatmap Mode</strong></label>
-            <select id="heatmap-mode" aria-label="Select heatmap mode">
-              <option value="ig_target" selected>IG — Target</option>
-              <option value="ig_competitor">IG — Competitor</option>
-              <option value="seed_density">Seed-hit density</option>
-            </select>
-            <label for="heatmap-steps"><strong>IG Steps</strong></label>
-            <input id="heatmap-steps" type="number" min="10" max="300" step="5" value="50" aria-label="Integrated Gradients steps"/>
-            <span aria-hidden="true" style="color:#64748b;">(applies when IG mode selected)</span>
-          </div>
+        <div class="row">
+          <label for="heatmap-mode"><strong>Heatmap Mode</strong></label>
+          <select id="heatmap-mode" aria-label="Select heatmap mode">
+            <!-- Fast path first & default -->
+            <option value="seed_density" selected>Seed-hit density (fast)</option>
+            <option value="ig_target">IG — Target</option>
+            <option value="ig_competitor">IG — Competitor</option>
+          </select>
+
+          <label for="heatmap-steps"><strong>IG Steps</strong></label>
+          <input
+            id="heatmap-steps"
+            type="number"
+            min="10"
+            max="200"
+            step="5"
+            value="24"
+            aria-label="Integrated Gradients steps (higher = slower)"
+          />
+          <span aria-hidden="true" style="color:#64748b;">
+            (applies when IG mode selected; higher = slower heatmaps)
+          </span>
         </div>
+
 
         <div id="loader" class="hidden" role="status" aria-live="polite">
           <span class="loader-spinner" aria-hidden="true"></span>Running prediction...
