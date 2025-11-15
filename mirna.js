@@ -307,42 +307,59 @@ function injectPremiumStyles(){
       box-shadow:0 1px 4px rgba(15,23,42,.18);
     }
 
-    /* Small clear buttons for each FASTA picker */
-    .fasta-clear-btn{
-      min-height:28px;
-      padding:3px 10px;
-      margin-left:6px;
+    /* Shell that keeps "Choose File" + "Clear" in ONE pill box */
+    .fasta-file-shell{
+      display:flex;
+      align-items:center;          /* vertically center both buttons */
+      flex-wrap:nowrap;
+      padding:3px 8px 3px 3px;
       border-radius:999px;
-      border:1px solid #e5e7eb;
-      background:#f9fafb;
+      border:1px solid #c4ddf9;
+      background:#ffffff;
+      width:100%;                  /* full-row pill */
+      box-sizing:border-box;
+    }
+    .fasta-file-shell input[type="file"].file-premium{
+      border:none;                 /* remove inner border inside the shell only */
+      padding:0;
+      box-shadow:none;
+    }
+
+    /* Small clear buttons for each FASTA picker – match light sky blue */
+    .fasta-clear-btn{
+      display:inline-flex;
+      align-items:center;
+      min-height:35px;
+      padding:3px 12px;
+      margin-left:auto;            /* push Clear to the far right */
+      border-radius:999px;
+      border:1px solid #93c5fd;
+      background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* same family as Choose File */
       font-size:12px;
       font-weight:500;
-      color:#64748b;
+      color:#0f172a;
       cursor:pointer;
+      box-shadow:0 1px 4px rgba(15,23,42,.18);
       transition:.15s background-color ease,
-                 .15s border-color ease,
-                 .15s color ease,
-                 .12s transform ease;
+                .15s border-color ease,
+                .15s color ease,
+                .12s transform ease;
     }
+
     .fasta-clear-btn:hover{
-      background:#e5f0ff;
-      border-color:#bfdbfe;
-      color:#1d4ed8;
+      background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+      border-color:#93c5fd;
+      color:#0f172a;
       transform:translateY(-0.5px);
     }
     .fasta-clear-btn:active{
       transform:translateY(0);
+      box-shadow:0 1px 4px rgba(15,23,42,.18);
     }
 
     /* ===================================================
        PREMIUM ADVANCED OPTIONS (only inside #advanced-tab)
-       – affects:
-         a) Convert AA → NT (lossy; …)
-         b) Auto-trim miRNAs > 30nt …
-         c) Convert protein AA → NT …
        =================================================== */
-
-    /* Soft card behind the three checkboxes + AA→NT select */
     #advanced-flags-wrapper{
       margin-top:8px;
     }
@@ -361,16 +378,14 @@ function injectPremiumStyles(){
       font-size:14px;
       color:#111827;
     }
-
-    /* Premium bluish-green gradient checkbox ONLY in Advanced tab */
     #advanced-tab input[type="checkbox"]{
       -webkit-appearance:none;
       appearance:none;
       width:18px;
       height:18px;
       border-radius:6px;
-      border:1px solid #a7f3d0; /* light green border */
-      background:linear-gradient(135deg,#ecfdf3,#d1fae5); /* very light green */
+      border:1px solid #a7f3d0;
+      background:linear-gradient(135deg,#ecfdf3,#d1fae5);
       position:relative;
       outline:none;
       cursor:pointer;
@@ -387,7 +402,7 @@ function injectPremiumStyles(){
       border-color:#6ee7b7;
     }
     #advanced-tab input[type="checkbox"]:checked{
-      background:linear-gradient(135deg,#22c55e,#0ea5e9); /* bluish-green gradient */
+      background:linear-gradient(135deg,#22c55e,#0ea5e9);
       border-color:#22c55e;
       box-shadow:
         0 0 0 1px rgba(255,255,255,.45) inset,
@@ -407,15 +422,13 @@ function injectPremiumStyles(){
     }
     #advanced-tab input[type="checkbox"]:checked::after{
       opacity:1;
-      transform:scale(.9) rotate(45deg); /* tick mark */
+      transform:scale(.9) rotate(45deg);
     }
     #advanced-tab input[type="checkbox"]:disabled{
       cursor:not-allowed;
       opacity:.55;
       box-shadow:none;
     }
-
-    /* Premium very light-green AA→NT mode select box */
     #advanced-tab select#aa-nt-mode{
       border-radius:8px;
       border:1px solid #a7f3d0;
@@ -423,12 +436,12 @@ function injectPremiumStyles(){
       font-size:13px;
       font-weight:500;
       background:linear-gradient(135deg,#f0fdf4,#ecfeff);
-      box-shadow:0 1px 3px rgba(16,185,129,.25);
+      box-shadow:0 1px 3px rgba(199, 243, 228, 1);
     }
     #advanced-tab select#aa-nt-mode:focus{
       outline:none;
       border-color:#22c55e;
-      box-shadow:0 0 0 1px rgba(34,197,94,.45);
+      box-shadow:0 0 0 1px rgba(202, 236, 214, 1);
     }
     #advanced-tab select#aa-nt-mode:disabled{
       opacity:.6;
@@ -442,6 +455,21 @@ function injectPremiumStyles(){
   document.head.appendChild(style);
   GUARDS.styleInjected = true;
 }
+
+window.addEventListener('load', () => {
+  document.querySelectorAll('.fasta-clear-btn').forEach(btn => {
+    const fileInput = btn.previousElementSibling;
+    if (!fileInput || !fileInput.classList.contains('file-premium')) return;
+    if (btn.parentElement && btn.parentElement.classList.contains('fasta-file-shell')) return;
+
+    const shell = document.createElement('span');
+    shell.className = 'fasta-file-shell';
+
+    fileInput.parentNode.insertBefore(shell, fileInput);
+    shell.appendChild(fileInput);
+    shell.appendChild(btn);
+  });
+});
 
 // Map a tab button → target card id (robust: data- attrs, aria-controls, text label, href)
 function targetIdFromButton(btn){
