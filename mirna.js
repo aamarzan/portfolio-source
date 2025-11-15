@@ -1932,41 +1932,92 @@ function injectResultFilters(){
 // Adds Allow G:U, Max mismatches, and two global buttons.
 // =====================================================
 function injectAnalysisControls(container){
-  if(GUARDS.analysisControlsInjected) return;
+  if (GUARDS.analysisControlsInjected) return;
 
-  const html = `
-  <div id="analysis-controls" class="controls-grid">
-    <label class="ctrl"><input type="checkbox" id="allow-gu" checked /><span>Allow G:U wobble</span></label>
-    <label class="ctrl"><span>Max mismatches</span><input id="max-mm" type="number" value="0" min="0" max="3" step="1"></label>
-    <label class="ctrl"><span>Heatmap</span>
-      <select id="heatmap-mode">
-        <option value="ig_target" selected>IG → Target</option>
-        <option value="ig_competitor">IG → Competitor</option>
-        <option value="seed_density">Seed density (fast)</option>
-      </select>
-    </label>
-    <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
+  const shell = $('analysis-controls');
+  if (!shell) {
+    GUARDS.analysisControlsInjected = true;
+    return;
+  }
 
-    <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-    <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
-  </div>
-  `;
+  // Make sure the HTML block is visible
+  shell.classList.remove('hidden');
+  shell.classList.add('controls-grid');
 
-  prependHTML(container, html);
+  const row = shell.querySelector('.row') || shell;
 
-  const seedBtn = $('seed-scan-global-btn');
-  const hmBtn   = $('explain-global-btn');
+  // ---- Allow G:U toggle ----
+  if (!$('allow-gu')) {
+    const guLabel = document.createElement('label');
+    guLabel.className = 'ctrl';
+    guLabel.style.display = 'inline-flex';
+    guLabel.style.alignItems = 'center';
+    guLabel.style.gap = '6px';
+    guLabel.innerHTML =
+      '<input type="checkbox" id="allow-gu" checked />' +
+      '<span>Allow G:U wobble</span>';
+    row.appendChild(guLabel);
+  }
 
-  bindOnce(seedBtn, 'click', async ()=>{
-    if(!predictionResults.length){
+  // ---- Max mismatches ----
+  if (!$('max-mm')) {
+    const mmLabel = document.createElement('label');
+    mmLabel.className = 'ctrl';
+    mmLabel.style.display = 'inline-flex';
+    mmLabel.style.alignItems = 'center';
+    mmLabel.style.gap = '6px';
+    mmLabel.innerHTML =
+      '<span>Max mismatches</span>' +
+      '<input id="max-mm" type="number" value="0" min="0" max="3" step="1" style="width:64px;">';
+    row.appendChild(mmLabel);
+  }
+
+  // ---- Global buttons (Seed Sites / Heatmap for top row) ----
+  let seedBtn = $('seed-scan-global-btn');
+  let hmBtn   = $('explain-global-btn');
+
+  if (!seedBtn || !hmBtn) {
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.flexWrap = 'wrap';
+    btnRow.style.gap = '8px';
+    btnRow.style.marginTop = '8px';
+
+    if (!seedBtn) {
+      seedBtn = document.createElement('button');
+      seedBtn.type = 'button';
+      seedBtn.id = 'seed-scan-global-btn';
+      seedBtn.className = 'btn-premium';
+      seedBtn.textContent = 'Seed Sites (top row)';
+      btnRow.appendChild(seedBtn);
+    }
+
+    if (!hmBtn) {
+      hmBtn = document.createElement('button');
+      hmBtn.type = 'button';
+      hmBtn.id = 'explain-global-btn';
+      hmBtn.className = 'btn-premium btn-accent';
+      hmBtn.textContent = 'Heatmap (top row)';
+      btnRow.appendChild(hmBtn);
+    }
+
+    shell.appendChild(btnRow);
+  }
+
+  // ---- Wire the two global buttons ----
+  const seed = $('seed-scan-global-btn');
+  const hm   = $('explain-global-btn');
+
+  bindOnce(seed, 'click', async () => {
+    if (!predictionResults.length) {
       openModal('Seed Sites', formatInfo('Run a prediction first so we can use the top-ranked row.'));
       return;
     }
     await handleSeedSitesClick(predictionResults[0]);
   }, 'seedGlobalOnce');
 
-  bindOnce(hmBtn, 'click', async ()=>{
-    if(!predictionResults.length){
+  bindOnce(hm, 'click', async () => {
+    if (!predictionResults.length) {
       openModal('Heatmap', formatInfo('Run a prediction first so we can use the top-ranked row.'));
       return;
     }
