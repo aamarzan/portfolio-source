@@ -2073,30 +2073,38 @@ async function handleHeatmapClick(item){
 }
 
 async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=false){
-  try{
-    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
-    const targetId= item.target_id ?? '';
-    const compId  = item.competitor_id ?? '';
+  const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+  const targetId = item.target_id ?? '';
+  const compId   = item.competitor_id ?? '';
 
-    const mirnaSeq = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-    const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
-    const cRes = compId ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors) : {seq:'', converted:false, note:'', mode:''};
+  const mirnaSeqRaw = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
+  const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
+  const cRes = compId
+    ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors)
+    : { seq: '', converted: false, note: '', mode: '' };
 
-    const targetSeq= tRes.seq;
-    const compSeq  = cRes.seq;
+  const targetSeq = tRes.seq;
+  const compSeq   = cRes.seq;
+  const mirnaSeq  = mirnaSeqRaw ? toRNA(mirnaSeqRaw) : '';
 
-    if(!mirnaSeq || !targetSeq){
-      setHTML($('modal-content'), formatError('Could not resolve miRNA and/or target sequences for this row.'));
-      return;
+  if (!mirnaSeq || !targetSeq) {
+    const mc = $('modal-content');
+    if (mc) {
+      setHTML(mc, formatError('Could not resolve miRNA and/or target sequences for this row.'));
     }
+    return;
+  }
 
-    const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-    const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
+  const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
+  const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
 
-    // --- NEW: pure client 2D seed-match matrix heatmap ---
-    if(uiMode === 'seed_matrix'){
-      const profile = computeSeedMatchProfile(mirnaSeq, targetSeq);  // 1D scores
-      const vals    = normalizeArray(profile || []);                 // 0..1
+  // ========= 1) PURE CLIENT MODES: seed_matrix (2D) & seed_density =========
+
+  // --- 2D seed-match matrix (never calls /explain, never auto-falls back) ---
+  if (uiMode === 'seed_matrix') {
+    try {
+      const profile = computeSeedMatchProfile(mirnaSeq, targetSeq);  // 1D seed-based scores
+      const vals    = normalizeArray(profile || []);
 
       const canvas = makeSeedMatchMatrixCanvas(
         mirnaId,
@@ -2108,35 +2116,72 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
 
       showCanvasAsModalPNG(
         canvas,
-        'Heatmap — Seed-match matrix',
+        'Heatmap — Seed-match matrix (2D)',
         `${(item.interaction_id || 'local')}_seed_matrix.png`
       );
 
-      if(tRes.converted || cRes.converted){
+      if (tRes.converted || cRes.converted) {
         const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-        appendHTML($('modal-content'),
-          `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for target before seed-match visualization.</em></small></div>`
+        const mc = $('modal-content');
+        if (mc) {
+          appendHTML(
+            mc,
+            `<div style="margin-top:6px;color:#333;">
+               <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before seed-match visualization.</em></small>
+             </div>`
+          );
+        }
+      }
+    } catch (err) {
+      const mc = $('modal-content');
+      if (mc) {
+        setHTML(
+          mc,
+          formatError(err?.message || 'Unexpected error while drawing the 2D seed-match heatmap.')
         );
       }
-      return;
+    }
+    return;
+  }
+
+  // --- Seed-density mode (pure client, no /explain) ---
+  if (uiMode === 'seed_density') {
+    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
+    const vals    = normalizeArray(density);
+    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+
+    showCanvasAsModalPNG(
+      canvas,
+      'Heatmap — Seed density',
+      `${(item.interaction_id || 'local')}_seed_density.png`
+    );
+
+    if (tRes.converted || cRes.converted) {
+      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
+      const mc = $('modal-content');
+      if (mc) {
+        appendHTML(
+          mc,
+          `<div style="margin-top:6px;color:#333;">
+             <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before visualization.</em></small>
+           </div>`
+        );
+      }
+    }
+    return;
+  }
+
+  // =================== 2) IG MODES: use /explain with fallback ===================
+
+  try {
+    const mc = $('modal-content');
+    if (mc) {
+      setHTML(mc, smallSpinner('Computing attributions...'));
     }
 
-    // Special case: seed density requested (existing behaviour)
-    if(uiMode === 'seed_density'){
-      const density = computeSeedDensityArray(targetId, targetSeq);
-      const vals = normalizeArray(density);
-      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
-      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density', `${(item.interaction_id || 'local')}_seed_density.png`);
-      return;
-    }
-
-    // ---- existing IG logic below stays as you had it ----
-    setHTML($('modal-content'), smallSpinner('Computing attributions...'));
-
-    // Try /explain with retry
     const headers = await getNonceOrKeyHeaders();
     const body = JSON.stringify({
-      mirna_seq: toRNA(mirnaSeq),
+      mirna_seq: mirnaSeq,
       target_seq: targetSeq,
       competitor_seq: compSeq || undefined,
       steps: uiSteps,
@@ -2144,72 +2189,120 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
     });
 
     let data = null;
-    try{
-      const res = await fetchRetry(EXPLAIN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body
-      }, 45000, 1, 700);
+    try {
+      const res = await fetchRetry(
+        EXPLAIN_URL,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body
+        },
+        45000,
+        1,
+        700
+      );
       data = await res.json();
-    }catch(_){ data = null; }
+    } catch (_) {
+      data = null;
+    }
 
-    if(data && (Array.isArray(data.target_attrib) || Array.isArray(data.attribution))){
+    if (data && (Array.isArray(data.target_attrib) || Array.isArray(data.attribution))) {
       const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : data.attribution;
       const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
 
       const targVals = normalizeArray(targAttr.slice(0, targetSeq.length));
-      const titleT = `IG → Target — ${targetId}`;
-      const cnvT = makeHeatCanvas(targetSeq, targVals, titleT);
+      const titleT   = `IG → Target — ${targetId}`;
+      const cnvT     = makeHeatCanvas(targetSeq, targVals, titleT);
 
-      if(uiMode === 'ig_competitor' && compSeq && Array.isArray(compAttr)){
-        const cVals = normalizeArray(compAttr.slice(0, compSeq.length));
+      if (uiMode === 'ig_competitor' && compSeq && Array.isArray(compAttr)) {
+        const cVals  = normalizeArray(compAttr.slice(0, compSeq.length));
         const titleC = `IG → Competitor — ${compId}`;
-        const cnvC = makeHeatCanvas(compSeq, cVals, titleC);
+        const cnvC   = makeHeatCanvas(compSeq, cVals, titleC);
+
         const stack = document.createElement('canvas');
-        const pad = 12;
-        const W = Math.max(cnvT.width, cnvC.width);
-        const H = cnvT.height + cnvC.height + pad;
-        stack.width = W; stack.height = H;
+        const pad   = 12;
+        const W     = Math.max(cnvT.width, cnvC.width);
+        const H     = cnvT.height + cnvC.height + pad;
+        stack.width = W;
+        stack.height = H;
         const g = stack.getContext('2d');
-        g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+        g.fillStyle = '#fff';
+        g.fillRect(0, 0, W, H);
         g.drawImage(cnvT, 0, 0);
-        g.drawImage(cnvC, 0, cnvT.height + pad/2);
-        showCanvasAsModalPNG(stack, 'Heatmap — IG (target + competitor)', `${(item.interaction_id||'local')}_ig_both.png`);
-      }else{
-        showCanvasAsModalPNG(cnvT, 'Heatmap — IG → Target', `${(item.interaction_id||'local')}_ig_target.png`);
+        g.drawImage(cnvC, 0, cnvT.height + pad / 2);
+
+        showCanvasAsModalPNG(
+          stack,
+          'Heatmap — IG (target + competitor)',
+          `${(item.interaction_id || 'local')}_ig_both.png`
+        );
+      } else {
+        showCanvasAsModalPNG(
+          cnvT,
+          'Heatmap — IG → Target',
+          `${(item.interaction_id || 'local')}_ig_target.png`
+        );
       }
 
-      if(tRes.converted || cRes.converted){
+      if (tRes.converted || cRes.converted) {
         const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-        appendHTML($('modal-content'),
-          `<div style="margin-top:6px;color:#333;"><small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small></div>`
-        );
+        const mc2 = $('modal-content');
+        if (mc2) {
+          appendHTML(
+            mc2,
+            `<div style="margin-top:6px;color:#333;">
+               <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for
+               ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small>
+             </div>`
+          );
+        }
       }
       return;
     }
 
-    // existing final fallback (seed density as PNG) stays the same...
-    const density = computeSeedDensityArray(targetId, targetSeq);
-    const vals = normalizeArray(density);
-    const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
-    const aaNote = (tRes.converted || cRes.converted)
-      ? `<div style="margin-top:6px;color:#333;"><em>AA→NT conversion was applied before fallback visualization.</em></div>` : '';
-    showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
-    appendHTML($('modal-content'), aaNote);
+    // --- No usable attribution returned → seed-based fallback, not hard failure ---
+    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
+    const vals    = normalizeArray(density);
+    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
 
-  }catch(err){
-    // unchanged error fallback
-    const mirnaId = item.primary_molecule_id ?? item.mirna_id;
-    const targetId= item.target_id ?? '';
-    const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
-    const targetSeq= tRes.seq;
-    if (mirnaId && targetSeq){
-      const density = computeSeedDensityArray(targetId, targetSeq);
-      const vals = normalizeArray(density);
-      const canvas = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
-      showCanvasAsModalPNG(canvas, 'Heatmap — Seed density (fallback)', `${(item.interaction_id||'local')}_seed_density.png`);
-    }else{
-      setHTML($('modal-content'), formatError(err?.message || 'Unexpected error during explanation.'));
+    showCanvasAsModalPNG(
+      canvas,
+      'Heatmap — Seed-based fallback',
+      `${(item.interaction_id || 'local')}_seed_profile.png`
+    );
+
+    const mc3 = $('modal-content');
+    if (mc3) {
+      appendHTML(
+        mc3,
+        `<div style="margin-top:6px;color:#333;">
+           <small><em>Attribution service unavailable; showing a seed-based profile instead.</em></small>
+         </div>`
+      );
+    }
+
+  } catch (err) {
+    // --- Hard error in IG path → still show a seed-based profile, but with message ---
+    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
+    const vals    = normalizeArray(density);
+    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+
+    showCanvasAsModalPNG(
+      canvas,
+      'Heatmap — Seed-based fallback',
+      `${(item.interaction_id || 'local')}_seed_profile.png`
+    );
+
+    const mc = $('modal-content');
+    if (mc) {
+      appendHTML(
+        mc,
+        `<div style="margin-top:6px;color:#333;">
+           <small><em>${escapeHTML(
+             err?.message || 'Attribution failed; showing a seed-based profile instead.'
+           )}</em></small>
+         </div>`
+      );
     }
   }
 }
@@ -2349,17 +2442,35 @@ function showCanvasAsModalPNG(canvas, title, filename){
     document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
 }
 
-// Compute seed-density array (0..max counts) for a target
-function computeSeedDensityArray(targetId, targetSeq){
-  const L = targetSeq.length;
-  const density = new Array(L).fill(0);
-  if(Array.isArray(LAST_SEED_HITS)){
+// Compute seed-density / seed-profile array (0..N) for a target.
+// 1) If we have LAST_SEED_HITS for this target, use them.
+// 2) Otherwise, fall back to a simple 7-mer seed-match profile vs mirnaSeq (if provided).
+function computeSeedDensityArray(targetId, targetSeq, mirnaSeq){
+  const L = targetSeq.length || 0;
+  let density = new Array(L).fill(0);
+
+  // 1) Use explicit seed hits when available (from Seed Sites)
+  if (Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length) {
     LAST_SEED_HITS
       .filter(h => h.molecule === 'target' && h.id === targetId)
-      .forEach(h=>{
-        for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
+      .forEach(h => {
+        for (let i = Math.max(0, h.start - 1); i < Math.min(L, h.end); i++) {
+          density[i] += 1;
+        }
       });
+
+    // If we actually filled something, keep it
+    if (density.some(v => v > 0)) {
+      return density;
+    }
   }
+
+  // 2) Fallback: derive a seed-based profile directly from sequences (no Seed Sites required)
+  if (mirnaSeq) {
+    return computeSeedMatchProfile(mirnaSeq, targetSeq);
+  }
+
+  // 3) Last resort: flat zero profile (should rarely be hit now)
   return density;
 }
 
