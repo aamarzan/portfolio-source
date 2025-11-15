@@ -2033,9 +2033,9 @@ async function handleHeatmapClick(item){
 
   const effMode = (mode === 'ig_competitor' && !(item.competitor_id||'').trim()) ? 'ig_target' : mode;
 
-  const isPureClient =
-    effMode === 'seed_density' ||
-    effMode === 'seed_matrix';   // NEW mode is always client-side
+  // Only seed_density is strictly client-side;
+  // seed_matrix now comes from the Python PNG endpoint.
+  const isPureClient = effMode === 'seed_density' || effMode === 'seed_matrix';
 
   // 1) Try server PNG only for IG modes (or other server-backed modes)
   if(!isPureClient && CURRENT_JOB_ID && item.interaction_id){
@@ -2428,18 +2428,10 @@ function makeHeatCanvas(seq, values01, titleText){
   return c;
 }
 
-// Show a canvas as PNG in the modal with “Open” & “Download”
-function showCanvasAsModalPNG(canvas, title, filename){
-  const data = canvas.toDataURL('image/png');
-  const img  = `<img id="hm-img" src="${data}" alt="Heatmap" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
-  const tools = `
-    <button id="hm-open" class="toolbar-btn">Open in new tab</button>
-    <button id="hm-save" class="toolbar-btn">Download PNG</button>
-  `;
-  openModal(title, img, tools);
-  bindOnce($('hm-open'),'click',()=>{ const w = window.open(data,'_blank'); if(w) w.opener = null; }, 'hmOpenCanvas');
-  bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = data; a.download = filename||'heatmap.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
+// Normalize an array of numbers to 0..1 (abs)
+function normalizeArray(arr){
+  const max = Math.max(1e-12, ...arr.map(v => Math.abs(v || 0)));
+  return arr.map(v => Math.abs(v || 0) / max);
 }
 
 // Compute seed-density / seed-profile array (0..N) for a target.
@@ -2678,6 +2670,77 @@ function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsN
   ctx.fillText('Low', cbX + cbW + 6, cbY + cbH + 2);
 
   return canvas;
+}
+
+// Build premium seed-site summary chips from LAST_SEED_HITS
+function buildSeedChipSummaryHTML(){
+  if (!Array.isArray(LAST_SEED_HITS) || LAST_SEED_HITS.length === 0) return '';
+
+  const groups = new Map(); // key: "molecule:id"
+  for (const h of LAST_SEED_HITS){
+    const key = `${h.molecule}:${h.id}`;
+    if (!groups.has(key)){
+      groups.set(key, {
+        molecule: h.molecule,
+        id: h.id,
+        count: 0,
+        bestSeed: null,
+        minMM: Number.POSITIVE_INFINITY,
+        wobbleHits: 0
+      });
+    }
+    const g = groups.get(key);
+    g.count++;
+    if (h.seed_type && !g.bestSeed) g.bestSeed = h.seed_type;
+    const mm = typeof h.mismatches === 'number' ? h.mismatches : 0;
+    if (mm < g.minMM) g.minMM = mm;
+    if (h.wobble && h.wobble > 0) g.wobbleHits++;
+  }
+
+  const chips = [];
+  for (const g of groups.values()){
+    const seedTxt = g.bestSeed ? ` • ${g.bestSeed}` : '';
+    const mmTxt   = Number.isFinite(g.minMM) ? ` • min mm: ${g.minMM}` : '';
+    const wobTxt  = g.wobbleHits ? ` • wobble hits: ${g.wobbleHits}` : '';
+    chips.push(
+      `<span class="chip">${escapeHTML(g.molecule)}:${escapeHTML(g.id)} • ${g.count} hit(s)${seedTxt}${mmTxt}${wobTxt}</span>`
+    );
+  }
+
+  if (!chips.length) return '';
+
+  return `
+    <div style="margin-top:8px;text-align:center;">
+      <div style="font-size:12px;color:#475569;margin-bottom:4px;">
+        Seed-site summary (cached from “Seed Sites” scan)
+      </div>
+      ${chips.join(' ')}
+    </div>
+  `;
+}
+
+// Show a canvas as PNG in the modal with “Open” & “Download” + seed chips
+function showCanvasAsModalPNG(canvas, title, filename){
+  const data = canvas.toDataURL('image/png');
+  const img  = `<img id="hm-img" src="${data}" alt="Heatmap" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+  const tools = `
+    <button id="hm-open" class="toolbar-btn">Open in new tab</button>
+    <button id="hm-save" class="toolbar-btn">Download PNG</button>
+  `;
+  openModal(title, img, tools);
+
+  // Attach seed summary chips (if any cached hits)
+  const mc = $('modal-content');
+  if (mc) {
+    const chipsHtml = buildSeedChipSummaryHTML();
+    if (chipsHtml) {
+      appendHTML(mc, chipsHtml);
+    }
+  }
+
+  bindOnce($('hm-open'),'click',()=>{ const w = window.open(data,'_blank'); if(w) w.opener = null; }, 'hmOpenCanvas');
+  bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = data; a.download = filename||'heatmap.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
 }
 
 // =====================================================

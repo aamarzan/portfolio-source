@@ -508,6 +508,148 @@ def _parse_fasta_naive(text: str):
 def has_any_fasta_header(text: str) -> bool:
     return any(ln.strip().startswith(">") for ln in (text or "").splitlines())
 
+# --- Seed-matrix heatmap helpers (server-side 2D heatmap) ---
+from matplotlib.colors import LinearSegmentedColormap
+
+def _norm_base(b: str) -> str:
+    b = (b or "").upper()
+    return "U" if b == "T" else b
+
+
+def _seed_pair_score(mi: str, tg: str) -> float:
+    """1.0 = Watson–Crick, 0.5 = G:U wobble, 0 = mismatch."""
+    mi = _norm_base(mi)
+    tg = _norm_base(tg)
+
+    # Watson–Crick pairs
+    if (mi == "A" and tg == "U") or (mi == "U" and tg == "A"):
+        return 1.0
+    if (mi == "C" and tg == "G") or (mi == "G" and tg == "C"):
+        return 1.0
+
+    # wobble
+    if (mi == "G" and tg == "U") or (mi == "U" and tg == "G"):
+        return 0.5
+
+    return 0.0
+
+
+def compute_seed_profile(mirna_seq: str, target_seq: str, seed_len: int = 7) -> np.ndarray:
+    """
+    1D profile: for each target position, best seed score of any overlapping 7-mer.
+    """
+    if not mirna_seq or not target_seq:
+        return np.zeros(len(target_seq or ""), dtype=float)
+
+    s = mirna_seq.strip().upper()
+    t = target_seq.strip().upper()
+
+    if len(s) < seed_len or len(t) < seed_len:
+        return np.zeros(len(t), dtype=float)
+
+    # canonical seed: positions 2–8 (1-based) → index 1..7 (0-based)
+    seed_start = 1
+    seed = s[seed_start: seed_start + seed_len]
+    L_t = len(t)
+
+    pos_scores = np.zeros(L_t, dtype=float)
+
+    for offset in range(0, L_t - seed_len + 1):
+        score = 0.0
+        # reverse seed for pairing (miRNA 5' vs target 3')
+        for s_idx in range(seed_len):
+            mi = seed[seed_len - 1 - s_idx]
+            tg = t[offset + s_idx]
+            score += _seed_pair_score(mi, tg)
+        # propagate window score to all covered positions (keep max)
+        for s_idx in range(seed_len):
+            idx = offset + s_idx
+            if score > pos_scores[idx]:
+                pos_scores[idx] = score
+
+    return pos_scores
+
+
+# premium dark-blue → light-blue colormap
+PREMIUM_BLUE_CMAP = LinearSegmentedColormap.from_list(
+    "premium_blue",
+    [
+        (0.0, (0.07, 0.13, 0.28)),  # deep navy
+        (1.0, (0.76, 0.88, 0.98)),  # very light sky-blue
+    ],
+)
+
+
+def make_seed_matrix(mirna_seq: str, target_seq: str) -> np.ndarray:
+    """
+    Returns a 2D matrix (1 x L_target) with values normalized 0..1.
+    """
+    prof = compute_seed_profile(mirna_seq, target_seq)
+    if not np.any(prof):
+        return np.zeros((1, len(target_seq)), dtype=float)
+    max_val = float(np.max(np.abs(prof)))
+    mat = (prof / max_val)[None, :]  # shape: 1 x L
+    return mat
+
+
+def render_seed_matrix_png(
+    mirna_id: str,
+    target_id: str,
+    mirna_seq: str,
+    target_seq: str,
+    dpi: int = 150,
+) -> io.BytesIO:
+    """
+    Renders the 1×L matrix as a premium blue heatmap PNG and returns a BytesIO buffer.
+    Row header  = miRNA ID
+    Column headers = target nucleotides (if L <= 80)
+    """
+    mat = make_seed_matrix(mirna_seq, target_seq)
+    n_cols = mat.shape[1]
+
+    # width scales with target length but capped so huge UTRs still look okay
+    base_width = 6.0
+    extra = max(0.0, (n_cols - 60) * 0.04)  # small growth after 60 nt
+    fig_w = min(base_width + extra, 16.0)
+    fig_h = 3.2
+
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
+    im = ax.imshow(
+        mat,
+        aspect="auto",
+        cmap=PREMIUM_BLUE_CMAP,
+        vmin=0.0,
+        vmax=1.0,
+        origin="lower",
+    )
+
+    # Row label = miRNA ID
+    ax.set_yticks([0])
+    ax.set_yticklabels([mirna_id or "miRNA"], fontsize=9)
+
+    # Column labels = target bases (only if not insanely long)
+    target_seq = (target_seq or "").upper()
+    if n_cols <= 80:
+        ax.set_xticks(range(n_cols))
+        ax.set_xticklabels(list(target_seq), fontsize=7, rotation=90)
+    else:
+        ax.set_xticks([])
+
+    ax.set_xlabel(f"Target: {target_id or ''}", fontsize=10)
+    ax.set_title(
+        f"Seed-match heatmap — {mirna_id or 'miRNA'} vs {target_id or 'target'}",
+        fontsize=11,
+    )
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label("Seed match strength", fontsize=9)
+
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
 
 # =========================
 # 3D structure parsing and validation
@@ -1859,12 +2001,40 @@ def download_heatmap_png(job_id, interaction_id):
     mode = (request.args.get('mode') or 'ig_target').lower().strip()
     steps = int(request.args.get('steps') or 50)
 
-    pseq = row.get('primary_seq_used','') or ''
-    tseq = row.get('target_seq_used','') or ''
-    cseq = row.get('competitor_seq_used','') or ''
+    # sequences used by the model
+    pseq = row.get('primary_seq_used', '') or ''
+    tseq = row.get('target_seq_used', '') or ''
+    cseq = row.get('competitor_seq_used', '') or ''
 
+    # 🔵 NEW: server-side 2D seed-matrix heatmap (premium blue)
+    if mode == 'seed_matrix':
+        if not pseq or not tseq:
+            return jsonify({"error": "Missing miRNA or target sequence for seed_matrix"}), 400
+
+        buf = render_seed_matrix_png(
+            mirna_id=row.get('mirna_id') or row.get('primary_molecule_id') or "miRNA",
+            target_id=row.get('target_id') or "target",
+            mirna_seq=pseq,
+            target_seq=tseq,
+            dpi=200,
+        )
+        send_ga_event("download_heatmap_png", {
+            "job_id": job_id,
+            "interaction_id": interaction_id,
+            "mode": mode
+        })
+        return send_file(
+            buf,
+            mimetype="image/png",
+            as_attachment=True,
+            download_name=f"{interaction_id}_seed_matrix.png"
+        )
+
+    # ----- existing IG + seed-density logic -----
     shapes = job.get("model_input_shapes", {})
-    Lp, Lt, Lc = int(shapes.get('Lp', 120)), int(shapes.get('Lt', 200)), int(shapes.get('Lc', 200))
+    Lp = int(shapes.get('Lp', 120))
+    Lt = int(shapes.get('Lt', 200))
+    Lc = int(shapes.get('Lc', 200))
 
     model_inputs = _keras_inputs_map()
     include_struct = {
@@ -1886,15 +2056,17 @@ def download_heatmap_png(job_id, interaction_id):
             title = f"IG (competitor) — {row.get('mirna_id')} vs {row.get('competitor_id','')}"
             L = Lc
         else:
-            return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, or seed_density."}), 400
+            return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, seed_density, or seed_matrix."}), 400
+
         data = np.array(values[:L], dtype=np.float32)[None, :]
         ytick = ['IG magnitude']
+
     elif mode == 'seed_density':
         hits = json.loads(row.get('seed_hits_json') or "[]")
         L = len(tseq)
         vec = np.zeros(L, dtype=np.float32)
         for h in hits:
-            s = int(h['start'])-1
+            s = int(h['start']) - 1
             e = int(h['end'])
             vec[s:e] += 1.0
         if L == 0:
@@ -1902,8 +2074,9 @@ def download_heatmap_png(job_id, interaction_id):
         data = vec[None, :]
         title = f"Seed-hit density — {row.get('mirna_id')} on {row.get('target_id')}"
         ytick = ['hit count']
+
     else:
-        return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, or seed_density."}), 400
+        return jsonify({"error": "Invalid mode. Use ig_target, ig_competitor, seed_density, or seed_matrix."}), 400
 
     fig, ax = plt.subplots(figsize=(max(6, data.shape[1] / 20.0), 1.8))
     im = ax.imshow(data, aspect='auto')
@@ -1912,16 +2085,24 @@ def download_heatmap_png(job_id, interaction_id):
     ax.set_xlabel('Position')
     ax.set_title(title, fontsize=10)
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
     buf = io.BytesIO()
     plt.tight_layout()
     fig.savefig(buf, format='png', dpi=200)
     plt.close(fig)
     buf.seek(0)
 
-    send_ga_event("download_heatmap_png", {"job_id": job_id, "interaction_id": interaction_id, "mode": mode})
-    return send_file(buf, mimetype="image/png",
-                     as_attachment=True,
-                     download_name=f"{interaction_id}_{mode}.png")
+    send_ga_event("download_heatmap_png", {
+        "job_id": job_id,
+        "interaction_id": interaction_id,
+        "mode": mode
+    })
+    return send_file(
+        buf,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=f"{interaction_id}_{mode}.png"
+    )
 
 
 @app.route('/download/<job_id>/<interaction_id>/bundle.zip', methods=['GET'])
