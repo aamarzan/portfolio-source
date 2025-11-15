@@ -13164,3 +13164,5 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-16 00:53:28,629 | INFO | 127.0.0.1 - - [16/Nov/2025 00:53:28] "POST /precheck HTTP/1.1" 200 -
 2025-11-16 00:53:28,654 | INFO | 127.0.0.1 - - [16/Nov/2025 00:53:28] "OPTIONS /predict HTTP/1.1" 200 -
 2025-11-16 00:53:29,253 | INFO | 127.0.0.1 - - [16/Nov/2025 00:53:29] "GET /config HTTP/1.1" 200 -
+2025-11-16 00:53:29,937 | INFO | 127.0.0.1 - - [16/Nov/2025 00:53:29] "GET /config HTTP/1.1" 200 -
+2025-11-16 00:53:29,941 | INFO | 127.0.0.1 - - [16/Nov/2025 00:53:29] "POST /predict HTTP/1.1" 200 -
