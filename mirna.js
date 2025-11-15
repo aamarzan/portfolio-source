@@ -1187,22 +1187,35 @@ async function handleSubmit(event){
     Please do not refresh or close this page while your prediction is running — this will cancel the analysis in progress.
   </div>`);
 
-  // Premium guard: friendly message when no miRNA and/or target FASTA is attached
-  const mirnaEmpty  = !primarySeqs;
-  const targetEmpty = !targetSeq;
+  // Premium guard: require at least one representation (FASTA or PDB/ID) for BOTH miRNA and target
+  const hasMirnaFasta      = !!primarySeqs;
+  const hasMirnaPdbFile    = ($('mirna-file')?.files?.length || 0) > 0;
+  const hasMirnaPdbStaged  = getBasketFiles('mirna').length > 0;
+  const hasMirnaAny        = hasMirnaFasta || hasMirnaPdbFile || hasMirnaPdbStaged;
 
-  if (mirnaEmpty) {
-    // Remove the anti-refresh note for this early-exit
+  const hasTargetFasta        = !!targetSeq;
+  const targetPdbIdsGuard     = extractPdbIdsFromFasta(targetSeq); // PDB IDs in target FASTA headers also count
+  const hasTargetPdbFile      = ($('target-file')?.files?.length || 0) > 0;
+  const hasTargetPdbStaged    = getBasketFiles('target').length > 0;
+  const hasTargetAny          = hasTargetFasta || hasTargetPdbFile || hasTargetPdbStaged ||
+                                (targetPdbIdsGuard && targetPdbIdsGuard.length > 0);
+
+  // Competitor is completely optional: FASTA, PDB, both, or none — no impact on starting the analysis.
+
+  // If either miRNA or target is missing (no FASTA, no PDB, no PDB ID), do NOT start the analysis
+  if (!hasMirnaAny || !hasTargetAny) {
     const rw = resultsContainer?.querySelector('.reload-warning');
     if (rw) rw.remove();
 
-    const bullets = [];
-    bullets.push(
-      '<li><strong>miRNA FASTA</strong> — paste at least one miRNA sequence or attach a <code>.fasta</code> file under “Primary miRNAs”.</li>'
-    );
-    if (targetEmpty) {
-      bullets.push(
-        '<li><strong>Target FASTA (recommended)</strong> — paste a 3′UTR / target sequence or attach a <code>.fasta</code> file so we can compute range-aware coordinates, seed maps, and IG heatmaps.</li>'
+    const missingBits = [];
+    if (!hasMirnaAny) {
+      missingBits.push(
+        '<li><strong>miRNA</strong> — provide a FASTA sequence in “Primary miRNAs” or attach a PDB/mmCIF file.</li>'
+      );
+    }
+    if (!hasTargetAny) {
+      missingBits.push(
+        '<li><strong>Target</strong> — provide a FASTA sequence (e.g., 3′UTR / CDS fragment), attach a PDB/mmCIF file, or specify a PDB ID in the FASTA header.</li>'
       );
     }
 
@@ -1213,29 +1226,26 @@ async function handleSubmit(event){
                   border:1px solid #fed7aa;
                   padding:12px;
                   margin:8px 0;">
-        <div style="font-weight:600;margin-bottom:4px;">Sequences needed to start</div>
+        <div style="font-weight:600;margin-bottom:4px;">We need your core pair to start</div>
         <p style="margin:0 0 4px;color:#334155;font-size:14px;">
-          Before running a prediction, please add the following FASTA inputs:
+          To launch the analysis, please provide both a <strong>miRNA</strong> and a <strong>target</strong> in any of these forms:
+          FASTA, PDB/mmCIF, or (for targets) a PDB ID inside the FASTA header.
         </p>
         <ul style="margin:0 0 4px 18px;padding:0;font-size:13px;color:#1f2937;">
-          ${bullets.join('')}
+          ${missingBits.join('')}
         </ul>
         <p style="margin:0;font-size:12px;color:#64748b;">
-          Tip: each FASTA record starts with a header line beginning with <code>&gt;</code>,
-          for example <code>&gt;hsa-miR-21-5p</code> or <code>&gt;TP53_3UTR</code>.
+          Competitor remains optional — add it in FASTA and/or PDB if you want us to model competitive displacement.
         </p>
       </div>
     `);
 
     if (loader) hide(loader);
-    return; // miRNA FASTA is mandatory
+    return;
   }
 
-  // Optional premium note if target FASTA is missing (PDB-only still allowed)
-  if (targetEmpty) {
-    const rw = resultsContainer?.querySelector('.reload-warning');
-    if (rw) rw.remove();
-
+  // Soft hint: if one of them is PDB-only, remind that some client-side plots prefer FASTA
+  if (!hasMirnaFasta || !hasTargetFasta) {
     prependHTML(resultsContainer, `
       <div class="staging-box"
            style="background:linear-gradient(135deg,#f0f9ff,#eef2ff);
@@ -1243,18 +1253,17 @@ async function handleSubmit(event){
                   border:1px solid #bfdbfe;
                   padding:10px;
                   margin:8px 0;">
-        <div style="font-weight:600;margin-bottom:2px;">No target FASTA detected</div>
+        <div style="font-weight:600;margin-bottom:2px;">Running with structural-only input</div>
         <p style="margin:0;color:#334155;font-size:13px;">
-          You can still run a <strong>structure-only / PDB-assisted</strong> analysis, but adding a
-          target FASTA will unlock range-aware coordinates, seed-site summaries, and IG heatmaps.
+          Your combination (FASTA + PDB) is valid — we’ll start the analysis. Just note that some client-side views
+          (Seed Sites, IG heatmaps) work best when FASTA sequences are also provided.
         </p>
       </div>
     `);
-    // continue to backend; target can be PDB-only
   }
 
-  // Require miRNA FASTA headers
-  if(!hasFastaHeaders(primarySeqs)){
+  // Require miRNA FASTA headers only if FASTA text was supplied
+  if (primarySeqs && !hasFastaHeaders(primarySeqs)) {
     setHTML(resultsContainer, formatError(
       'Your miRNA input is missing FASTA headers. Please add lines starting with ">" (e.g., >hsa-let-7a-5p) so results can be labeled correctly.'
     ));
