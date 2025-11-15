@@ -1136,6 +1136,7 @@ function extractChainHintsFromFasta(text){
 // =====================================================
 async function handleSubmit(event){
   event.preventDefault();
+  gotoResultsTab();
 
   const loader = $('loader');
   const resultsContainer = $('results-container');
@@ -1301,15 +1302,6 @@ async function handleSubmit(event){
   }
   if(competitorSeq && !hasFastaHeaders(competitorSeq)){
     prependHTML(resultsContainer, formatWarn('Tip: Add FASTA headers to competitors (e.g., >comp1) for clean labels in results.'));
-  }
-
-  // Switch to results tab & scroll to top of results (sticky aware)
-  const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
-    .find(b => /results/i.test(b.textContent || ''));
-  if (resultsTabButton) {
-    openTab(resultsTabButton, 'results-tab');
-    // OLD: scrollToCardTop('results-tab');
-    scrollTabsToTop(); // NEW: snap the tabs to the exact top
   }
 
   // Show loader
@@ -3192,6 +3184,14 @@ function scrollTabsToTop(){
   requestAnimationFrame(() => a.scrollIntoView({ block: 'start', behavior: 'auto' }));
 }
 
+function gotoResultsTab(){
+  const resultsTabButton = Array.from(document.querySelectorAll('button.tab-btn'))
+    .find(b => /results/i.test(b.textContent || ''));
+  if (resultsTabButton) {
+    openTab(resultsTabButton, 'results-tab');
+    scrollTabsToTop();
+  }
+}
 
 function wireTabButtonsOnce(){
   if(GUARDS.tabWiringDone) return;
