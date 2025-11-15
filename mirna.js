@@ -1195,10 +1195,10 @@ async function handleSubmit(event){
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
   // Friendly info
-  const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
-  prependHTML(resultsContainer, formatInfo(
-    `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
-  ));
+  //const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
+  //prependHTML(resultsContainer, formatInfo(
+  //  `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
+  //));
 
   // Non-blocking tips
   const MIN_TARGET_LEN = 30;
