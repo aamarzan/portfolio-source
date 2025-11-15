@@ -7372,3 +7372,249 @@ werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) 
 2025-11-15 08:08:55,430 | INFO | 127.0.0.1 - - [15/Nov/2025 08:08:55] "GET /config HTTP/1.1" 200 -
 2025-11-15 08:08:56,192 | INFO | 127.0.0.1 - - [15/Nov/2025 08:08:56] "GET /config HTTP/1.1" 200 -
 2025-11-15 08:09:13,962 | INFO | 127.0.0.1 - - [15/Nov/2025 08:09:13] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:09:15,474 | INFO | 127.0.0.1 - - [15/Nov/2025 08:09:15] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:09:17,943 | INFO | 127.0.0.1 - - [15/Nov/2025 08:09:17] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:09:18,928 | INFO | 127.0.0.1 - - [15/Nov/2025 08:09:18] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:09:59,230 | INFO | 127.0.0.1 - - [15/Nov/2025 08:09:59] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:10:00,168 | INFO | 127.0.0.1 - - [15/Nov/2025 08:10:00] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:10:01,898 | INFO | 127.0.0.1 - - [15/Nov/2025 08:10:01] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:10:29,385 | INFO | 127.0.0.1 - - [15/Nov/2025 08:10:29] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:22:51,226 | ERROR | CID bfea7232 | Unexpected error: 405 Method Not Allowed: The method is not allowed for the requested URL.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 624, in match
+    raise MethodNotAllowed(valid_methods=list(e.have_match_for)) from None
+werkzeug.exceptions.MethodNotAllowed: 405 Method Not Allowed: The method is not allowed for the requested URL.
+2025-11-15 08:22:51,336 | INFO | 127.0.0.1 - - [15/Nov/2025 08:22:51] "[35m[1mGET /predict HTTP/1.1[0m" 500 -
+2025-11-15 08:22:52,056 | ERROR | CID 02e1371f | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-11-15 08:22:52,063 | INFO | 127.0.0.1 - - [15/Nov/2025 08:22:52] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-11-15 08:24:29,646 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:29] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:24:39,234 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:39] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:24:40,415 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:40] "POST /predict HTTP/1.1" 200 -
+2025-11-15 08:24:40,435 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:40] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:41,736 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:41] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:42,902 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:42] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:44,111 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:44] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:45,312 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:45] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:46,584 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:46] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:47,923 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:47] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:48,990 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:48] "GET /progress/f38473f0-b0af-4364-8d7d-a4a253972a5f HTTP/1.1" 200 -
+2025-11-15 08:24:50,153 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:50] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:24:55,917 | INFO | 127.0.0.1 - - [15/Nov/2025 08:24:55] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:10,412 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:10] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:15,388 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:15] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:25:16,338 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:16] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:16,539 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:16] "POST /predict HTTP/1.1" 200 -
+2025-11-15 08:25:20,187 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:20] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:25,012 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:25] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:25:25,350 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:25] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:25,771 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:25] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:26,110 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:26] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:26,205 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:26] "POST /predict HTTP/1.1" 200 -
+2025-11-15 08:25:26,657 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:26] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:26,924 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:26] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:25:27,435 | INFO | 127.0.0.1 - - [15/Nov/2025 08:25:27] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:27:13,748 | WARNING | From C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2025-11-15 08:27:15,603 | INFO | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.2.101:8080
+2025-11-15 08:27:15,603 | INFO | [33mPress CTRL+C to quit[0m
+2025-11-15 08:31:59,904 | INFO | 127.0.0.1 - - [15/Nov/2025 08:31:59] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:32:08,215 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:08] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:32:08,262 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:08] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-15 08:32:14,528 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:14] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:32:22,084 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:22] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:32:22,088 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:22] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:32:22,255 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:22] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-15 08:32:22,257 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:22] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-15 08:32:22,424 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:22] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:32:24,006 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:24] "POST /predict HTTP/1.1" 200 -
+2025-11-15 08:32:24,174 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:24] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:25,603 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:25] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:27,126 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:27] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:28,542 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:28] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:29,963 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:29] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:31,352 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:31] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:32,817 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:32] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:34,452 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:34] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:35,918 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:35] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:37,417 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:37] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:38,899 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:38] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:40,346 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:40] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:41,749 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:41] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:43,198 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:43] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:45,153 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:45] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:46,612 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:46] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:47,989 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:47] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:49,364 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:49] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:50,922 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:50] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:52,288 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:52] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:53,652 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:53] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:55,070 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:55] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:56,784 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:56] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:58,253 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:58] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:32:59,718 | INFO | 127.0.0.1 - - [15/Nov/2025 08:32:59] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:01,164 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:01] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:02,540 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:02] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:03,943 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:03] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:05,306 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:05] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:06,664 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:06] "GET /progress/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:06,810 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:33:06,959 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:06] "OPTIONS /download/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:33:07,099 | INFO | 127.0.0.1 - - [15/Nov/2025 08:33:07] "GET /download/5be5de58-1fe2-47e4-b570-8e65cdf2d79c HTTP/1.1" 200 -
+2025-11-15 08:36:16,795 | ERROR | CID 3a5cfd75 | Unexpected error: 405 Method Not Allowed: The method is not allowed for the requested URL.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 624, in match
+    raise MethodNotAllowed(valid_methods=list(e.have_match_for)) from None
+werkzeug.exceptions.MethodNotAllowed: 405 Method Not Allowed: The method is not allowed for the requested URL.
+2025-11-15 08:36:16,804 | INFO | 127.0.0.1 - - [15/Nov/2025 08:36:16] "[35m[1mGET /predict HTTP/1.1[0m" 500 -
+2025-11-15 08:36:17,396 | ERROR | CID f13167a9 | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-11-15 08:36:17,398 | INFO | 127.0.0.1 - - [15/Nov/2025 08:36:17] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-11-15 08:36:44,191 | ERROR | CID ef626816 | Unexpected error: 405 Method Not Allowed: The method is not allowed for the requested URL.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 624, in match
+    raise MethodNotAllowed(valid_methods=list(e.have_match_for)) from None
+werkzeug.exceptions.MethodNotAllowed: 405 Method Not Allowed: The method is not allowed for the requested URL.
+2025-11-15 08:36:44,193 | INFO | 127.0.0.1 - - [15/Nov/2025 08:36:44] "[35m[1mGET /predict HTTP/1.1[0m" 500 -
+2025-11-15 08:36:45,255 | ERROR | CID bd17221b | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-11-15 08:36:45,256 | INFO | 127.0.0.1 - - [15/Nov/2025 08:36:45] "[35m[1mGET /favicon.ico HTTP/1.1[0m" 500 -
+2025-11-15 08:36:58,065 | INFO | 127.0.0.1 - - [15/Nov/2025 08:36:58] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:40:10,075 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:10] "GET /config HTTP/1.1" 200 -
+2025-11-15 08:40:21,007 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:40:21,009 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:40:21,180 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-15 08:40:21,187 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:21] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-15 08:40:21,369 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:21] "POST /precheck HTTP/1.1" 200 -
+2025-11-15 08:40:22,724 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:22] "POST /predict HTTP/1.1" 200 -
+2025-11-15 08:40:22,954 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:22] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:24,487 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:24] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:25,931 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:25] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:27,410 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:27] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:28,830 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:28] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:30,517 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:30] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:31,996 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:31] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:33,751 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:33] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:35,475 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:35] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:36,924 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:36] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:38,363 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:38] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:40,304 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:40] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:41,715 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:41] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:43,138 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:43] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:44,595 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:44] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:46,038 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:46] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:47,512 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:47] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:49,309 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:49] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:50,742 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:50] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:52,220 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:52] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:53,712 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:53] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:55,206 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:55] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:56,668 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:56] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:58,209 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:58] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:40:59,634 | INFO | 127.0.0.1 - - [15/Nov/2025 08:40:59] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:01,396 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:01] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:02,781 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:02] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:04,175 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:04] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:05,770 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:05] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:07,196 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:07] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:08,598 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:08] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:10,129 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:10] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:11,543 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:11] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:12,938 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:12] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:14,390 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:14] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:15,835 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:15] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:17,296 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:17] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:18,768 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:18] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:20,256 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:20] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:21,714 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:21] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:23,140 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:23] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:24,589 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:24] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:26,031 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:26] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:27,469 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:27] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:28,931 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:28] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:30,481 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:30] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:31,969 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:31] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:33,364 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:33] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:35,114 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:35] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:36,506 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:36] "GET /progress/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:36,646 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:36] "GET /nonce HTTP/1.1" 200 -
+2025-11-15 08:41:36,800 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:36] "OPTIONS /download/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
+2025-11-15 08:41:36,938 | INFO | 127.0.0.1 - - [15/Nov/2025 08:41:36] "GET /download/bbeed51b-8e1a-4d0a-a36b-683d40e8a366 HTTP/1.1" 200 -
