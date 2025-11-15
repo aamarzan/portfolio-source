@@ -416,7 +416,6 @@ function injectPremiumStyles(){
     }
     #advanced-tab input[type="checkbox"]::after{
       content:'';
-
       position:absolute;
       inset:3px 4px 4px 4px;
       border-radius:4px;
@@ -1145,43 +1144,6 @@ async function handleSubmit(event){
   const targetSeq     = $('target-seq')?.value?.trim() ?? '';
   const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
 
-  // 🔹 PREMIUM GUARD: require miRNA + target FASTA content before running
-  const missingMirna  = !primarySeqs;
-  const missingTarget = !targetSeq;
-  if (missingMirna || missingTarget){
-    if (resultsContainer){
-      const missingList = [];
-      if (missingMirna) {
-        missingList.push('<li>miRNA FASTA (left input box)</li>');
-      }
-      if (missingTarget) {
-        missingList.push('<li>Target FASTA (middle input box)</li>');
-      }
-      const html = `
-        <div class="staging-box" style="background:linear-gradient(135deg,#fef2f2,#eff6ff);border-radius:12px;padding:14px 16px;border:1px solid #fecaca;margin:8px 0;">
-          <div style="display:flex;gap:10px;align-items:flex-start;">
-            <div style="font-size:20px;line-height:1;">⚠️</div>
-            <div>
-              <div style="font-weight:600;color:#111827;margin-bottom:4px;">Sequences required before running</div>
-              <div style="font-size:14px;color:#374151;margin-bottom:6px;">
-                Please provide ${missingMirna && missingTarget ? 'both' : 'the'} following FASTA input${(missingMirna && missingTarget) ? 's' : ''} before starting a prediction:
-              </div>
-              <ul style="margin:0 0 4px 18px;font-size:13px;color:#374151;">
-                ${missingList.join('')}
-              </ul>
-              <div style="font-size:13px;color:#6b7280;">
-                You can either <strong>upload a FASTA file</strong> or <strong>paste FASTA-formatted text</strong> into the boxes above, then click <strong>Run Prediction</strong> again.
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      setHTML(resultsContainer, html);
-    }
-    if (loader) hide(loader);
-    return;
-  }
-
   // Snapshot FASTA → maps for downstream analysis
   CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
   CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
@@ -1238,6 +1200,12 @@ async function handleSubmit(event){
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
 
+  // Friendly info
+  //const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
+  //prependHTML(resultsContainer, formatInfo(
+  //  `Detected ${tgtCount||0} target(s) and ${compCount||0} competitor(s) from FASTA. Staged 3D files: target=${getBasketFiles('target').length}, competitor=${getBasketFiles('competitor').length}. Estimated evaluations: ${estTotal}.`
+  //));
+
   // Non-blocking tips
   const MIN_TARGET_LEN = 30;
   const MIN_COMP_LEN   = 15;
@@ -1265,7 +1233,8 @@ async function handleSubmit(event){
     .find(b => /results/i.test(b.textContent || ''));
   if (resultsTabButton) {
     openTab(resultsTabButton, 'results-tab');
-    scrollTabsToTop(); // snap the tabs to the exact top
+    // OLD: scrollToCardTop('results-tab');
+    scrollTabsToTop(); // NEW: snap the tabs to the exact top
   }
 
   // Show loader
@@ -1306,6 +1275,8 @@ async function handleSubmit(event){
   }
 
   // Optional 3D files:
+  // The HTML fetch wrapper will append window.__BASKET__ files automatically on /predict.
+  // For resilience, also include any still-selected legacy inputs.
   const legacyTargetFiles = $('target-file')?.files;
   if (legacyTargetFiles?.length) {
     for (const f of legacyTargetFiles) {
