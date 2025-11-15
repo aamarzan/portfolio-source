@@ -204,22 +204,237 @@ function injectPremiumStyles(){
   const css = `
     :root{ --sticky-gap: 12px; }
     nav.is-sticky-gap, header.is-sticky-gap { top: 0 !important; }
-    .btn-premium{padding:10px 14px;min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);
-      font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;}
-    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);}
-    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);}
+    .btn-premium{
+      padding:10px 14px;
+      min-height:42px;
+      min-width:130px;
+      border-radius:12px;
+      border:1px solid #d9d9e3;
+      background:linear-gradient(180deg,#ffffff,#f6f7fb);
+      font-weight:600;
+      letter-spacing:.2px;
+      box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);
+      transition:.15s transform ease,.2s box-shadow ease;
+    }
+    .btn-premium:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(17,24,39,.09);
+    }
+    .btn-action{
+      min-width:128px;
+      min-height:40px;
+      padding:9px 12px;
+      border-radius:10px;
+      font-weight:600;
+      border:1px solid #d8dee9;
+      background:linear-gradient(180deg,#fff,#f8fafc);
+    }
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
-    .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
+    .chip{
+      display:inline-block;
+      padding:2px 8px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#f8fafc;
+      color:#334155;
+      font-size:12px;
+      margin-left:6px;
+    }
     #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
-    table#results-table thead th{position:static;top:0;background:#fff;z-index:1;text-align:center;}
+    table#results-table thead th{
+      position:static;
+      top:0;
+      background:#fff;
+      z-index:1;
+      text-align:center;
+    }
     table#results-table tbody tr:hover{filter:brightness(0.98)}
-    .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
+    .toolbar-btn{
+      min-height:32px;
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid #d8dee9;
+      background:#fff;
+      font-weight:600
+    }
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
-    .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
+    .precheck-table th,.precheck-table td{
+      border-bottom:1px solid #e5e7eb;
+      padding:6px 8px;
+      text-align:left;
+      font-size:13px;
+    }
     /* When we detect the sticky nav container, we add this class */
     .is-sticky-gap{ top: calc(var(--sticky-offset-main) + var(--sticky-gap)) !important; }
+
+    /* Premium "Choose file" buttons for FASTA & PDB (light sky blue, matches PDB) */
+    input[type="file"].file-premium{
+      font-size:13px;
+      border-radius:999px;
+      border:1px solid #c4ddf9;
+      padding:3px;
+      background:transparent;
+      cursor:pointer;
+    }
+    input[type="file"].file-premium::-webkit-file-upload-button,
+    input[type="file"].file-premium::file-selector-button{
+      padding:7px 14px;
+      border-radius:999px;
+      border:1px solid #93c5fd;
+      background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* very light sky blue */
+      color:#0f172a;
+      font-weight:500;
+      letter-spacing:.15px;
+      box-shadow:0 1px 4px rgba(15,23,42,.18);
+      cursor:pointer;
+      background-size:100% 100%;
+      transition:
+        .12s transform ease,
+        .18s box-shadow ease,
+        .18s background-color ease;
+    }
+    input[type="file"].file-premium:hover::-webkit-file-upload-button,
+    input[type="file"].file-premium:hover::file-selector-button{
+      background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+      box-shadow:0 3px 8px rgba(15,23,42,.22);
+      transform:translateY(-0.5px);
+    }
+    input[type="file"].file-premium:active::-webkit-file-upload-button,
+    input[type="file"].file-premium:active::file-selector-button{
+      transform:translateY(0);
+      box-shadow:0 1px 4px rgba(15,23,42,.18);
+    }
+
+    /* Small clear buttons for each FASTA picker */
+    .fasta-clear-btn{
+      min-height:28px;
+      padding:3px 10px;
+      margin-left:6px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      font-size:12px;
+      font-weight:500;
+      color:#64748b;
+      cursor:pointer;
+      transition:.15s background-color ease,
+                 .15s border-color ease,
+                 .15s color ease,
+                 .12s transform ease;
+    }
+    .fasta-clear-btn:hover{
+      background:#e5f0ff;
+      border-color:#bfdbfe;
+      color:#1d4ed8;
+      transform:translateY(-0.5px);
+    }
+    .fasta-clear-btn:active{
+      transform:translateY(0);
+    }
+
+    /* ===================================================
+       PREMIUM ADVANCED OPTIONS (only inside #advanced-tab)
+       – affects:
+         a) Convert AA → NT (lossy; …)
+         b) Auto-trim miRNAs > 30nt …
+         c) Convert protein AA → NT …
+       =================================================== */
+
+    /* Soft card behind the three checkboxes + AA→NT select */
+    #advanced-flags-wrapper{
+      margin-top:8px;
+    }
+    #advanced-flags-wrapper > div{
+      background:linear-gradient(135deg,#f0fdf4,#ecfeff); /* very light bluish-green */
+      border-radius:10px;
+      padding:10px 12px;
+      box-shadow:0 1px 1px rgba(15,23,42,.04),
+                 0 8px 20px rgba(15,23,42,.06);
+    }
+    #advanced-flags-wrapper label{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      cursor:pointer;
+      font-size:14px;
+      color:#111827;
+    }
+
+    /* Premium bluish-green gradient checkbox ONLY in Advanced tab */
+    #advanced-tab input[type="checkbox"]{
+      -webkit-appearance:none;
+      appearance:none;
+      width:18px;
+      height:18px;
+      border-radius:6px;
+      border:1px solid #a7f3d0; /* light green border */
+      background:linear-gradient(135deg,#ecfdf3,#d1fae5); /* very light green */
+      position:relative;
+      outline:none;
+      cursor:pointer;
+      box-shadow:0 1px 3px rgba(16,185,129,.25);
+      transition:
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease,
+        transform .12s ease;
+    }
+    #advanced-tab input[type="checkbox"]:hover{
+      transform:translateY(-0.5px);
+      box-shadow:0 4px 10px rgba(16,185,129,.35);
+      border-color:#6ee7b7;
+    }
+    #advanced-tab input[type="checkbox"]:checked{
+      background:linear-gradient(135deg,#22c55e,#0ea5e9); /* bluish-green gradient */
+      border-color:#22c55e;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.45) inset,
+        0 7px 16px rgba(14,165,233,.55);
+    }
+    #advanced-tab input[type="checkbox"]::after{
+      content:'';
+      position:absolute;
+      inset:3px 4px 4px 4px;
+      border-radius:4px;
+      border:2px solid #ffffff;
+      border-top:none;
+      border-left:none;
+      opacity:0;
+      transform:scale(.5) rotate(10deg);
+      transition:opacity .16s ease, transform .16s ease;
+    }
+    #advanced-tab input[type="checkbox"]:checked::after{
+      opacity:1;
+      transform:scale(.9) rotate(45deg); /* tick mark */
+    }
+    #advanced-tab input[type="checkbox"]:disabled{
+      cursor:not-allowed;
+      opacity:.55;
+      box-shadow:none;
+    }
+
+    /* Premium very light-green AA→NT mode select box */
+    #advanced-tab select#aa-nt-mode{
+      border-radius:8px;
+      border:1px solid #a7f3d0;
+      padding:4px 26px 4px 10px;
+      font-size:13px;
+      font-weight:500;
+      background:linear-gradient(135deg,#f0fdf4,#ecfeff);
+      box-shadow:0 1px 3px rgba(16,185,129,.25);
+    }
+    #advanced-tab select#aa-nt-mode:focus{
+      outline:none;
+      border-color:#22c55e;
+      box-shadow:0 0 0 1px rgba(34,197,94,.45);
+    }
+    #advanced-tab select#aa-nt-mode:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
   `;
   const style = document.createElement('style');
   style.id = 'mirna-js-style';
@@ -720,6 +935,45 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindFileToTextarea('mirna-seq-file', 'primary-seqs');
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
+
+  // Premium styling + Clear buttons for each FASTA file input
+  const fastaFileMap = [
+    { fileId: 'mirna-seq-file',      textareaId: 'primary-seqs'   },
+    { fileId: 'target-seq-file',     textareaId: 'target-seq'     },
+    { fileId: 'competitor-seq-file', textareaId: 'competitor-seq' }
+  ];
+
+  fastaFileMap.forEach(({ fileId, textareaId }) => {
+    const input = $(fileId);
+    if (!input) return;
+
+    // make it match the light sky-blue PDB style
+    input.classList.add('file-premium');
+
+    // create a small Clear button next to each FASTA picker (once)
+    if (!input.dataset.hasClearBtn) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Clear';
+      btn.className = 'fasta-clear-btn';
+      input.insertAdjacentElement('afterend', btn);
+
+      btn.addEventListener('click', () => {
+        input.value = '';
+        const ta = $(textareaId);
+        if (ta) ta.value = '';
+      });
+
+      input.dataset.hasClearBtn = '1';
+    }
+  });
+
+  // (optional) also make PDB inputs use the same light sky-blue style
+  ['mirna-file','target-file','competitor-file'].forEach(id => {
+    const el = $(id);
+    if (el) el.classList.add('file-premium');
+  });
+
 
   // Form submit
   const form = $('prediction-form');
