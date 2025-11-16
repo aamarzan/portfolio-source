@@ -876,7 +876,206 @@ function scrollToCardTop(id){
   });
 }
 
+function renderSeedMatrixDirect(item){
+  const mirnaId =
+    item.mirna_id ||
+    item.miRNA_id ||
+    item.miRNA_name ||
+    item.mirna_name ||
+    'miRNA';
 
+  const targetId =
+    item.target_id ||
+    item.target_name ||
+    item.transcript_id ||
+    'Target';
+
+  const mirnaSeq = (
+    item.mirna_seq ||
+    item.miRNA_seq ||
+    item.miRNA_sequence ||
+    item.mirna_sequence ||
+    ''
+  ).toUpperCase().replace(/[^AUGCTU]/g, '');
+
+  const targetSeq = (
+    item.target_seq ||
+    item.target_sequence ||
+    item.mrna_seq ||
+    item.mRNA_sequence ||
+    ''
+  ).toUpperCase().replace(/[^AUGCTU]/g, '');
+
+  if (!mirnaSeq || !targetSeq) {
+    openModal(
+      'Heatmap',
+      `<p style="padding:8px 0;">
+         Missing miRNA or target sequence; cannot build 2D seed-match heatmap.
+       </p>`
+    );
+    return;
+  }
+
+  const canvas = makeSeedMatchMatrixCanvasSimple(mirnaId, mirnaSeq, targetId, targetSeq);
+  const data   = canvas.toDataURL('image/png');
+  const stats  = canvas.__seedStats || null;
+
+  let chipsHtml = '';
+  if (stats) {
+    const density = stats.total ? (stats.matches * 100 / stats.total) : 0;
+    chipsHtml = `
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;font-size:0.78rem;">
+        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.02);">
+          Cells: ${stats.total}
+        </span>
+        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.02);">
+          Matches: ${stats.matches}
+        </span>
+        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(52,211,153,0.6);background:rgba(16,185,129,0.05);">
+          Match density: ${density.toFixed(1)}%
+        </span>
+      </div>
+    `;
+  }
+
+  const html = `
+    <div class="hm-wrapper">
+      <div class="hm-toolbar"
+           style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+        <div style="font-size:0.9rem;opacity:0.85;">
+          Seed-match matrix (2D)&nbsp;—&nbsp;
+          <strong>${mirnaId}</strong> vs <strong>${targetId}</strong>
+        </div>
+        <button class="btn btn-sm btn-outline" id="hm-2d-download">
+          Download PNG
+        </button>
+      </div>
+      <img src="${data}" alt="Seed-match matrix heatmap"
+           style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;display:block;margin:0 auto;"/>
+      ${chipsHtml}
+    </div>
+  `;
+
+  openModal('Heatmap', html);
+
+  setTimeout(() => {
+    const btn = document.getElementById('hm-2d-download');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = data;
+        a.download = `${(item.interaction_id || 'local')}_seed_matrix.png`;
+        a.click();
+      });
+    }
+  }, 0);
+}
+
+
+function makeSeedMatchMatrixCanvasSimple(mirnaId, mirnaSeq, targetId, targetSeq){
+  const seedLen = Math.min(8, Math.max(6, mirnaSeq.length));
+
+  const canvas = document.createElement('canvas');
+  const ctx    = canvas.getContext('2d');
+
+  // If target is too short, just show a text notice on a small canvas
+  if (targetSeq.length < seedLen) {
+    canvas.width  = 600;
+    canvas.height = 80;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111827';
+    ctx.font      = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('Target sequence shorter than seed – cannot build 2D matrix.', 10, 40);
+    return canvas;
+  }
+
+  const cols = targetSeq.length - seedLen + 1;
+  const rows = seedLen;
+
+  const cellSize   = 14;   // px
+  const marginLeft = 80;
+  const marginTop  = 40;
+  const marginRight  = 20;
+  const marginBottom = 30;
+
+  const width  = marginLeft + cols * cellSize + marginRight;
+  const height = marginTop  + rows * cellSize + marginBottom;
+
+  canvas.width  = width;
+  canvas.height = height;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  // Titles
+  ctx.fillStyle = '#111827';
+  ctx.font      = '15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText(`${mirnaId} seed vs ${targetId}`, 10, 18);
+
+  ctx.font = '11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText("Target position (5'→3')", marginLeft, marginTop - 12);
+
+  ctx.save();
+  ctx.translate(18, marginTop + (rows * cellSize) / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Seed offset', 0, 0);
+  ctx.restore();
+
+  // Simple Watson–Crick complement map
+  const comp = { A: 'U', U: 'A', T: 'A', G: 'C', C: 'G' };
+
+  let totalCells  = 0;
+  let matchCells  = 0;
+
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const mi = row;
+      const ti = col + row;
+
+      const baseMirna  = mirnaSeq[mi] || 'N';
+      const baseTarget = targetSeq[ti] || 'N';
+      const match      = comp[baseMirna] === baseTarget;
+
+      totalCells += 1;
+      if (match) matchCells += 1;
+
+      const x = marginLeft + col * cellSize;
+      const y = marginTop  + row * cellSize;
+
+      // Simple purple-ish heatmap: non-match = very light, match = darker
+      const v    = match ? 1 : 0;
+      const base = 235 - v * 150; // 235 → 85
+      ctx.fillStyle = `rgb(${base - 10}, ${base - 20}, ${base})`;
+      ctx.fillRect(x, y, cellSize, cellSize);
+
+      ctx.strokeStyle = 'rgba(15,23,42,0.15)';
+      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+    }
+  }
+
+  // X-axis ticks every 5 bases
+  ctx.fillStyle = '#4b5563';
+  ctx.font      = '10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  for (let col = 0; col < cols; col += 5) {
+    const x = marginLeft + col * cellSize;
+    ctx.fillText(String(col + 1), x, marginTop + rows * cellSize + 12);
+  }
+
+  // Row labels 1..seedLen
+  for (let row = 0; row < rows; row++) {
+    const y = marginTop + row * cellSize + cellSize / 2 + 3;
+    ctx.fillText(String(row + 1), marginLeft - 18, y);
+  }
+
+  // Attach basic stats for chips
+  canvas.__seedStats = {
+    total: totalCells,
+    matches: matchCells
+  };
+
+  return canvas;
+}
 
 // =====================================================
 // Initialization
@@ -1129,6 +1328,29 @@ function extractChainHintsFromFasta(text){
     if(m && id){ hints[id] = m[1].toUpperCase(); }
   }
   return hints;
+}
+
+async function fetchServerHeatmapPng(item, mode = 'ig_target', steps = 64) {
+  if (!CURRENT_JOB_ID) {
+    throw new Error('No active job id for heatmap.');
+  }
+  if (!item || !item.interaction_id) {
+    throw new Error('Row is missing interaction_id for heatmap.');
+  }
+
+  const headers = await getNonceOrKeyHeaders();
+  const url = HEATMAP_PNG_URL(
+    CURRENT_JOB_ID,
+    item.interaction_id,
+    mode,
+    steps
+  );
+
+  const res = await fetchRetry(url, { method: 'GET', headers }, 45000, 2, 700);
+  if (!res.ok) {
+    throw new Error(`Heatmap PNG request failed: ${res.status}`);
+  }
+  return await res.blob();
 }
 
 // =====================================================
@@ -2023,7 +2245,14 @@ async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
 
-  const mode  = (modeSel?.value || 'ig_target').toLowerCase();
+  const rawMode  = (modeSel?.value || 'ig_target').toLowerCase();
+
+  // ✅ PURE 2D PATH — no attribution, no “Attribution failed” message
+  if (rawMode === 'seed_matrix') {
+    renderSeedMatrixDirect(item);
+    return;
+  }
+
   const steps = Math.max(
     10,
     Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64)
@@ -2031,84 +2260,65 @@ async function handleHeatmapClick(item){
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
-  // If competitor mode chosen but row has no competitor, switch to target
-  if (mode === 'ig_competitor' && !(item.competitor_id || '').trim()) {
-    setHTML(
-      $('modal-content'),
-      formatWarn('This row has no competitor. Showing IG for target instead.')
-      + smallSpinner()
-    );
-  }
-
-  const effMode = (mode === 'ig_competitor' && !(item.competitor_id || '').trim())
+  const effMode = (rawMode === 'ig_competitor' && !(item.competitor_id || '').trim())
     ? 'ig_target'
-    : mode;
+    : rawMode;
 
-  // Only seed_density + seed_matrix are pure client modes
-  const isPureClient = effMode === 'seed_density' || effMode === 'seed_matrix';
+  // For IG target / IG competitor we try server PNG first.
+  // Only seed_density is pure client in this function now.
+  const isPureClient = effMode === 'seed_density';
 
-  // 1) Try server PNG only for IG modes (or other server-backed modes)
   if (!isPureClient && CURRENT_JOB_ID && item.interaction_id) {
     try {
       const headers = await getNonceOrKeyHeaders();
       const res = await fetchRetry(
         HEATMAP_PNG_URL(CURRENT_JOB_ID, item.interaction_id, effMode, steps),
         { method: 'GET', headers },
-        45000,   // timeout per attempt
-        2,       // retries
-        700      // backoff ms
+        45000,
+        2,
+        700
       );
 
-      if (!res.ok) throw new Error('Heatmap PNG request failed.');
+      if (res.ok) {
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
 
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const title = `Heatmap (${effMode.replace('_',' → ')}) — ${
-        escapeHTML(item.primary_molecule_id || item.mirna_id || '')
-      }`;
-      const toolbar = `
-        <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
-        <button id="hm-save"  class="toolbar-btn">Download PNG</button>
-      `;
-      const html = `
-        <img id="hm-img" alt="Heatmap" src="${url}"
-             style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>
-      `;
-      openModal(title, html, toolbar);
+        const html = `
+          <div class="hm-wrapper">
+            <div class="hm-toolbar">
+              <button class="btn btn-sm btn-outline" id="hm-download-btn">
+                Download PNG
+              </button>
+            </div>
+            <img id="hm-img" src="${url}" alt="Heatmap"
+                 style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;"/>
+          </div>
+        `;
+        openModal('Heatmap', html);
 
-      bindOnce(
-        $('hm-open'),
-        'click',
-        () => {
-          const w = window.open(url, '_blank');
-          if (w) w.opener = null;
-        },
-        'hmOpenOnce'
-      );
+        setTimeout(() => {
+          const btn = document.getElementById('hm-download-btn');
+          if (btn) {
+            btn.addEventListener('click', () => {
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${item.interaction_id || 'heatmap'}.png`;
+              a.click();
+            });
+          }
+        }, 0);
 
-      bindOnce(
-        $('hm-save'),
-        'click',
-        () => {
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${item.interaction_id}_${effMode}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        },
-        'hmSaveOnce'
-      );
-
-      return; // done with server PNG
-    } catch (_) {
-      // fall through to client path
+        return; // ⬅️ IMPORTANT: do not fall through to client fallback when PNG works
+      }
+    } catch (err) {
+      console.warn('Server heatmap PNG failed, falling back to client IG/seed.', err);
     }
   }
 
-  // 2) Client path: /explain (for IG) or local seed modes
-  await clientExplainHeatmapFallback(item, effMode, true); // true = force canvas→PNG
+  // Fallback: client IG / 1D seed-density (for ig_target / ig_competitor / seed_density)
+  await clientExplainHeatmapFallback(item, effMode, true);
 }
+
 
 async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG = false){
   const mirnaId  = item.primary_molecule_id ?? item.mirna_id;
