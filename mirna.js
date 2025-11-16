@@ -2242,17 +2242,37 @@ async function handleBundleClick(item){
 // =====================================================
 
 async function handleHeatmapClick(item){
-  const modeSel  = byQS('#heatmap-mode');
-  const stepsInp = byQS('#heatmap-steps');
+  const modeSel = byQS('#heatmap-mode');
 
-  const rawMode  = (modeSel?.value || 'ig_target').toLowerCase();
+  const rawVal = (modeSel?.value || '').toLowerCase().trim();
+  const label  = (modeSel?.selectedOptions?.[0]?.textContent || '').toLowerCase().trim();
 
-  // ✅ PURE 2D PATH — no attribution, no “Attribution failed” message
-  if (rawMode === 'seed_matrix') {
+  // 💡 Be very tolerant: if either the value OR the visible text
+  // looks like "seed-match matrix (2D)", we treat it as 2D mode.
+  const isSeedMatrixMode =
+    rawVal === 'seed_matrix' ||
+    rawVal === 'seed-matrix' ||
+    rawVal === 'seed_matrix_2d' ||
+    rawVal === 'seed-matrix-2d' ||
+    label.includes('seed-match') ||
+    label.includes('seed match') ||
+    label.includes('matrix (2d)') ||
+    label.includes('2d matrix');
+
+  // ✅ PURE 2D PATH — no attribution, no “Attribution failed” text,
+  // no call to clientExplainHeatmapFallback at all.
+  if (isSeedMatrixMode) {
+    console.log('[Heatmap] Seed-match 2D mode detected:', { rawVal, label });
     renderSeedMatrixDirect(item);
     return;
   }
 
+  // ──────────────────────────────────────────────────────────────
+  // Everything below is the IG / 1D seed-density logic as before
+  // ──────────────────────────────────────────────────────────────
+  const stepsInp = byQS('#heatmap-steps');
+
+  const rawMode  = (rawVal || 'ig_target');  // default if empty
   const steps = Math.max(
     10,
     Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64)
@@ -2260,14 +2280,14 @@ async function handleHeatmapClick(item){
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
+  // If user chose IG-competitor but row has no competitor → fall back to ig_target
   const effMode = (rawMode === 'ig_competitor' && !(item.competitor_id || '').trim())
     ? 'ig_target'
     : rawMode;
 
-  // For IG target / IG competitor we try server PNG first.
-  // Only seed_density is pure client in this function now.
   const isPureClient = effMode === 'seed_density';
 
+  // Try server-side PNG first for IG modes
   if (!isPureClient && CURRENT_JOB_ID && item.interaction_id) {
     try {
       const headers = await getNonceOrKeyHeaders();
@@ -2308,14 +2328,14 @@ async function handleHeatmapClick(item){
           }
         }, 0);
 
-        return; // ⬅️ IMPORTANT: do not fall through to client fallback when PNG works
+        return; // ⬅️ Do NOT fall through if PNG was OK
       }
     } catch (err) {
       console.warn('Server heatmap PNG failed, falling back to client IG/seed.', err);
     }
   }
 
-  // Fallback: client IG / 1D seed-density (for ig_target / ig_competitor / seed_density)
+  // Fallback: client IG or 1D seed-density
   await clientExplainHeatmapFallback(item, effMode, true);
 }
 
