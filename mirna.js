@@ -2355,6 +2355,29 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG = f
   }
 }
 
+// Smooth Viridis-style colour map used by heatmaps
+function viridisColor(value, alpha = 1) {
+  const palette = [
+    [68, 1, 84],    // #440154
+    [59, 82, 139],  // #3b528b
+    [33, 144, 141], // #21908d
+    [93, 201, 99],  // #5dc963
+    [253, 231, 37]  // #fde725
+  ];
+
+  const v = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  const pos = v * (palette.length - 1);
+  const i0 = Math.floor(pos);
+  const i1 = Math.min(i0 + 1, palette.length - 1);
+  const t  = pos - i0;
+
+  const r = Math.round(palette[i0][0] + t * (palette[i1][0] - palette[i0][0]));
+  const g = Math.round(palette[i0][1] + t * (palette[i1][1] - palette[i0][1]));
+  const b = Math.round(palette[i0][2] + t * (palette[i1][2] - palette[i0][2]));
+
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 // -----------------------------------------------------
 // 1D letter-strip canvas, normalization, seed density
 // -----------------------------------------------------
