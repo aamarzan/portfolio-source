@@ -2018,62 +2018,100 @@ async function handleBundleClick(item){
 // Heatmap (server PNG → retry; then /explain → client PNG;
 //          plus pure client modes: seed_density & seed_matrix)
 // =====================================================
+
 async function handleHeatmapClick(item){
   const modeSel  = byQS('#heatmap-mode');
   const stepsInp = byQS('#heatmap-steps');
+
   const mode  = (modeSel?.value || 'ig_target').toLowerCase();
-  const steps = Math.max(10, Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64));
+  const steps = Math.max(
+    10,
+    Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64)
+  );
 
   openModal('Heatmap', smallSpinner('Generating heatmap...'));
 
   // If competitor mode chosen but row has no competitor, switch to target
-  if(mode === 'ig_competitor' && !(item.competitor_id || '').trim()){
-    setHTML($('modal-content'), formatWarn('This row has no competitor. Showing IG for target instead.') + smallSpinner());
+  if (mode === 'ig_competitor' && !(item.competitor_id || '').trim()) {
+    setHTML(
+      $('modal-content'),
+      formatWarn('This row has no competitor. Showing IG for target instead.')
+      + smallSpinner()
+    );
   }
 
-  const effMode = (mode === 'ig_competitor' && !(item.competitor_id||'').trim()) ? 'ig_target' : mode;
+  const effMode = (mode === 'ig_competitor' && !(item.competitor_id || '').trim())
+    ? 'ig_target'
+    : mode;
 
-  // Only seed_density is strictly client-side;
-  // seed_matrix now comes from the Python PNG endpoint.
+  // Only seed_density + seed_matrix are pure client modes
   const isPureClient = effMode === 'seed_density' || effMode === 'seed_matrix';
 
   // 1) Try server PNG only for IG modes (or other server-backed modes)
-  if(!isPureClient && CURRENT_JOB_ID && item.interaction_id){
-    try{
+  if (!isPureClient && CURRENT_JOB_ID && item.interaction_id) {
+    try {
       const headers = await getNonceOrKeyHeaders();
       const res = await fetchRetry(
         HEATMAP_PNG_URL(CURRENT_JOB_ID, item.interaction_id, effMode, steps),
-        { method:'GET', headers },
-        45000,        // timeout per attempt
-        2,            // retries
-        700           // backoff
+        { method: 'GET', headers },
+        45000,   // timeout per attempt
+        2,       // retries
+        700      // backoff ms
       );
 
-      // Success → show server PNG with buttons
+      if (!res.ok) throw new Error('Heatmap PNG request failed.');
+
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
-      const title = `Heatmap (${effMode.replace('_',' → ')}) — ${escapeHTML(item.primary_molecule_id || item.mirna_id || '')}`;
+      const title = `Heatmap (${effMode.replace('_',' → ')}) — ${
+        escapeHTML(item.primary_molecule_id || item.mirna_id || '')
+      }`;
       const toolbar = `
         <button id="hm-open"  class="toolbar-btn">Open in new tab</button>
         <button id="hm-save"  class="toolbar-btn">Download PNG</button>
       `;
-      const html = `<img id="hm-img" alt="Heatmap" src="${url}" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+      const html = `
+        <img id="hm-img" alt="Heatmap" src="${url}"
+             style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>
+      `;
       openModal(title, html, toolbar);
-      bindOnce($('hm-open'),'click',()=>{ const w = window.open(url,'_blank'); if(w) w.opener = null; }, 'hmOpenOnce');
-      bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = url; a.download = `${item.interaction_id}_${effMode}.png`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveOnce');
-      return;
-    }catch(_){
+
+      bindOnce(
+        $('hm-open'),
+        'click',
+        () => {
+          const w = window.open(url, '_blank');
+          if (w) w.opener = null;
+        },
+        'hmOpenOnce'
+      );
+
+      bindOnce(
+        $('hm-save'),
+        'click',
+        () => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${item.interaction_id}_${effMode}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        },
+        'hmSaveOnce'
+      );
+
+      return; // done with server PNG
+    } catch (_) {
       // fall through to client path
     }
   }
 
   // 2) Client path: /explain (for IG) or local seed modes
-  await clientExplainHeatmapFallback(item, effMode, true); // true = force canvas-PNG
+  await clientExplainHeatmapFallback(item, effMode, true); // true = force canvas→PNG
 }
 
-async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=false){
-  const mirnaId = item.primary_molecule_id ?? item.mirna_id;
+async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG = false){
+  const mirnaId  = item.primary_molecule_id ?? item.mirna_id;
   const targetId = item.target_id ?? '';
   const compId   = item.competitor_id ?? '';
 
@@ -2096,7 +2134,10 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
   }
 
   const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-  const uiSteps = Math.max(10, Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64));
+  const uiSteps = Math.max(
+    10,
+    Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64)
+  );
 
   // ========= 1) PURE CLIENT MODES: seed_matrix (2D) & seed_density =========
 
@@ -2137,7 +2178,9 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
       if (mc) {
         setHTML(
           mc,
-          formatError(err?.message || 'Unexpected error while drawing the 2D seed-match heatmap.')
+          formatError(
+            err?.message || 'Unexpected error while drawing the 2D seed-match heatmap.'
+          )
         );
       }
     }
@@ -2176,7 +2219,7 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
   try {
     const mc = $('modal-content');
     if (mc) {
-      setHTML(mc, smallSpinner('Computing attributions...'));
+      setHTML(mc, smallSpinner('Computing attributions.'));
     }
 
     const headers = await getNonceOrKeyHeaders();
@@ -2201,7 +2244,11 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
         1,
         700
       );
-      data = await res.json();
+      if (res.ok) {
+        data = await res.json();
+      } else {
+        data = null;
+      }
     } catch (_) {
       data = null;
     }
@@ -2225,6 +2272,7 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
         const H     = cnvT.height + cnvC.height + pad;
         stack.width = W;
         stack.height = H;
+
         const g = stack.getContext('2d');
         g.fillStyle = '#fff';
         g.fillRect(0, 0, W, H);
@@ -2307,83 +2355,9 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG=fal
   }
 }
 
-// Render a simple seed-density heat strip from LAST_SEED_HITS (client fallback)
-function renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq){
-  const L = targetSeq.length;
-  const density = new Array(L).fill(0);
-  if(Array.isArray(LAST_SEED_HITS)){
-    LAST_SEED_HITS
-      .filter(h => h.molecule === 'target' && h.id === targetId)
-      .forEach(h=>{
-        for(let i=Math.max(0,h.start-1); i<Math.min(L,h.end); i++) density[i] += 1;
-      });
-  }
-  const max = Math.max(1, ...density);
-  const norm = density.map(v => v / max);
-
-  let strip = `<div style="font-family:ui-monospace, Menlo, Consolas;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
-  strip += `<div style="white-space:nowrap;">`;
-  for(let i=0;i<L;i++){
-    const color = viridisColor(norm[i] || 0, 0.85);
-    strip += `<span title="pos ${i+1} • ${(targetSeq[i]||'')} • ${(norm[i]||0).toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(targetSeq[i] || '')}</span>`;
-  }
-  strip += `</div></div>`;
-  const note = Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length ? '' : '<br/><small style="color:#666;">Tip: run Seed Sites first for a more informative density.</small>';
-  return `<div><h4 style="margin:6px 0;">Seed density (client fallback)</h4>${strip}${note}</div>`;
-}
-
-// Render one attribution panel (mini heat-strip + top peaks)
-function renderAttributionPanel(label, seq, attrib){
-  if(!Array.isArray(attrib) || attrib.length === 0){
-    return `<div><h4 style="margin:6px 0;">${escapeHTML(label)}</h4><p>No attribution available.</p></div>`;
-  }
-  const max = Math.max(1e-12, ...attrib.map(v => Math.abs(v)));
-  const norm = attrib.map(v => Math.abs(v) / max);
-
-  let strip = `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
-  strip += `<div style="white-space:nowrap;">`;
-  for(let i=0;i<seq.length;i++){
-    const v = norm[i] || 0;
-    const color = viridisColor(v, 0.85);
-    strip += `<span title="pos ${i+1} • ${seq[i]} • ${v.toFixed(3)}" style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(seq[i] || '')}</span>`;
-  }
-  strip += `</div></div>`;
-
-  const idxs = norm.map((v,i)=>({i,v})).sort((a,b)=>b.v-a.v).slice(0,5);
-  const peaks = idxs.map(o => `pos ${o.i+1} (${escapeHTML(seq[o.i]||'')}) → ${o.v.toFixed(3)}`).join(', ');
-
-  return `
-    <div>
-      <h4 style="margin:6px 0;">${escapeHTML(label)}</h4>
-      ${strip}
-      <div style="margin-top:6px;color:#333;"><strong>Top positions:</strong> ${peaks}</div>
-      <small style="color:#666;">Color scale is relative within each sequence (min→max saliency, Viridis).</small>
-    </div>
-  `;
-}
-
-// Viridis color helper for heatmaps (0..1 → rgba)
-function viridisColor(t, alpha=1.0){
-  const lut = [
-    [68,1,84],[71,44,122],[59,82,139],[44,113,142],[33,144,141],[39,173,129],[92,200,99],[170,220,50],[253,231,37]
-  ];
-  const x = Math.max(0, Math.min(1, t)) * (lut.length-1);
-  const i = Math.floor(x);
-  const j = Math.min(i+1, lut.length-1);
-  const f = x - i;
-  const r = Math.round(lut[i][0] + f*(lut[j][0]-lut[i][0]));
-  const g = Math.round(lut[i][1] + f*(lut[j][1]-lut[i][1]));
-  const b = Math.round(lut[i][2] + f*(lut[j][2]-lut[i][2]));
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// ============ Canvas heatmap helpers (guarantee a PNG) ============
-
-// Normalize an array of numbers to 0..1 (abs)
-function normalizeArray(arr){
-  const max = Math.max(1e-12, ...arr.map(v => Math.abs(v || 0)));
-  return arr.map(v => Math.abs(v || 0) / max);
-}
+// -----------------------------------------------------
+// 1D letter-strip canvas, normalization, seed density
+// -----------------------------------------------------
 
 // Draw a letter-strip heatmap to canvas (Viridis blocks + base letters)
 function makeHeatCanvas(seq, values01, titleText){
@@ -2397,23 +2371,26 @@ function makeHeatCanvas(seq, values01, titleText){
   const g = c.getContext('2d');
 
   // background
-  g.fillStyle = '#ffffff'; g.fillRect(0,0,c.width,c.height);
+  g.fillStyle = '#ffffff';
+  g.fillRect(0, 0, c.width, c.height);
 
   // title
   if (titleText){
     g.fillStyle = '#111';
     g.font = '600 14px ui-monospace, Menlo, Consolas, monospace';
-    g.textAlign = 'left'; g.textBaseline = 'top';
+    g.textAlign = 'left';
+    g.textBaseline = 'top';
     g.fillText(titleText, pad, 6);
   }
 
   // strip
   const y = pad + 14;
   g.font = 'bold 12px ui-monospace, Menlo, Consolas, monospace';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
 
-  for (let i=0;i<seq.length;i++){
-    const x = pad + i*(bw + gap);
+  for (let i = 0; i < seq.length; i++){
+    const x = pad + i * (bw + gap);
     const v = Math.max(0, Math.min(1, values01[i] || 0));
     g.fillStyle = viridisColor(v, 0.95);
     g.fillRect(x, y, bw, bh);
@@ -2423,14 +2400,18 @@ function makeHeatCanvas(seq, values01, titleText){
 
   // border
   g.strokeStyle = '#e5e7eb';
-  g.strokeRect(0.5, 0.5, c.width-1, c.height-1);
+  g.strokeRect(0.5, 0.5, c.width - 1, c.height - 1);
 
   return c;
 }
 
-// Normalize an array of numbers to 0..1 (abs)
+// Normalize an array of numbers to [0,1] (abs)
 function normalizeArray(arr){
-  const max = Math.max(1e-12, ...arr.map(v => Math.abs(v || 0)));
+  if (!Array.isArray(arr) || !arr.length) return [];
+  const max = arr.reduce((m, v) => {
+    const a = Math.abs(v || 0);
+    return a > m ? a : m;
+  }, 1e-12);
   return arr.map(v => Math.abs(v || 0) / max);
 }
 
@@ -2472,7 +2453,7 @@ function computeSeedDensityArray(targetId, targetSeq, mirnaSeq){
 
 // Simple base normalizer: T -> U, uppercase all
 function normBase(b){
-  if(!b) return '';
+  if (!b) return '';
   b = b.toUpperCase();
   return (b === 'T') ? 'U' : b;
 }
@@ -2481,9 +2462,9 @@ function normBase(b){
 function seedPairScore(mi, tg){
   mi = normBase(mi);
   tg = normBase(tg);
-  if((mi === 'A' && tg === 'U') || (mi === 'U' && tg === 'A')) return 1;
-  if((mi === 'C' && tg === 'G') || (mi === 'G' && tg === 'C')) return 1;
-  if((mi === 'G' && tg === 'U') || (mi === 'U' && tg === 'G')) return 0.5; // wobble
+  if ((mi === 'A' && tg === 'U') || (mi === 'U' && tg === 'A')) return 1;
+  if ((mi === 'C' && tg === 'G') || (mi === 'G' && tg === 'C')) return 1;
+  if ((mi === 'G' && tg === 'U') || (mi === 'U' && tg === 'G')) return 0.5; // wobble
   return 0;
 }
 
@@ -2493,19 +2474,19 @@ function seedPairScore(mi, tg){
  * overlapping that nucleotide.
  */
 function computeSeedMatchProfile(mirnaSeq, targetSeq){
-  if(!mirnaSeq || !targetSeq) return [];
+  if (!mirnaSeq || !targetSeq) return [];
 
   mirnaSeq  = String(mirnaSeq).trim().toUpperCase();
   targetSeq = String(targetSeq).trim().toUpperCase();
 
   const Lm = mirnaSeq.length;
   const Lt = targetSeq.length;
-  if(Lm < 7 || Lt < 7) {
+  if (Lm < 7 || Lt < 7) {
     // too short for a proper 7-mer; just return zeros
     return new Array(Lt).fill(0);
   }
 
-  // canonical 7-mer seed: positions 2–8 (1-based) → index 1..7 (0-based)
+  // canonical 7-mer seed: positions 2–8 (1-based) → index 1 (0-based)
   const seedStart = 1;
   const seedLen   = Math.min(7, Lm - seedStart);
   const seed      = mirnaSeq.slice(seedStart, seedStart + seedLen);
@@ -2513,18 +2494,18 @@ function computeSeedMatchProfile(mirnaSeq, targetSeq){
   const posScores = new Array(Lt).fill(0);
 
   // slide seed along target
-  for(let offset = 0; offset <= Lt - seedLen; offset++){
+  for (let offset = 0; offset <= Lt - seedLen; offset++){
     let score = 0;
     // miRNA 5' seed binds target 3' → reverse seed for pairing
-    for(let s = 0; s < seedLen; s++){
+    for (let s = 0; s < seedLen; s++){
       const mi = seed[seedLen - 1 - s];    // reverse
       const tg = targetSeq[offset + s];
       score += seedPairScore(mi, tg);
     }
     // propagate this window score to all covered positions, keep the max
-    for(let s = 0; s < seedLen; s++){
+    for (let s = 0; s < seedLen; s++){
       const idx = offset + s;
-      if(score > posScores[idx]) posScores[idx] = score;
+      if (score > posScores[idx]) posScores[idx] = score;
     }
   }
 
@@ -2556,8 +2537,8 @@ function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsN
 
   // adaptive cell size so extremely long targets are still manageable
   let cellSize = 18;
-  if(cols > 60 && cols <= 140) cellSize = 10;
-  else if(cols > 140)          cellSize = 4;
+  if (cols > 60 && cols <= 140) cellSize = 10;
+  else if (cols > 140)          cellSize = 4;
 
   const leftMargin   = 160;
   const topMargin    = 70;
@@ -2590,11 +2571,11 @@ function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsN
 
   // column nucleotide labels (only if not insanely long)
   const drawNtLabels = cols <= 80;
-  if(drawNtLabels){
+  if (drawNtLabels){
     ctx.font = `11px ${fontBase}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for(let j = 0; j < cols; j++){
+    for (let j = 0; j < cols; j++){
       const base = (targetSeq[j] || '').toUpperCase();
       const x = leftMargin + j * cellSize + cellSize / 2;
       const y = topMargin - 18;
@@ -2615,8 +2596,8 @@ function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsN
   ctx.restore();
 
   // heatmap cells
-  for(let j = 0; j < cols; j++){
-    const v = (valsNorm && Number.isFinite(valsNorm[j])) ? valsNorm[j] : 0;
+  for (let j = 0; j < cols; j++){
+    const v = valsNorm[j] || 0;
     const color = premiumBlueScale(v);
     const x = leftMargin + j * cellSize;
     const y = topMargin;
@@ -2624,59 +2605,26 @@ function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsN
     ctx.fillRect(x, y, cellSize, cellSize);
   }
 
-  // grid lines
+  // outline around heatmap
   ctx.strokeStyle = '#e5e7eb';
-  ctx.lineWidth = 0.5;
-  for(let j = 0; j <= cols; j++){
-    const x = leftMargin + j * cellSize;
-    ctx.beginPath();
-    ctx.moveTo(x, topMargin);
-    ctx.lineTo(x, topMargin + rows * cellSize);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(leftMargin, topMargin);
-  ctx.lineTo(leftMargin + cols * cellSize, topMargin);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(leftMargin, topMargin + rows * cellSize);
-  ctx.lineTo(leftMargin + cols * cellSize, topMargin + rows * cellSize);
-  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.strokeRect(leftMargin + 0.5, topMargin + 0.5, cols * cellSize - 1, rows * cellSize - 1);
 
-  // color bar
-  const cbX = leftMargin + cols * cellSize + 20;
-  const cbY = topMargin;
-  const cbW = 16;
-  const cbH = rows * cellSize;
-  const steps = 40;
-
-  for(let i = 0; i < steps; i++){
-    const t = i / (steps - 1);          // 0..1
-    const yy = cbY + (1 - t) * cbH;     // dark at top, light at bottom
-    ctx.fillStyle = premiumBlueScale(t);
-    ctx.fillRect(cbX, yy, cbW, cbH / steps + 1);
-  }
-
-  ctx.strokeStyle = '#9ca3af';
-  ctx.lineWidth = 0.8;
-  ctx.strokeRect(cbX, cbY, cbW, cbH);
-
-  ctx.font = `10px ${fontBase}`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = '#374151';
-  ctx.fillText('High seed match', cbX + cbW + 6, cbY - 2);
-  ctx.textBaseline = 'bottom';
-  ctx.fillText('Low', cbX + cbW + 6, cbY + cbH + 2);
+  // axis labels
+  ctx.fillStyle = '#4b5563';
+  ctx.font = `12px ${fontBase}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Target positions', leftMargin + (cols * cellSize) / 2, height - bottomMargin + 18);
 
   return canvas;
 }
 
 // Build premium seed-site summary chips from LAST_SEED_HITS
 function buildSeedChipSummaryHTML(){
-  if (!Array.isArray(LAST_SEED_HITS) || LAST_SEED_HITS.length === 0) return '';
+  if (!Array.isArray(LAST_SEED_HITS) || !LAST_SEED_HITS.length) return '';
 
-  const groups = new Map(); // key: "molecule:id"
+  const groups = new Map();
   for (const h of LAST_SEED_HITS){
     const key = `${h.molecule}:${h.id}`;
     if (!groups.has(key)){
@@ -2684,14 +2632,14 @@ function buildSeedChipSummaryHTML(){
         molecule: h.molecule,
         id: h.id,
         count: 0,
-        bestSeed: null,
-        minMM: Number.POSITIVE_INFINITY,
+        bestSeed: '',
+        minMM: Infinity,
         wobbleHits: 0
       });
     }
     const g = groups.get(key);
     g.count++;
-    if (h.seed_type && !g.bestSeed) g.bestSeed = h.seed_type;
+    if (!g.bestSeed && h.seed_type) g.bestSeed = h.seed_type;
     const mm = typeof h.mismatches === 'number' ? h.mismatches : 0;
     if (mm < g.minMM) g.minMM = mm;
     if (h.wobble && h.wobble > 0) g.wobbleHits++;
@@ -2722,7 +2670,8 @@ function buildSeedChipSummaryHTML(){
 // Show a canvas as PNG in the modal with “Open” & “Download” + seed chips
 function showCanvasAsModalPNG(canvas, title, filename){
   const data = canvas.toDataURL('image/png');
-  const img  = `<img id="hm-img" src="${data}" alt="Heatmap" style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
+  const img  = `<img id="hm-img" src="${data}" alt="Heatmap"
+                    style="max-width:100%;height:auto;border:1px solid #e5e7eb;border-radius:8px;"/>`;
   const tools = `
     <button id="hm-open" class="toolbar-btn">Open in new tab</button>
     <button id="hm-save" class="toolbar-btn">Download PNG</button>
@@ -2738,9 +2687,56 @@ function showCanvasAsModalPNG(canvas, title, filename){
     }
   }
 
-  bindOnce($('hm-open'),'click',()=>{ const w = window.open(data,'_blank'); if(w) w.opener = null; }, 'hmOpenCanvas');
-  bindOnce($('hm-save'),'click',()=>{ const a = document.createElement('a'); a.href = data; a.download = filename||'heatmap.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); }, 'hmSaveCanvas');
+  bindOnce(
+    $('hm-open'),
+    'click',
+    () => {
+      const w = window.open(data, '_blank');
+      if (w) w.opener = null;
+    },
+    'hmOpenCanvas'
+  );
+  bindOnce(
+    $('hm-save'),
+    'click',
+    () => {
+      const a = document.createElement('a');
+      a.href = data;
+      a.download = filename || 'heatmap.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    },
+    'hmSaveCanvas'
+  );
+}
+
+// Render a simple seed-density heat strip from LAST_SEED_HITS (client fallback)
+function renderSeedDensityFromScan(mirnaSeq, targetId, targetSeq){
+  const L = targetSeq.length;
+  const density = new Array(L).fill(0);
+  if (Array.isArray(LAST_SEED_HITS)){
+    LAST_SEED_HITS
+      .filter(h => h.molecule === 'target' && h.id === targetId)
+      .forEach(h => {
+        for (let i = Math.max(0, h.start - 1); i < Math.min(L, h.end); i++) density[i] += 1;
+      });
+  }
+  const max = density.reduce((m, v) => v > m ? v : m, 1);
+  const norm = density.map(v => v / max);
+
+  let strip = `<div style="font-family:ui-monospace, Menlo, Consolas;overflow:auto;border:1px solid #eee;border-radius:8px;padding:8px;">`;
+  strip += `<div style="white-space:nowrap;">`;
+  for (let i = 0; i < L; i++){
+    const color = viridisColor(norm[i] || 0, 0.85);
+    strip += `<span title="pos ${i+1} • ${(targetSeq[i]||'')} • ${(norm[i]||0).toFixed(3)}"
+                    style="display:inline-block;min-width:10px;padding:2px 0;text-align:center;background:${color};color:#000;border-radius:2px;margin:0 1px;">${escapeHTML(targetSeq[i] || '')}</span>`;
+  }
+  strip += `</div></div>`;
+  const note = Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length
+    ? ''
+    : '<br/><small style="color:#666;">Tip: run Seed Sites first for a more informative density.</small>';
+  return `<div><h4 style="margin:6px 0;">Seed density (client fallback)</h4>${strip}${note}</div>`;
 }
 
 // =====================================================
