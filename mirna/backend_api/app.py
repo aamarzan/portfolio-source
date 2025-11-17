@@ -2555,18 +2555,14 @@ def seed_scan():
 
 # =========================
 # Explain (Integrated Gradients) endpoint (public API)
-# Dummy flat-attribution version for UI testing
 # =========================
 @app.route('/explain', methods=['POST'])
 @limiter.limit("20 per 15 minutes")
 def explain():
-    """
-    Dummy attribution endpoint.
-
-    It ignores the model and simply returns a constant score per nucleotide,
-    so the front-end IG/2D heatmap UI can be tested independently.
-    """
     try:
+        if model is None or scaler is None:
+            return jsonify({"error": "Model or scaler not loaded on server."}), 500
+
         data = request.get_json(force=True, silent=True) or {}
         mirna = (data.get('mirna_seq') or '').strip()
         target = (data.get('target_seq') or '').strip()
@@ -2575,35 +2571,80 @@ def explain():
         if not mirna or not target:
             return jsonify({'error': 'Provide mirna_seq and target_seq'}), 400
 
-        # Lengths of the sequences we’ll generate scores for
-        tgt_len = len(target)
-        cmp_len = len(competitor) if competitor else 0
+        model_inputs = _keras_inputs_map()
+        Lp = int((model_inputs.get('primary_sequence_input') or (None,120))[1] or 120)
+        Lt = int((model_inputs.get('target_sequence_input')  or (None,200))[1] or 200)
+        Lc = int((model_inputs.get('competitor_sequence_input') or (None,200))[1] or 200)
 
-        # Flat, fake “IG-like” profiles so the UI always has something to plot
-        # Target: all 0.5
-        # Competitor: all 0.25 (only if competitor present)
-        if tgt_len <= 0:
-            tgt_attr = [0.5]
+        has_comp_input = 'competitor_sequence_input' in model_inputs
+        has_num_input  = 'numerical_features_input' in model_inputs
+        has_p_struct   = 'primary_structure_input' in model_inputs
+        has_t_struct   = 'target_structure_input' in model_inputs
+        has_c_struct   = 'competitor_structure_input' in model_inputs
+
+        def ensure_dict(data):
+            if isinstance(data, tuple):
+                return {
+                    "sequence": data[1] if len(data) > 1 else "",
+                    "gc_content": 0.5, "dg": 0.0, "conservation": 0.0,
+                    "structure_vector": "[]", "adjacency_matrix": "[]"
+                }
+            return data
+
+        pdat = ensure_dict(process_molecule_universal((("miRNA", mirna), {}, 'primary_molecule')))
+        tdat = ensure_dict(process_molecule_universal((("target", target), {}, 'target_molecule')))
+        if competitor:
+            cdat = ensure_dict(process_molecule_universal((("competitor", competitor), {}, 'competitor_molecule')))
         else:
-            tgt_attr = [0.5] * tgt_len
+            cdat = {'sequence': ''}
 
-        if cmp_len > 0:
-            cmp_attr = [0.25] * cmp_len
-        else:
-            cmp_attr = []
+        pseq = pdat.get('sequence','')
+        if MATURE_TRIM_ENABLED and len(pseq) > 30:
+            pseq = choose_mature_window(pseq, window=MATURE_TRIM_WINDOW)
 
-        # (Optional) you could add small variation instead of pure flat:
-        # tgt_attr = [0.2 + 0.6 * (i / max(1, tgt_len - 1)) for i in range(tgt_len)]
+        pri_enc = one_hot_encode_sequence(pseq, Lp)[None, ...].astype(np.float32)
+        tgt_enc = one_hot_encode_sequence(tdat.get('sequence',''), Lt)[None, ...].astype(np.float32)
+        if has_comp_input:
+            if competitor:
+                cmp_enc = one_hot_encode_sequence(cdat.get('sequence',''), Lc)[None, ...].astype(np.float32)
+            else:
+                cmp_enc = one_hot_encode_sequence('', Lc)[None, ...].astype(np.float32)
+
+        feed: Dict[str, np.ndarray] = {
+            'primary_sequence_input': pri_enc,
+            'target_sequence_input':  tgt_enc,
+        }
+        if has_comp_input:
+            feed['competitor_sequence_input'] = cmp_enc
+        if has_num_input:
+            num_list = [numerical_features_from_processed_json(pdat)]
+            if hasattr(scaler, 'feature_names_in_'):
+                df_features = pd.DataFrame(num_list, columns=scaler.feature_names_in_)
+                scaled_num = scaler.transform(df_features)
+            else:
+                scaled_num = scaler.transform(num_list)
+            feed['numerical_features_input'] = scaled_num.astype(np.float32)
+
+        if has_p_struct:
+            feed['primary_structure_input'] = structure_vector_from_processed_json(pdat.get('structure_vector','[]'), Lp)[None, ...].astype(np.float32)
+        if has_t_struct:
+            feed['target_structure_input'] = structure_vector_from_processed_json(tdat.get('structure_vector','[]'), Lt)[None, ...].astype(np.float32)
+        if has_c_struct and has_comp_input:
+            if competitor:
+                feed['competitor_structure_input'] = structure_vector_from_processed_json(cdat.get('structure_vector','[]'), Lc)[None, ...].astype(np.float32)
+            else:
+                feed['competitor_structure_input'] = np.zeros((1, Lc, 1), dtype=np.float32)
+
+        tgt_attr = integrated_gradients(model, feed, 'target_sequence_input', steps=50)
+        cmp_attr = integrated_gradients(model, feed, 'competitor_sequence_input', steps=50) if (has_comp_input and competitor) else []
 
         return jsonify({
-            "mode": "dummy_flat",
-            "target_attrib": tgt_attr,
-            "competitor_attrib": cmp_attr,
+            'target_attrib': tgt_attr,
+            'competitor_attrib': cmp_attr
         })
     except Exception as e:
-        logging.exception("/explain dummy error: %s", e)
-        return jsonify({"error": str(e)}), 500
-
+        logging.exception(f"/explain error: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 # =========================
