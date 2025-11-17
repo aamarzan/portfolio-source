@@ -876,208 +876,6 @@ function scrollToCardTop(id){
   });
 }
 
-function renderSeedMatrixDirect(item){
-  const mirnaId =
-    item.mirna_id ||
-    item.miRNA_id ||
-    item.miRNA_name ||
-    item.mirna_name ||
-    'miRNA';
-
-  const targetId =
-    item.target_id ||
-    item.target_name ||
-    item.transcript_id ||
-    'Target';
-
-  const mirnaSeq = (
-    item.primary_seq_used ||       // <- NEW: server field name
-    item.mirna_seq ||
-    item.miRNA_seq ||
-    item.miRNA_sequence ||
-    item.mirna_sequence ||
-    ''
-  ).toUpperCase().replace(/[^AUGCTU]/g, '');
-
-  const targetSeq = (
-    item.target_seq_used ||        // <- NEW: server field name
-    item.target_seq ||
-    item.target_sequence ||
-    item.mrna_seq ||
-    item.mRNA_sequence ||
-    ''
-  ).toUpperCase().replace(/[^AUGCTU]/g, '');
-
-  if (!mirnaSeq || !targetSeq) {
-    openModal(
-      'Heatmap',
-      `<p style="padding:8px 0;">
-         Missing miRNA or target sequence; cannot build 2D seed-match heatmap.
-       </p>`
-    );
-    return;
-  }
-
-  const canvas = makeSeedMatchMatrixCanvasSimple(mirnaId, mirnaSeq, targetId, targetSeq);
-  const data   = canvas.toDataURL('image/png');
-  const stats  = canvas.__seedStats || null;
-
-  let chipsHtml = '';
-  if (stats) {
-    const density = stats.total ? (stats.matches * 100 / stats.total) : 0;
-    chipsHtml = `
-      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;font-size:0.78rem;">
-        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.02);">
-          Cells: ${stats.total}
-        </span>
-        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);background:rgba(15,23,42,0.02);">
-          Matches: ${stats.matches}
-        </span>
-        <span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(52,211,153,0.6);background:rgba(16,185,129,0.05);">
-          Match density: ${density.toFixed(1)}%
-        </span>
-      </div>
-    `;
-  }
-
-  const html = `
-    <div class="hm-wrapper">
-      <div class="hm-toolbar"
-           style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
-        <div style="font-size:0.9rem;opacity:0.85;">
-          Seed-match matrix (2D)&nbsp;—&nbsp;
-          <strong>${mirnaId}</strong> vs <strong>${targetId}</strong>
-        </div>
-        <button class="btn btn-sm btn-outline" id="hm-2d-download">
-          Download PNG
-        </button>
-      </div>
-      <img src="${data}" alt="Seed-match matrix heatmap"
-           style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;display:block;margin:0 auto;"/>
-      ${chipsHtml}
-    </div>
-  `;
-
-  openModal('Heatmap', html);
-
-  setTimeout(() => {
-    const btn = document.getElementById('hm-2d-download');
-    if (btn) {
-      btn.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.href = data;
-        a.download = `${(item.interaction_id || 'local')}_seed_matrix.png`;
-        a.click();
-      });
-    }
-  }, 0);
-}
-
-
-function makeSeedMatchMatrixCanvasSimple(mirnaId, mirnaSeq, targetId, targetSeq){
-  const seedLen = Math.min(8, Math.max(6, mirnaSeq.length));
-
-  const canvas = document.createElement('canvas');
-  const ctx    = canvas.getContext('2d');
-
-  // If target is too short, just show a text notice on a small canvas
-  if (targetSeq.length < seedLen) {
-    canvas.width  = 600;
-    canvas.height = 80;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#111827';
-    ctx.font      = '14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('Target sequence shorter than seed – cannot build 2D matrix.', 10, 40);
-    return canvas;
-  }
-
-  const cols = targetSeq.length - seedLen + 1;
-  const rows = seedLen;
-
-  const cellSize   = 14;   // px
-  const marginLeft = 80;
-  const marginTop  = 40;
-  const marginRight  = 20;
-  const marginBottom = 30;
-
-  const width  = marginLeft + cols * cellSize + marginRight;
-  const height = marginTop  + rows * cellSize + marginBottom;
-
-  canvas.width  = width;
-  canvas.height = height;
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  // Titles
-  ctx.fillStyle = '#111827';
-  ctx.font      = '15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  ctx.fillText(`${mirnaId} seed vs ${targetId}`, 10, 18);
-
-  ctx.font = '11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  ctx.fillText("Target position (5'→3')", marginLeft, marginTop - 12);
-
-  ctx.save();
-  ctx.translate(18, marginTop + (rows * cellSize) / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText('Seed offset', 0, 0);
-  ctx.restore();
-
-  // Simple Watson–Crick complement map
-  const comp = { A: 'U', U: 'A', T: 'A', G: 'C', C: 'G' };
-
-  let totalCells  = 0;
-  let matchCells  = 0;
-
-  for (let col = 0; col < cols; col++) {
-    for (let row = 0; row < rows; row++) {
-      const mi = row;
-      const ti = col + row;
-
-      const baseMirna  = mirnaSeq[mi] || 'N';
-      const baseTarget = targetSeq[ti] || 'N';
-      const match      = comp[baseMirna] === baseTarget;
-
-      totalCells += 1;
-      if (match) matchCells += 1;
-
-      const x = marginLeft + col * cellSize;
-      const y = marginTop  + row * cellSize;
-
-      // Simple purple-ish heatmap: non-match = very light, match = darker
-      const v    = match ? 1 : 0;
-      const base = 235 - v * 150; // 235 → 85
-      ctx.fillStyle = `rgb(${base - 10}, ${base - 20}, ${base})`;
-      ctx.fillRect(x, y, cellSize, cellSize);
-
-      ctx.strokeStyle = 'rgba(15,23,42,0.15)';
-      ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
-    }
-  }
-
-  // X-axis ticks every 5 bases
-  ctx.fillStyle = '#4b5563';
-  ctx.font      = '10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  for (let col = 0; col < cols; col += 5) {
-    const x = marginLeft + col * cellSize;
-    ctx.fillText(String(col + 1), x, marginTop + rows * cellSize + 12);
-  }
-
-  // Row labels 1..seedLen
-  for (let row = 0; row < rows; row++) {
-    const y = marginTop + row * cellSize + cellSize / 2 + 3;
-    ctx.fillText(String(row + 1), marginLeft - 18, y);
-  }
-
-  // Attach basic stats for chips
-  canvas.__seedStats = {
-    total: totalCells,
-    matches: matchCells
-  };
-
-  return canvas;
-}
 
 // =====================================================
 // Initialization
@@ -2164,7 +1962,6 @@ function injectAnalysisControls(container){
     <label class="ctrl"><span>Max mismatches</span><input id="max-mm" type="number" value="0" min="0" max="3" step="1"></label>
     <label class="ctrl"><span>Heatmap</span>
       <select id="heatmap-mode">
-        <option value="seed_matrix">Seed-match matrix (2D)</option>
         <option value="ig_target" selected>IG → Target</option>
         <option value="ig_competitor">IG → Competitor</option>
         <option value="seed_density">Seed-hit density (fast)</option>
@@ -2248,12 +2045,6 @@ async function handleHeatmapClick(item){
   const stepsInp = byQS('#heatmap-steps');
 
   const rawMode  = (modeSel?.value || 'ig_target').toLowerCase();
-
-  // ✅ PURE 2D PATH — no attribution, no “Attribution failed” message
-  if (rawMode === 'seed_matrix') {
-    renderSeedMatrixDirect(item);
-    return;
-  }
 
   const steps = Math.max(
     10,
@@ -2351,48 +2142,29 @@ async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG = f
     Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64)
   );
 
-  // ========= 1) PURE CLIENT MODES: seed_matrix (2D) & seed_density =========
+  // ========= 1) PURE CLIENT MODE: seed_density =========
 
-  // --- 2D seed-match matrix (never calls /explain, never auto-falls back) ---
-  if (uiMode === 'seed_matrix') {
-    try {
-      const profile = computeSeedMatchProfile(mirnaSeq, targetSeq);  // 1D seed-based scores
-      const vals    = normalizeArray(profile || []);
+  // --- Seed-density mode (pure client, no /explain) ---
+  if (uiMode === 'seed_density') {
+    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
+    const vals    = normalizeArray(density);
+    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
 
-      const canvas = makeSeedMatchMatrixCanvas(
-        mirnaId,
-        mirnaSeq,
-        targetId,
-        targetSeq,
-        vals
-      );
+    showCanvasAsModalPNG(
+      canvas,
+      'Heatmap — Seed density',
+      `${(item.interaction_id || 'local')}_seed_density.png`
+    );
 
-      showCanvasAsModalPNG(
-        canvas,
-        'Heatmap — Seed-match matrix (2D)',
-        `${(item.interaction_id || 'local')}_seed_matrix.png`
-      );
-
-      if (tRes.converted || cRes.converted) {
-        const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-        const mc = $('modal-content');
-        if (mc) {
-          appendHTML(
-            mc,
-            `<div style="margin-top:6px;color:#333;">
-               <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before seed-match visualization.</em></small>
-             </div>`
-          );
-        }
-      }
-    } catch (err) {
+    if (tRes.converted || cRes.converted) {
+      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
       const mc = $('modal-content');
       if (mc) {
-        setHTML(
+        appendHTML(
           mc,
-          formatError(
-            err?.message || 'Unexpected error while drawing the 2D seed-match heatmap.'
-          )
+          `<div style="margin-top:6px;color:#333;">
+             <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before visualization.</em></small>
+           </div>`
         );
       }
     }
@@ -2747,113 +2519,6 @@ function computeSeedMatchProfile(mirnaSeq, targetSeq){
   return posScores;
 }
 
-// Premium dark-blue → light-sky-blue scale
-function premiumBlueScale(t){
-  // clamp 0..1
-  t = Math.max(0, Math.min(1, t));
-
-  // t=0 → very light sky blue
-  // t=1 → deep rich blue
-  const r = Math.round(220 - 90 * t);   // 220 → 130
-  const g = Math.round(235 - 140 * t);  // 235 → 95
-  const b = Math.round(255 - 190 * t);  // 255 → 65
-
-  return `rgb(${r},${g},${b})`;
-}
-
-/**
- * Build a 2D seed-match heatmap canvas:
- * columns = target nucleotides,
- * single row labelled with miRNA ID.
- */
-function makeSeedMatchMatrixCanvas(mirnaId, mirnaSeq, targetId, targetSeq, valsNorm){
-  const cols = targetSeq.length || 0;
-  const rows = 1; // one row = this miRNA
-
-  // adaptive cell size so extremely long targets are still manageable
-  let cellSize = 18;
-  if (cols > 60 && cols <= 140) cellSize = 10;
-  else if (cols > 140)          cellSize = 4;
-
-  const leftMargin   = 160;
-  const topMargin    = 70;
-  const bottomMargin = 45;
-  const rightMargin  = 80;
-
-  const width  = leftMargin + cols * cellSize + rightMargin;
-  const height = topMargin + rows * cellSize + bottomMargin;
-
-  const canvas = document.createElement('canvas');
-  canvas.width  = Math.max(width, 260);
-  canvas.height = Math.max(height, 180);
-
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-
-  // background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const fontBase = 'system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif';
-
-  // title
-  ctx.fillStyle = '#111827';
-  ctx.font = `14px ${fontBase}`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  const title = `Seed-match heatmap — miRNA ${mirnaId || ''} vs target ${targetId || ''}`;
-  ctx.fillText(title, 16, 24);
-
-  // column nucleotide labels (only if not insanely long)
-  const drawNtLabels = cols <= 80;
-  if (drawNtLabels){
-    ctx.font = `11px ${fontBase}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (let j = 0; j < cols; j++){
-      const base = (targetSeq[j] || '').toUpperCase();
-      const x = leftMargin + j * cellSize + cellSize / 2;
-      const y = topMargin - 18;
-      ctx.fillStyle = '#4b5563';
-      ctx.fillText(base, x, y);
-    }
-  }
-
-  // row label (miRNA), rotated
-  ctx.save();
-  ctx.translate(80, topMargin + (rows * cellSize) / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#374151';
-  ctx.font = `12px ${fontBase}`;
-  ctx.fillText(`miRNA: ${mirnaId || ''}`, 0, 0);
-  ctx.restore();
-
-  // heatmap cells
-  for (let j = 0; j < cols; j++){
-    const v = valsNorm[j] || 0;
-    const color = premiumBlueScale(v);
-    const x = leftMargin + j * cellSize;
-    const y = topMargin;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, cellSize, cellSize);
-  }
-
-  // outline around heatmap
-  ctx.strokeStyle = '#e5e7eb';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(leftMargin + 0.5, topMargin + 0.5, cols * cellSize - 1, rows * cellSize - 1);
-
-  // axis labels
-  ctx.fillStyle = '#4b5563';
-  ctx.font = `12px ${fontBase}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Target positions', leftMargin + (cols * cellSize) / 2, height - bottomMargin + 18);
-
-  return canvas;
-}
 
 // Build premium seed-site summary chips from LAST_SEED_HITS
 function buildSeedChipSummaryHTML(){
