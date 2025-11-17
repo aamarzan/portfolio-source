@@ -78,27 +78,7 @@ const DOWNLOAD_ALL_CSV_URL = (jobId) => `${BASE_URL}/download/${jobId}/all.csv`;
 const DOWNLOAD_ROW_CSV_URL = (jobId, interactionId) => `${BASE_URL}/download/${jobId}/${interactionId}.csv`;
 const HEATMAP_PNG_URL = (jobId, interactionId, mode, steps) => `${BASE_URL}/download/${jobId}/${interactionId}/heatmap.png?mode=${encodeURIComponent(mode)}&steps=${encodeURIComponent(steps)}`;
 // NOTE: 'kind' now accepts 'target' | 'competitor' | 'mirna'
-const STRUCTURE_URL = (jobId, kind, id) => {
-  const safeJob = encodeURIComponent(jobId);
-  const k = (kind || '').toString();
-
-  // miRNA route has a dedicated endpoint: /structure/<job_id>/miRNA/<mirna_id>
-  if (k.toLowerCase() === 'mirna') {
-    const miId = id || 'primary';
-    return apiUrl(`/structure/${safeJob}/miRNA/${encodeURIComponent(miId)}`);
-  }
-
-  // target / competitor: /structure/<job_id>/<kind> optionally with ?id=<...>
-  const safeKind = encodeURIComponent(k.toLowerCase()); // "target" or "competitor"
-
-  if (id) {
-    return apiUrl(
-      `/structure/${safeJob}/${safeKind}?id=${encodeURIComponent(id)}`
-    );
-  }
-
-  return apiUrl(`/structure/${safeJob}/${safeKind}`);
-};
+const STRUCTURE_URL   = (jobId, kind) => `${BASE_URL}/structure/${jobId}/${kind}`;
 
 const NONCE_URL      = `${BASE_URL}/nonce`;
 const CONFIG_URL     = `${BASE_URL}/config`;
@@ -2863,18 +2843,16 @@ async function ensureNGL(){
   }catch(_){ return false; }
 }
 
-async function fetchStructureBlob(kind, id) {
-  const url = STRUCTURE_URL(CURRENT_JOB_ID, kind, id);
-  return fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-  }).then(async (res) => {
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`3D structure fetch failed (${res.status}): ${text}`);
-    }
-    return res.blob();
-  });
+async function fetchStructureBlob(kind){
+  if(!CURRENT_JOB_ID) return null;
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    if(!res.ok) return null;
+    const ext = inferExtFromResponse(res);
+    const blob = await res.blob();
+    return { blob, ext };
+  }catch(_){ return null; }
 }
 
 async function open3DCombined(rowItem){
@@ -3159,51 +3137,24 @@ async function open3DCombined(rowItem){
     }, 'nglsnap2');
 }
 
-function open3DOrExplain(anyId, kind, rowItem) {
-  ensureNGL().catch((err) => {
-    console.error('NGL load failed:', err);
-    alert('3D viewer failed to load. Please refresh the page and try again.');
-  });
+async function open3DOrExplain(anyId, kind /* 'target'|'competitor'|'mirna' */, rowItem=null){
+  if(!CURRENT_JOB_ID){
+    openModalText('3D Viewer', 'Run a prediction first.');
+    return;
+  }
 
-  const structureLabel =
-    kind === 'target' ? 'Target' :
-    kind === 'competitor' ? 'Competitor' :
-    'miRNA';
+  // Try server structure for the kind
+  let primaryBlob = null, primaryExt = 'pdb';
+  try{
+    const headers = await getNonceOrKeyHeaders();
+    const res = await fetchWithTimeout(STRUCTURE_URL(CURRENT_JOB_ID, kind), { method:'GET', headers }, 20000);
+    if(res.ok){
+      primaryExt = inferExtFromResponse(res);
+      primaryBlob = await res.blob();
+    }
+  }catch(_){ /* ignore, we’ll fallback to staged/legacy */ }
 
-  const cutoff = (Number(
-    document.getElementById('contacts-cutoff')?.value
-  ) || 4.0).toFixed(1);
-  const cutoffArg = `?cutoff=${cutoff}`;
-
-  // BEFORE:
-  // const promiseStructure = fetchStructureBlob(kind);
-
-  // AFTER:
-  const promiseStructure = fetchStructureBlob(kind, anyId);
-
-  const promiseContacts = fetchContactsData(
-    // for contacts you already correctly use /contacts/<job_id>/<miRNA_id>?cutoff=...
-    kind.toLowerCase() === 'mirna'
-      ? anyId
-      : (rowItem?.primary_molecule_id || anyId || 'primary'),
-    cutoffArg
-  );
-
-  Promise.all([promiseStructure, promiseContacts])
-    .then(([pdbBlob, contacts]) => {
-      open3DCombined({
-        pdbBlob,
-        contacts,
-        label: structureLabel,
-        cutoff,
-        rowItem,
-        kind,
-      });
-    })
-    .catch((err) => {
-      console.error('3D/contacts combined fetch failed:', err);
-      alert('3D structure or contacts data could not be loaded. Please check console for details.');
-    });
+  await open3DStageManager(kind, anyId, { blob: primaryBlob, ext: primaryExt }, rowItem);
 }
 
 async function open3DStageManager(kind, anyId, primary, rowItem){

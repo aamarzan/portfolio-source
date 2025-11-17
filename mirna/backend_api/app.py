@@ -233,10 +233,8 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
         'download_all_csv', 'download_single_csv',
         'download_heatmap_png',
         'download_seeds_all', 'download_seeds_one',
-        # 3D viewer + contacts left OPEN so the UI works without extra headers
-        # 'get_structure_artifact',
-        # 'get_structure_mirna',
-        # 'get_contacts',
+        'get_structure_artifact', 'get_structure_mirna',
+        'get_contacts',
         'download_all_zip', 'download_bundle_zip',
         'get_manifest'
     }
@@ -1154,28 +1152,11 @@ def start_prediction():
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
     # Parse miRNA FASTA
-    # ---------- FIX: allow miRNA-only PDB submissions ----------
     primary_records = parse_fasta_records(fasta_string)
-    has_fasta_headers = has_any_fasta_header(fasta_string)
-
-    mirna_3d_files = request.files.getlist('mirna_3d_file')
-    mirna_pdb_available = any(f.filename for f in mirna_3d_files)
-
-    # If no FASTA but PDB exists → allow pipeline to continue
-    if not primary_records and not mirna_pdb_available:
-        return jsonify({
-            "error": "Provide at least one miRNA FASTA or miRNA PDB file."
-        }), 400
-
-    # If FASTA exists but missing headers → warn only, don't fail
-    if primary_records and not has_fasta_headers:
-        # Auto-generate IDs for FASTA-without-headers
-        fixed = []
-        for i,(hdr,seq) in enumerate(primary_records,1):
-            fixed.append((f"mirna_{i}", seq))
-        primary_records = fixed
-    # ------------------------------------------------------------
-
+    if not primary_records:
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
+    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
     if len(primary_records) > MIRNA_MAX:
         return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
@@ -1323,23 +1304,11 @@ def start_prediction():
             if not competitor_3d_path:
                 competitor_3d_path = p
 
-    # ---- NEW: integrate PDB-derived sequences in addition to FASTA (per-ID) ----
-    # Targets: add PDB-only targets whose IDs do NOT match any FASTA target
-    existing_target_ids = {tid for (tid, _) in targets_list}
-    existing_target_variants = set()
-    for tid in existing_target_ids:
-        for v in id_variants(tid):
-            existing_target_variants.add(v)
-
-    if target_3d_files or t_ids:
+    # ---- NEW: PDB-only allowance — derive sequences when FASTA empty ----
+    # Targets
+    if not targets_list and (target_3d_files or t_ids):
         for fname, p in target_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
-
-            # if this PDB matches an existing FASTA ID (tolerant), use only as structure, not a new logical target
-            stem_variants = id_variants(stem)
-            if any(sv in existing_target_variants for sv in stem_variants):
-                continue
-
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_TARGET_LEN:
                 tid = stem
@@ -1349,26 +1318,13 @@ def start_prediction():
                     "aa_to_nt_applied": aa_to_nt,
                     "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
                 }
+        if not targets_list:
+            return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
 
-    # If we *only* had PDBs for targets and none could yield NT, abort
-    if not targets_list and (target_3d_files or t_ids):
-        return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
-
-    # Competitors: same idea — PDB-only competitors become NEW logical competitors
-    existing_comp_ids = {cid for (cid, _) in _fixed_comps}
-    existing_comp_variants = set()
-    for cid in existing_comp_ids:
-        for v in id_variants(cid):
-            existing_comp_variants.add(v)
-
-    if competitor_3d_files or c_ids:
+    # Competitors
+    if not _fixed_comps and (competitor_3d_files or c_ids):
         for fname, p in competitor_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
-
-            stem_variants = id_variants(stem)
-            if any(sv in existing_comp_variants for sv in stem_variants):
-                continue
-
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_COMP_LEN:
                 cid = stem
@@ -1383,47 +1339,17 @@ def start_prediction():
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
     # ---------------------------------------------
 
-    # miRNA 3D index + optional PDB-only miRNAs (like target/competitor integration)
+    # miRNA 3D index
     mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
-
-    # Existing miRNA IDs from FASTA
-    existing_mi_ids = {pid for (pid, _) in primary_records}
-    existing_mi_variants = set()
-    for pid in existing_mi_ids:
-        for v in id_variants(pid):
-            existing_mi_variants.add(v)
-
     for f in mirna_3d_files:
         if f and f.filename:
             p = save_filestorage_to_temp(f)
             tmp_paths_to_cleanup.append(p)
             stem = os.path.splitext(secure_filename(f.filename))[0]
-
-            # Index for 3D viewer / contacts
             kind, seq = extract_seq_from_structure(p)
             for k in _id_variants(stem):
                 mirna_3d_index[k] = (kind, seq, p)
-
-            # Add PDB-only miRNAs as logical primaries (derive NT from structure)
-            stem_variants = id_variants(stem)
-            if not any(sv in existing_mi_variants for sv in stem_variants):
-                nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
-                if nt_seq and len(nt_seq) >= MIN_MIRNA_LEN:
-                    primary_records.append((stem, nt_seq))
-                    existing_mi_ids.add(stem)
-                    for v in stem_variants:
-                        existing_mi_variants.add(v)
-
-    # After integrating PDB-only miRNAs, enforce MIRNA_MAX again
-    if len(primary_records) > MIRNA_MAX:
-        return jsonify({
-            "error": (
-                f"Your submission (miRNA FASTA + miRNA PDB-derived) exceeds "
-                f"the maximum of {MIRNA_MAX} miRNAs."
-            )
-        }), 400
-
 
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
@@ -1538,30 +1464,25 @@ def process_job(job_id: str,
         c_meta = jobs[job_id].get("competitor_meta", {}) or {}
 
         interaction_counter = 0
+
         for (competitor_id, competitor_str) in competitors_list:
             competitor_processed = {'sequence': ''}
             if competitor_str.strip():
-                competitor_processed = ensure_dict(
-                    process_molecule_universal(((competitor_id, competitor_str), {}, 'competitor_molecule'))
-                )
+                competitor_processed = ensure_dict(process_molecule_universal(((competitor_id, competitor_str), {}, 'competitor_molecule')))
 
             # Select competitor 3D path per ID (multi-index aware)
             comp_path = _select_struct_path(art, 'competitor', competitor_id)
 
             # Soft validation if both present
-            if comp_path and competitor_processed.get('sequence', '').strip():
+            if comp_path and competitor_processed.get('sequence','').strip():
                 kind, seq = extract_seq_from_structure(comp_path)
-                ok, msg = validate_structure_matches_sequence(
-                    kind, seq, competitor_processed.get('sequence', ''), "Competitor"
-                )
+                ok, msg = validate_structure_matches_sequence(kind, seq, competitor_processed.get('sequence',''), "Competitor")
                 if msg:
                     warn(msg)
 
             comp_seq_enc = None
             if competitor_processed.get('sequence', '').strip() and has_comp_input:
-                comp_seq_enc = one_hot_encode_sequence(
-                    competitor_processed.get('sequence', ''), max_competitor_len
-                )
+                comp_seq_enc = one_hot_encode_sequence(competitor_processed.get('sequence', ''), max_competitor_len)
 
             # Competitor structural input (if expected)
             competitor_struct_input = None
@@ -1570,20 +1491,16 @@ def process_job(job_id: str,
                 if comp_path:
                     vec = extract_structure_vector_from_file(comp_path, max_competitor_len)
                 if vec is None:
-                    if competitor_processed.get('sequence', '').strip():
-                        vec = structure_vector_from_processed_json(
-                            competitor_processed.get('structure_vector', '[]'), max_competitor_len
-                        )
+                    if competitor_processed.get('sequence','').strip():
+                        vec = structure_vector_from_processed_json(competitor_processed.get('structure_vector', '[]'), max_competitor_len)
                     else:
-                        vec = np.zeros((max_competitor_len, 1), dtype=np.float32)
+                        vec = np.zeros((max_competitor_len,1), dtype=np.float32)
                 competitor_struct_input = vec
 
             for (target_id, target_str) in targets_list:
-                target_processed = ensure_dict(
-                    process_molecule_universal(((target_id, target_str), {}, 'target_molecule'))
-                )
+                target_processed = ensure_dict(process_molecule_universal(((target_id, target_str), {}, 'target_molecule')))
                 target_seq_used = target_processed.get('sequence', '')
-                target_seq_enc = one_hot_encode_sequence(target_seq_used, max_target_len)
+                target_seq_enc  = one_hot_encode_sequence(target_seq_used, max_target_len)
 
                 # Select target 3D path per ID (multi-index aware)
                 t_path = _select_struct_path(art, 'target', target_id)
@@ -1591,9 +1508,7 @@ def process_job(job_id: str,
                 # Soft validation if both present
                 if t_path and target_seq_used:
                     kind, seq = extract_seq_from_structure(t_path)
-                    ok, msg = validate_structure_matches_sequence(
-                        kind, seq, target_seq_used, "Target"
-                    )
+                    ok, msg = validate_structure_matches_sequence(kind, seq, target_seq_used, "Target")
                     if msg:
                         warn(msg)
 
@@ -1604,77 +1519,40 @@ def process_job(job_id: str,
                     if t_path:
                         vec = extract_structure_vector_from_file(t_path, max_target_len)
                     if vec is None:
-                        vec = structure_vector_from_processed_json(
-                            target_processed.get('structure_vector', '[]'), max_target_len
-                        )
+                        vec = structure_vector_from_processed_json(target_processed.get('structure_vector', '[]'), max_target_len)
                     target_struct_input = vec
 
-                # -------- Batch over primaries (properly defined) --------
-                n_primaries = len(primary_records)
-                for batch_start in range(0, n_primaries, BATCH_SIZE):
-                    batch_records = primary_records[batch_start: batch_start + BATCH_SIZE]
-
-                    # These were previously "not defined" – they are now per-batch lists
+                # -------- Batch over primaries --------
+                for start in range(0, len(primary_records), BATCH_SIZE):
+                    batch_records = primary_records[start:start + BATCH_SIZE]
+                    prim_seq_list, num_feat_list, prim_struct_list = [], [], []
                     trimmed_sequences: List[str] = []
-                    prim_seq_list: List[np.ndarray] = []
-                    num_feat_list: List[List[float]] = []
-                    prim_struct_list: List[np.ndarray] = []
 
                     for pri_id, pri_seq in batch_records:
-                        pdata = ensure_dict(
-                            process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule'))
-                        )
-
-                        # 1) start from FASTA / PDB-derived sequence
-                        seq = (pdata.get('sequence', '') or '').strip()
-
-                        # 2) If miRNA FASTA looks amino-acid-like, optionally back-translate to NT
-                        aa_to_nt_primary = False
-                        if is_aa_like(seq):
-                            if AA_CONVERT_ALLOWED and convert_aa_to_nt_flag:
-                                seq = back_translate(seq)
-                                aa_to_nt_primary = True
-                                pdata['sequence'] = seq
-                            else:
-                                # permissive: keep going but warn; targets/competitors still hard-fail above
-                                warn(
-                                    f"Primary '{pri_id}' appears to be amino-acid sequence; "
-                                    f"AA→NT not enabled, using as-is."
-                                )
-
-                        # 3) Optional mature-window trimming (after we know we are in NT space)
+                        pdata = ensure_dict(process_molecule_universal(((pri_id, pri_seq), {}, 'primary_molecule')))
+                        seq = pdata.get('sequence', '')
                         if MATURE_TRIM_ENABLED and mature_trim_flag and len(seq) > 30:
                             seq = choose_mature_window(seq, window=MATURE_TRIM_WINDOW)
                             pdata['sequence'] = seq
 
-                        # 4) Store for seed/heatmap & encode
                         trimmed_sequences.append(seq)
                         prim_seq_list.append(one_hot_encode_sequence(seq, max_primary_len))
-
                         if has_num_input:
                             num_feat_list.append(numerical_features_from_processed_json(pdata))
 
                         if has_p_struct:
-                            sp = structure_vector_from_processed_json(
-                                pdata.get('structure_vector', '[]'), max_primary_len
-                            )
+                            sp = structure_vector_from_processed_json(pdata.get('structure_vector','[]'), max_primary_len)
                             prim_struct_list.append(sp)
 
-                        # 5) miRNA 3D validation (soft, independent of FASTA presence)
+                        # miRNA 3D validation (soft)
                         idx = art.get('mirna_3d_index') or {}
                         val = _lookup_3d(idx, pri_id)
                         if val is not None:
-                            kind3d, seq3d, path3d = val
-                            ok, msg = validate_structure_matches_sequence(
-                                kind3d, seq3d, pdata.get('sequence', ''), f"miRNA {pri_id}"
-                            )
+                            kind, seq3d, path3d = val
+                            ok, msg = validate_structure_matches_sequence(kind, seq3d, pdata.get('sequence',''), f"miRNA {pri_id}")
                             if msg:
                                 warn(msg)
 
-                    if not prim_seq_list:
-                        continue  # nothing in this batch
-
-                    # 6) Scale numeric features (batch-wise)
                     if has_num_input:
                         try:
                             if hasattr(scaler, 'feature_names_in_'):
@@ -1687,78 +1565,47 @@ def process_job(job_id: str,
                             jobs[job_id]["error"] = f"Numeric feature scaling failed: {e}"
                             return
 
-                    # 7) Build model inputs for this batch
-                    pri_seq_enc = np.stack(prim_seq_list, axis=0).astype(np.float32)
-                    batch_size = pri_seq_enc.shape[0]
+                    pri_seq_enc  = np.stack(prim_seq_list, axis=0).astype(np.float32)
+                    batch_size   = pri_seq_enc.shape[0]
 
                     common_inputs = {
                         'primary_sequence_input': pri_seq_enc,
-                        'target_sequence_input': np.repeat(
-                            target_seq_enc[np.newaxis, ...], batch_size, axis=0
-                        ),
+                        'target_sequence_input':  np.repeat(target_seq_enc[np.newaxis, ...], batch_size, axis=0),
                     }
                     if has_num_input:
                         common_inputs['numerical_features_input'] = scaled_num
                     if has_p_struct:
-                        pri_struct = (
-                            np.stack(prim_struct_list, axis=0).astype(np.float32)
-                            if prim_struct_list
-                            else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
-                        )
+                        pri_struct = np.stack(prim_struct_list, axis=0).astype(np.float32) if prim_struct_list else np.zeros((batch_size, max_primary_len, 1), dtype=np.float32)
                         common_inputs['primary_structure_input'] = pri_struct
                     if has_t_struct and target_struct_input is not None:
-                        common_inputs['target_structure_input'] = np.repeat(
-                            target_struct_input[np.newaxis, ...], batch_size, axis=0
-                        )
+                        common_inputs['target_structure_input'] = np.repeat(target_struct_input[np.newaxis, ...], batch_size, axis=0)
                     if has_c_struct and competitor_struct_input is not None:
-                        common_inputs['competitor_structure_input'] = np.repeat(
-                            competitor_struct_input[np.newaxis, ...], batch_size, axis=0
-                        )
+                        common_inputs['competitor_structure_input'] = np.repeat(competitor_struct_input[np.newaxis, ...], batch_size, axis=0)
 
-                    # 8) Predictions with / without competitor
                     if has_comp_input:
                         with_comp = dict(common_inputs)
                         if comp_seq_enc is not None:
-                            with_comp['competitor_sequence_input'] = np.repeat(
-                                comp_seq_enc[np.newaxis, ...], batch_size, axis=0
-                            )
+                            with_comp['competitor_sequence_input'] = np.repeat(comp_seq_enc[np.newaxis, ...], batch_size, axis=0)
                         else:
-                            with_comp['competitor_sequence_input'] = np.repeat(
-                                empty_comp_enc[np.newaxis, ...], batch_size, axis=0
-                            )
+                            with_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
 
                         no_comp = dict(common_inputs)
-                        no_comp['competitor_sequence_input'] = np.repeat(
-                            empty_comp_enc[np.newaxis, ...], batch_size, axis=0
-                        )
+                        no_comp['competitor_sequence_input'] = np.repeat(empty_comp_enc[np.newaxis, ...], batch_size, axis=0)
 
                         preds_with = model.predict(with_comp, verbose=0).reshape(-1).astype(np.float64)
-                        preds_no = model.predict(no_comp, verbose=0).reshape(-1).astype(np.float64)
+                        preds_no   = model.predict(no_comp,   verbose=0).reshape(-1).astype(np.float64)
                     else:
                         preds_no = model.predict(common_inputs, verbose=0).reshape(-1).astype(np.float64)
                         preds_with = preds_no.copy()
 
-                    # 9) Build result rows for this batch
-                    for row_idx, ((pri_id, _), p_base, p_with) in enumerate(
-                        zip(batch_records, preds_no, preds_with)
-                    ):
+                    for row_idx, ((pri_id, _), p_base, p_with) in enumerate(zip(batch_records, preds_no, preds_with)):
                         interaction_counter += 1
                         pri_seq_used = trimmed_sequences[row_idx]
-                        seed_hits = _scan_seeds_for_pair(
-                            pri_seq_used, target_seq_used, allow_gu=True, max_mismatch=0
-                        )
+                        seed_hits = _scan_seeds_for_pair(pri_seq_used, target_seq_used, allow_gu=True, max_mismatch=0)
 
                         best = None
                         if seed_hits:
-                            seed_hits_sorted = sorted(
-                                seed_hits,
-                                key=lambda h: (
-                                    -h['seed_len'],
-                                    h['mismatches'],
-                                    h.get('wobble', 0),
-                                    h['start'],
-                                ),
-                            )
+                            seed_hits_sorted = sorted(seed_hits, key=lambda h: (-h['seed_len'], h['mismatches'], h.get('wobble',0), h['start']))
                             best = seed_hits_sorted[0]
 
                         # Badges / provenance per row
@@ -1766,14 +1613,10 @@ def process_job(job_id: str,
                         c_badge = c_meta.get(competitor_id, {}) if competitor_id in c_meta else {}
 
                         pdb_used_target = bool(_select_struct_path(art, 'target', target_id))
-                        pdb_used_comp = bool(
-                            _select_struct_path(art, 'competitor', competitor_id)
-                        ) if competitor_id and competitor_id != "none" else False
-                        struct_feats_on = bool(
-                            'target_structure_input' in _keras_inputs_map()
-                            or 'competitor_structure_input' in _keras_inputs_map()
-                            or 'primary_structure_input' in _keras_inputs_map()
-                        )
+                        pdb_used_comp   = bool(_select_struct_path(art, 'competitor', competitor_id)) if competitor_id and competitor_id != "none" else False
+                        struct_feats_on = bool('target_structure_input' in _keras_inputs_map() or
+                                               'competitor_structure_input' in _keras_inputs_map() or
+                                               'primary_structure_input' in _keras_inputs_map())
 
                         row = {
                             'interaction_id': f"I{interaction_counter:07d}",
@@ -1788,9 +1631,9 @@ def process_job(job_id: str,
 
                             'primary_seq_used': pri_seq_used,
                             'target_seq_used': target_seq_used,
-                            'competitor_seq_used': competitor_processed.get('sequence', '') if competitor_str else '',
+                            'competitor_seq_used': competitor_processed.get('sequence','') if competitor_str else '',
 
-                            'seed_hits_json': json.dumps(seed_hits, separators=(',', ':')),
+                            'seed_hits_json': json.dumps(seed_hits, separators=(',',':')),
                             'seed_best_type': (best or {}).get('seed_type', ''),
                             'seed_best_start': (best or {}).get('start', ''),
                             'seed_best_end': (best or {}).get('end', ''),
@@ -1801,10 +1644,10 @@ def process_job(job_id: str,
                             'pdb_target_used': 'yes' if pdb_used_target else 'no',
                             'pdb_competitor_used': 'yes' if pdb_used_comp else 'no',
                             'aa_to_nt_applied_target': 'yes' if t_badge.get('aa_to_nt_applied') else 'no',
-                            'aa_to_nt_mode_target': t_badge.get('aa_to_nt_mode', ''),
+                            'aa_to_nt_mode_target': t_badge.get('aa_to_nt_mode',''),
                             'aa_to_nt_applied_competitor': 'yes' if c_badge.get('aa_to_nt_applied') else 'no',
-                            'aa_to_nt_mode_competitor': c_badge.get('aa_to_nt_mode', ''),
-                            'structure_features': 'on' if struct_feats_on else 'off',
+                            'aa_to_nt_mode_competitor': c_badge.get('aa_to_nt_mode',''),
+                            'structure_features': 'on' if struct_feats_on else 'off'
                         }
 
                         row.update({
@@ -1814,10 +1657,7 @@ def process_job(job_id: str,
                             'prov_scaler_sha256': PROVENANCE.get('scaler_sha256'),
                             'prov_explain_method': 'integrated_gradients',
                             'prov_explain_steps': 50,
-                            'prov_seed_rules': (
-                                'v1 canonical (6/7mer, upstream-A for 7mer-A1/8mer), '
-                                'allow_gu=True, max_mismatch=0'
-                            ),
+                            'prov_seed_rules': 'v1 canonical (6/7mer, upstream-A for 7mer-A1/8mer), allow_gu=True, max_mismatch=0'
                         })
 
                         jobs[job_id]["results"].append(row)
