@@ -1,3 +1,4 @@
+
 // mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
 // Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
 // persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
@@ -771,6 +772,32 @@ function collectStructureSources(kind, primaryBlob=null, primaryExt='pdb'){
   const legacy = getLegacyInputFiles(kind);
   legacy.forEach((f,i)=> sources.push({label:`legacy_${i+1}_${f.name}`, type:'legacy', payload: f, ext: (f.name.split('.').pop()||'pdb').toLowerCase()}));
   return sources;
+}
+
+function filterSourcesForRowByRowItem(sources, kind, rowItem){
+  // Best-effort: if a rowItem is provided and its ID appears in the PDB filename/label,
+  // keep only those matches. Otherwise, fall back to all sources so we never break 3D.
+  if(!rowItem || !sources || !sources.length) return sources || [];
+
+  let wantedId = '';
+  if(kind === 'target'){
+    wantedId = (rowItem.target_id || '').trim();
+  }else if(kind === 'mirna'){
+    wantedId = (rowItem.primary_molecule_id || rowItem.mirna_id || '').trim();
+  }else if(kind === 'competitor'){
+    wantedId = (rowItem.competitor_id || '').trim();
+  }
+
+  if(!wantedId) return sources;
+
+  const needle = wantedId.toLowerCase();
+  const filtered = sources.filter(src=>{
+    const label = (src && src.label ? String(src.label) : '');
+    return label.toLowerCase().includes(needle);
+  });
+
+  // If nothing matches by name, keep original list so viewer still works
+  return filtered.length ? filtered : sources;
 }
 
 // --- ultra-smooth scroll animator (cubic ease, cancelable) ---
@@ -2896,7 +2923,8 @@ async function open3DCombined(rowItem){
   const kinds = ['mirna','target','competitor'];
   for (const k of kinds){
     const s = await fetchStructureBlob(k);
-    const extra = collectStructureSources(k, s?.blob || null, s?.ext || 'pdb');
+    let extra = collectStructureSources(k, s?.blob || null, s?.ext || 'pdb');
+    extra = filterSourcesForRowByRowItem(extra, k, rowItem);
     for (const src of extra){
       await loadSource(src, k);
     }
@@ -3169,7 +3197,9 @@ async function open3DStageManager(kind, anyId, primary, rowItem){
   const stage = new window.NGL.Stage('ngl-stage', { backgroundColor: 'black' });
   window.addEventListener('resize', () => stage.handleResize(), { passive:true });
 
-  const sources = collectStructureSources(kind, primary?.blob || null, primary?.ext || 'pdb');
+  let sources = collectStructureSources(kind, primary?.blob || null, primary?.ext || 'pdb');
+  sources = filterSourcesForRowByRowItem(sources, kind, rowItem);
+
   if (sources.length === 0){
     setHTML($('modal-content'), formatError(`No 3D structures found for ${prettyKind}. Upload PDB/mmCIF or add a PDB ID in FASTA and re-run.`));
     return;

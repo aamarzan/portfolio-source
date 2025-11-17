@@ -1,3 +1,4 @@
+
 # app.py — multi-target & multi-competitor + seed-scan + IG explain + CSV & heatmap exports + 3D contacts
 # (premium, future-proof, and strictly provenance-grounded)
 
