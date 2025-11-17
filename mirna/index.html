@@ -255,8 +255,8 @@
 
       <!-- Workflow (About + Workflow + Tips unified) -->
       <div id="intro-tab" class="card active" role="tabpanel" aria-labelledby="tab-workflow">
-        <section aria-label="About this tool" style="margin-bottom:14px;">
-          <h3 style="margin:0 0 6px 0;">About this tool</h3>
+        <section aria-label="About the tool" style="margin-bottom:14px;">
+          <h3 style="margin:0 0 6px 0;">About the tool</h3>
           <p>
             This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules.
             It fuses sequence features with optional 3D structure-derived features and evaluates inputs in RAM-safe batches.
@@ -486,8 +486,7 @@
         <div id="analysis-controls" class="hidden" aria-live="polite">
           <div class="row">
             <label for="heatmap-mode"><strong>Heatmap Mode</strong></label>
-            <select id="heatmap-mode">
-              <option value="seed_matrix">Seed-match matrix (2D)</option>
+            <select id="heatmap-mode" aria-label="Select heatmap mode">
               <option value="ig_target" selected>IG — Target</option>
               <option value="ig_competitor">IG — Competitor</option>
               <option value="seed_density">Seed-hit density</option>
