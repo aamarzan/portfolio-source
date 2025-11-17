@@ -1970,16 +1970,14 @@ function injectAnalysisControls(container){
     <label class="ctrl"><span>Steps</span><input id="heatmap-steps" type="number" value="64" min="10" max="200" step="2"></label>
 
     <button id="seed-scan-global-btn" class="btn-premium">Seed Sites (top row)</button>
-    <button id="seed-scan-all-btn"    class="btn-premium">Seed Sites (all rows)</button>
     <button id="explain-global-btn"   class="btn-premium btn-accent">Heatmap (top row)</button>
   </div>
   `;
 
   prependHTML(container, html);
 
-  const seedBtn    = $('seed-scan-global-btn');
-  const seedAllBtn = $('seed-scan-all-btn');
-  const hmBtn      = $('explain-global-btn');
+  const seedBtn = $('seed-scan-global-btn');
+  const hmBtn   = $('explain-global-btn');
 
   bindOnce(seedBtn, 'click', async ()=>{
     if(!predictionResults.length){
@@ -1988,14 +1986,6 @@ function injectAnalysisControls(container){
     }
     await handleSeedSitesClick(predictionResults[0]);
   }, 'seedGlobalOnce');
-
-  bindOnce(seedAllBtn, 'click', async ()=>{
-    if(!predictionResults.length){
-      openModal('Seed Sites', formatInfo('Run a prediction first so we can scan all rows.'));
-      return;
-    }
-    await handleSeedSitesAllClick();
-  }, 'seedAllGlobalOnce');
 
   bindOnce(hmBtn, 'click', async ()=>{
     if(!predictionResults.length){
@@ -2764,139 +2754,6 @@ async function handleSeedSitesClick(item){
 
   }catch(err){
     openModal('Seed Sites', formatError(err?.message || 'Unexpected error during seed scan.'));
-  }
-}
-
-async function handleSeedSitesAllClick(){
-  try{
-    if(!predictionResults || !predictionResults.length){
-      openModal('Seed Sites', formatInfo('No prediction results to scan. Run a prediction first.'));
-      return;
-    }
-
-    // We’ll reuse the existing single-row logic, but suppress the inner modals.
-    const originalOpenModal = openModal;
-    let combinedHits = [];
-
-    try{
-      // Temporarily mute inner openModal calls from handleSeedSitesClick
-      openModal = function(){ /* suppressed during multi-row seed scan */ };
-
-      for(let idx = 0; idx < predictionResults.length; idx++){
-        const item = predictionResults[idx];
-
-        // Reuse the full per-row pipeline (resolves ranges, AA→NT, etc.)
-        await handleSeedSitesClick(item);
-
-        if(Array.isArray(LAST_SEED_HITS) && LAST_SEED_HITS.length){
-          const meta = LAST_SEED_META || {};
-          const mirnaLabel = meta.mirnaId
-            || item.primary_molecule_id
-            || item.mirna_id
-            || 'miRNA';
-          const targetLabel = meta.targetId || item.target_id || '';
-          const compLabel   = meta.compId   || item.competitor_id || '';
-          const interactionId = item.interaction_id || '';
-
-          const augmented = LAST_SEED_HITS.map(h => ({
-            ...h,
-            __row_index: idx + 1,
-            __interaction_id: interactionId,
-            __mirna_id: mirnaLabel,
-            __target_id: targetLabel,
-            __comp_id: compLabel
-          }));
-
-          combinedHits.push(...augmented);
-        }
-      }
-    } finally {
-      // Restore original modal function no matter what
-      openModal = originalOpenModal;
-    }
-
-    if(!combinedHits.length){
-      openModal(
-        'Seed Sites (all rows)',
-        `<p>No canonical seed matches found across any row with the current settings
-        (G:U wobble ${ (byQS('#allow-gu')?.checked ?? true) ? 'on' : 'off' },
-        max mismatches = ${parseInt(byQS('#max-mm')?.value ?? '0', 10)}).</p>`
-      );
-      return;
-    }
-
-    // Let the existing CSV downloader work on the combined list
-    LAST_SEED_HITS = combinedHits;
-    LAST_SEED_META = { mirnaId: 'MULTI', targetId: '', compId: '' };
-
-    const showGlobalCols = combinedHits.some(h => typeof h.global_start !== 'undefined');
-
-    let html = `<div style="margin-bottom:8px;">
-      Found <b>${combinedHits.length}</b> seed hits across
-      <b>${predictionResults.length}</b> row(s) with the current filters.
-    </div>`;
-
-    html += `<table style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr style="text-align:left;border-bottom:1px solid #ddd;">
-          <th>Row</th>
-          <th>Interaction</th>
-          <th>miRNA</th>
-          <th>Molecule</th>
-          <th>ID</th>
-          <th>Start</th>
-          <th>End</th>
-          ${showGlobalCols ? '<th>Global start</th><th>Global end</th>' : ''}
-          <th>Seed len</th>
-          <th>Type</th>
-          <th>Wobble</th>
-          <th>Mismatches</th>
-          <th>Upstream</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-    combinedHits.forEach(h => {
-      const molLabel = h.molecule === 'target'
-        ? 'Target'
-        : (h.molecule === 'competitor' ? 'Competitor' : (h.molecule || ''));
-      const idLabel = h.id
-        || (h.molecule === 'target' ? h.__target_id
-            : (h.molecule === 'competitor' ? h.__comp_id : ''));
-
-      html += `<tr style="border-bottom:1px solid #f0f0f0;">
-        <td>${h.__row_index || ''}</td>
-        <td>${escapeHTML(h.__interaction_id || '')}</td>
-        <td>${escapeHTML(h.__mirna_id || '')}</td>
-        <td>${escapeHTML(molLabel)}</td>
-        <td>${escapeHTML(idLabel || '')}</td>
-        <td>${h.start}</td>
-        <td>${h.end}</td>
-        ${showGlobalCols ? `<td>${h.global_start ?? ''}</td><td>${h.global_end ?? ''}</td>` : ''}
-        <td>${h.seed_len}</td>
-        <td>${escapeHTML(h.seed_type || '')}</td>
-        <td>${h.wobble ?? 0}</td>
-        <td>${h.mismatches ?? 0}</td>
-        <td>${escapeHTML(h.upstream_base ?? '')}</td>
-      </tr>`;
-    });
-
-    html += `</tbody></table>`;
-
-    const toolbar = `<button id="download-seed-csv" class="btn-action">Download CSV</button>`;
-    openModal('Seed Sites (all rows)', html, toolbar);
-
-    const dlBtn = $('download-seed-csv');
-    if(dlBtn){
-      // Separate key so both single-row and all-rows CSV buttons can work
-      bindOnce(dlBtn,'click',downloadSeedCSV,'seedCsvAll');
-    }
-
-  }catch(err){
-    openModal(
-      'Seed Sites (all rows)',
-      formatError(err?.message || 'Unexpected error during multi-row seed scan.')
-    );
   }
 }
 
