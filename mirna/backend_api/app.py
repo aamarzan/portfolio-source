@@ -233,8 +233,10 @@ def _nonce_protected(endpoint_name: Optional[str]) -> bool:
         'download_all_csv', 'download_single_csv',
         'download_heatmap_png',
         'download_seeds_all', 'download_seeds_one',
-        'get_structure_artifact', 'get_structure_mirna',
-        'get_contacts',
+        # 3D viewer + contacts left OPEN so the UI works without extra headers
+        # 'get_structure_artifact',
+        # 'get_structure_mirna',
+        # 'get_contacts',
         'download_all_zip', 'download_bundle_zip',
         'get_manifest'
     }
