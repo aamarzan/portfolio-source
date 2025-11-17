@@ -64,7 +64,7 @@ const GUARDS = {
 // API routing and auth
 // =====================================================
 const LOCAL_BASE = "http://127.0.0.1:8080";
-const PROD_BASE  = "https://<random>.trycloudflare.com";
+const PROD_BASE  = "https://wow-boards-indexes-main.trycloudflare.com";
 const isLocal =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1";
