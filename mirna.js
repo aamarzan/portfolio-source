@@ -891,6 +891,7 @@ function renderSeedMatrixDirect(item){
     'Target';
 
   const mirnaSeq = (
+    item.primary_seq_used ||       // <- NEW: server field name
     item.mirna_seq ||
     item.miRNA_seq ||
     item.miRNA_sequence ||
@@ -899,6 +900,7 @@ function renderSeedMatrixDirect(item){
   ).toUpperCase().replace(/[^AUGCTU]/g, '');
 
   const targetSeq = (
+    item.target_seq_used ||        // <- NEW: server field name
     item.target_seq ||
     item.target_sequence ||
     item.mrna_seq ||
