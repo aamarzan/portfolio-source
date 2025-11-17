@@ -143,7 +143,7 @@ CORS(app,
        "https://aamarzan.com",
        "https://www.aamarzan.com",
        "https://aamarzan.netlify.app",
-       "https://wow-boards-indexes-main.trycloudflare.com",
+       "https://mirna.aamarzan.com",
        re.compile(r"http://localhost(:\d+)?$"),
        re.compile(r"http://127\.0\.0\.1(:\d+)?$")
      ],
