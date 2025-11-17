@@ -2241,348 +2241,159 @@ async function handleBundleClick(item){
 //          plus pure client modes: seed_density & seed_matrix)
 // =====================================================
 
-async function handleHeatmapClick(item){
-  const modeSel = byQS('#heatmap-mode');
+// =========================
+// Heatmap click handler
+// =========================
+async function handleHeatmapClick(item) {
+  if (!item || !item.target_seq) return;
 
-  const rawVal = (modeSel?.value || '').toLowerCase().trim();
-  const label  = (modeSel?.selectedOptions?.[0]?.textContent || '').toLowerCase().trim();
+  const modeSelect = byQS('#heatmap-mode');
+  const effMode = modeSelect?.value || 'ig_target';
 
-  // 💡 Be very tolerant: if either the value OR the visible text
-  // looks like "seed-match matrix (2D)", we treat it as 2D mode.
-  const isSeedMatrixMode =
-    rawVal === 'seed_matrix' ||
-    rawVal === 'seed-matrix' ||
-    rawVal === 'seed_matrix_2d' ||
-    rawVal === 'seed-matrix-2d' ||
-    label.includes('seed-match') ||
-    label.includes('seed match') ||
-    label.includes('matrix (2d)') ||
-    label.includes('2d matrix');
+  const isSeedMatrixMode = effMode === 'seed_matrix';
+  const isPureClient = effMode === 'seed_density' || effMode === 'seed_matrix';
 
-  // ✅ PURE 2D PATH — no attribution, no “Attribution failed” text,
-  // no call to clientExplainHeatmapFallback at all.
-  if (isSeedMatrixMode) {
-    console.log('[Heatmap] Seed-match 2D mode detected:', { rawVal, label });
-    renderSeedMatrixDirect(item);
-    return;
-  }
+  const targetLabel =
+    item.target_label || item.target_id || item.target_name || 'Target';
 
-  // ──────────────────────────────────────────────────────────────
-  // Everything below is the IG / 1D seed-density logic as before
-  // ──────────────────────────────────────────────────────────────
-  const stepsInp = byQS('#heatmap-steps');
+  const meta = {
+    label: targetLabel,
+    mirna: item.mirna_seq,
+    target: item.target_seq,
+    competitor: item.competitor_seq || '',
+  };
 
-  const rawMode  = (rawVal || 'ig_target');  // default if empty
-  const steps = Math.max(
-    10,
-    Math.min(200, parseInt(stepsInp?.value || '64', 10) || 64)
-  );
-
-  openModal('Heatmap', smallSpinner('Generating heatmap...'));
-
-  // If user chose IG-competitor but row has no competitor → fall back to ig_target
-  const effMode = (rawMode === 'ig_competitor' && !(item.competitor_id || '').trim())
-    ? 'ig_target'
-    : rawMode;
-
-  const isPureClient = effMode === 'seed_density';
-
-  // Try server-side PNG first for IG modes
-  if (!isPureClient && CURRENT_JOB_ID && item.interaction_id) {
-    try {
-      const headers = await getNonceOrKeyHeaders();
-      const res = await fetchRetry(
-        HEATMAP_PNG_URL(CURRENT_JOB_ID, item.interaction_id, effMode, steps),
-        { method: 'GET', headers },
-        45000,
-        2,
-        700
-      );
-
-      if (res.ok) {
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
-
-        const html = `
-          <div class="hm-wrapper">
-            <div class="hm-toolbar">
-              <button class="btn btn-sm btn-outline" id="hm-download-btn">
-                Download PNG
-              </button>
-            </div>
-            <img id="hm-img" src="${url}" alt="Heatmap"
-                 style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e5e7eb;"/>
-          </div>
-        `;
-        openModal('Heatmap', html);
-
-        setTimeout(() => {
-          const btn = document.getElementById('hm-download-btn');
-          if (btn) {
-            btn.addEventListener('click', () => {
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${item.interaction_id || 'heatmap'}.png`;
-              a.click();
-            });
-          }
-        }, 0);
-
-        return; // ⬅️ Do NOT fall through if PNG was OK
-      }
-    } catch (err) {
-      console.warn('Server heatmap PNG failed, falling back to client IG/seed.', err);
+  // ── 100% client-side modes (no /explain call at all) ─────────────
+  if (isPureClient) {
+    if (isSeedMatrixMode) {
+      // 2D seed-matrix heatmap (true 2D panel)
+      return renderSeedMatrixDirect(item, meta);
     }
+
+    // 1D seed-density profile
+    return renderSeedDensityFromScan(item, meta, {
+      labelPrefix: 'Seed density',
+      footerNote: 'Seed-site summary (cached from “Seed Sites” scan)',
+    });
   }
 
-  // Fallback: client IG or 1D seed-density
-  await clientExplainHeatmapFallback(item, effMode, true);
-}
-
-
-async function clientExplainHeatmapFallback(item, forcedMode, forceCanvasPNG = false){
-  const mirnaId  = item.primary_molecule_id ?? item.mirna_id;
-  const targetId = item.target_id ?? '';
-  const compId   = item.competitor_id ?? '';
-
-  const mirnaSeqRaw = lookupTolerant(CURRENT_INPUTS.mirnas, mirnaId);
-  const tRes = resolveSeqWithAAHandling(targetId, CURRENT_INPUTS.targets);
-  const cRes = compId
-    ? resolveSeqWithAAHandling(compId, CURRENT_INPUTS.competitors)
-    : { seq: '', converted: false, note: '', mode: '' };
-
-  const targetSeq = tRes.seq;
-  const compSeq   = cRes.seq;
-  const mirnaSeq  = mirnaSeqRaw ? toRNA(mirnaSeqRaw) : '';
+  // ── IG / dummy-IG from backend (/explain) ────────────────────────
+  const mirnaSeq = item.mirna_seq || '';
+  const targetSeq = item.target_seq || '';
+  const competitorSeq = item.competitor_seq || '';
 
   if (!mirnaSeq || !targetSeq) {
-    const mc = $('modal-content');
-    if (mc) {
-      setHTML(mc, formatError('Could not resolve miRNA and/or target sequences for this row.'));
-    }
+    toastError('Need both miRNA and target sequence for IG heatmap.');
     return;
   }
 
-  const uiMode  = (forcedMode || byQS('#heatmap-mode')?.value || 'ig_target').toLowerCase();
-  const uiSteps = Math.max(
-    10,
-    Math.min(200, parseInt(byQS('#heatmap-steps')?.value || '64', 10) || 64)
+  const modal = openHeatmapModal({
+    title:
+      effMode === 'ig_competitor'
+        ? `Heatmap — IG → Competitor (${targetLabel})`
+        : `Heatmap — IG → Target (${targetLabel})`,
+    subtitle: 'Attribution-based nucleotide importance from the deep model',
+  });
+
+  const content = modal.content;
+  content.innerHTML = '';
+  const spinner = smallSpinner(
+    'Computing attributions. This may take a few seconds…'
   );
-
-  // ========= 1) PURE CLIENT MODES: seed_matrix (2D) & seed_density =========
-
-  // --- 2D seed-match matrix (never calls /explain, never auto-falls back) ---
-  if (uiMode === 'seed_matrix') {
-    try {
-      const profile = computeSeedMatchProfile(mirnaSeq, targetSeq);  // 1D seed-based scores
-      const vals    = normalizeArray(profile || []);
-
-      const canvas = makeSeedMatchMatrixCanvas(
-        mirnaId,
-        mirnaSeq,
-        targetId,
-        targetSeq,
-        vals
-      );
-
-      showCanvasAsModalPNG(
-        canvas,
-        'Heatmap — Seed-match matrix (2D)',
-        `${(item.interaction_id || 'local')}_seed_matrix.png`
-      );
-
-      if (tRes.converted || cRes.converted) {
-        const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-        const mc = $('modal-content');
-        if (mc) {
-          appendHTML(
-            mc,
-            `<div style="margin-top:6px;color:#333;">
-               <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before seed-match visualization.</em></small>
-             </div>`
-          );
-        }
-      }
-    } catch (err) {
-      const mc = $('modal-content');
-      if (mc) {
-        setHTML(
-          mc,
-          formatError(
-            err?.message || 'Unexpected error while drawing the 2D seed-match heatmap.'
-          )
-        );
-      }
-    }
-    return;
-  }
-
-  // --- Seed-density mode (pure client, no /explain) ---
-  if (uiMode === 'seed_density') {
-    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
-    const vals    = normalizeArray(density);
-    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
-
-    showCanvasAsModalPNG(
-      canvas,
-      'Heatmap — Seed density',
-      `${(item.interaction_id || 'local')}_seed_density.png`
-    );
-
-    if (tRes.converted || cRes.converted) {
-      const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-      const mc = $('modal-content');
-      if (mc) {
-        appendHTML(
-          mc,
-          `<div style="margin-top:6px;color:#333;">
-             <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) before visualization.</em></small>
-           </div>`
-        );
-      }
-    }
-    return;
-  }
-
-  // =================== 2) IG MODES: use /explain with fallback ===================
+  content.appendChild(spinner);
 
   try {
-    const mc = $('modal-content');
-    if (mc) {
-      setHTML(mc, smallSpinner('Computing attributions.'));
-    }
-
-    const headers = await getNonceOrKeyHeaders();
-    const body = JSON.stringify({
-      mirna_seq: mirnaSeq,
-      target_seq: targetSeq,
-      competitor_seq: compSeq || undefined,
-      steps: uiSteps,
-      mode: uiMode
+    const resp = await fetch(EXPLAIN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mirna_seq: mirnaSeq,
+        target_seq: targetSeq,
+        competitor_seq: competitorSeq,
+      }),
     });
 
-    let data = null;
-    try {
-      const res = await fetchRetry(
-        EXPLAIN_URL,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body
-        },
-        45000,
-        1,
-        700
-      );
-      if (res.ok) {
-        data = await res.json();
-      } else {
-        data = null;
-      }
-    } catch (_) {
-      data = null;
+    if (!resp.ok) {
+      console.error('Explain endpoint failed', resp.status, await resp.text());
+      throw new Error('Explain endpoint failed');
     }
 
-    if (data && (Array.isArray(data.target_attrib) || Array.isArray(data.attribution))) {
-      const targAttr = Array.isArray(data.target_attrib) ? data.target_attrib : data.attribution;
-      const compAttr = Array.isArray(data.competitor_attrib) ? data.competitor_attrib : null;
+    const data = await resp.json();
 
-      const targVals = normalizeArray(targAttr.slice(0, targetSeq.length));
-      const titleT   = `IG → Target — ${targetId}`;
-      const cnvT     = makeHeatCanvas(targetSeq, targVals, titleT);
+    const targAttr = Array.isArray(data.target_attrib)
+      ? data.target_attrib
+      : [];
+    const compAttr = Array.isArray(data.competitor_attrib)
+      ? data.competitor_attrib
+      : [];
 
-      if (uiMode === 'ig_competitor' && compSeq && Array.isArray(compAttr)) {
-        const cVals  = normalizeArray(compAttr.slice(0, compSeq.length));
-        const titleC = `IG → Competitor — ${compId}`;
-        const cnvC   = makeHeatCanvas(compSeq, cVals, titleC);
-
-        const stack = document.createElement('canvas');
-        const pad   = 12;
-        const W     = Math.max(cnvT.width, cnvC.width);
-        const H     = cnvT.height + cnvC.height + pad;
-        stack.width = W;
-        stack.height = H;
-
-        const g = stack.getContext('2d');
-        g.fillStyle = '#fff';
-        g.fillRect(0, 0, W, H);
-        g.drawImage(cnvT, 0, 0);
-        g.drawImage(cnvC, 0, cnvT.height + pad / 2);
-
-        showCanvasAsModalPNG(
-          stack,
-          'Heatmap — IG (target + competitor)',
-          `${(item.interaction_id || 'local')}_ig_both.png`
-        );
-      } else {
-        showCanvasAsModalPNG(
-          cnvT,
-          'Heatmap — IG → Target',
-          `${(item.interaction_id || 'local')}_ig_target.png`
-        );
-      }
-
-      if (tRes.converted || cRes.converted) {
-        const modeTxt = byQS('#aa-nt-mode')?.value || 'canonical';
-        const mc2 = $('modal-content');
-        if (mc2) {
-          appendHTML(
-            mc2,
-            `<div style="margin-top:6px;color:#333;">
-               <small><em>AA→NT conversion applied (${escapeHTML(modeTxt)}) for
-               ${tRes.converted ? 'target' : ''}${tRes.converted && cRes.converted ? ' & ' : ''}${cRes.converted ? 'competitor' : ''}.</em></small>
-             </div>`
-          );
-        }
-      }
-      return;
+    if (!targAttr.length && !compAttr.length) {
+      console.warn('No attributions from /explain; falling back to seed profile.');
+      modal.close();
+      return clientExplainHeatmapFallback(item, meta);
     }
 
-    // --- No usable attribution returned → seed-based fallback, not hard failure ---
-    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
-    const vals    = normalizeArray(density);
-    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
+    spinner.remove();
 
-    showCanvasAsModalPNG(
-      canvas,
-      'Heatmap — Seed-based fallback',
-      `${(item.interaction_id || 'local')}_seed_profile.png`
-    );
+    const uiMode = effMode; // 'ig_target' or 'ig_competitor'
 
-    const mc3 = $('modal-content');
-    if (mc3) {
-      appendHTML(
-        mc3,
-        `<div style="margin-top:6px;color:#333;">
-           <small><em>Attribution service unavailable; showing a seed-based profile instead.</em></small>
-         </div>`
-      );
+    if (uiMode === 'ig_competitor' && compAttr.length && competitorSeq) {
+      // 2D heatmap for competitor
+      renderIGHeatmap2D({
+        container: content,
+        seq: competitorSeq,
+        attrib: compAttr,
+        label: `${targetLabel} — Competitor`,
+        palette: 'magma',
+      });
+    } else {
+      // 2D heatmap for target
+      renderIGHeatmap2D({
+        container: content,
+        seq: targetSeq,
+        attrib: targAttr,
+        label: `${targetLabel} — Target`,
+        palette: 'magma',
+      });
     }
 
+    // Premium seed-site chips under the heatmap
+    attachSeedSiteSummaryChipRow({
+      container: content,
+      item,
+      targetLabel,
+    });
   } catch (err) {
-    // --- Hard error in IG path → still show a seed-based profile, but with message ---
-    const density = computeSeedDensityArray(targetId, targetSeq, mirnaSeq);
-    const vals    = normalizeArray(density);
-    const canvas  = makeHeatCanvas(targetSeq, vals, `Seed density — ${targetId}`);
-
-    showCanvasAsModalPNG(
-      canvas,
-      'Heatmap — Seed-based fallback',
-      `${(item.interaction_id || 'local')}_seed_profile.png`
-    );
-
-    const mc = $('modal-content');
-    if (mc) {
-      appendHTML(
-        mc,
-        `<div style="margin-top:6px;color:#333;">
-           <small><em>${escapeHTML(
-             err?.message || 'Attribution failed; showing a seed-based profile instead.'
-           )}</em></small>
-         </div>`
-      );
-    }
+    console.error('Explain UI error', err);
+    modal.close();
+    return clientExplainHeatmapFallback(item, meta);
   }
+}
+
+// =========================
+// Fallback when /explain fails completely
+// =========================
+function clientExplainHeatmapFallback(item, meta) {
+  const modal = openHeatmapModal({
+    title: 'Heatmap — Seed-based fallback',
+    subtitle:
+      'Attribution service unavailable; showing a seed-based profile instead.',
+  });
+
+  const content = modal.content;
+  content.innerHTML = '';
+
+  renderSeedDensityFromScan(item, meta, {
+    labelPrefix: 'Seed density',
+    footerNote: 'Seed-site summary (cached from “Seed Sites” scan)',
+  });
+
+  // also show chip-style seed-site summary row
+  attachSeedSiteSummaryChipRow({
+    container: content,
+    item,
+    targetLabel: meta.label,
+  });
 }
 
 // Smooth Viridis-style colour map used by heatmaps
