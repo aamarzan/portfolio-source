@@ -1154,11 +1154,28 @@ def start_prediction():
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
     # Parse miRNA FASTA
+    # ---------- FIX: allow miRNA-only PDB submissions ----------
     primary_records = parse_fasta_records(fasta_string)
-    if not primary_records:
-        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
-    if not has_any_fasta_header(fasta_string):
-        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
+    has_fasta_headers = has_any_fasta_header(fasta_string)
+
+    mirna_3d_files = request.files.getlist('mirna_3d_file')
+    mirna_pdb_available = any(f.filename for f in mirna_3d_files)
+
+    # If no FASTA but PDB exists → allow pipeline to continue
+    if not primary_records and not mirna_pdb_available:
+        return jsonify({
+            "error": "Provide at least one miRNA FASTA or miRNA PDB file."
+        }), 400
+
+    # If FASTA exists but missing headers → warn only, don't fail
+    if primary_records and not has_fasta_headers:
+        # Auto-generate IDs for FASTA-without-headers
+        fixed = []
+        for i,(hdr,seq) in enumerate(primary_records,1):
+            fixed.append((f"mirna_{i}", seq))
+        primary_records = fixed
+    # ------------------------------------------------------------
+
     if len(primary_records) > MIRNA_MAX:
         return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
