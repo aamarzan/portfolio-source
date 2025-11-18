@@ -1135,7 +1135,6 @@ def precheck():
     return jsonify(out)
 # ---------------------------------------------------------------------------
 
-
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
 def start_prediction():
@@ -1152,16 +1151,18 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # 🔹 NEW: temp file list + save miRNA 3D files early (for PDB-only fallback)
+    # Temp paths for janitor (miRNA + target + competitor 3D)
     tmp_paths_to_cleanup: List[str] = []
+
+    # 🔹 1) miRNA 3D files — save early so we can derive sequence if no FASTA
     mirna_3d_files = _save_optional_multi('mirna_3d_file')
     for _, p in mirna_3d_files:
         tmp_paths_to_cleanup.append(p)
 
-    # Parse miRNA FASTA (primary molecules)
-    primary_records = parse_fasta_records(fasta_string)
+    # 🔹 2) Parse miRNA FASTA (primary molecules)
+    primary_records = parse_fasta_records(fasta_string or "")
 
-    # 🔹 NEW: allow miRNA PDB-only — derive miRNA sequences from uploaded PDB/CIF if no FASTA present
+    # 🔹 3) If no miRNA FASTA, allow PDB-only miRNA: derive NT sequence from 3D
     if not primary_records and mirna_3d_files:
         pdb_primaries: List[Tuple[str, str]] = []
         for fname, p in mirna_3d_files:
@@ -1171,29 +1172,43 @@ def start_prediction():
                 pdb_primaries.append((stem, nt_seq))
         primary_records = pdb_primaries
 
-    # Still nothing? Bail out.
+    # Still nothing? Then we truly have no miRNA sequence
     if not primary_records:
-        return jsonify({"error": "We could not detect any valid miRNA sequences (FASTA or PDB-derived). Please check your input."}), 400
+        return jsonify({
+            "error": "We could not detect any valid miRNA sequences (FASTA or PDB-derived). Please check the format and try again."
+        }), 400
 
-    # 🔹 Only enforce FASTA header check if user actually provided FASTA text
+    # Only enforce FASTA-header rule if user actually typed something in the box
     if fasta_string.strip() and not has_any_fasta_header(fasta_string):
-        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
+        return jsonify({
+            "error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."
+        }), 400
 
     # Min miRNA length
     MIN_MIRNA_LEN = 10
-    short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
+    short_mirnas = [
+        pid for pid, seq in primary_records
+        if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN
+    ]
     if short_mirnas:
-        return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
+        return jsonify({
+            "error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: "
+                     f"{', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"
+        }), 400
 
-    # Parse targets (may be empty — PDB-only supported now)
-    targets_list = parse_fasta_records(target_seq_text)
+    # 🔹 4) Parse targets (FASTA; can be empty because PDB-only is allowed later)
+    targets_list = parse_fasta_records(target_seq_text or "")
 
     # Optional target range
     target_start_raw = request.form.get('target_start', '').strip()
     target_end_raw   = request.form.get('target_end', '').strip()
+
     def _to_int_safe(s):
-        try: return int(s)
-        except Exception: return None
+        try:
+            return int(s)
+        except Exception:
+            return None
+
     ts = _to_int_safe(target_start_raw)
     te = _to_int_safe(target_end_raw)
 
@@ -1232,9 +1247,13 @@ def start_prediction():
                 seq = back_translate(seq)
                 aa_to_nt = True
             else:
-                return jsonify({"error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+                return jsonify({
+                    "error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."
+                }), 400
         if len(seq) < MIN_TARGET_LEN:
-            return jsonify({"error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after range)."}), 400
+            return jsonify({
+                "error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after range)."
+            }), 400
         _fixed_targets.append((tid, seq))
         target_meta_map[tid] = {
             "source": "fasta",
@@ -1243,9 +1262,9 @@ def start_prediction():
         }
     targets_list = _fixed_targets
 
-    # Competitors
+    # 🔹 5) Competitors
     if competitor_seq_text.strip():
-        competitors_list_raw = parse_fasta_records(competitor_seq_text)
+        competitors_list_raw = parse_fasta_records(competitor_seq_text or "")
     else:
         competitors_list_raw = []
 
@@ -1261,9 +1280,13 @@ def start_prediction():
                 s = back_translate(s)
                 aa_to_nt = True
             else:
-                return jsonify({"error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
+                return jsonify({
+                    "error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."
+                }), 400
         if len(s) < MIN_COMP_LEN:
-            return jsonify({"error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."}), 400
+            return jsonify({
+                "error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."
+            }), 400
         _fixed_comps.append((cid, s))
         competitor_meta_map[cid] = {
             "source": "fasta",
@@ -1271,7 +1294,7 @@ def start_prediction():
             "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
         }
 
-    # Save uploaded 3D files (multi) for target & competitor (miRNA handled above)
+    # 🔹 6) Save uploaded 3D files for targets & competitors
     target_3d_files = _save_optional_multi('target_3d_file')
     competitor_3d_files = _save_optional_multi('competitor_3d_file')
     for _, p in target_3d_files + competitor_3d_files:
@@ -1292,13 +1315,11 @@ def start_prediction():
         for k in _id_variants(stem):
             competitor_3d_index[k] = p
 
-    # Accept PDB IDs (download & index) — support both plural string and repeated fields [UPDATED]
-    # Old form (comma/space/semicolon separated):
+    # 🔹 7) Accept PDB IDs for target/competitor (unchanged)
     target_pdb_ids_str = request.form.get('target_pdb_ids', '')
     competitor_pdb_ids_str = request.form.get('competitor_pdb_ids', '')
     t_ids = _split_ids(target_pdb_ids_str)
     c_ids = _split_ids(competitor_pdb_ids_str)
-    # New form (repeated fields):
     t_ids += [x.strip() for x in request.form.getlist("target_pdb_id") if x.strip()]
     c_ids += [x.strip() for x in request.form.getlist("competitor_pdb_id") if x.strip()]
 
@@ -1322,8 +1343,7 @@ def start_prediction():
             if not competitor_3d_path:
                 competitor_3d_path = p
 
-    # ---- NEW: PDB-only allowance — derive sequences when FASTA empty ----
-    # Targets
+    # 🔹 8) PDB-only allowance for targets (existing logic)
     if not targets_list and (target_3d_files or t_ids):
         for fname, p in target_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
@@ -1339,7 +1359,7 @@ def start_prediction():
         if not targets_list:
             return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
 
-    # Competitors
+    # 🔹 9) PDB-only allowance for competitors (existing logic)
     if not _fixed_comps and (competitor_3d_files or c_ids):
         for fname, p in competitor_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
@@ -1355,9 +1375,8 @@ def start_prediction():
 
     # If still no competitors, use placeholder
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
-    # ---------------------------------------------
 
-    # miRNA 3D index (reuse files saved earlier)
+    # 🔹 10) miRNA 3D index (reuse miRNA files we already saved)
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
     for fname, p in mirna_3d_files:
         stem = os.path.splitext(secure_filename(fname))[0]
@@ -1365,13 +1384,14 @@ def start_prediction():
         for k in _id_variants(stem):
             mirna_3d_index[k] = (kind, seq, p)
 
+    # 🔹 11) Create job + counts
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
 
     _total = len(primary_records) * max(1, len(targets_list)) * max(1, len(competitors_list))
 
-    # NEW: optional chain hints manifest capture [ADDED]
+    # Optional chain hints
     try:
         target_chain_hints = json.loads(request.form.get("target_chain_hints_json") or "{}")
     except Exception:
@@ -1403,7 +1423,6 @@ def start_prediction():
         "model_input_shapes": {},
         "target_meta": target_meta_map,
         "competitor_meta": competitor_meta_map,
-        # NEW: manifest stub to mirror client expectations [ADDED]
         "manifest": {
             "created_at": datetime.utcnow().isoformat() + "Z",
             "client": "mirna.js",
@@ -1418,9 +1437,18 @@ def start_prediction():
 
     threading.Thread(
         target=process_job,
-        args=(job_id, primary_records, targets_list, competitors_list,
-              target_3d_path, competitor_3d_path, {}, tmp_paths_to_cleanup,
-              convert_aa_to_nt_flag, mature_trim_flag),
+        args=(
+            job_id,
+            primary_records,
+            targets_list,
+            competitors_list,
+            target_3d_path,
+            competitor_3d_path,
+            {},                # mirna_3d_index_unused (kept for signature)
+            tmp_paths_to_cleanup,
+            convert_aa_to_nt_flag,
+            mature_trim_flag
+        ),
         daemon=True
     ).start()
 
