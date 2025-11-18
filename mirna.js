@@ -105,6 +105,12 @@ function inferExtFromResponse(res){
   return 'pdb';
 }
 
+if (data.status === "error") {
+  hide(loader);
+  setHTML(resultsContainer, formatError(data.error || "An unexpected error occurred during prediction."));
+  return;
+}
+
 // =====================================================
 // Helpers: DOM, UI, utils
 // =====================================================
@@ -1410,7 +1416,7 @@ if (
   const totalCombinations = mirnaEffectiveCount * Math.max(1, targetEffectiveCount) * Math.max(1, compEffectiveCount);
 
   prependHTML(resultsContainer, formatInfo(
-    `Detected: miRNA=${mirnaEffectiveCount}, Target=${targetEffectiveCount}, Competitor=${compEffectiveCount}.<br>Estimated total combinations: ${totalCombinations}.`
+    `Detected: miRNA=${mirnaEffectiveCount}, Target=${targetEffectiveCount}, Competitor=${compEffectiveCount}.Estimated total combinations: ${totalCombinations}.`
   ));
 
   // Friendly info
