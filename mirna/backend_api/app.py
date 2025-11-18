@@ -1170,6 +1170,9 @@ def start_prediction():
     # 🔹 2) Parse miRNA FASTA (primary molecules)
     primary_records = parse_fasta_records(fasta_string or "")
 
+    # Track whether the user actually sent anything miRNA-related
+    has_any_mirna_input = bool((fasta_string or "").strip()) or bool(mirna_3d_files)
+
     # 🔹 3) If no miRNA FASTA, allow PDB-only miRNA: derive NT sequence from 3D
     if not primary_records and mirna_3d_files:
         pdb_primaries: List[Tuple[str, str]] = []
@@ -1182,9 +1185,23 @@ def start_prediction():
 
     # Still nothing? Then we truly have no miRNA sequence
     if not primary_records:
-        return jsonify({
-            "error": "We could not detect any valid miRNA sequences (FASTA or PDB-derived). Please check the format and try again."
-        }), 400
+        if has_any_mirna_input:
+            # User sent something (text or PDB) but we couldn't decode it
+            return jsonify({
+                "error": (
+                    "We received miRNA-related input but could not parse any usable sequences "
+                    "(FASTA or PDB-derived). Please check that your sequences are valid "
+                    "nucleotides (A/U/G/C) or that uploaded structures contain polymer chains."
+                )
+            }), 400
+        else:
+            # Absolutely no miRNA provided
+            return jsonify({
+                "error": (
+                    "No miRNA input was provided. Please paste at least one miRNA sequence "
+                    "or upload a miRNA 3D structure."
+                )
+            }), 400
 
     # Only enforce FASTA-header rule if user actually typed something in the box
     if fasta_string.strip() and not has_any_fasta_header(fasta_string):
