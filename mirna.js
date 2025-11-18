@@ -117,7 +117,18 @@ function prependHTML(el, html){ if(el) el.insertAdjacentHTML('afterbegin', html)
 function show(el){ if(el) el.classList.remove('hidden'); }
 function hide(el){ if(el) el.classList.add('hidden'); }
 function text(el, t){ if(el) el.textContent = t; }
+function getFirstExistingElement(ids){
+  for(const id of ids){
+    const el = document.getElementById(id);
+    if(el) return el;
+  }
+  return null;
+}
 
+function getTextValuePossible(ids){
+  const el = getFirstExistingElement(ids);
+  return el && typeof el.value === 'string' ? el.value.trim() : '';
+}
 function safeParseFloat(x, d=0){
   const v = parseFloat(x);
   return Number.isFinite(v) ? v : d;
@@ -1029,7 +1040,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
   // Link file pickers → textareas (sequence FASTA inputs)
-  bindFileToTextarea('mirna-seq-file', 'primary-seqs');
+  const primaryTaEl = getFirstExistingElement(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']) || $('primary-seqs');
+  const primaryTaId = primaryTaEl ? primaryTaEl.id : 'primary-seqs';
+
+  bindFileToTextarea('mirna-seq-file', primaryTaId);
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 
@@ -1227,9 +1241,23 @@ async function handleSubmit(event){
   const loader = $('loader');
   const resultsContainer = $('results-container');
 
-  const primarySeqs   = $('primary-seqs')?.value?.trim() ?? '';
-  const targetSeq     = $('target-seq')?.value?.trim() ?? '';
-  const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
+  // Be robust to old/new textarea IDs
+  const primarySeqs   = getTextValuePossible(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']);
+  const targetSeq     = getTextValuePossible(['target-seq','target-seqs','target_sequence']);
+  const competitorSeq = getTextValuePossible(['competitor-seq','competitor-seqs','competitor_sequence']);
+
+    // If we really don't see any miRNA sequences, stop here (matches backend error)
+  if (Object.keys(CURRENT_INPUTS.mirnas).length === 0) {
+    const rw = resultsContainer?.querySelector('.reload-warning');
+    if (rw) rw.remove();
+    setHTML(
+      resultsContainer,
+      formatError('We could not detect any valid miRNA sequences in your input. ' +
+                  'Please paste nucleotide sequences in FASTA format (each starting with ">") and try again.')
+    );
+    if (loader) hide(loader);
+    return;
+  }
 
   // Snapshot FASTA → maps for downstream analysis
   CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
@@ -1415,9 +1443,17 @@ async function handleSubmit(event){
 
   // Build FormData
   const formData = new FormData();
-  formData.append('primary_molecules', primarySeqs);
+
+  // Send miRNA sequences under multiple keys for backward compatibility
+  formData.append('primary_molecules', primarySeqs);   // current multi-miRNA key
+  formData.append('primary_molecule', primarySeqs);    // older single-miRNA key
+  formData.append('mirna_sequences', primarySeqs);     // extra safety
+  formData.append('mirna_seq', primarySeqs);           // extra safety
+
+  // Targets / competitors (old key names kept)
   formData.append('target_molecule', targetSeq);
   formData.append('competitor_molecule', competitorSeq);
+
   formData.append('target_start', $('target-start')?.value ?? '');
   formData.append('target_end',   $('target-end')?.value ?? '');
 
