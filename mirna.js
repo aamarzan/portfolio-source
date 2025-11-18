@@ -231,68 +231,23 @@ function injectPremiumStyles(){
   const css = `
     :root{ --sticky-gap: 12px; }
     nav.is-sticky-gap, header.is-sticky-gap { top: 0 !important; }
-    .btn-premium{
-      padding:10px 14px;
-      min-height:42px;
-      min-width:130px;
-      border-radius:12px;
-      border:1px solid #d9d9e3;
-      background:linear-gradient(180deg,#ffffff,#f6f7fb);
-      font-weight:600;
-      letter-spacing:.2px;
-      box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);
-      transition:.15s transform ease,.2s box-shadow ease;
+    .btn-premium{padding:10px 14px; min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;
     }
-    .btn-premium:hover{
-      transform:translateY(-1px);
-      box-shadow:0 10px 24px rgba(17,24,39,.09);
+    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);
     }
-    .btn-action{
-      min-width:128px;
-      min-height:40px;
-      padding:9px 12px;
-      border-radius:10px;
-      font-weight:600;
-      border:1px solid #d8dee9;
-      background:linear-gradient(180deg,#fff,#f8fafc);
+    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);
     }
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
-    .chip{
-      display:inline-block;
-      padding:2px 8px;
-      border:1px solid #e5e7eb;
-      border-radius:10px;
-      background:#f8fafc;
-      color:#334155;
-      font-size:12px;
-      margin-left:6px;
-    }
+    .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
     #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     table#results-table thead th{
-      position:static;
-      top:0;
-      background:#fff;
-      z-index:1;
-      text-align:center;
-    }
+      position:static;top:0;background:#fff;z-index:1;text-align:center;}
     table#results-table tbody tr:hover{filter:brightness(0.98)}
-    .toolbar-btn{
-      min-height:32px;
-      padding:6px 10px;
-      border-radius:8px;
-      border:1px solid #d8dee9;
-      background:#fff;
-      font-weight:600
-    }
+    .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
-    .precheck-table th,.precheck-table td{
-      border-bottom:1px solid #e5e7eb;
-      padding:6px 8px;
-      text-align:left;
-      font-size:13px;
-    }
+    .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
     /* When we detect the sticky nav container, we add this class */
     .is-sticky-gap{ top: calc(var(--sticky-offset-main) + var(--sticky-gap)) !important; }
 
@@ -307,14 +262,7 @@ function injectPremiumStyles(){
     }
     input[type="file"].file-premium::-webkit-file-upload-button,
     input[type="file"].file-premium::file-selector-button{
-      padding:7px 14px;
-      border-radius:999px;
-      border:1px solid #93c5fd;
-      background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* very light sky blue */
-      color:#0f172a;
-      font-weight:500;
-      letter-spacing:.15px;
-      box-shadow:0 1px 4px rgba(15,23,42,.18);
+      padding:7px 14px;border-radius:999px;border:1px solid #93c5fd;background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* very light sky blue */color:#0f172a;font-weight:500;letter-spacing:.15px;box-shadow:0 1px 4px rgba(15,23,42,.18);
       cursor:pointer;
       background-size:100% 100%;
       transition:
@@ -323,10 +271,7 @@ function injectPremiumStyles(){
         .18s background-color ease;
     }
     input[type="file"].file-premium:hover::-webkit-file-upload-button,
-    input[type="file"].file-premium:hover::file-selector-button{
-      background:linear-gradient(135deg,#dbeafe,#bfdbfe);
-      box-shadow:0 3px 8px rgba(15,23,42,.22);
-      transform:translateY(-0.5px);
+    input[type="file"].file-premium:hover::file-selector-button{background:linear-gradient(135deg,#dbeafe,#bfdbfe);box-shadow:0 3px 8px rgba(15,23,42,.22);transform:translateY(-0.5px);
     }
     input[type="file"].file-premium:active::-webkit-file-upload-button,
     input[type="file"].file-premium:active::file-selector-button{
