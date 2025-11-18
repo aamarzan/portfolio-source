@@ -143,7 +143,7 @@ CORS(app,
        "https://aamarzan.com",
        "https://www.aamarzan.com",
        "https://aamarzan.netlify.app",
-       "https://mirna.aamarzan.com",
+       "https://brunette-nevada-pointer-was.trycloudflare.com",
        re.compile(r"http://localhost(:\d+)?$"),
        re.compile(r"http://127\.0\.0\.1(:\d+)?$")
      ],
