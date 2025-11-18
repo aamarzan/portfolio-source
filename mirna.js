@@ -1241,28 +1241,34 @@ async function handleSubmit(event){
   const loader = $('loader');
   const resultsContainer = $('results-container');
 
-  // Be robust to old/new textarea IDs
-  const primarySeqs   = getTextValuePossible(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']);
-  const targetSeq     = getTextValuePossible(['target-seq','target-seqs','target_sequence']);
-  const competitorSeq = getTextValuePossible(['competitor-seq','competitor-seqs','competitor_sequence']);
+// Be robust to old/new textarea IDs
+const primarySeqs   = getTextValuePossible(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']);
+const targetSeq     = getTextValuePossible(['target-seq','target-seqs','target_sequence']);
+const competitorSeq = getTextValuePossible(['competitor-seq','competitor-seqs','competitor_sequence']);
 
-    // If we really don't see any miRNA sequences, stop here (matches backend error)
-  if (Object.keys(CURRENT_INPUTS.mirnas).length === 0) {
-    const rw = resultsContainer?.querySelector('.reload-warning');
-    if (rw) rw.remove();
-    setHTML(
-      resultsContainer,
-      formatError('We could not detect any valid miRNA sequences in your input. ' +
-                  'Please paste nucleotide sequences in FASTA format (each starting with ">") and try again.')
-    );
-    if (loader) hide(loader);
-    return;
-  }
+// Snapshot FASTA → maps for downstream analysis
+CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
+CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
+CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
 
-  // Snapshot FASTA → maps for downstream analysis
-  CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
-  CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
-  CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
+// If we really don't see any miRNA sequences *and* no 3D input, stop here
+if (
+  Object.keys(CURRENT_INPUTS.mirnas).length === 0 &&
+  getBasketFiles('mirna').length === 0 &&
+  (($('mirna-file')?.files?.length || 0) === 0)
+) {
+  const rw = resultsContainer?.querySelector('.reload-warning');
+  if (rw) rw.remove();
+  setHTML(
+    resultsContainer,
+    formatError(
+      'We could not detect any valid miRNA sequences in your input. ' +
+      'Please paste nucleotide sequences in FASTA format (each starting with ">") and try again.'
+    )
+  );
+  if (loader) hide(loader);
+  return;
+}
 
   // Reset run manifest
   RUN_MANIFEST = {
