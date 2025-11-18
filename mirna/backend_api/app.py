@@ -2725,6 +2725,9 @@ def healthz():
         "active_jobs": len(jobs)
     }), (200 if ok else 503)
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"status": "ok"}), 200
 
 def main():
     port = int(os.environ.get("PORT", 8080))
@@ -2735,5 +2738,7 @@ def main():
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=True)
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    port = 8080
+    print(f"Starting backend on http://127.0.0.1:{port}")
+    app.run(host="127.0.0.1", port=port)
