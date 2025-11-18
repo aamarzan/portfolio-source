@@ -21362,3 +21362,639 @@ werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on 
 2025-11-18 16:23:24,756 | INFO | 127.0.0.1 - - [18/Nov/2025 16:23:24] "OPTIONS /precheck HTTP/1.1" 200 -
 2025-11-18 16:23:24,853 | INFO | 127.0.0.1 - - [18/Nov/2025 16:23:24] "POST /precheck HTTP/1.1" 200 -
 2025-11-18 16:23:25,910 | INFO | 127.0.0.1 - - [18/Nov/2025 16:23:25] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 16:32:55,610 | INFO | 127.0.0.1 - - [18/Nov/2025 16:32:55] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:06,255 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:06] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:09,552 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:09] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:11,994 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:11] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:14,819 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:14] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:17,262 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:17] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:25,058 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:25] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:33:25,067 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:25] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:33:25,117 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:25] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 16:33:25,127 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:25] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 16:33:25,265 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:25] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 16:33:27,130 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:27] "POST /predict HTTP/1.1" 200 -
+2025-11-18 16:33:27,256 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:27] "GET /progress/560ff577-6501-426f-8ef9-50e289878e86 HTTP/1.1" 200 -
+2025-11-18 16:33:28,597 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:28] "GET /progress/560ff577-6501-426f-8ef9-50e289878e86 HTTP/1.1" 200 -
+2025-11-18 16:33:29,926 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:29] "GET /progress/560ff577-6501-426f-8ef9-50e289878e86 HTTP/1.1" 200 -
+2025-11-18 16:33:33,285 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:33] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:33:56,604 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:56] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:33:56,664 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:56] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:33:56,757 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:56] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 16:33:56,835 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:56] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 16:33:56,914 | INFO | 127.0.0.1 - - [18/Nov/2025 16:33:56] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 16:34:04,817 | INFO | 127.0.0.1 - - [18/Nov/2025 16:34:04] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 16:34:14,881 | INFO | 127.0.0.1 - - [18/Nov/2025 16:34:14] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:35:00,258 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:00] "GET /config HTTP/1.1" 200 -
+2025-11-18 16:35:17,695 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:17,698 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:17,740 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:17] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 16:35:17,749 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:17] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 16:35:17,786 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:17] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 16:35:21,703 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:21] "POST /predict HTTP/1.1" 200 -
+2025-11-18 16:35:21,815 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:21] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:23,138 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:23] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:24,437 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:24] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:25,686 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:25] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:26,990 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:26] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:28,259 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:28] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:29,524 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:29] "GET /progress/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:29,559 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:29] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:29,605 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:29] "OPTIONS /download/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:29,664 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:29] "GET /download/da73d030-013f-4de8-afb8-5bb6511281fc HTTP/1.1" 200 -
+2025-11-18 16:35:38,376 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:38] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:38,415 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:38] "OPTIONS /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:38,451 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:38] "GET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:42,122 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:42] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:42,173 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:42] "GET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:50,364 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:50] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:50,412 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:50] "OPTIONS /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:50,466 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:50] "GET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:55,370 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:55,419 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "OPTIONS /structure/da73d030-013f-4de8-afb8-5bb6511281fc/mirna HTTP/1.1" 200 -
+2025-11-18 16:35:55,453 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "[31m[1mGET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/mirna HTTP/1.1[0m" 400 -
+2025-11-18 16:35:55,487 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:55,520 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "OPTIONS /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:55,553 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "GET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/target HTTP/1.1" 200 -
+2025-11-18 16:35:55,865 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:35:55,948 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "OPTIONS /structure/da73d030-013f-4de8-afb8-5bb6511281fc/competitor HTTP/1.1" 200 -
+2025-11-18 16:35:55,986 | INFO | 127.0.0.1 - - [18/Nov/2025 16:35:55] "[33mGET /structure/da73d030-013f-4de8-afb8-5bb6511281fc/competitor HTTP/1.1[0m" 404 -
+2025-11-18 16:36:47,827 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:47] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:36:47,832 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:47] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 16:36:47,863 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:47] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 16:36:47,874 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:47] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 16:36:47,894 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:47] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 16:36:49,332 | INFO | 127.0.0.1 - - [18/Nov/2025 16:36:49] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 17:40:13,849 | INFO | 127.0.0.1 - - [18/Nov/2025 17:40:13] "GET /config HTTP/1.1" 200 -
+2025-11-18 17:50:58,198 | INFO | 127.0.0.1 - - [18/Nov/2025 17:50:58] "GET /config HTTP/1.1" 200 -
+2025-11-18 17:51:02,615 | INFO | 127.0.0.1 - - [18/Nov/2025 17:51:02] "GET /config HTTP/1.1" 200 -
+2025-11-18 21:26:04,384 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:04] "GET /config HTTP/1.1" 200 -
+2025-11-18 21:26:14,682 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:14] "GET /config HTTP/1.1" 200 -
+2025-11-18 21:26:20,056 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 21:26:20,075 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:20] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 21:26:20,169 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:20] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 21:26:20,173 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:20] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 21:26:20,338 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:20] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 21:26:22,453 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:22] "POST /predict HTTP/1.1" 200 -
+2025-11-18 21:26:22,517 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:22] "GET /progress/09f61949-1039-4a0b-9fbb-2efd454a9a60 HTTP/1.1" 200 -
+2025-11-18 21:26:23,843 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:23] "GET /progress/09f61949-1039-4a0b-9fbb-2efd454a9a60 HTTP/1.1" 200 -
+2025-11-18 21:26:25,180 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:25] "GET /progress/09f61949-1039-4a0b-9fbb-2efd454a9a60 HTTP/1.1" 200 -
+2025-11-18 21:26:26,539 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:26] "GET /progress/09f61949-1039-4a0b-9fbb-2efd454a9a60 HTTP/1.1" 200 -
+2025-11-18 21:26:34,377 | INFO | 127.0.0.1 - - [18/Nov/2025 21:26:34] "GET /config HTTP/1.1" 200 -
+2025-11-18 21:27:17,410 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 21:27:17,420 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:17] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 21:27:17,701 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:17] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 21:27:17,706 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:17] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 21:27:17,847 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:17] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 21:27:21,732 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:21] "POST /predict HTTP/1.1" 200 -
+2025-11-18 21:27:21,885 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:21] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:23,246 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:23] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:24,593 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:24] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:26,719 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:26] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:28,141 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:28] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:30,161 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:30] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:31,486 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:31] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:33,147 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:33] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:34,800 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:34] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:36,542 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:36] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:40,081 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:40] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:41,697 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:41] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:43,119 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:43] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:44,546 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:44] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:46,200 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:46] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:48,007 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:48] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:50,475 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:50] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:52,220 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:52] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:54,265 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:54] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:56,257 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:56] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:27:58,237 | INFO | 127.0.0.1 - - [18/Nov/2025 21:27:58] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:00,272 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:00] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:02,207 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:02] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:04,214 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:04] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:06,332 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:06] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:08,208 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:08] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:10,235 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:10] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:12,426 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:12] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:14,247 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:14] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:16,250 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:16] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:18,214 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:18] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:20,330 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:20] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:22,280 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:22] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:24,267 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:24] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:26,258 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:26] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:28,301 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:28] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:30,275 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:30] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:32,211 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:32] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:34,216 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:34] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:36,707 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:36] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:38,266 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:38] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:40,250 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:40] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:42,247 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:42] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:44,255 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:44] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:46,201 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:46] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:48,251 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:48] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:50,273 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:50] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:52,303 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:52] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:54,237 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:54] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:56,260 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:56] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:28:58,582 | INFO | 127.0.0.1 - - [18/Nov/2025 21:28:58] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:00,554 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:00] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:02,256 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:02] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:04,259 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:04] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:06,275 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:06] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:08,209 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:08] "GET /progress/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:08,242 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:08] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 21:29:08,285 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:08] "OPTIONS /download/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 21:29:08,309 | INFO | 127.0.0.1 - - [18/Nov/2025 21:29:08] "GET /download/2b8445da-35d6-4bbe-8ab5-c95ebc4ad770 HTTP/1.1" 200 -
+2025-11-18 22:06:58,332 | INFO | 127.0.0.1 - - [18/Nov/2025 22:06:58] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:19:01,245 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:01] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:19:22,833 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:22] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:19:22,863 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:22] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:19:22,883 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:22] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:19:22,909 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:22] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:19:23,151 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:23] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-18 22:19:23,250 | INFO | 127.0.0.1 - - [18/Nov/2025 22:19:23] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:20:52,905 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:52] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:20:59,248 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:59] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:20:59,260 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:59] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:20:59,603 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:59] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:20:59,626 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:59] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:20:59,913 | INFO | 127.0.0.1 - - [18/Nov/2025 22:20:59] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:21:01,706 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:01] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:21:09,177 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:09] "GET /progress/3b312bd5-2f9f-47e9-b700-14ca6c00839e HTTP/1.1" 200 -
+2025-11-18 22:21:10,680 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:10] "GET /progress/3b312bd5-2f9f-47e9-b700-14ca6c00839e HTTP/1.1" 200 -
+2025-11-18 22:21:12,220 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:12] "GET /progress/3b312bd5-2f9f-47e9-b700-14ca6c00839e HTTP/1.1" 200 -
+2025-11-18 22:21:14,060 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:14] "GET /progress/3b312bd5-2f9f-47e9-b700-14ca6c00839e HTTP/1.1" 200 -
+2025-11-18 22:21:16,959 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:16] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:21:46,783 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:46] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:21:46,791 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:46] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:21:47,054 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:47] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:21:48,292 | INFO | 127.0.0.1 - - [18/Nov/2025 22:21:48] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:22:13,041 | ERROR | CID b68fb4f0 | Unexpected error: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1132, in precheck
+    for pid in request.form.getlist(f"{kind}_pdb_id"):
+                 ^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1123, in handle
+    if f" {aa} " in sample:
+               ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 368, in parse
+    for data in _chunk_iter(stream.read, self.buffer_size):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 423, in _chunk_iter
+    data = read(size)
+           ^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 562, in readinto
+    self.on_disconnect()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 499, in on_disconnect
+    raise ClientDisconnected()
+werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-11-18 22:22:14,295 | INFO | 127.0.0.1 - - [18/Nov/2025 22:22:14] "[35m[1mPOST /precheck HTTP/1.1[0m" 500 -
+2025-11-18 22:22:51,541 | INFO | 127.0.0.1 - - [18/Nov/2025 22:22:51] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 22:22:57,981 | INFO | 127.0.0.1 - - [18/Nov/2025 22:22:57] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:23:18,219 | INFO | 127.0.0.1 - - [18/Nov/2025 22:23:18] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:23:18,224 | INFO | 127.0.0.1 - - [18/Nov/2025 22:23:18] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:23:18,465 | INFO | 127.0.0.1 - - [18/Nov/2025 22:23:18] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:23:18,492 | INFO | 127.0.0.1 - - [18/Nov/2025 22:23:18] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:23:48,627 | ERROR | CID c4141abe | Unexpected error: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1132, in precheck
+    for pid in request.form.getlist(f"{kind}_pdb_id"):
+                 ^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1123, in handle
+    if f" {aa} " in sample:
+               ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 368, in parse
+    for data in _chunk_iter(stream.read, self.buffer_size):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 423, in _chunk_iter
+    data = read(size)
+           ^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 562, in readinto
+    self.on_disconnect()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 499, in on_disconnect
+    raise ClientDisconnected()
+werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-11-18 22:23:48,635 | INFO | 127.0.0.1 - - [18/Nov/2025 22:23:48] "[35m[1mPOST /precheck HTTP/1.1[0m" 500 -
+2025-11-18 22:24:14,651 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:14] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:24:19,163 | ERROR | CID 7d4fb4ad | Unexpected error: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask_limiter\limits.py", line 326, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1146, in start_prediction
+    @app.route('/predict', methods=['POST'])
+                       ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 368, in parse
+    for data in _chunk_iter(stream.read, self.buffer_size):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 423, in _chunk_iter
+    data = read(size)
+           ^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 562, in readinto
+    self.on_disconnect()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 499, in on_disconnect
+    raise ClientDisconnected()
+werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-11-18 22:24:19,181 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:19] "[35m[1mPOST /predict HTTP/1.1[0m" 500 -
+2025-11-18 22:24:24,901 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:24] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:24:24,925 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:24] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:24:25,134 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:25] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:24:25,146 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:25] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:24:25,338 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:25] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:24:26,626 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:26] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:24:26,882 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:26] "GET /progress/5a7f43af-36ef-4ecc-95ff-09c7ee2e0eca HTTP/1.1" 200 -
+2025-11-18 22:24:28,380 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:28] "GET /progress/5a7f43af-36ef-4ecc-95ff-09c7ee2e0eca HTTP/1.1" 200 -
+2025-11-18 22:24:30,015 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:30] "GET /progress/5a7f43af-36ef-4ecc-95ff-09c7ee2e0eca HTTP/1.1" 200 -
+2025-11-18 22:24:32,508 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:32] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:24:54,413 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:54] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:24:58,818 | INFO | 127.0.0.1 - - [18/Nov/2025 22:24:58] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:25:06,378 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:25:06,385 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:25:06,625 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:06] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:25:06,631 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:06] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:25:06,944 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:06] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:25:08,159 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:08] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:25:08,702 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:08] "GET /progress/6a6a7cf4-a9c5-4404-8975-a131b10b57bf HTTP/1.1" 200 -
+2025-11-18 22:25:10,207 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:10] "GET /progress/6a6a7cf4-a9c5-4404-8975-a131b10b57bf HTTP/1.1" 200 -
+2025-11-18 22:25:12,171 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:12] "GET /progress/6a6a7cf4-a9c5-4404-8975-a131b10b57bf HTTP/1.1" 200 -
+2025-11-18 22:25:13,618 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:13] "GET /progress/6a6a7cf4-a9c5-4404-8975-a131b10b57bf HTTP/1.1" 200 -
+2025-11-18 22:25:17,562 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:17] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:25:43,991 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:43] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:25:55,136 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:25:55,185 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:55] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:25:55,447 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:55] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:25:55,525 | INFO | 127.0.0.1 - - [18/Nov/2025 22:25:55] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:26:25,517 | ERROR | CID b53df7df | Unexpected error: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1132, in precheck
+    for pid in request.form.getlist(f"{kind}_pdb_id"):
+                 ^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1123, in handle
+    if f" {aa} " in sample:
+               ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 368, in parse
+    for data in _chunk_iter(stream.read, self.buffer_size):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 423, in _chunk_iter
+    data = read(size)
+           ^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 562, in readinto
+    self.on_disconnect()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 499, in on_disconnect
+    raise ClientDisconnected()
+werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-11-18 22:26:25,636 | INFO | 127.0.0.1 - - [18/Nov/2025 22:26:25] "[35m[1mPOST /precheck HTTP/1.1[0m" 500 -
+2025-11-18 22:27:02,036 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:02] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:27:02,640 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:02] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:04,314 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:04] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:06,338 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:06] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:08,538 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:08] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:10,341 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:10] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:12,354 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:12] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:14,344 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:14] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:16,345 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:16] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:18,365 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:18] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:20,473 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:20] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:22,347 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:22] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:24,300 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:24] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:26,319 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:26] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:28,333 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:28] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:27:30,327 | INFO | 127.0.0.1 - - [18/Nov/2025 22:27:30] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:30:13,471 | INFO | 127.0.0.1 - - [18/Nov/2025 22:30:13] "GET /progress/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:30:13,678 | INFO | 127.0.0.1 - - [18/Nov/2025 22:30:13] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:30:13,881 | INFO | 127.0.0.1 - - [18/Nov/2025 22:30:13] "OPTIONS /download/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:30:14,073 | INFO | 127.0.0.1 - - [18/Nov/2025 22:30:14] "GET /download/fd915195-12d9-435b-a8c9-46f65afbaf97 HTTP/1.1" 200 -
+2025-11-18 22:36:44,974 | INFO | 127.0.0.1 - - [18/Nov/2025 22:36:44] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:36:45,224 | INFO | 127.0.0.1 - - [18/Nov/2025 22:36:45] "OPTIONS /seed_scan HTTP/1.1" 200 -
+2025-11-18 22:36:45,523 | INFO | 127.0.0.1 - - [18/Nov/2025 22:36:45] "POST /seed_scan HTTP/1.1" 200 -
+2025-11-18 22:37:08,025 | INFO | 127.0.0.1 - - [18/Nov/2025 22:37:08] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:50:52,239 | INFO | 127.0.0.1 - - [18/Nov/2025 22:50:52] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:50:57,633 | INFO | 127.0.0.1 - - [18/Nov/2025 22:50:57] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:51:40,753 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:40] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:51:50,337 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:50] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:51:50,344 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:50] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:51:50,385 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:50] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:51:50,388 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:50] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:51:50,527 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:50] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:51:52,322 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:52] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:51:52,439 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:52] "GET /progress/414f2af1-3f91-4b72-aa8f-b1046e3f3c6d HTTP/1.1" 200 -
+2025-11-18 22:51:57,871 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:57] "GET /progress/414f2af1-3f91-4b72-aa8f-b1046e3f3c6d HTTP/1.1" 200 -
+2025-11-18 22:51:58,565 | INFO | 127.0.0.1 - - [18/Nov/2025 22:51:58] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:52:19,012 | INFO | 127.0.0.1 - - [18/Nov/2025 22:52:19] "GET /config HTTP/1.1" 200 -
+2025-11-18 22:53:07,280 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:07] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:53:07,342 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:07] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:53:07,390 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:07] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 22:53:07,464 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:07] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 22:53:23,563 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:23] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 22:53:40,817 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:40] "POST /predict HTTP/1.1" 200 -
+2025-11-18 22:53:40,872 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:40] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:42,197 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:42] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:44,215 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:44] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:46,200 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:46] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:48,200 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:48] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:50,204 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:50] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:52,205 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:52] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:54,191 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:54] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:56,267 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:56] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:53:58,664 | INFO | 127.0.0.1 - - [18/Nov/2025 22:53:58] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:00,371 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:00] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:02,624 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:02] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:04,252 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:04] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:06,207 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:06] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:08,210 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:08] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:10,200 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:10] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:12,201 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:12] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:14,198 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:14] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:16,221 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:16] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:18,206 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:18] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:20,388 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:20] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:22,256 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:22] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:24,321 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:24] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:26,196 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:26] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:28,192 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:28] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:30,221 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:30] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:33,203 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:33] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:35,200 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:35] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:37,187 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:37] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:39,200 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:39] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:40,882 | ERROR | Prediction error: Command '['C:/Program Files (x86)/ViennaRNA Package/RNAfold.exe']' timed out after 60 seconds
+Traceback (most recent call last):
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1471, in process_job
+    mature_trim_flag
+                     
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 499, in process_molecule_universal
+    structural_features_1d = predict_rna_structure_1d(nt_sequence)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\molecule_processors.py", line 167, in predict_rna_structure_1d
+    proc = subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 552, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1211, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1632, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['C:/Program Files (x86)/ViennaRNA Package/RNAfold.exe']' timed out after 60 seconds
+2025-11-18 22:54:41,201 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:41] "GET /progress/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:41,232 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:41] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 22:54:41,279 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:41] "OPTIONS /download/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1" 200 -
+2025-11-18 22:54:41,309 | INFO | 127.0.0.1 - - [18/Nov/2025 22:54:41] "[31m[1mGET /download/64c5139a-5b6d-42d5-8095-1f58b4012cf6 HTTP/1.1[0m" 400 -
+2025-11-18 22:59:32,487 | INFO | 127.0.0.1 - - [18/Nov/2025 22:59:32] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:00:07,214 | INFO | 127.0.0.1 - - [18/Nov/2025 23:00:07] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:00:07,244 | INFO | 127.0.0.1 - - [18/Nov/2025 23:00:07] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:00:07,480 | INFO | 127.0.0.1 - - [18/Nov/2025 23:00:07] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:00:07,510 | INFO | 127.0.0.1 - - [18/Nov/2025 23:00:07] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:00:49,828 | INFO | 127.0.0.1 - - [18/Nov/2025 23:00:49] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 23:01:11,736 | INFO | 127.0.0.1 - - [18/Nov/2025 23:01:11] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 23:40:15,348 | INFO | 127.0.0.1 - - [18/Nov/2025 23:40:15] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:40:58,760 | INFO | 127.0.0.1 - - [18/Nov/2025 23:40:58] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:41:03,028 | INFO | 127.0.0.1 - - [18/Nov/2025 23:41:03] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:41:32,902 | INFO | 127.0.0.1 - - [18/Nov/2025 23:41:32] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:46:23,290 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:23] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:46:33,392 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:33] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:46:33,416 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:33] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:46:33,629 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:33] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:46:33,647 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:33] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:46:33,954 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:33] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 23:46:35,837 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:35] "POST /predict HTTP/1.1" 200 -
+2025-11-18 23:46:36,090 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:36] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:37,780 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:37] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:43,577 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:43] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:43,835 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:43] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:44,103 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:44] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:44,323 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:44] "GET /progress/b69df563-132e-44de-a934-80a91d7bc8a1 HTTP/1.1" 200 -
+2025-11-18 23:46:45,251 | INFO | 127.0.0.1 - - [18/Nov/2025 23:46:45] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:47:38,343 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:38] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:47:38,354 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:38] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:47:38,666 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:38] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:47:38,715 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:38] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:47:50,655 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:50] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 23:47:53,585 | INFO | 127.0.0.1 - - [18/Nov/2025 23:47:53] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 23:48:08,874 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:08] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:48:29,552 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:29] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:48:29,566 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:29] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:48:29,769 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:29] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:48:29,796 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:29] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:48:42,563 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:42] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 23:48:48,411 | INFO | 127.0.0.1 - - [18/Nov/2025 23:48:48] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-18 23:50:46,172 | INFO | 127.0.0.1 - - [18/Nov/2025 23:50:46] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:51:17,335 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:17] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:51:21,739 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:21] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:51:27,467 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:27] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:51:27,478 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:27] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:51:27,712 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:27] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:51:27,716 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:27] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:51:27,957 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:27] "POST /precheck HTTP/1.1" 200 -
+2025-11-18 23:51:29,293 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:29] "POST /predict HTTP/1.1" 200 -
+2025-11-18 23:51:29,569 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:29] "GET /progress/2e439802-7867-41cb-a333-b06322340f92 HTTP/1.1" 200 -
+2025-11-18 23:51:31,073 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:31] "GET /progress/2e439802-7867-41cb-a333-b06322340f92 HTTP/1.1" 200 -
+2025-11-18 23:51:33,340 | INFO | 127.0.0.1 - - [18/Nov/2025 23:51:33] "GET /config HTTP/1.1" 200 -
+2025-11-18 23:52:02,885 | INFO | 127.0.0.1 - - [18/Nov/2025 23:52:02] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:52:02,918 | INFO | 127.0.0.1 - - [18/Nov/2025 23:52:02] "GET /nonce HTTP/1.1" 200 -
+2025-11-18 23:52:03,211 | INFO | 127.0.0.1 - - [18/Nov/2025 23:52:03] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-18 23:52:03,807 | INFO | 127.0.0.1 - - [18/Nov/2025 23:52:03] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-18 23:52:41,787 | ERROR | CID 846967e0 | Unexpected error: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1132, in precheck
+    for pid in request.form.getlist(f"{kind}_pdb_id"):
+                 ^^^^^^^^^^^^^^^^
+  File "E:\1. Github\3. portfolio-source\mirna\backend_api\app.py", line 1123, in handle
+    if f" {aa} " in sample:
+               ^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\utils.py", line 107, in __get__
+    value = self.fget(obj)  # type: ignore
+            ^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 445, in form
+    self._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\wrappers.py", line 198, in _load_form_data
+    super()._load_form_data()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wrappers\request.py", line 271, in _load_form_data
+    data = parser.parse(
+           ^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 242, in parse
+    return parse_func(stream, mimetype, content_length, options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 267, in _parse_multipart
+    form, files = parser.parse(stream, boundary, content_length)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 368, in parse
+    for data in _chunk_iter(stream.read, self.buffer_size):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\formparser.py", line 423, in _chunk_iter
+    data = read(size)
+           ^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 562, in readinto
+    self.on_disconnect()
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\wsgi.py", line 499, in on_disconnect
+    raise ClientDisconnected()
+werkzeug.exceptions.ClientDisconnected: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2025-11-18 23:52:42,311 | INFO | 127.0.0.1 - - [18/Nov/2025 23:52:42] "[35m[1mPOST /precheck HTTP/1.1[0m" 500 -
+2025-11-18 23:53:20,563 | INFO | 127.0.0.1 - - [18/Nov/2025 23:53:20] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-19 00:02:32,443 | INFO | 127.0.0.1 - - [19/Nov/2025 00:02:32] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:02:50,187 | INFO | 127.0.0.1 - - [19/Nov/2025 00:02:50] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:02:58,428 | INFO | 127.0.0.1 - - [19/Nov/2025 00:02:58] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:00,977 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:00] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:09,237 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:09] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:19,068 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:19] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:26,862 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:26] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:30,521 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:30] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:35,904 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:35] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:03:40,096 | INFO | 127.0.0.1 - - [19/Nov/2025 00:03:40] "GET /config HTTP/1.1" 200 -
+2025-11-19 00:57:12,150 | INFO | 127.0.0.1 - - [19/Nov/2025 00:57:12] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:14:45,871 | INFO | 127.0.0.1 - - [19/Nov/2025 01:14:45] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:29,129 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:29] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:33,292 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:33] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:37,111 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:37] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:41,497 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:41] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:45,636 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:45] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:48,118 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:48] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:50,486 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:50] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:54,073 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:54] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:23:56,547 | INFO | 127.0.0.1 - - [19/Nov/2025 01:23:56] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:00,403 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:00] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:02,756 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:02] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:05,381 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:05] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:07,490 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:07] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:10,241 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:10] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:12,622 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:12] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:14,933 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:14] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:18,468 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:18] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:20,650 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:20] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:24:29,036 | INFO | 127.0.0.1 - - [19/Nov/2025 01:24:29] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:26:13,083 | INFO | 127.0.0.1 - - [19/Nov/2025 01:26:13] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:26:38,453 | INFO | 127.0.0.1 - - [19/Nov/2025 01:26:38] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:38:24,197 | INFO | 127.0.0.1 - - [19/Nov/2025 01:38:24] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:54:39,729 | INFO | 127.0.0.1 - - [19/Nov/2025 01:54:39] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:55:26,709 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:26] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:55:35,959 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:35] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:55:36,193 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:36] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-19 01:55:36,371 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:36] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:55:36,784 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:36] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-19 01:55:37,816 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:37] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-19 01:55:37,835 | INFO | 127.0.0.1 - - [19/Nov/2025 01:55:37] "POST /precheck HTTP/1.1" 200 -
+2025-11-19 01:56:09,971 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:09] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:56:21,580 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:56:21,606 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:21] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:56:21,618 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:21] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-19 01:56:21,630 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:21] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-19 01:56:21,738 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:21] "POST /precheck HTTP/1.1" 200 -
+2025-11-19 01:56:23,625 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:23] "POST /predict HTTP/1.1" 200 -
+2025-11-19 01:56:23,850 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:23] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:25,272 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:25] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:26,446 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:26] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:31,888 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:31] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:31,985 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:31] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:32,118 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:32] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:32,225 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:32] "GET /progress/2f1dfd0b-9264-4e74-a36b-3ca18315e653 HTTP/1.1" 200 -
+2025-11-19 01:56:40,378 | INFO | 127.0.0.1 - - [19/Nov/2025 01:56:40] "GET /config HTTP/1.1" 200 -
+2025-11-19 01:57:06,155 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:57:06,188 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:06] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 01:57:06,246 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:06] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-19 01:57:06,289 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:06] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-19 01:57:15,621 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:15] "POST /precheck HTTP/1.1" 200 -
+2025-11-19 01:57:22,460 | INFO | 127.0.0.1 - - [19/Nov/2025 01:57:22] "[31m[1mPOST /predict HTTP/1.1[0m" 400 -
+2025-11-19 01:59:42,898 | INFO | 127.0.0.1 - - [19/Nov/2025 01:59:42] "GET /config HTTP/1.1" 200 -
+2025-11-19 02:00:50,703 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:50] "GET /config HTTP/1.1" 200 -
+2025-11-19 02:00:57,347 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "OPTIONS /predict HTTP/1.1" 200 -
+2025-11-19 02:00:57,370 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 02:00:57,393 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "OPTIONS /precheck HTTP/1.1" 200 -
+2025-11-19 02:00:57,405 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "GET /nonce HTTP/1.1" 200 -
+2025-11-19 02:00:57,580 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "[31m[1mPOST /predict HTTP/1.1[0m" 403 -
+2025-11-19 02:00:57,632 | INFO | 127.0.0.1 - - [19/Nov/2025 02:00:57] "POST /precheck HTTP/1.1" 200 -
