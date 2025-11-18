@@ -670,35 +670,43 @@ def extract_seq_from_structure(file_path: str) -> Tuple[Optional[str], str]:
     except Exception as e:
         logging.warning(f"Structure parse failed for {file_path}: {e}")
         return (None, "")
-    # Protein attempt
+
+    # 1) Try as protein (AA)
     try:
         ppb = PPBuilder()
         aas = []
         for pp in ppb.build_peptides(structure):
             aas.append(str(pp.get_sequence()))
         if aas:
+            # joined protein chain(s)
             return ("AA", "".join(aas))
     except Exception as e:
         logging.warning(f"PPBuilder failed: {e}")
-    # Nucleic acids by residue name (simple)
-    NA3 = {"A":"ADE", "U":"URA", "G":"GUA", "C":"CYT", "T":"THY"}
-    nts = []
+
+    # 2) Try as nucleic acid (DNA/RNA) by residue name
+    NA_MAP = {
+        # single-letter nucleotide residues
+        "A": "A", "C": "C", "G": "G", "U": "U", "T": "T",
+        # common DNA residues
+        "DA": "A", "DC": "C", "DG": "G", "DT": "T", "DU": "U",
+        # 3-letter forms seen in some PDBs/mmCIF
+        "ADE": "A", "CYT": "C", "GUA": "G", "URA": "U", "THY": "T",
+        # inosine etc.
+        "I": "N",
+    }
+    nts: List[str] = []
     try:
         for model in structure:
             for chain in model:
                 for res in chain:
                     name = res.get_resname().strip().upper()
-                    one = None
-                    for base, three in NA3.items():
-                        if name == three or name == base:
-                            one = base
-                            break
-                    if one:
-                        nts.append(one)
+                    if name in NA_MAP:
+                        nts.append(NA_MAP[name])
         if nts:
             return ("NT", "".join(nts))
     except Exception as e:
         logging.warning(f"Nucleic parse failed: {e}")
+
     return (None, "")
 
 
@@ -1359,19 +1367,32 @@ def start_prediction():
         if not targets_list:
             return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
 
-    # 🔹 9) PDB-only allowance for competitors (existing logic)
-    if not _fixed_comps and (competitor_3d_files or c_ids):
+    # ✅ Must have at least one target (FASTA or PDB-derived)
+    if not targets_list:
+        return jsonify({
+            "error": "Provide at least one target sequence (FASTA or PDB/ID) to run the analysis."
+        }), 400
+
+    # 🔹 9) Add competitor sequences derived from PDB (union of FASTA + PDB)
+    if competitor_3d_files or c_ids:
         for fname, p in competitor_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_COMP_LEN:
                 cid = stem
-                _fixed_comps.append((cid, nt_seq))
-                competitor_meta_map[cid] = {
-                    "source": f"pdb:{src_kind}",
-                    "aa_to_nt_applied": aa_to_nt,
-                    "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
-                }
+                if cid not in competitor_meta_map:
+                    # new competitor coming only from PDB
+                    _fixed_comps.append((cid, nt_seq))
+                    competitor_meta_map[cid] = {
+                        "source": f"pdb:{src_kind}",
+                        "aa_to_nt_applied": aa_to_nt,
+                        "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+                    }
+                else:
+                    # there is already a FASTA competitor with the same ID -> annotate it
+                    src = competitor_meta_map[cid].get("source", "fasta")
+                    if f"pdb:{src_kind}" not in src:
+                        competitor_meta_map[cid]["source"] = src + f"+pdb:{src_kind}"
 
     # If still no competitors, use placeholder
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
