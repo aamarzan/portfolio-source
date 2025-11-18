@@ -31,6 +31,15 @@ let CONFIG = {
   aa_convert_allowed: true,
   use_nonce: false
 };
+// === Core pipeline placeholders (initialized cleanly) ===
+// These were previously undefined in some downstream functions.
+// They hold normalized intermediate data per batch/run.
+let batch_records     = [];     // array of { miRNA, target, competitor, score, meta }
+let trimmed_sequences = {};     // { id: trimmed_nt_seq }
+let prim_seq_list     = [];     // list of original sequences (FASTA-derived)
+let num_feat_list     = [];     // numeric feature vectors passed to model (if client-side)
+let prim_struct_list  = [];     // structure metadata objects (FASTA ↔ PDB matched)
+
 
 // Store the exact inputs used at submit time so downstream analysis matches predictions
 const CURRENT_INPUTS = {
@@ -676,22 +685,50 @@ function aaToRNAWithMode(aaSeq, mode='canonical'){
   }
   return out;
 }
-function resolveSeqWithAAHandling(anyId, pool){
-  const raw = tolerantGetAnySeqForId(anyId, pool);
-  if(!raw) return { seq:'', converted:false, note:'', mode:'' };
 
+// =====================================================
+// Unified NT extraction cascade (FASTA + PDB/CIF) — Rule 5
+// =====================================================
+function resolveSeqWithAAHandling(anyId, pool, pdbTextPool = {}) {
+  // 1️⃣ FASTA lookup
+  let raw = tolerantGetAnySeqForId(anyId, pool);
   const uiFlag = $('aa-convert-flag')?.checked ?? CONFIG.aa_convert_allowed;
   const mode = (byQS('#aa-nt-mode')?.value || 'canonical').toLowerCase();
   const canConvert = CONFIG.aa_convert_allowed && uiFlag;
 
-  if(isLikelyAA(raw)){
-    if(!canConvert){
-      return { seq:'', converted:false, note:'Target appears to be amino acids; enable AA→NT conversion or supply nucleotides.', mode:'' };
+  // helper: fallback extract from PDB/CIF (nt first, else AA→NT)
+  const fallbackFromPDB = () => {
+    const pdbSeq = tolerantGetAnySeqForId(anyId, pdbTextPool);
+    if (!pdbSeq) return { seq: '', converted: false, note: 'No PDB sequence available.', mode: '' };
+
+    if (!isLikelyAA(pdbSeq)) {
+      return { seq: toRNA(pdbSeq), converted: false, note: 'From PDB/CIF (nt chain).', mode: '' };
     }
-    const nt = aaToRNAWithMode(raw, mode);
-    return { seq: toRNA(nt), converted:true, note:`AA→NT conversion applied (${mode}).`, mode };
+
+    if (canConvert) {
+      const nt = aaToRNAWithMode(pdbSeq, mode);
+      return { seq: toRNA(nt), converted: true, note: `AA→NT from PDB (${mode}).`, mode };
+    }
+
+    return { seq: '', converted: false, note: 'PDB-only amino acids — conversion disabled.', mode: '' };
+  };
+
+  // 1️⃣ direct NT
+  if (raw && !isLikelyAA(raw)) {
+    return { seq: toRNA(raw), converted: false, note: 'From FASTA nt.', mode: '' };
   }
-  return { seq: toRNA(raw), converted:false, note:'', mode:'' };
+
+  // 2️⃣ FASTA AA→NT
+  if (raw && isLikelyAA(raw)) {
+    if (canConvert) {
+      const nt = aaToRNAWithMode(raw, mode);
+      return { seq: toRNA(nt), converted: true, note: `AA→NT from FASTA (${mode}).`, mode };
+    }
+    return fallbackFromPDB();
+  }
+
+  // 3️⃣ no FASTA → fallback to PDB
+  return fallbackFromPDB();
 }
 
 // =====================================================
@@ -1252,46 +1289,19 @@ async function handleSubmit(event){
 
   // Competitor is completely optional: FASTA, PDB, both, or none — no impact on starting the analysis.
 
-  // If either miRNA or target is missing (no FASTA, no PDB, no PDB ID), do NOT start the analysis
+  // Premium guard: allow PDB-only molecules (Rule 6)
   if (!hasMirnaAny || !hasTargetAny) {
-    const rw = resultsContainer?.querySelector('.reload-warning');
-    if (rw) rw.remove();
+    // if either is missing entirely — still allow if there is valid PDB/mmCIF uploaded
+    const hasMirnaStruct = (getBasketFiles('mirna').length + ($('mirna-file')?.files?.length || 0)) > 0;
+    const hasTargetStruct = (getBasketFiles('target').length + ($('target-file')?.files?.length || 0)) > 0;
 
-    const missingBits = [];
-    if (!hasMirnaAny) {
-      missingBits.push(
-        '<li><strong>miRNA</strong> — provide a FASTA sequence in “Primary miRNAs” or attach a PDB/mmCIF file.</li>'
-      );
+    if (!(hasMirnaStruct && hasTargetStruct)) {
+      const rw = resultsContainer?.querySelector('.reload-warning');
+      if (rw) rw.remove();
+      setHTML(resultsContainer, formatError('Provide at least a PDB/mmCIF for both miRNA and Target. FASTA is optional.'));
+      if (loader) hide(loader);
+      return;
     }
-    if (!hasTargetAny) {
-      missingBits.push(
-        '<li><strong>Target</strong> — provide a FASTA sequence (e.g., 3′UTR / CDS fragment), attach a PDB/mmCIF file, or specify a PDB ID in the FASTA header.</li>'
-      );
-    }
-
-    setHTML(resultsContainer, `
-      <div class="staging-box"
-           style="background:linear-gradient(135deg,#fff7ed,#e0f2fe);
-                  border-radius:12px;
-                  border:1px solid #fed7aa;
-                  padding:12px;
-                  margin:8px 0;">
-        <div style="font-weight:600;margin-bottom:4px;">We need your core pair to start</div>
-        <p style="margin:0 0 4px;color:#334155;font-size:14px;">
-          To launch the analysis, please provide both a <strong>miRNA</strong> and a <strong>target</strong> in any of these forms:
-          FASTA, PDB/mmCIF, or (for targets) a PDB ID inside the FASTA header.
-        </p>
-        <ul style="margin:0 0 4px 18px;padding:0;font-size:13px;color:#1f2937;">
-          ${missingBits.join('')}
-        </ul>
-        <p style="margin:0;font-size:12px;color:#64748b;">
-          Competitor remains optional — add it in FASTA and/or PDB if you want us to model competitive displacement.
-        </p>
-      </div>
-    `);
-
-    if (loader) hide(loader);
-    return;
   }
 
   // Soft hint: if one of them is PDB-only, remind that some client-side plots prefer FASTA
@@ -1324,6 +1334,50 @@ async function handleSubmit(event){
   const mirnaCount = countFastaRecords(primarySeqs);
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
+
+  // =====================================================
+  // DEDUPLICATED COMBINATION LOGIC — Rule 3 + Rule 4
+  // =====================================================
+  function dedupCount(role, fastaText, files) {
+    const fastaIds = Object.keys(parseFastaToMap(fastaText || '', role));
+    const pdbIds   = new Set((files || []).map(f => {
+      const name = (f.name || '').split('.')[0];
+      return name.toLowerCase();
+    }));
+
+    // Count overlaps
+    const overlaps = fastaIds.filter(id =>
+      pdbIds.has(id.toLowerCase())
+    ).length;
+
+    const fastaOnly = Math.max(0, fastaIds.length - overlaps);
+    const pdbOnly   = Math.max(0, pdbIds.size - overlaps);
+    const matched   = overlaps;
+    return fastaOnly + pdbOnly + matched;
+  }
+
+  const mirnaFiles = [
+    ...(getBasketFiles('mirna') || []),
+    ...Array.from($('mirna-file')?.files || [])
+  ];
+  const targetFiles = [
+    ...(getBasketFiles('target') || []),
+    ...Array.from($('target-file')?.files || [])
+  ];
+  const compFiles = [
+    ...(getBasketFiles('competitor') || []),
+    ...Array.from($('competitor-file')?.files || [])
+  ];
+
+  const mirnaEffectiveCount = dedupCount('mirna', primarySeqs, mirnaFiles);
+  const targetEffectiveCount = dedupCount('target', targetSeq, targetFiles);
+  const compEffectiveCount = dedupCount('competitor', competitorSeq, compFiles);
+
+  const totalCombinations = mirnaEffectiveCount * Math.max(1, targetEffectiveCount) * Math.max(1, compEffectiveCount);
+
+  prependHTML(resultsContainer, formatInfo(
+    `Detected: miRNA=${mirnaEffectiveCount}, Target=${targetEffectiveCount}, Competitor=${compEffectiveCount}.<br>Estimated total combinations: ${totalCombinations}.`
+  ));
 
   // Friendly info
   //const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
@@ -1940,14 +1994,14 @@ function displayResults(results, finalData=null){
 }
 
 function hasAnyStructure(){
-  const tgt = getBasketFiles('target').length;
-  const cmp = getBasketFiles('competitor').length;
-  const mir = getBasketFiles('mirna').length || 0;
-  const legacy =
-    ($('target-file')?.files?.length || 0) +
-    ($('competitor-file')?.files?.length || 0) +
-    ($('mirna-file')?.files?.length || 0);
-  return (tgt + cmp + mir + legacy) > 0;
+  // Always consider all PDB/CIF regardless of FASTA presence
+  const allKinds = ['mirna','target','competitor'];
+  let total = 0;
+  allKinds.forEach(k=>{
+    total += getBasketFiles(k).length;
+    total += ($(`${k}-file`)?.files?.length || 0);
+  });
+  return total > 0;
 }
 
 // === Inject range/tolerant filter chips (toggle behavior) ===
