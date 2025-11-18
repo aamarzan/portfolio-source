@@ -31,15 +31,6 @@ let CONFIG = {
   aa_convert_allowed: true,
   use_nonce: false
 };
-// === Core pipeline placeholders (initialized cleanly) ===
-// These were previously undefined in some downstream functions.
-// They hold normalized intermediate data per batch/run.
-let batch_records     = [];     // array of { miRNA, target, competitor, score, meta }
-let trimmed_sequences = {};     // { id: trimmed_nt_seq }
-let prim_seq_list     = [];     // list of original sequences (FASTA-derived)
-let num_feat_list     = [];     // numeric feature vectors passed to model (if client-side)
-let prim_struct_list  = [];     // structure metadata objects (FASTA ↔ PDB matched)
-
 
 // Store the exact inputs used at submit time so downstream analysis matches predictions
 const CURRENT_INPUTS = {
@@ -105,12 +96,6 @@ function inferExtFromResponse(res){
   return 'pdb';
 }
 
-if (data.status === "error") {
-  hide(loader);
-  setHTML(resultsContainer, formatError(data.error || "An unexpected error occurred during prediction."));
-  return;
-}
-
 // =====================================================
 // Helpers: DOM, UI, utils
 // =====================================================
@@ -123,18 +108,7 @@ function prependHTML(el, html){ if(el) el.insertAdjacentHTML('afterbegin', html)
 function show(el){ if(el) el.classList.remove('hidden'); }
 function hide(el){ if(el) el.classList.add('hidden'); }
 function text(el, t){ if(el) el.textContent = t; }
-function getFirstExistingElement(ids){
-  for(const id of ids){
-    const el = document.getElementById(id);
-    if(el) return el;
-  }
-  return null;
-}
 
-function getTextValuePossible(ids){
-  const el = getFirstExistingElement(ids);
-  return el && typeof el.value === 'string' ? el.value.trim() : '';
-}
 function safeParseFloat(x, d=0){
   const v = parseFloat(x);
   return Number.isFinite(v) ? v : d;
@@ -231,23 +205,68 @@ function injectPremiumStyles(){
   const css = `
     :root{ --sticky-gap: 12px; }
     nav.is-sticky-gap, header.is-sticky-gap { top: 0 !important; }
-    .btn-premium{padding:10px 14px; min-height:42px;min-width:130px;border-radius:12px;border:1px solid #d9d9e3;background:linear-gradient(180deg,#ffffff,#f6f7fb);font-weight:600;letter-spacing:.2px;box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);transition:.15s transform ease,.2s box-shadow ease;
+    .btn-premium{
+      padding:10px 14px;
+      min-height:42px;
+      min-width:130px;
+      border-radius:12px;
+      border:1px solid #d9d9e3;
+      background:linear-gradient(180deg,#ffffff,#f6f7fb);
+      font-weight:600;
+      letter-spacing:.2px;
+      box-shadow:0 1px 1px rgba(0,0,0,.04), 0 8px 20px rgba(17,24,39,.06);
+      transition:.15s transform ease,.2s box-shadow ease;
     }
-    .btn-premium:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,24,39,.09);
+    .btn-premium:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(17,24,39,.09);
     }
-    .btn-action{min-width:128px;min-height:40px;padding:9px 12px;border-radius:10px;font-weight:600;border:1px solid #d8dee9;background:linear-gradient(180deg,#fff,#f8fafc);
+    .btn-action{
+      min-width:128px;
+      min-height:40px;
+      padding:9px 12px;
+      border-radius:10px;
+      font-weight:600;
+      border:1px solid #d8dee9;
+      background:linear-gradient(180deg,#fff,#f8fafc);
     }
     .btn-accent{background:#0ea5e9;color:#fff;border:1px solid #0284c7;}
-    .chip{display:inline-block;padding:2px 8px;border:1px solid #e5e7eb;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;margin-left:6px;}
+    .chip{
+      display:inline-block;
+      padding:2px 8px;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      background:#f8fafc;
+      color:#334155;
+      font-size:12px;
+      margin-left:6px;
+    }
     #tabs-anchor{ scroll-margin-top: calc(var(--sticky-offset-main) + var(--sticky-gap)); }
     table#results-table thead th{
-      position:static;top:0;background:#fff;z-index:1;text-align:center;}
+      position:static;
+      top:0;
+      background:#fff;
+      z-index:1;
+      text-align:center;
+    }
     table#results-table tbody tr:hover{filter:brightness(0.98)}
-    .toolbar-btn{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid #d8dee9;background:#fff;font-weight:600}
+    .toolbar-btn{
+      min-height:32px;
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid #d8dee9;
+      background:#fff;
+      font-weight:600
+    }
     .info-note{ text-align:center; margin:8px 0; }
     .reload-warning{ text-align:center; margin:8px 0; }
     .precheck-table{width:100%;border-collapse:collapse;margin:6px 0;}
-    .precheck-table th,.precheck-table td{border-bottom:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px;}
+    .precheck-table th,.precheck-table td{
+      border-bottom:1px solid #e5e7eb;
+      padding:6px 8px;
+      text-align:left;
+      font-size:13px;
+    }
     /* When we detect the sticky nav container, we add this class */
     .is-sticky-gap{ top: calc(var(--sticky-offset-main) + var(--sticky-gap)) !important; }
 
@@ -262,7 +281,14 @@ function injectPremiumStyles(){
     }
     input[type="file"].file-premium::-webkit-file-upload-button,
     input[type="file"].file-premium::file-selector-button{
-      padding:7px 14px;border-radius:999px;border:1px solid #93c5fd;background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* very light sky blue */color:#0f172a;font-weight:500;letter-spacing:.15px;box-shadow:0 1px 4px rgba(15,23,42,.18);
+      padding:7px 14px;
+      border-radius:999px;
+      border:1px solid #93c5fd;
+      background:linear-gradient(135deg,#e0f2ff,#bae6fd); /* very light sky blue */
+      color:#0f172a;
+      font-weight:500;
+      letter-spacing:.15px;
+      box-shadow:0 1px 4px rgba(15,23,42,.18);
       cursor:pointer;
       background-size:100% 100%;
       transition:
@@ -271,7 +297,10 @@ function injectPremiumStyles(){
         .18s background-color ease;
     }
     input[type="file"].file-premium:hover::-webkit-file-upload-button,
-    input[type="file"].file-premium:hover::file-selector-button{background:linear-gradient(135deg,#dbeafe,#bfdbfe);box-shadow:0 3px 8px rgba(15,23,42,.22);transform:translateY(-0.5px);
+    input[type="file"].file-premium:hover::file-selector-button{
+      background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+      box-shadow:0 3px 8px rgba(15,23,42,.22);
+      transform:translateY(-0.5px);
     }
     input[type="file"].file-premium:active::-webkit-file-upload-button,
     input[type="file"].file-premium:active::file-selector-button{
@@ -647,50 +676,22 @@ function aaToRNAWithMode(aaSeq, mode='canonical'){
   }
   return out;
 }
+function resolveSeqWithAAHandling(anyId, pool){
+  const raw = tolerantGetAnySeqForId(anyId, pool);
+  if(!raw) return { seq:'', converted:false, note:'', mode:'' };
 
-// =====================================================
-// Unified NT extraction cascade (FASTA + PDB/CIF) — Rule 5
-// =====================================================
-function resolveSeqWithAAHandling(anyId, pool, pdbTextPool = {}) {
-  // 1️⃣ FASTA lookup
-  let raw = tolerantGetAnySeqForId(anyId, pool);
   const uiFlag = $('aa-convert-flag')?.checked ?? CONFIG.aa_convert_allowed;
   const mode = (byQS('#aa-nt-mode')?.value || 'canonical').toLowerCase();
   const canConvert = CONFIG.aa_convert_allowed && uiFlag;
 
-  // helper: fallback extract from PDB/CIF (nt first, else AA→NT)
-  const fallbackFromPDB = () => {
-    const pdbSeq = tolerantGetAnySeqForId(anyId, pdbTextPool);
-    if (!pdbSeq) return { seq: '', converted: false, note: 'No PDB sequence available.', mode: '' };
-
-    if (!isLikelyAA(pdbSeq)) {
-      return { seq: toRNA(pdbSeq), converted: false, note: 'From PDB/CIF (nt chain).', mode: '' };
+  if(isLikelyAA(raw)){
+    if(!canConvert){
+      return { seq:'', converted:false, note:'Target appears to be amino acids; enable AA→NT conversion or supply nucleotides.', mode:'' };
     }
-
-    if (canConvert) {
-      const nt = aaToRNAWithMode(pdbSeq, mode);
-      return { seq: toRNA(nt), converted: true, note: `AA→NT from PDB (${mode}).`, mode };
-    }
-
-    return { seq: '', converted: false, note: 'PDB-only amino acids — conversion disabled.', mode: '' };
-  };
-
-  // 1️⃣ direct NT
-  if (raw && !isLikelyAA(raw)) {
-    return { seq: toRNA(raw), converted: false, note: 'From FASTA nt.', mode: '' };
+    const nt = aaToRNAWithMode(raw, mode);
+    return { seq: toRNA(nt), converted:true, note:`AA→NT conversion applied (${mode}).`, mode };
   }
-
-  // 2️⃣ FASTA AA→NT
-  if (raw && isLikelyAA(raw)) {
-    if (canConvert) {
-      const nt = aaToRNAWithMode(raw, mode);
-      return { seq: toRNA(nt), converted: true, note: `AA→NT from FASTA (${mode}).`, mode };
-    }
-    return fallbackFromPDB();
-  }
-
-  // 3️⃣ no FASTA → fallback to PDB
-  return fallbackFromPDB();
+  return { seq: toRNA(raw), converted:false, note:'', mode:'' };
 }
 
 // =====================================================
@@ -991,10 +992,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
   // Link file pickers → textareas (sequence FASTA inputs)
-  const primaryTaEl = getFirstExistingElement(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']) || $('primary-seqs');
-  const primaryTaId = primaryTaEl ? primaryTaEl.id : 'primary-seqs';
-
-  bindFileToTextarea('mirna-seq-file', primaryTaId);
+  bindFileToTextarea('mirna-seq-file', 'primary-seqs');
   bindFileToTextarea('target-seq-file', 'target-seq');
   bindFileToTextarea('competitor-seq-file', 'competitor-seq');
 
@@ -1192,34 +1190,14 @@ async function handleSubmit(event){
   const loader = $('loader');
   const resultsContainer = $('results-container');
 
-// Be robust to old/new textarea IDs
-const primarySeqs   = getTextValuePossible(['primary-seqs','mirna-seqs','mirna-seq','primary_molecules']);
-const targetSeq     = getTextValuePossible(['target-seq','target-seqs','target_sequence']);
-const competitorSeq = getTextValuePossible(['competitor-seq','competitor-seqs','competitor_sequence']);
+  const primarySeqs   = $('primary-seqs')?.value?.trim() ?? '';
+  const targetSeq     = $('target-seq')?.value?.trim() ?? '';
+  const competitorSeq = $('competitor-seq')?.value?.trim() ?? '';
 
-// Snapshot FASTA → maps for downstream analysis
-CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
-CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
-CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
-
-// If we really don't see any miRNA sequences *and* no 3D input, stop here
-if (
-  Object.keys(CURRENT_INPUTS.mirnas).length === 0 &&
-  getBasketFiles('mirna').length === 0 &&
-  (($('mirna-file')?.files?.length || 0) === 0)
-) {
-  const rw = resultsContainer?.querySelector('.reload-warning');
-  if (rw) rw.remove();
-  setHTML(
-    resultsContainer,
-    formatError(
-      'We could not detect any valid miRNA sequences in your input. ' +
-      'Please paste nucleotide sequences in FASTA format (each starting with ">") and try again.'
-    )
-  );
-  if (loader) hide(loader);
-  return;
-}
+  // Snapshot FASTA → maps for downstream analysis
+  CURRENT_INPUTS.mirnas      = parseFastaToMap(primarySeqs, 'miRNA');
+  CURRENT_INPUTS.targets     = parseFastaToMap(targetSeq, 'target');
+  CURRENT_INPUTS.competitors = parseFastaToMap(competitorSeq, 'competitor');
 
   // Reset run manifest
   RUN_MANIFEST = {
@@ -1274,19 +1252,46 @@ if (
 
   // Competitor is completely optional: FASTA, PDB, both, or none — no impact on starting the analysis.
 
-  // Premium guard: allow PDB-only molecules (Rule 6)
+  // If either miRNA or target is missing (no FASTA, no PDB, no PDB ID), do NOT start the analysis
   if (!hasMirnaAny || !hasTargetAny) {
-    // if either is missing entirely — still allow if there is valid PDB/mmCIF uploaded
-    const hasMirnaStruct = (getBasketFiles('mirna').length + ($('mirna-file')?.files?.length || 0)) > 0;
-    const hasTargetStruct = (getBasketFiles('target').length + ($('target-file')?.files?.length || 0)) > 0;
+    const rw = resultsContainer?.querySelector('.reload-warning');
+    if (rw) rw.remove();
 
-    if (!(hasMirnaStruct && hasTargetStruct)) {
-      const rw = resultsContainer?.querySelector('.reload-warning');
-      if (rw) rw.remove();
-      setHTML(resultsContainer, formatError('Provide at least a PDB/mmCIF for both miRNA and Target. FASTA is optional.'));
-      if (loader) hide(loader);
-      return;
+    const missingBits = [];
+    if (!hasMirnaAny) {
+      missingBits.push(
+        '<li><strong>miRNA</strong> — provide a FASTA sequence in “Primary miRNAs” or attach a PDB/mmCIF file.</li>'
+      );
     }
+    if (!hasTargetAny) {
+      missingBits.push(
+        '<li><strong>Target</strong> — provide a FASTA sequence (e.g., 3′UTR / CDS fragment), attach a PDB/mmCIF file, or specify a PDB ID in the FASTA header.</li>'
+      );
+    }
+
+    setHTML(resultsContainer, `
+      <div class="staging-box"
+           style="background:linear-gradient(135deg,#fff7ed,#e0f2fe);
+                  border-radius:12px;
+                  border:1px solid #fed7aa;
+                  padding:12px;
+                  margin:8px 0;">
+        <div style="font-weight:600;margin-bottom:4px;">We need your core pair to start</div>
+        <p style="margin:0 0 4px;color:#334155;font-size:14px;">
+          To launch the analysis, please provide both a <strong>miRNA</strong> and a <strong>target</strong> in any of these forms:
+          FASTA, PDB/mmCIF, or (for targets) a PDB ID inside the FASTA header.
+        </p>
+        <ul style="margin:0 0 4px 18px;padding:0;font-size:13px;color:#1f2937;">
+          ${missingBits.join('')}
+        </ul>
+        <p style="margin:0;font-size:12px;color:#64748b;">
+          Competitor remains optional — add it in FASTA and/or PDB if you want us to model competitive displacement.
+        </p>
+      </div>
+    `);
+
+    if (loader) hide(loader);
+    return;
   }
 
   // Soft hint: if one of them is PDB-only, remind that some client-side plots prefer FASTA
@@ -1319,50 +1324,6 @@ if (
   const mirnaCount = countFastaRecords(primarySeqs);
   let tgtCount  = countFastaRecords(targetSeq);      if(!tgtCount && targetSeq)  tgtCount  = 1;
   let compCount = countFastaRecords(competitorSeq);  if(!compCount && competitorSeq) compCount = 1;
-
-  // =====================================================
-  // DEDUPLICATED COMBINATION LOGIC — Rule 3 + Rule 4
-  // =====================================================
-  function dedupCount(role, fastaText, files) {
-    const fastaIds = Object.keys(parseFastaToMap(fastaText || '', role));
-    const pdbIds   = new Set((files || []).map(f => {
-      const name = (f.name || '').split('.')[0];
-      return name.toLowerCase();
-    }));
-
-    // Count overlaps
-    const overlaps = fastaIds.filter(id =>
-      pdbIds.has(id.toLowerCase())
-    ).length;
-
-    const fastaOnly = Math.max(0, fastaIds.length - overlaps);
-    const pdbOnly   = Math.max(0, pdbIds.size - overlaps);
-    const matched   = overlaps;
-    return fastaOnly + pdbOnly + matched;
-  }
-
-  const mirnaFiles = [
-    ...(getBasketFiles('mirna') || []),
-    ...Array.from($('mirna-file')?.files || [])
-  ];
-  const targetFiles = [
-    ...(getBasketFiles('target') || []),
-    ...Array.from($('target-file')?.files || [])
-  ];
-  const compFiles = [
-    ...(getBasketFiles('competitor') || []),
-    ...Array.from($('competitor-file')?.files || [])
-  ];
-
-  const mirnaEffectiveCount = dedupCount('mirna', primarySeqs, mirnaFiles);
-  const targetEffectiveCount = dedupCount('target', targetSeq, targetFiles);
-  const compEffectiveCount = dedupCount('competitor', competitorSeq, compFiles);
-
-  const totalCombinations = mirnaEffectiveCount * Math.max(1, targetEffectiveCount) * Math.max(1, compEffectiveCount);
-
-  prependHTML(resultsContainer, formatInfo(
-    `Detected: miRNA=${mirnaEffectiveCount}, Target=${targetEffectiveCount}, Competitor=${compEffectiveCount}.Estimated total combinations: ${totalCombinations}.`
-  ));
 
   // Friendly info
   //const estTotal = (mirnaCount || 0) * (Math.max(tgtCount, 1)) * (Math.max(compCount, 1));
@@ -1400,18 +1361,9 @@ if (
 
   // Build FormData
   const formData = new FormData();
-
-  // Send miRNA sequences under multiple keys for backward compatibility
-  formData.append("primary_molecules", mirnaFastaText);
-  formData.append('primary_molecules', primarySeqs);   // current multi-miRNA key
-  formData.append('primary_molecule', primarySeqs);    // older single-miRNA key
-  formData.append('mirna_sequences', primarySeqs);     // extra safety
-  formData.append('mirna_seq', primarySeqs);           // extra safety
-
-  // Targets / competitors (old key names kept)
+  formData.append('primary_molecules', primarySeqs);
   formData.append('target_molecule', targetSeq);
   formData.append('competitor_molecule', competitorSeq);
-
   formData.append('target_start', $('target-start')?.value ?? '');
   formData.append('target_end',   $('target-end')?.value ?? '');
 
@@ -1438,44 +1390,30 @@ if (
     formData.append('competitor_chain_hints_json', JSON.stringify(compChainHints));
   }
 
-  // Optional 3D structure files (PDB / mmCIF) — unified for all roles
-  // Rule #2: always send every valid structure file for miRNA, target and competitor,
-  // regardless of whether FASTA is present for that molecule.
-  const structureRoles = [
-    { kind: 'mirna',      inputId: 'mirna-file',      field: 'mirna_3d_file' },
-    { kind: 'target',     inputId: 'target-file',     field: 'target_3d_file' },
-    { kind: 'competitor', inputId: 'competitor-file', field: 'competitor_3d_file' }
-  ];
-
-  // Avoid re-appending the exact same File object (same name+size+type)
-  const seenStructFiles = new Set();
-  const fingerprint = (f) => `${f.name}::${f.size}::${f.type || ''}`;
-
-  structureRoles.forEach(({ kind, inputId, field }) => {
-    // 1) Legacy single-input <input type="file" id="…-file">
-    const inputEl = $(inputId);
-    if (inputEl?.files?.length) {
-      for (const f of inputEl.files) {
-        if (!validateFileSize(f)) { inputEl.value = ''; break; }
-        const fp = fingerprint(f);
-        if (seenStructFiles.has(fp)) continue;
-        seenStructFiles.add(fp);
-        formData.append(field, f);
-      }
+  // Optional 3D files:
+  // The HTML fetch wrapper will append window.__BASKET__ files automatically on /predict.
+  // For resilience, also include any still-selected legacy inputs.
+  const legacyTargetFiles = $('target-file')?.files;
+  if (legacyTargetFiles?.length) {
+    for (const f of legacyTargetFiles) {
+      if (!validateFileSize(f)) { $('target-file').value=''; break; }
+      formData.append('target_3d_file', f);
     }
-
-    // 2) Multi-upload basket (window.__BASKET__[kind]) — can hold multiple PDB/CIF files
-    const staged = getBasketFiles(kind);
-    if (staged && staged.length) {
-      for (const f of staged) {
-        if (!validateFileSize(f)) continue; // we don't clear the basket here
-        const fp = fingerprint(f);
-        if (seenStructFiles.has(fp)) continue;
-        seenStructFiles.add(fp);
-        formData.append(field, f);
-      }
+  }
+  const legacyCompFiles = $('competitor-file')?.files;
+  if (legacyCompFiles?.length) {
+    for (const f of legacyCompFiles) {
+      if (!validateFileSize(f)) { $('competitor-file').value=''; break; }
+      formData.append('competitor_3d_file', f);
     }
-  });
+  }
+  const mirnaFileInput = $('mirna-file');
+  if (mirnaFileInput?.files?.length) {
+    for (const f of mirnaFileInput.files) {
+      if (!validateFileSize(f)) { mirnaFileInput.value=''; break; }
+      formData.append('mirna_3d_file', f);
+    }
+  }
 
   // Fire a non-blocking precheck (if supported). Show Use/Skip table.
   tryPrecheck(formData).catch(()=>{ /* silent */ });
@@ -1988,14 +1926,14 @@ function displayResults(results, finalData=null){
 }
 
 function hasAnyStructure(){
-  // Always consider all PDB/CIF regardless of FASTA presence
-  const allKinds = ['mirna','target','competitor'];
-  let total = 0;
-  allKinds.forEach(k=>{
-    total += getBasketFiles(k).length;
-    total += ($(`${k}-file`)?.files?.length || 0);
-  });
-  return total > 0;
+  const tgt = getBasketFiles('target').length;
+  const cmp = getBasketFiles('competitor').length;
+  const mir = getBasketFiles('mirna').length || 0;
+  const legacy =
+    ($('target-file')?.files?.length || 0) +
+    ($('competitor-file')?.files?.length || 0) +
+    ($('mirna-file')?.files?.length || 0);
+  return (tgt + cmp + mir + legacy) > 0;
 }
 
 // === Inject range/tolerant filter chips (toggle behavior) ===
