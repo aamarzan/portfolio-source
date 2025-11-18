@@ -1390,30 +1390,44 @@ async function handleSubmit(event){
     formData.append('competitor_chain_hints_json', JSON.stringify(compChainHints));
   }
 
-  // Optional 3D files:
-  // The HTML fetch wrapper will append window.__BASKET__ files automatically on /predict.
-  // For resilience, also include any still-selected legacy inputs.
-  const legacyTargetFiles = $('target-file')?.files;
-  if (legacyTargetFiles?.length) {
-    for (const f of legacyTargetFiles) {
-      if (!validateFileSize(f)) { $('target-file').value=''; break; }
-      formData.append('target_3d_file', f);
+  // Optional 3D structure files (PDB / mmCIF) — unified for all roles
+  // Rule #2: always send every valid structure file for miRNA, target and competitor,
+  // regardless of whether FASTA is present for that molecule.
+  const structureRoles = [
+    { kind: 'mirna',      inputId: 'mirna-file',      field: 'mirna_3d_file' },
+    { kind: 'target',     inputId: 'target-file',     field: 'target_3d_file' },
+    { kind: 'competitor', inputId: 'competitor-file', field: 'competitor_3d_file' }
+  ];
+
+  // Avoid re-appending the exact same File object (same name+size+type)
+  const seenStructFiles = new Set();
+  const fingerprint = (f) => `${f.name}::${f.size}::${f.type || ''}`;
+
+  structureRoles.forEach(({ kind, inputId, field }) => {
+    // 1) Legacy single-input <input type="file" id="…-file">
+    const inputEl = $(inputId);
+    if (inputEl?.files?.length) {
+      for (const f of inputEl.files) {
+        if (!validateFileSize(f)) { inputEl.value = ''; break; }
+        const fp = fingerprint(f);
+        if (seenStructFiles.has(fp)) continue;
+        seenStructFiles.add(fp);
+        formData.append(field, f);
+      }
     }
-  }
-  const legacyCompFiles = $('competitor-file')?.files;
-  if (legacyCompFiles?.length) {
-    for (const f of legacyCompFiles) {
-      if (!validateFileSize(f)) { $('competitor-file').value=''; break; }
-      formData.append('competitor_3d_file', f);
+
+    // 2) Multi-upload basket (window.__BASKET__[kind]) — can hold multiple PDB/CIF files
+    const staged = getBasketFiles(kind);
+    if (staged && staged.length) {
+      for (const f of staged) {
+        if (!validateFileSize(f)) continue; // we don't clear the basket here
+        const fp = fingerprint(f);
+        if (seenStructFiles.has(fp)) continue;
+        seenStructFiles.add(fp);
+        formData.append(field, f);
+      }
     }
-  }
-  const mirnaFileInput = $('mirna-file');
-  if (mirnaFileInput?.files?.length) {
-    for (const f of mirnaFileInput.files) {
-      if (!validateFileSize(f)) { mirnaFileInput.value=''; break; }
-      formData.append('mirna_3d_file', f);
-    }
-  }
+  });
 
   // Fire a non-blocking precheck (if supported). Show Use/Skip table.
   tryPrecheck(formData).catch(()=>{ /* silent */ });
