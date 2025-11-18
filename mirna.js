@@ -1445,6 +1445,7 @@ async function handleSubmit(event){
   const formData = new FormData();
 
   // Send miRNA sequences under multiple keys for backward compatibility
+  formData.append("primary_molecules", mirnaFastaText);
   formData.append('primary_molecules', primarySeqs);   // current multi-miRNA key
   formData.append('primary_molecule', primarySeqs);    // older single-miRNA key
   formData.append('mirna_sequences', primarySeqs);     // extra safety
