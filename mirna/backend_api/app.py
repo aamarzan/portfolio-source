@@ -1503,8 +1503,6 @@ def process_job(job_id: str,
                 tmp_paths_to_cleanup: List[str],
                 convert_aa_to_nt_flag: bool,
                 mature_trim_flag: bool):
-    logging.info(f"Started process_job for {job_id} with {len(primary_records)} miRNAs, {len(targets_list)} targets, {len(competitors_list)} competitors")
-
     try:
         if model is None or scaler is None:
             jobs[job_id]["status"] = "error"
