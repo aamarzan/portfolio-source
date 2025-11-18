@@ -1152,14 +1152,32 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Parse miRNA FASTA
+    # 🔹 NEW: temp file list + save miRNA 3D files early (for PDB-only fallback)
+    tmp_paths_to_cleanup: List[str] = []
+    mirna_3d_files = _save_optional_multi('mirna_3d_file')
+    for _, p in mirna_3d_files:
+        tmp_paths_to_cleanup.append(p)
+
+    # Parse miRNA FASTA (primary molecules)
     primary_records = parse_fasta_records(fasta_string)
+
+    # 🔹 NEW: allow miRNA PDB-only — derive miRNA sequences from uploaded PDB/CIF if no FASTA present
+    if not primary_records and mirna_3d_files:
+        pdb_primaries: List[Tuple[str, str]] = []
+        for fname, p in mirna_3d_files:
+            stem = os.path.splitext(secure_filename(fname))[0]
+            nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
+            if nt_seq:
+                pdb_primaries.append((stem, nt_seq))
+        primary_records = pdb_primaries
+
+    # Still nothing? Bail out.
     if not primary_records:
-        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
-    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "We could not detect any valid miRNA sequences (FASTA or PDB-derived). Please check your input."}), 400
+
+    # 🔹 Only enforce FASTA header check if user actually provided FASTA text
+    if fasta_string.strip() and not has_any_fasta_header(fasta_string):
         return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
-    if len(primary_records) > MIRNA_MAX:
-        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
     # Min miRNA length
     MIN_MIRNA_LEN = 10
@@ -1253,8 +1271,7 @@ def start_prediction():
             "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
         }
 
-    # Save uploaded 3D files (multi)
-    tmp_paths_to_cleanup: List[str] = []
+    # Save uploaded 3D files (multi) for target & competitor (miRNA handled above)
     target_3d_files = _save_optional_multi('target_3d_file')
     competitor_3d_files = _save_optional_multi('competitor_3d_file')
     for _, p in target_3d_files + competitor_3d_files:
@@ -1340,17 +1357,13 @@ def start_prediction():
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
     # ---------------------------------------------
 
-    # miRNA 3D index
-    mirna_3d_files = request.files.getlist('mirna_3d_file')
+    # miRNA 3D index (reuse files saved earlier)
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
-    for f in mirna_3d_files:
-        if f and f.filename:
-            p = save_filestorage_to_temp(f)
-            tmp_paths_to_cleanup.append(p)
-            stem = os.path.splitext(secure_filename(f.filename))[0]
-            kind, seq = extract_seq_from_structure(p)
-            for k in _id_variants(stem):
-                mirna_3d_index[k] = (kind, seq, p)
+    for fname, p in mirna_3d_files:
+        stem = os.path.splitext(secure_filename(fname))[0]
+        kind, seq = extract_seq_from_structure(p)
+        for k in _id_variants(stem):
+            mirna_3d_index[k] = (kind, seq, p)
 
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
