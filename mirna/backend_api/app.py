@@ -670,43 +670,35 @@ def extract_seq_from_structure(file_path: str) -> Tuple[Optional[str], str]:
     except Exception as e:
         logging.warning(f"Structure parse failed for {file_path}: {e}")
         return (None, "")
-
-    # 1) Try as protein (AA)
+    # Protein attempt
     try:
         ppb = PPBuilder()
         aas = []
         for pp in ppb.build_peptides(structure):
             aas.append(str(pp.get_sequence()))
         if aas:
-            # joined protein chain(s)
             return ("AA", "".join(aas))
     except Exception as e:
         logging.warning(f"PPBuilder failed: {e}")
-
-    # 2) Try as nucleic acid (DNA/RNA) by residue name
-    NA_MAP = {
-        # single-letter nucleotide residues
-        "A": "A", "C": "C", "G": "G", "U": "U", "T": "T",
-        # common DNA residues
-        "DA": "A", "DC": "C", "DG": "G", "DT": "T", "DU": "U",
-        # 3-letter forms seen in some PDBs/mmCIF
-        "ADE": "A", "CYT": "C", "GUA": "G", "URA": "U", "THY": "T",
-        # inosine etc.
-        "I": "N",
-    }
-    nts: List[str] = []
+    # Nucleic acids by residue name (simple)
+    NA3 = {"A":"ADE", "U":"URA", "G":"GUA", "C":"CYT", "T":"THY"}
+    nts = []
     try:
         for model in structure:
             for chain in model:
                 for res in chain:
                     name = res.get_resname().strip().upper()
-                    if name in NA_MAP:
-                        nts.append(NA_MAP[name])
+                    one = None
+                    for base, three in NA3.items():
+                        if name == three or name == base:
+                            one = base
+                            break
+                    if one:
+                        nts.append(one)
         if nts:
             return ("NT", "".join(nts))
     except Exception as e:
         logging.warning(f"Nucleic parse failed: {e}")
-
     return (None, "")
 
 
@@ -1143,6 +1135,7 @@ def precheck():
     return jsonify(out)
 # ---------------------------------------------------------------------------
 
+
 @app.route('/predict', methods=['POST'])
 @limiter.limit("10 per 15 minutes")
 def start_prediction():
@@ -1159,81 +1152,30 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Temp paths for janitor (miRNA + target + competitor 3D)
-    tmp_paths_to_cleanup: List[str] = []
-
-    # 🔹 1) miRNA 3D files — save early so we can derive sequence if no FASTA
-    mirna_3d_files = _save_optional_multi('mirna_3d_file')
-    for _, p in mirna_3d_files:
-        tmp_paths_to_cleanup.append(p)
-
-    # 🔹 2) Parse miRNA FASTA (primary molecules)
-    primary_records = parse_fasta_records(fasta_string or "")
-
-    # Track whether the user actually sent anything miRNA-related
-    has_any_mirna_input = bool((fasta_string or "").strip()) or bool(mirna_3d_files)
-
-    # 🔹 3) If no miRNA FASTA, allow PDB-only miRNA: derive NT sequence from 3D
-    if not primary_records and mirna_3d_files:
-        pdb_primaries: List[Tuple[str, str]] = []
-        for fname, p in mirna_3d_files:
-            stem = os.path.splitext(secure_filename(fname))[0]
-            nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
-            if nt_seq:
-                pdb_primaries.append((stem, nt_seq))
-        primary_records = pdb_primaries
-
-    # Still nothing? Then we truly have no miRNA sequence
+    # Parse miRNA FASTA
+    primary_records = parse_fasta_records(fasta_string)
     if not primary_records:
-        if has_any_mirna_input:
-            # User sent something (text or PDB) but we couldn't decode it
-            return jsonify({
-                "error": (
-                    "We received miRNA-related input but could not parse any usable sequences "
-                    "(FASTA or PDB-derived). Please check that your sequences are valid "
-                    "nucleotides (A/U/G/C) or that uploaded structures contain polymer chains."
-                )
-            }), 400
-        else:
-            # Absolutely no miRNA provided
-            return jsonify({
-                "error": (
-                    "No miRNA input was provided. Please paste at least one miRNA sequence "
-                    "or upload a miRNA 3D structure."
-                )
-            }), 400
-
-    # Only enforce FASTA-header rule if user actually typed something in the box
-    if fasta_string.strip() and not has_any_fasta_header(fasta_string):
-        return jsonify({
-            "error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."
-        }), 400
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
+    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
+    if len(primary_records) > MIRNA_MAX:
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
     # Min miRNA length
     MIN_MIRNA_LEN = 10
-    short_mirnas = [
-        pid for pid, seq in primary_records
-        if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN
-    ]
+    short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
     if short_mirnas:
-        return jsonify({
-            "error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: "
-                     f"{', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"
-        }), 400
+        return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
-    # 🔹 4) Parse targets (FASTA; can be empty because PDB-only is allowed later)
-    targets_list = parse_fasta_records(target_seq_text or "")
+    # Parse targets (may be empty — PDB-only supported now)
+    targets_list = parse_fasta_records(target_seq_text)
 
     # Optional target range
     target_start_raw = request.form.get('target_start', '').strip()
     target_end_raw   = request.form.get('target_end', '').strip()
-
     def _to_int_safe(s):
-        try:
-            return int(s)
-        except Exception:
-            return None
-
+        try: return int(s)
+        except Exception: return None
     ts = _to_int_safe(target_start_raw)
     te = _to_int_safe(target_end_raw)
 
@@ -1272,13 +1214,9 @@ def start_prediction():
                 seq = back_translate(seq)
                 aa_to_nt = True
             else:
-                return jsonify({
-                    "error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."
-                }), 400
+                return jsonify({"error": f"Target '{tid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
         if len(seq) < MIN_TARGET_LEN:
-            return jsonify({
-                "error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after range)."
-            }), 400
+            return jsonify({"error": f"Target '{tid}' must be at least {MIN_TARGET_LEN} nt long (after range)."}), 400
         _fixed_targets.append((tid, seq))
         target_meta_map[tid] = {
             "source": "fasta",
@@ -1287,9 +1225,9 @@ def start_prediction():
         }
     targets_list = _fixed_targets
 
-    # 🔹 5) Competitors
+    # Competitors
     if competitor_seq_text.strip():
-        competitors_list_raw = parse_fasta_records(competitor_seq_text or "")
+        competitors_list_raw = parse_fasta_records(competitor_seq_text)
     else:
         competitors_list_raw = []
 
@@ -1305,13 +1243,9 @@ def start_prediction():
                 s = back_translate(s)
                 aa_to_nt = True
             else:
-                return jsonify({
-                    "error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."
-                }), 400
+                return jsonify({"error": f"Competitor '{cid}' appears to be an amino-acid sequence. Enable AA→NT (lossy) in Advanced to proceed."}), 400
         if len(s) < MIN_COMP_LEN:
-            return jsonify({
-                "error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."
-            }), 400
+            return jsonify({"error": f"Competitor '{cid}' must be at least {MIN_COMP_LEN} nt long."}), 400
         _fixed_comps.append((cid, s))
         competitor_meta_map[cid] = {
             "source": "fasta",
@@ -1319,7 +1253,8 @@ def start_prediction():
             "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
         }
 
-    # 🔹 6) Save uploaded 3D files for targets & competitors
+    # Save uploaded 3D files (multi)
+    tmp_paths_to_cleanup: List[str] = []
     target_3d_files = _save_optional_multi('target_3d_file')
     competitor_3d_files = _save_optional_multi('competitor_3d_file')
     for _, p in target_3d_files + competitor_3d_files:
@@ -1340,11 +1275,13 @@ def start_prediction():
         for k in _id_variants(stem):
             competitor_3d_index[k] = p
 
-    # 🔹 7) Accept PDB IDs for target/competitor (unchanged)
+    # Accept PDB IDs (download & index) — support both plural string and repeated fields [UPDATED]
+    # Old form (comma/space/semicolon separated):
     target_pdb_ids_str = request.form.get('target_pdb_ids', '')
     competitor_pdb_ids_str = request.form.get('competitor_pdb_ids', '')
     t_ids = _split_ids(target_pdb_ids_str)
     c_ids = _split_ids(competitor_pdb_ids_str)
+    # New form (repeated fields):
     t_ids += [x.strip() for x in request.form.getlist("target_pdb_id") if x.strip()]
     c_ids += [x.strip() for x in request.form.getlist("competitor_pdb_id") if x.strip()]
 
@@ -1368,7 +1305,8 @@ def start_prediction():
             if not competitor_3d_path:
                 competitor_3d_path = p
 
-    # 🔹 8) PDB-only allowance for targets (existing logic)
+    # ---- NEW: PDB-only allowance — derive sequences when FASTA empty ----
+    # Targets
     if not targets_list and (target_3d_files or t_ids):
         for fname, p in target_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
@@ -1384,52 +1322,43 @@ def start_prediction():
         if not targets_list:
             return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
 
-    # ✅ Must have at least one target (FASTA or PDB-derived)
-    if not targets_list:
-        return jsonify({
-            "error": "Provide at least one target sequence (FASTA or PDB/ID) to run the analysis."
-        }), 400
-
-    # 🔹 9) Add competitor sequences derived from PDB (union of FASTA + PDB)
-    if competitor_3d_files or c_ids:
+    # Competitors
+    if not _fixed_comps and (competitor_3d_files or c_ids):
         for fname, p in competitor_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_COMP_LEN:
                 cid = stem
-                if cid not in competitor_meta_map:
-                    # new competitor coming only from PDB
-                    _fixed_comps.append((cid, nt_seq))
-                    competitor_meta_map[cid] = {
-                        "source": f"pdb:{src_kind}",
-                        "aa_to_nt_applied": aa_to_nt,
-                        "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
-                    }
-                else:
-                    # there is already a FASTA competitor with the same ID -> annotate it
-                    src = competitor_meta_map[cid].get("source", "fasta")
-                    if f"pdb:{src_kind}" not in src:
-                        competitor_meta_map[cid]["source"] = src + f"+pdb:{src_kind}"
+                _fixed_comps.append((cid, nt_seq))
+                competitor_meta_map[cid] = {
+                    "source": f"pdb:{src_kind}",
+                    "aa_to_nt_applied": aa_to_nt,
+                    "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
+                }
 
     # If still no competitors, use placeholder
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
+    # ---------------------------------------------
 
-    # 🔹 10) miRNA 3D index (reuse miRNA files we already saved)
+    # miRNA 3D index
+    mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
-    for fname, p in mirna_3d_files:
-        stem = os.path.splitext(secure_filename(fname))[0]
-        kind, seq = extract_seq_from_structure(p)
-        for k in _id_variants(stem):
-            mirna_3d_index[k] = (kind, seq, p)
+    for f in mirna_3d_files:
+        if f and f.filename:
+            p = save_filestorage_to_temp(f)
+            tmp_paths_to_cleanup.append(p)
+            stem = os.path.splitext(secure_filename(f.filename))[0]
+            kind, seq = extract_seq_from_structure(p)
+            for k in _id_variants(stem):
+                mirna_3d_index[k] = (kind, seq, p)
 
-    # 🔹 11) Create job + counts
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=True)
 
     _total = len(primary_records) * max(1, len(targets_list)) * max(1, len(competitors_list))
 
-    # Optional chain hints
+    # NEW: optional chain hints manifest capture [ADDED]
     try:
         target_chain_hints = json.loads(request.form.get("target_chain_hints_json") or "{}")
     except Exception:
@@ -1461,6 +1390,7 @@ def start_prediction():
         "model_input_shapes": {},
         "target_meta": target_meta_map,
         "competitor_meta": competitor_meta_map,
+        # NEW: manifest stub to mirror client expectations [ADDED]
         "manifest": {
             "created_at": datetime.utcnow().isoformat() + "Z",
             "client": "mirna.js",
@@ -1475,18 +1405,9 @@ def start_prediction():
 
     threading.Thread(
         target=process_job,
-        args=(
-            job_id,
-            primary_records,
-            targets_list,
-            competitors_list,
-            target_3d_path,
-            competitor_3d_path,
-            {},                # mirna_3d_index_unused (kept for signature)
-            tmp_paths_to_cleanup,
-            convert_aa_to_nt_flag,
-            mature_trim_flag
-        ),
+        args=(job_id, primary_records, targets_list, competitors_list,
+              target_3d_path, competitor_3d_path, {}, tmp_paths_to_cleanup,
+              convert_aa_to_nt_flag, mature_trim_flag),
         daemon=True
     ).start()
 
@@ -1503,8 +1424,6 @@ def process_job(job_id: str,
                 tmp_paths_to_cleanup: List[str],
                 convert_aa_to_nt_flag: bool,
                 mature_trim_flag: bool):
-    logging.info(f"Started process_job for {job_id} with {len(primary_records)} miRNAs, {len(targets_list)} targets, {len(competitors_list)} competitors")
-
     try:
         if model is None or scaler is None:
             jobs[job_id]["status"] = "error"
