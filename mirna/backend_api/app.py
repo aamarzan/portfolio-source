@@ -1,5 +1,9 @@
 
-# app.py — multi-target & multi-competitor + seed-scan + IG explain + CSV & heatmap exports + 3D contacts
+# app.py — backend for SeedScope™ (multi-miRNA, multi-target, multi-competitor)
+# - Unified FASTA+PDB cascade per molecule (miRNA, target, competitor):
+#     FASTA → PDB nucleic acid → AA→NT back-translation → NT sequence for all analytics
+# - Non-blocking 3D: PDB/mmCIF is optional; unusable structures are kept for viz and clearly flagged
+# - Seed-scan + IG heatmaps + CSV/PNG exports + 3D contact extraction, with RAM-safe batching
 # (premium, future-proof, and strictly provenance-grounded)
 
 import os

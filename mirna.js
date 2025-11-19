@@ -1,23 +1,17 @@
 
-// mirna.js — upgraded & sync’d with multi-target/competitor backend (+ seed-scan + IG heatmap)
-// Supreme edition: tolerant header matching, range-aware coords, premium-sized buttons, seed CSV export,
-// persistent analysis controls, sortable table, safe bindings, graceful fallbacks, server CSV/PNG downloads,
-// progress stall detector, 3D viewer, and precise UX around optional/visualization-only PDB usage.
-// + 2025-11-11: multi-PDB upload (target/competitor), per-row bundle download, global “Download All”,
-//   perfectly leveled Heatmap controls, and AA→NT before any analysis (no AA letters in alignments).
-// + 2025-11-12: Accept PDB IDs in FASTA headers and pass to backend so jobs start with IDs or files.
-// + 2025-11-13:
-//   • Multi-file 3D viewer with chain/role panel (miRNA, Target, Competitor) + combined view
-//   • Seed-site highlight in 3D (best-effort) + residue offset
-//   • Extra actions in Results table: 3D miRNA + 3D All
-//   • Robust extension inference from server responses; staged/legacy 3D files merged
-//   • “Structure-features” badge; manifest preserved
-// + 2025-11-14:
-//   • Tab buttons snap to section top (with premium sticky gap)
-//   • Results table headers centered
-//   • NGL snapshot robust to Blob/canvas return
-//   • Removed “Open raw file(s)” from 3D viewer toolbars
-//   • Premium sticky gap between site header and sticky tab bar
+// mirna.js — frontend for SeedScope™ miRNA–RNA affinity (multi-miRNA, multi-target, multi-competitor)
+// Core features:
+//   • Tolerant FASTA parsing, header matching & range-aware coordinates (Header:Start-End)
+//   • Multi-role 3D support (miRNA, target, competitor) from PDB/mmCIF files and PDB IDs
+//   • Unified FASTA+PDB cascade per molecule:
+//       - If FASTA exists → FASTA provides the nucleotide sequence for scoring
+//       - If no FASTA → derive NT from PDB nucleic chains; if protein-only → AA→NT back-translation
+//   • NT-first analytics: Seed Sites, IG heatmaps, density plots always run on nucleotide strings
+//   • Server CSV/PNG downloads, per-row bundles, “Download All”, RAM-safe batching & progress polling
+//   • Multi-file 3D viewer (miRNA/Target/Competitor/combined), best-effort seed highlighting in 3D
+//   • Non-blocking auth (nonce/API key/open) and guards so missing/odd PDB never silently kills a job
+//
+// This file only coordinates UI, pre-validation and result rendering; all model decisions live in app.py.
 
 // =====================================================
 // Global state
@@ -1645,7 +1639,7 @@ function renderPrecheckPanel(data){
     });
   }
   html += `</tbody></table>
-      <small style="color:#475569;">If a PDB isn’t nucleotide or doesn’t match the FASTA, it’s kept for visualization with a “not used in scoring” note. Protein chains are auto back-translated for seed/IG scanning when enabled.</small>
+      <small style="color:#475569;">If a PDB isn’t nucleotide and if AA to NT conversion gets too noise or doesn’t match the FASTA, it’s kept for visualization with a “not used in scoring” note. Protein chains are auto back-translated for seed/IG scanning when enabled.</small>
     </div>
   `;
   prependHTML(rc, html);

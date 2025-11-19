@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- v2025-11-12 r8: tab buttons type=button, PDB-only flow, styled 3D stagers (Add/Clear+badge), sticky Use/Skip header, AA→NT fallback checkbox -->
+  <!-- v2025-11-20 r10: multi-role 3D (miRNA/Target/Competitor) with unified FASTA+PDB cascade, NT-first analytics, AA→NT fallback, sticky Use/Skip preview & premium controls -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
@@ -256,8 +256,8 @@
 
       <!-- Workflow (About + Workflow + Tips unified) -->
       <div id="intro-tab" class="card active" role="tabpanel" aria-labelledby="tab-workflow">
-        <section aria-label="About such tool" style="margin-bottom:14px;">
-          <h3 style="margin:0 0 6px 0;">About this premium tool</h3>
+        <section aria-label="About this tool" style="margin-bottom:14px;">
+          <h3 style="margin:0 0 6px 0;">About this tool</h3>
           <p>
             This tool predicts miRNA binding affinity to RNA targets and estimates competitive effects of optional competitor molecules.
             It fuses sequence features with optional 3D structure-derived features and evaluates inputs in RAM-safe batches.
@@ -267,20 +267,53 @@
         <section aria-label="How it works" style="margin-bottom:14px;">
           <h3 style="margin:0 0 6px 0;">How it works</h3>
           <ul>
-            <li>Input your miRNA(s) as multi-FASTA. You may also provide one or more targets (multi-FASTA) and zero or more competitors (multi-FASTA).</li>
-            <li>The analysis iterates: competitor1 → all targets → all miRNAs, then competitor2 → all targets → all miRNAs, and so on.</li>
-            <li>Advanced options include auto-trimming long miRNAs to a mature-like window and <b>lossy AA→NT back-translation</b> (where enabled).</li>
-            <li>The backend validates inputs, encodes sequences/structures, and performs model inference to produce affinity scores.</li>
+            <li>
+              Input your miRNA(s) as multi-FASTA. You may also provide one or more targets (multi-FASTA)
+              and zero or more competitors (multi-FASTA).
+            </li>
+            <li>
+              For each competitor, the backend evaluates all targets against all miRNAs
+              (baseline + with-competitor), so every triple (miRNA, target, competitor) is covered.
+            </li>
+            <li>
+              For every molecule (miRNA, target, competitor), the backend applies a unified sequence cascade:
+              <b>FASTA → PDB nucleic acid → AA→NT back-translation</b> so analytics always run on nucleotides.
+            </li>
+            <li>
+              Advanced options include auto-trimming long miRNAs to a mature-like window and
+              <b>lossy AA→NT back-translation</b> for protein or protein-only PDB inputs (when enabled).
+            </li>
+            <li>
+              The backend validates inputs, encodes sequences and any usable structural features,
+              and performs model inference to produce affinity scores.
+            </li>
           </ul>
+
         </section>
 
         <section aria-label="Key rules" style="font-size:0.95em; color:#163b66; background:#f2f7ff; border:1px solid #d7e7ff; border-left:4px solid #1e5a9c; padding:12px 14px; border-radius:6px; margin:10px 0 14px;">
           <strong>Key rules & guarantees</strong>
           <ol style="margin:6px 0 0 18px;">
-            <li><b>PDB is optional and never blocks</b>. If a PDB can’t be used for scoring (e.g., protein only), the job still runs on nucleotide sequence; the PDB remains for 3D viewing with a “not used in scoring” note.</li>
-            <li><b>PDB-only is allowed</b>. If the PDB contains nucleic acid, we extract NT and run; if it contains protein, we auto back-translate AA→NT (deterministic codons).</li>
-            <li><b>FASTA-only works</b>. PDB is only needed for 3D viewing / optional structure features.</li>
-            <li><b>Both FASTA + PDB</b>: FASTA is trusted for scoring; matched NT in PDB may enrich features; mismatches just fall back to visualization—no hard fail.</li>
+            <li>
+              <b>FASTA wins when present.</b> If a FASTA record exists for a molecule, that nucleotide
+              sequence is trusted for scoring. Any matching PDB/mmCIF is paired as its 3D partner
+              (for viz and optional structure features).
+            </li>
+            <li>
+              <b>PDB-only is allowed.</b> If no FASTA exists for a molecule but a PDB/mmCIF or PDB ID is
+              provided, the backend will derive a nucleotide sequence: nucleic chains are used directly;
+              protein-only chains use AA→NT back-translation when enabled.
+            </li>
+            <li>
+              <b>PDB never silently disables scoring.</b> If a PDB cannot provide a usable sequence
+              (e.g., unknown polymer and no FASTA), it is kept for 3D viewing and clearly marked as
+              “not used for scoring” instead of causing a hard failure for other valid inputs.
+            </li>
+            <li>
+              <b>FASTAn + PDB together behave like one molecule.</b> When IDs match, FASTA supplies
+              the NT sequence, PDB supplies the structure; when they do not, FASTA-based scoring still runs
+              and the PDB is treated as an independent visualization entry.
+            </li>
           </ol>
           <div class="badge-legend">
             <span class="badge">PDB used: yes/no</span>
@@ -437,7 +470,11 @@
           <div id="precheck" style="margin-top:12px;">
             <strong>Use/Skip Preview</strong>
             <div class="note" style="margin:6px 0 8px;">
-              This preview is heuristic. <b>FASTA wins for scoring.</b> PDB is used for 3D (and optional features). If only PDB is supplied: nucleic acid runs as-is; protein runs via AA→NT back-translation.
+              This preview is heuristic. <b>FASTA wins for scoring when present.</b> For any molecule that has
+              only PDB/PDB-ID input, the backend will try to extract a nucleotide sequence from nucleic chains,
+              or fall back to AA→NT back-translation for protein-only chains (when AA→NT is enabled).
+              Entries that cannot provide a usable NT sequence are still available for 3D viewing but are
+              clearly marked as “not used for scoring.”
             </div>
             <div class="wrap" id="precheck-table-wrap"></div>
           </div>
@@ -879,11 +916,12 @@
                 competitor:(window.__BASKET__.competitor||[]).map(f=>({name:f.name,size:f.size}))
               }
             },
-            declarations:[
-              "PDB is optional and never blocks scoring.",
-              "If both FASTA and PDB are present, FASTA is trusted for scoring.",
-              "Seed/IG are always computed on nucleotide sequences (direct or AA→NT).",
-              "AA→NT is heuristic (deterministic codon mapping)."
+            declarations: [
+              "FASTA is the primary source of nucleotide sequence when present; PDB/mmCIF is optional for structure.",
+              "If both FASTA and PDB are present for a molecule, FASTA provides the NT sequence and PDB provides the 3D structure.",
+              "If only PDB/PDB-ID is present, the backend derives NT from nucleic chains or via AA→NT back-translation for protein-only chains (when enabled).",
+              "Seed/IG analyses are always computed on nucleotide sequences (direct FASTA or NT derived from PDB/AA via the cascade).",
+              "AA→NT is heuristic (deterministic codon mapping) and is used only when needed to obtain an NT sequence."
             ]
           };
           const blob = new Blob([JSON.stringify(manifest,null,2)], {type:'application/json'});
