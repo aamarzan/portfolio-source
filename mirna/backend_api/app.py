@@ -1151,14 +1151,7 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Parse miRNA FASTA
-    primary_records = parse_fasta_records(fasta_string)
-    if not primary_records:
-        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
-    if not has_any_fasta_header(fasta_string):
-        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
-    if len(primary_records) > MIRNA_MAX:
-        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
+
 
     # Min miRNA length
     MIN_MIRNA_LEN = 10
