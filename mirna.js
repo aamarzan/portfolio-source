@@ -1305,7 +1305,7 @@ async function handleSubmit(event){
                   margin:8px 0;">
         <div style="font-weight:600;margin-bottom:2px;">Running with structural-only input</div>
         <p style="margin:0;color:#334155;font-size:13px;">
-          Your combination (FASTA + PDB) is valid — we’ll start the analysis. Just note that some client-side views
+          Your combination (FASTA and/or PDB) is valid — we will start the analysis. Just note that some client-side views
           (Seed Sites, IG heatmaps) work best when FASTA sequences are also provided.
         </p>
       </div>
