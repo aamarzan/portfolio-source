@@ -81,7 +81,7 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = False
+USE_NONCE = True
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
@@ -1151,38 +1151,20 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Parse miRNA FASTA (may be empty — PDB-only runs allowed if 3D is present)
+    # Parse miRNA FASTA
     primary_records = parse_fasta_records(fasta_string)
+    if not primary_records:
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
+    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
+    if len(primary_records) > MIRNA_MAX:
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
-    # If the user actually supplied FASTA text, enforce headers, max count, and min length
-    if primary_records:
-        if not has_any_fasta_header(fasta_string):
-            return jsonify({
-                "error": (
-                    "Your miRNA input is missing FASTA headers. Please add >accession lines "
-                    "(e.g., >hsa-let-7a-5p)."
-                )
-            }), 400
-
-        if len(primary_records) > MIRNA_MAX:
-            return jsonify({
-                "error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."
-            }), 400
-
-    # Min miRNA length for FASTA-derived miRNAs
+    # Min miRNA length
     MIN_MIRNA_LEN = 10
-    if primary_records:
-        short_mirnas = [
-            pid for pid, seq in primary_records
-            if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN
-        ]
-        if short_mirnas:
-            return jsonify({
-                "error": (
-                    f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: "
-                    f"{', '.join(short_mirnas[:10])}{' .' if len(short_mirnas) > 10 else ''}"
-                )
-            }), 400
+    short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
+    if short_mirnas:
+        return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
 
     # Parse targets (may be empty — PDB-only supported now)
     targets_list = parse_fasta_records(target_seq_text)
@@ -1401,15 +1383,8 @@ def start_prediction():
 
         primary_records = derived_prim
 
-    # After FASTA + PDB/CIF cascades, enforce cap and require at least one miRNA
-    if len(primary_records) > MIRNA_MAX:
-        return jsonify({
-            "error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."
-        }), 400
-
+    # After all cascades, we still require at least one primary sequence
     if not primary_records:
-        # This is the only place we now *stop* for missing miRNA:
-        # no FASTA and no usable PDB/CIF.
         return jsonify({"error": "No valid miRNA sequences found in FASTA or PDB/CIF input."}), 400
 
     job_id = str(uuid.uuid4())
