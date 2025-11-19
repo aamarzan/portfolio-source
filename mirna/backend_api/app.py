@@ -1403,6 +1403,79 @@ def start_prediction():
     except Exception:
         competitor_chain_hints = {}
 
+    # --- NEW: unified, role-aware FASTA vs 3D deduplicated counts ---
+    def _canonical_role_id(raw_id: str) -> str:
+        """
+        Normalize IDs so FASTA and PDB/CIF keys can be matched:
+        - strip target ranges (id:start-end → id)
+        - collapse whitespace, lower-case
+        """
+        if not raw_id:
+            return ""
+        r = parse_range_id(raw_id)
+        if r:
+            raw_id = r["baseId"]
+        raw_id = raw_id.strip()
+        raw_id = re.sub(r"\s+", "_", raw_id)
+        return raw_id.lower()
+
+    def _struct_canonical_ids(idx, triple: bool = False):
+        """
+        Collapse structure index to canonical IDs per unique file path.
+
+        For target/competitor indices (key → path) we group by path and
+        pick one representative key. For miRNA (key → (kind, seq, path))
+        we do the same but unpack the triple.
+        """
+        by_path = {}
+        if triple:
+            # mirna_3d_index: key -> (kind, seq, path)
+            for key, (_kind, _seq3d, path) in (idx or {}).items():
+                by_path.setdefault(path, []).append(key)
+        else:
+            # target_3d_index / competitor_3d_index: key -> path
+            for key, path in (idx or {}).items():
+                by_path.setdefault(path, []).append(key)
+
+        out = set()
+        for path, keys in by_path.items():
+            if not keys:
+                continue
+            # Choose the shortest key as representative for this file
+            best = sorted(keys, key=len)[0]
+            out.add(_canonical_role_id(best))
+        return out
+
+    # Canonicalized FASTA IDs
+    mirna_ids_fasta = {_canonical_role_id(mid) for (mid, _seq) in primary_records}
+    target_ids_fasta = {_canonical_role_id(tid) for (tid, _seq) in targets_list}
+    competitor_ids_fasta = {_canonical_role_id(cid) for (cid, _seq) in competitors_list if cid != "none"}
+
+    # Canonicalized 3D IDs from the indices
+    mirna_ids_struct = _struct_canonical_ids(mirna_3d_index, triple=True)
+    target_ids_struct = _struct_canonical_ids(target_3d_index, triple=False)
+    competitor_ids_struct = _struct_canonical_ids(competitor_3d_index, triple=False)
+
+    def _dedup_counts(fset, sset):
+        matched = sorted(fset & sset)
+        fasta_only = sorted(fset - sset)
+        struct_only = sorted(sset - fset)
+        return {
+            "total_fasta": len(fset),
+            "total_struct": len(sset),
+            "matched_pairs": len(matched),
+            "fasta_only": len(fasta_only),
+            "struct_only": len(struct_only),
+            # Keep a few IDs for easy debugging in the manifest
+            "example_matched_ids": matched[:5],
+            "example_fasta_only": fasta_only[:5],
+            "example_struct_only": struct_only[:5],
+        }
+
+    mirna_summary = _dedup_counts(mirna_ids_fasta, mirna_ids_struct)
+    target_summary = _dedup_counts(target_ids_fasta, target_ids_struct)
+    competitor_summary = _dedup_counts(competitor_ids_fasta, competitor_ids_struct)
+
     jobs[job_id] = {
         "status": "running",
         "results": [],
@@ -1425,7 +1498,7 @@ def start_prediction():
         "model_input_shapes": {},
         "target_meta": target_meta_map,
         "competitor_meta": competitor_meta_map,
-        # NEW: manifest stub to mirror client expectations [ADDED]
+        # UPDATED: richer manifest for unified, role-aware inspection
         "manifest": {
             "created_at": datetime.utcnow().isoformat() + "Z",
             "client": "mirna.js",
@@ -1433,8 +1506,25 @@ def start_prediction():
             "competitor_pdb_ids": c_ids,
             "target_chain_hints": target_chain_hints,
             "competitor_chain_hints": competitor_chain_hints,
+            "role_counts": {
+                "mirna": mirna_summary,
+                "target": target_summary,
+                "competitor": competitor_summary,
+                "combos": {
+                    "primary": len(primary_records),
+                    "targets": len(targets_list),
+                    "competitors": len(competitors_list),
+                    "eval_triples": _total,
+                },
+            },
+            "fasta_ids": {
+                "mirna": sorted(list(mirna_ids_fasta)),
+                "target": sorted(list(target_ids_fasta)),
+                "competitor": sorted(list(competitor_ids_fasta)),
+            },
         }
     }
+
 
     send_ga_event("prediction_started", {"total": _total})
 
