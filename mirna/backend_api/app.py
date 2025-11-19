@@ -81,13 +81,13 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = False
+USE_NONCE = True
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
 MATURE_TRIM_WINDOW = int(os.getenv("MATURE_TRIM_WINDOW", "22"))
 AA_CONVERT_ALLOWED = True
-STRUCTURE_MISMATCH_TOL = 1  # 10%
+STRUCTURE_MISMATCH_TOL = 0.10  # 10%
 MAX_CONTENT_MB = 100
 AA_TO_NT_DEFAULT_MODE = "human_common"  # badge only
 
@@ -1136,7 +1136,7 @@ def precheck():
 
 
 @app.route('/predict', methods=['POST'])
-@limiter.limit("50 per 15 minutes")
+@limiter.limit("10 per 15 minutes")
 def start_prediction():
     # Strict Content-Type check
     if request.mimetype != 'multipart/form-data':
@@ -1151,7 +1151,14 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-
+    # Parse miRNA FASTA
+    primary_records = parse_fasta_records(fasta_string)
+    if not primary_records:
+        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
+    if not has_any_fasta_header(fasta_string):
+        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
+    if len(primary_records) > MIRNA_MAX:
+        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
     # Min miRNA length
     MIN_MIRNA_LEN = 10
