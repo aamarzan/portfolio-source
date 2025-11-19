@@ -81,7 +81,7 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = True
+USE_NONCE = False
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
