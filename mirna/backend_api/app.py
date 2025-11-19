@@ -81,13 +81,13 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = True
+USE_NONCE = False
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
 MATURE_TRIM_WINDOW = int(os.getenv("MATURE_TRIM_WINDOW", "22"))
 AA_CONVERT_ALLOWED = True
-STRUCTURE_MISMATCH_TOL = 0.10  # 10%
+STRUCTURE_MISMATCH_TOL = 1  # 10%
 MAX_CONTENT_MB = 100
 AA_TO_NT_DEFAULT_MODE = "human_common"  # badge only
 
@@ -1136,7 +1136,7 @@ def precheck():
 
 
 @app.route('/predict', methods=['POST'])
-@limiter.limit("10 per 15 minutes")
+@limiter.limit("50 per 15 minutes")
 def start_prediction():
     # Strict Content-Type check
     if request.mimetype != 'multipart/form-data':
