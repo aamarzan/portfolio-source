@@ -1,3 +1,3 @@
->9e7d nts=144 [9e7d] -- secondary structure derived by DSSR
-GGCACUAUGGGCGCAGCGUCAAUGACGCUGCCGGUACAGGCCAGACAAGAAACACUUGUCUGAUAUAGUGCC&GGCACUAUGGGCGCAGCGUCAAUGACGCUGCCGGUACAGGCCAGACAAGAAACACUUGUCUGAUAUAGUGCC
-(((((((([.((((((((((...))))))))].......))((((((((.....))))))))..))))))))&(((.(((([.((((((((((...))))))))].......))((((((((.....))))))))..)))).)))
+>1duq nts=104 [1duq] -- secondary structure derived by DSSR
+GCUGGGCGCAGG&CCUGACGGUACAGC&GCUGGGCGCAGG&CCUGACGGUACAGC&GCUGGGCGCAGG&CCUGACGGUACAGC&GCUGGGCGCAGG&CCUGACGGUACAGC
+((((..((((((&)))).))...))))&((((..((((((&)))).))...))))&((((..((((((&)))).))...))))&((((..((((((&)))).))...))))

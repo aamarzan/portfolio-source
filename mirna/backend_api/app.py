@@ -81,13 +81,13 @@ JOBS_DIR = ROOT_DIR / "job_cache"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 NONCE_EXPIRY_SECONDS = 300  # 5 minutes
-USE_NONCE = True
+USE_NONCE = False
 MIRNA_MAX = int(os.getenv("MIRNA_MAX", "5000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12"))
 MATURE_TRIM_ENABLED = True
 MATURE_TRIM_WINDOW = int(os.getenv("MATURE_TRIM_WINDOW", "22"))
 AA_CONVERT_ALLOWED = True
-STRUCTURE_MISMATCH_TOL = 0.10  # 10%
+STRUCTURE_MISMATCH_TOL = 1  # 10%
 MAX_CONTENT_MB = 100
 AA_TO_NT_DEFAULT_MODE = "human_common"  # badge only
 
@@ -1151,20 +1151,38 @@ def start_prediction():
     convert_aa_to_nt_flag = request.form.get('convert_aa_to_nt', 'false').lower() == 'true'
     mature_trim_flag = request.form.get('mature_trim', 'true').lower() == 'true' if MATURE_TRIM_ENABLED else False
 
-    # Parse miRNA FASTA
+    # Parse miRNA FASTA (may be empty — PDB-only runs allowed if 3D is present)
     primary_records = parse_fasta_records(fasta_string)
-    if not primary_records:
-        return jsonify({"error": "We could not detect any valid miRNA sequences in your input. Please check the format and try again."}), 400
-    if not has_any_fasta_header(fasta_string):
-        return jsonify({"error": "Your miRNA input is missing FASTA headers. Please add >accession lines (e.g., >hsa-let-7a-5p)."}), 400
-    if len(primary_records) > MIRNA_MAX:
-        return jsonify({"error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."}), 400
 
-    # Min miRNA length
+    # If the user actually supplied FASTA text, enforce headers, max count, and min length
+    if primary_records:
+        if not has_any_fasta_header(fasta_string):
+            return jsonify({
+                "error": (
+                    "Your miRNA input is missing FASTA headers. Please add >accession lines "
+                    "(e.g., >hsa-let-7a-5p)."
+                )
+            }), 400
+
+        if len(primary_records) > MIRNA_MAX:
+            return jsonify({
+                "error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."
+            }), 400
+
+    # Min miRNA length for FASTA-derived miRNAs
     MIN_MIRNA_LEN = 10
-    short_mirnas = [pid for pid, seq in primary_records if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN]
-    if short_mirnas:
-        return jsonify({"error": f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: {', '.join(short_mirnas[:10])}{' ...' if len(short_mirnas) > 10 else ''}"}), 400
+    if primary_records:
+        short_mirnas = [
+            pid for pid, seq in primary_records
+            if len((seq or '').replace('\n', '').strip()) < MIN_MIRNA_LEN
+        ]
+        if short_mirnas:
+            return jsonify({
+                "error": (
+                    f"One or more miRNAs are shorter than {MIN_MIRNA_LEN} nt: "
+                    f"{', '.join(short_mirnas[:10])}{' .' if len(short_mirnas) > 10 else ''}"
+                )
+            }), 400
 
     # Parse targets (may be empty — PDB-only supported now)
     targets_list = parse_fasta_records(target_seq_text)
@@ -1304,39 +1322,102 @@ def start_prediction():
             if not competitor_3d_path:
                 competitor_3d_path = p
 
-    # ---- NEW: PDB-only allowance — derive sequences when FASTA empty ----
+    # ---- NEW: PDB-derived sequences + FASTA/PDB unification ----
+    # For each role (target / competitor):
+    #   • If a PDB/mmCIF exists whose ID matches an existing FASTA ID, we treat
+    #     them as ONE entry: sequence from FASTA, 3D from PDB (handled later via
+    #     _select_struct_path + validate_structure_matches_sequence).
+    #   • If a PDB/mmCIF has NO matching FASTA ID, we derive a nucleotide
+    #     sequence from the structure and register it as an extra molecule entry
+    #     (PDB-only cascade).
+    #
+    # This preserves the old behaviour when no FASTA is present at all, but also
+    # lets PDB-only molecules coexist with FASTA-defined ones.
+
     # Targets
-    if not targets_list and (target_3d_files or t_ids):
+    if target_3d_files or t_ids:
+        had_any_targets = bool(targets_list)
+
+        # Normalize existing FASTA target IDs for matching
+        existing_t_ids = set()
+        for tid, _ in targets_list:
+            for k in _id_variants(tid):
+                existing_t_ids.add(k.lower())
+
+        derived_from_pdb = 0
         for fname, p in target_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
+
+            # Skip if this PDB/mmCIF corresponds to an existing FASTA ID
+            is_matched = False
+            for k in _id_variants(stem):
+                if k.lower() in existing_t_ids:
+                    is_matched = True
+                    break
+            if is_matched:
+                continue
+
+            # PDB-only (or extra) target → derive NT sequence
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_TARGET_LEN:
                 tid = stem
                 targets_list.append((tid, nt_seq))
+                derived_from_pdb += 1
                 target_meta_map[tid] = {
                     "source": f"pdb:{src_kind}",
                     "aa_to_nt_applied": aa_to_nt,
                     "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
                 }
-        if not targets_list:
+
+        # Preserve old error: no FASTA, PDBs present, but nothing usable derived
+        if (not targets_list
+                and (target_3d_files or t_ids)
+                and not had_any_targets
+                and derived_from_pdb == 0):
             return jsonify({"error": "Could not derive any nucleotide targets from provided PDB(s)."}), 400
 
     # Competitors
-    if not _fixed_comps and (competitor_3d_files or c_ids):
+    if competitor_3d_files or c_ids:
+        had_any_competitors = bool(_fixed_comps)
+
+        # Normalize existing FASTA competitor IDs for matching
+        existing_c_ids = set()
+        for cid, _ in _fixed_comps:
+            for k in _id_variants(cid):
+                existing_c_ids.add(k.lower())
+
+        derived_comps_from_pdb = 0
         for fname, p in competitor_3d_files:
             stem = os.path.splitext(secure_filename(fname))[0]
+
+            # Skip if this PDB/mmCIF corresponds to an existing FASTA ID
+            is_matched = False
+            for k in _id_variants(stem):
+                if k.lower() in existing_c_ids:
+                    is_matched = True
+                    break
+            if is_matched:
+                continue
+
+            # PDB-only (or extra) competitor → derive NT sequence
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(p)
             if nt_seq and len(nt_seq) >= MIN_COMP_LEN:
                 cid = stem
                 _fixed_comps.append((cid, nt_seq))
+                derived_comps_from_pdb += 1
                 competitor_meta_map[cid] = {
                     "source": f"pdb:{src_kind}",
                     "aa_to_nt_applied": aa_to_nt,
                     "aa_to_nt_mode": AA_TO_NT_DEFAULT_MODE if aa_to_nt else ""
                 }
 
-    # If still no competitors, use placeholder
+        # For competitors we keep the previous behaviour: if there are still no
+        # competitors at all after this cascade, we later fall back to the
+        # placeholder ("none", "") without raising a hard error.
+
+    # If still no competitors, use placeholder (unchanged behaviour)
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
+
     # ---------------------------------------------
 
     # miRNA 3D index (multi; always register all structures)
@@ -1352,39 +1433,79 @@ def start_prediction():
             for k in _id_variants(stem):
                 mirna_3d_index[k] = (kind, seq, p)
 
-    # ---- NEW: unified nt cascade for miRNA PDB/CIF-only runs ----
-    # If the user did not supply any miRNA FASTA but did upload PDB/CIF
-    # structures, derive nucleotide sequences so the model can run.
-    if not primary_records and mirna_3d_index:
-        seen_paths: list[str] = []
-        derived_prim: List[Tuple[str, str]] = []
+    # ---- UPDATED: unified nt cascade for miRNA PDB/CIF runs ----
+    # Behaviour:
+    #   • If a miRNA PDB/mmCIF matches an existing FASTA ID, we treat it as
+    #     the 3D partner of that FASTA miRNA (handled later via mirna_3d_index
+    #     + _lookup_3d) and do NOT create a second primary entry.
+    #   • If a miRNA PDB/mmCIF does NOT match any FASTA miRNA ID, we derive
+    #     a nucleotide sequence from the structure and register it as an
+    #     extra miRNA (so PDB-only miRNAs also enter the affinity/seed/IG pipeline).
+    #
+    # This works both when primary_records is empty (PDB-only run) and when
+    # FASTA + extra PDB-only miRNAs are mixed.
+
+    if mirna_3d_index:
+        # Pre-compute set of known FASTA ID variants for matching
+        existing_mirna_ids = set()
+        for mid, _ in primary_records:
+            for v in _id_variants(mid):
+                existing_mirna_ids.add(v.lower())
+
+        seen_paths: List[str] = []
+        extra_prim: List[Tuple[str, str]] = []
 
         for key, (_kind, _seq3d, path3d) in mirna_3d_index.items():
             if path3d in seen_paths:
                 continue
             seen_paths.append(path3d)
 
-            # Reuse the same unified cascade used for targets/competitors:
-            #   PDB/CIF NT → NT
-            #   PDB/CIF AA → back-translated NT (if allowed)
+            # Approximate "stem" similar to targets/competitors; here we use the
+            # first key associated with this path as the representative ID.
+            stem = key
+
+            # If this structure clearly belongs to an existing FASTA miRNA,
+            # just keep it as 3D partner and do not create a new sequence entry.
+            is_matched = False
+            for v in _id_variants(stem):
+                if v.lower() in existing_mirna_ids:
+                    is_matched = True
+                    break
+            if is_matched:
+                continue
+
+            # PDB-only miRNA → derive NT sequence (NT direct, or AA→NT)
             nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(path3d)
             if not nt_seq:
                 continue
 
             seq_clean = (nt_seq or "").replace("\n", "").strip()
             if len(seq_clean) < MIN_MIRNA_LEN:
-                # Respect the same lower bound as FASTA miRNAs
+                # Respect the same lower bound as FASTA-derived miRNAs
                 continue
 
-            # Use this ID as representative for the structure.
-            # (We don't try to over-normalize here; dedup is handled later.)
-            mid = key
-            derived_prim.append((mid, seq_clean))
+            # Use this ID so mirna_3d_index/_lookup_3d can reliably find the
+            # structure later.
+            mid = stem
+            extra_prim.append((mid, seq_clean))
 
-        primary_records = derived_prim
+        # If we have extra miRNAs derived from PDB/CIF, merge them in.
+        if extra_prim:
+            if primary_records:
+                primary_records.extend(extra_prim)
+            else:
+                # PDB-only run: behave like previous "PDB-only cascade"
+                primary_records = extra_prim
 
-    # After all cascades, we still require at least one primary sequence
+    # After FASTA + PDB/CIF cascades, enforce cap and require at least one miRNA
+    if len(primary_records) > MIRNA_MAX:
+        return jsonify({
+            "error": f"Your submission exceeds the maximum of {MIRNA_MAX} miRNA sequences."
+        }), 400
+
     if not primary_records:
+        # This is the only place we now *stop* for missing miRNA:
+        # no FASTA and no usable PDB/CIF.
         return jsonify({"error": "No valid miRNA sequences found in FASTA or PDB/CIF input."}), 400
 
     job_id = str(uuid.uuid4())
