@@ -1339,7 +1339,7 @@ def start_prediction():
     competitors_list = _fixed_comps if _fixed_comps else [("none", "")]
     # ---------------------------------------------
 
-    # miRNA 3D index
+    # miRNA 3D index (multi; always register all structures)
     mirna_3d_files = request.files.getlist('mirna_3d_file')
     mirna_3d_index: Dict[str, Tuple[Optional[str], str, str]] = {}
     for f in mirna_3d_files:
@@ -1348,8 +1348,44 @@ def start_prediction():
             tmp_paths_to_cleanup.append(p)
             stem = os.path.splitext(secure_filename(f.filename))[0]
             kind, seq = extract_seq_from_structure(p)
+            # Keep raw (kind, seq, path) for validation & viewer
             for k in _id_variants(stem):
                 mirna_3d_index[k] = (kind, seq, p)
+
+    # ---- NEW: unified nt cascade for miRNA PDB/CIF-only runs ----
+    # If the user did not supply any miRNA FASTA but did upload PDB/CIF
+    # structures, derive nucleotide sequences so the model can run.
+    if not primary_records and mirna_3d_index:
+        seen_paths: list[str] = []
+        derived_prim: List[Tuple[str, str]] = []
+
+        for key, (_kind, _seq3d, path3d) in mirna_3d_index.items():
+            if path3d in seen_paths:
+                continue
+            seen_paths.append(path3d)
+
+            # Reuse the same unified cascade used for targets/competitors:
+            #   PDB/CIF NT → NT
+            #   PDB/CIF AA → back-translated NT (if allowed)
+            nt_seq, src_kind, aa_to_nt = _derive_nt_from_structure(path3d)
+            if not nt_seq:
+                continue
+
+            seq_clean = (nt_seq or "").replace("\n", "").strip()
+            if len(seq_clean) < MIN_MIRNA_LEN:
+                # Respect the same lower bound as FASTA miRNAs
+                continue
+
+            # Use this ID as representative for the structure.
+            # (We don't try to over-normalize here; dedup is handled later.)
+            mid = key
+            derived_prim.append((mid, seq_clean))
+
+        primary_records = derived_prim
+
+    # After all cascades, we still require at least one primary sequence
+    if not primary_records:
+        return jsonify({"error": "No valid miRNA sequences found in FASTA or PDB/CIF input."}), 400
 
     job_id = str(uuid.uuid4())
     job_dir = JOBS_DIR / job_id
