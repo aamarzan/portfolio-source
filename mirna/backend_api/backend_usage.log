@@ -29042,3 +29042,29 @@ Traceback (most recent call last):
 werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
 2025-12-02 22:28:27,123 | INFO | 127.0.0.1 - - [02/Dec/2025 22:28:27] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
 2025-12-03 05:31:14,438 | INFO | 127.0.0.1 - - [03/Dec/2025 05:31:14] "GET /config HTTP/1.1" 200 -
+2025-12-03 07:14:51,285 | ERROR | CID 976d3864 | Unexpected error: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 891, in dispatch_request
+    self.raise_routing_exception(req)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\app.py", line 500, in raise_routing_exception
+    raise request.routing_exception  # type: ignore[misc]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\flask\ctx.py", line 362, in match_request
+    result = self.url_adapter.match(return_rule=True)  # type: ignore
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\routing\map.py", line 629, in match
+    raise NotFound() from None
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-12-03 07:14:51,310 | INFO | 127.0.0.1 - - [03/Dec/2025 07:14:51] "[35m[1mGET /robots.txt HTTP/1.1[0m" 500 -
+2025-12-03 07:14:52,010 | INFO | 127.0.0.1 - - [03/Dec/2025 07:14:52] "GET /config HTTP/1.1" 200 -
+2025-12-03 07:14:53,580 | ERROR | Error on request:
+Traceback (most recent call last):
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 370, in run_wsgi
+    execute(self.server.app)
+  File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\site-packages\werkzeug\serving.py", line 355, in execute
+    data = self.rfile.read(10_000_000)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MemoryError
