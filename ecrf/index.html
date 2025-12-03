@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>eCRF Error Dashboard – Methanol Trial</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://aamarzan.com/ecrf">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: #f3f5fb;
+    }
+    #chart {
+      width: 100%;
+      max-width: 1200px;
+      height: 650px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+      padding: 14px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      margin-bottom: 4px;
+      margin-top: 4px;
+      color: #111827;
+    }
+    p.subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    #visit-counter {
+      position: fixed;
+      top: 8px;
+      right: 18px;
+      background: rgba(255,255,255,0.9);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #374151;
+      box-shadow: 0 2px 6px rgba(15,23,42,0.18);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+<div id="visit-counter">Total visits: …</div>
+
+<h1>Most Common eCRF Error Types</h1>
+<p class="subtitle">Methanol trial eCRF queries by category (N = 49)</p>
+<div id="chart"></div>
+
+<script>
+  // ==== Simple visit counter (per browser, using localStorage) ====
+  (function () {
+    let count = parseInt(localStorage.getItem('ecrf_visit_count') || '0', 10);
+    count += 1;
+    localStorage.setItem('ecrf_visit_count', count.toString());
+    document.getElementById('visit-counter').textContent =
+      'Total visits (this browser): ' + count;
+  })();
+
+  // ==== Data ====
+
+  // Short, wrapped labels for x-axis (to avoid overlap)
+  const xLabels = [
+    'Methanol timing<br>& "time known"',
+    'Date/time<br>fields',
+    'Outcome &<br>sequelae',
+    'Treatment<br>dosing',
+    'Eligibility &<br>type',
+    'Admin<br>identifiers',
+    'BP entry<br>(SBP/DBP)',
+    'Poison<br>volume',
+    'Formate lab<br>+ image',
+    'Non-recruited<br>cases'
+  ];
+
+  // Full category descriptions for hover text
+  const fullCategories = [
+    'Methanol timing & "consumption known"',
+    'General date/time fields',
+    'Outcome assessment & sequelae documentation',
+    'Treatment dosing & documentation',
+    'Eligibility / inclusion criteria & poisoning type',
+    'Administrative identifiers (division/district, reg no, name)',
+    'Blood pressure entry (SBP/DBP)',
+    'Poison volume field',
+    'Formate lab assay result & image upload',
+    'Incomplete data for non-recruited cases'
+  ];
+
+  const counts = [10, 10, 9, 5, 4, 4, 3, 2, 1, 1];  // N per category
+  const perc   = [20.4, 20.4, 18.4, 10.2, 8.2, 8.2, 6.1, 4.1, 2.0, 2.0];
+
+  const sites = [
+    'CMCH, RMCH, SZMCH, DMCH',
+    'CMCH, RMCH, DMCH',
+    'CMCH, RMCH, SOMCH, SZMCH, DMCH',
+    'CMCH, RMCH, SZMCH, DMCH',
+    'CMCH, RMCH, DMCH',
+    'CMCH, RMCH',
+    'CMCH, RMCH',
+    'CMCH, RMCH',
+    'CMCH',
+    'RMCH'
+  ];
+
+  const examples = [
+    'Screen 2–5: time from intake to symptoms, onset time, "time of consumption known" mismatch',
+    'Recruitment, assessment, treatment, lab and investigation dates/times',
+    'Outcome not filled after DB update, vague outcome text, sequelae (e.g. reduced vision) not carried forward',
+    'Incorrect folic acid dose, fomepizole dosing/dates, repeated bolus entries, missing IV fluids',
+    'Inclusion criteria, consent, metabolic acidosis cause, choosing both methanol & unknown cause',
+    'Division/district, registration number, family name format errors',
+    'SBP/DBP combined or not updated correctly after system change',
+    'Poison volume left blank instead of selecting value or "Unknown"',
+    'Formate lab test result and image attachments unclear/incomplete',
+    'Non-recruited cases: important recruitment screens 3–7 not filled'
+  ];
+
+  const customData = fullCategories.map((cat, i) => ({
+    category: cat,
+    percent: perc[i],
+    sites: sites[i],
+    example: examples[i]
+  }));
+
+  // Custom colour scale (red → peach → blue)
+  const customColorscale = [
+    [0.00, '#b3122f'],
+    [0.14, '#cf4a3a'],
+    [0.28, '#f28a5c'],
+    [0.42, '#ffd3b3'],
+    [0.56, '#d2e6f5'],
+    [0.70, '#74add9'],
+    [1.00, '#2166ac']
+  ];
+
+  const barTrace = {
+    x: xLabels,
+    y: counts,
+    type: 'bar',
+    name: 'No. of queries',
+
+    // Visible value labels: above bars, black
+    text: perc.map(p => p + '%'),
+    textposition: 'outside',
+    textfont: {
+      color: 'black',
+      size: 12
+    },
+    cliponaxis: false,   // allow labels above top of axis
+
+    marker: {
+      color: counts,
+      colorscale: customColorscale,
+      cmin: 1,
+      cmax: 10,
+      showscale: true,
+      colorbar: {
+        title: 'No. of queries',
+        thickness: 18,
+        x: 1.02,
+        outlinecolor: '#9ca3af',
+        outlinewidth: 0.5,
+        tickfont: { size: 11, color: '#374151' },
+        titlefont: { size: 12, color: '#111827' }
+      },
+      line: {
+        color: '#ffffff',
+        width: 1
+      }
+    },
+
+    hovertemplate:
+      '<b>%{customdata.category}</b><br>' +
+      'Queries: %{y} of 49<br>' +
+      'Share: %{customdata.percent}%<br>' +
+      'Sites: %{customdata.sites}<br>' +
+      '<br><i>Typical issue:</i> %{customdata.example}' +
+      '<extra></extra>',
+    customdata: customData,
+    hoverlabel: {
+      bgcolor: 'white',
+      bordercolor: 'black',
+      font: { color: 'black', size: 12 }
+    }
+  };
+
+  const layout = {
+    margin: { t: 80, r: 120, b: 170, l: 70 },
+    paper_bgcolor: '#f3f5fb',
+    plot_bgcolor: '#ffffff',
+    font: {
+      family: "Segoe UI, -apple-system, BlinkMacSystemFont, system-ui, Arial, sans-serif",
+      color: '#111827'
+    },
+    xaxis: {
+      title: { text: 'Error category', font: { size: 13 } },
+      tickangle: 0,
+      tickfont: { size: 11 },
+      showgrid: false,
+      zeroline: false,
+      automargin: true
+    },
+    yaxis: {
+      title: { text: 'Number of queries', font: { size: 13 } },
+      gridcolor: '#e5e7eb',
+      zerolinecolor: '#d1d5db',
+      range: [0, 11]  // extra headroom for labels above tallest bar (10)
+    },
+    legend: {
+      orientation: 'h',
+      x: 0.5,
+      xanchor: 'center',
+      y: 1.10
+    },
+    hoverlabel: {
+      bgcolor: 'white',
+      bordercolor: 'black',
+      font: { color: 'black', size: 12 }
+    }
+  };
+
+  Plotly.newPlot('chart', [barTrace], layout, {responsive: true});
+</script>
+
+</body>
+</html>
