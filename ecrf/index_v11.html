@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinical Trial Query Dashboard | Abdullah Al Marzan</title>
+  <meta name="description" content="Interactive eCRF query intelligence dashboard for clinical trial data quality monitoring and site-wise follow-up." />
+  <meta name="author" content="Abdullah Al Marzan" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://aamarzan.com/ecrf/" />
+
+  <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png?v=1" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg?v=1" />
+  <link rel="shortcut icon" href="../favicon/favicon.ico?v=1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png?v=1" />
+  <meta name="apple-mobile-web-app-title" content="Marzan" />
+  <link rel="manifest" href="../favicon/site.webmanifest?v=1" />
+  <meta name="theme-color" content="#000000" />
+
+  <meta http-equiv="Cache-Control" content="max-age=600, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="../ecrf.css?v=20260310-2" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2YNVQSMXTM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2YNVQSMXTM');
+  </script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body class="ecrf-page">
+  <header class="ecrf-topbar">
+    <div class="container ecrf-topbar-inner">
+      <a href="/" class="ecrf-brand" aria-label="Back to portfolio home">
+        <img src="../media/home/Logo.png" alt="Abdullah Al Marzan logo" />
+        <div class="ecrf-brand-text">
+          <strong>Clinical Trial Query Dashboard</strong>
+          <span>Public-safe grouped operational view</span>
+        </div>
+      </a>
+
+      <div class="ecrf-topbar-actions">
+        
+        <a href="/contacts/" class="ecrf-link-btn primary">Collaborate</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <header class="hero-shell">
+      <div class="container hero">
+<!--    <div class="hero-top">
+          <div class="eyebrow">Clinical trial data quality operations</div>
+          <div class="author-credit">Professionally developed by Abdullah Al Marzan</div>
+        </div> -->
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <h1>Methanol trial eCRF query intelligence dashboard</h1>
+            <p id="heroSubtitle"></p>
+
+            <div class="hero-meta">
+              <span class="hero-meta-item">Latest query batch <strong id="lastRefresh">-</strong></span>
+              <span class="hero-meta-item">Public-safe grouped view</span>
+              <span class="hero-meta-item">Recruitment + assessment monitoring</span>
+            </div>
+          </div>
+
+          <div class="hero-stats panel-dark">
+            <div class="hero-stat">
+              <div class="label">Total query rows</div>
+              <div class="value" id="overallQueries">0</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Participants represented</div>
+              <div class="value" id="overallParticipants">0</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Active sites</div>
+              <div class="value" id="overallSites">0</div>
+            </div>
+            <div class="hero-stat">
+              <div class="label">Open in workbook</div>
+              <div class="value" id="overallOpen">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container dashboard-shell">
+      <aside class="control-rail panel" aria-label="Filter and navigation">
+        <div class="rail-head">
+          <h2>Filter &amp; navigate</h2>
+          <p>Desktop view keeps this control rail at the left so you can adjust filters while the graphs remain visible on the right.</p>
+        </div>
+
+        <nav class="jump-links" aria-label="Jump to sections">
+          <a href="#overview">Overview</a>
+          <a href="#trends">Charts</a>
+          <a href="#sites">Site details</a>
+          <a href="#catalogue">Issue catalogue</a>
+        </nav>
+
+        <div class="rail-actions">
+          <button class="btn secondary" id="resetFilters" type="button">Reset filters</button>
+          <button class="btn primary" id="downloadCsv" type="button">Download filtered catalogue</button>
+        </div>
+
+        <section class="control-group">
+          <div class="control-label-row">
+            <label class="control-label">Site slicer</label>
+            <span class="control-hint">Toggle one or multiple</span>
+          </div>
+          <div id="siteChips" class="site-chip-list"></div>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="formSelect">Form</label>
+          <select id="formSelect"></select>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="severitySelect">Severity</label>
+          <select id="severitySelect"></select>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="statusSelect">Query status</label>
+          <select id="statusSelect"></select>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="themeSelect">Issue theme</label>
+          <select id="themeSelect"></select>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="screenSelect">Screen / module</label>
+          <select id="screenSelect"></select>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="searchInput">Search within query wording</label>
+          <input id="searchInput" type="search" placeholder="Search by wording, site, screen, theme, or form..." />
+        </section>
+
+        <div class="rail-note">
+          This public-facing view deliberately hides participant-level identifiers and focuses on grouped operational intelligence instead.
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <section class="panel active-panel">
+          <div class="section-title">
+            <h3>Current selection</h3>
+            <p>All metrics, graphs, and the grouped issue catalogue below update together from the same filter state.</p>
+          </div>
+          <div id="activeFilters" class="active-filters"></div>
+        </section>
+
+        <section id="overview" class="kpi-grid"></section>
+
+        <section id="trends" class="chart-grid">
+          <article class="panel chart-card span-7">
+            <div class="card-head">
+              <div>
+                <h3>Site query load</h3>
+                <p>Stacked view of open, not-entered, and resolved rows by site.</p>
+              </div>
+            </div>
+            <div id="siteLoadChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-5">
+            <div class="card-head">
+              <div>
+                <h3>Status distribution</h3>
+                <p>Workbook status mix under the current filters.</p>
+              </div>
+            </div>
+            <div id="statusChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-4">
+            <div class="card-head">
+              <div>
+                <h3>Form mix</h3>
+                <p>Recruitment, assessment, and cross-form balance.</p>
+              </div>
+            </div>
+            <div id="formChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-4">
+            <div class="card-head">
+              <div>
+                <h3>Severity mix</h3>
+                <p>Major, minor, and standard issue share.</p>
+              </div>
+            </div>
+            <div id="severityChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-4">
+            <div class="card-head">
+              <div>
+                <h3>Query batches</h3>
+                <p>Rows sent by query batch date.</p>
+              </div>
+            </div>
+            <div id="timelineChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-6">
+            <div class="card-head">
+              <div>
+                <h3>Top issue themes</h3>
+                <p>Most frequent grouped problem families in the current selection.</p>
+              </div>
+            </div>
+            <div id="themeChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-6">
+            <div class="card-head">
+              <div>
+                <h3>Top screens / modules</h3>
+                <p>Where the filtered queries concentrate operationally.</p>
+              </div>
+            </div>
+            <div id="screenChart" class="chart"></div>
+          </article>
+
+          <article class="panel chart-card span-12">
+            <div class="card-head">
+              <div>
+                <h3>Site-theme heatmap</h3>
+                <p>Cross-site concentration of grouped issue themes.</p>
+              </div>
+            </div>
+            <div id="heatmapChart" class="chart heatmap"></div>
+          </article>
+        </section>
+
+        <section id="sites" class="panel">
+          <div class="section-title">
+            <h3>Site detail cards</h3>
+            <p>Quick operational reading by site, including latest batch date, open count, query status burden, and the dominant issue theme.</p>
+          </div>
+          <div id="siteCardGrid" class="site-card-grid"></div>
+        </section>
+
+        <section id="catalogue" class="panel table-panel">
+          <div class="section-title table-title">
+            <div>
+              <h3>Grouped issue catalogue</h3>
+              <p>Repeated query wordings are grouped together to create a cleaner, more usable issue library.</p>
+            </div>
+            <div class="table-meta">
+              <strong id="resultsCount">0</strong>
+              <span>grouped issue rows</span>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Query message</th>
+                  <th>Severity</th>
+                  <th>Form</th>
+                  <th>Theme</th>
+                  <th>Screen / module</th>
+                  <th>Sites</th>
+                  <th>Status</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="table-foot">
+            <div id="tableMeta" class="table-meta-left"></div>
+            <div id="pagination" class="pagination"></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <footer class="ecrf-footer-minimal">
+    <div class="container ecrf-footer-inner">
+      <div class="ecrf-footer-left">
+        <strong>Developed by Abdullah Al Marzan</strong>
+        <span>Clinical data quality and eCRF query operations dashboard</span>
+      </div>
+
+      <div class="ecrf-footer-center">
+        <span>Public-facing grouped dashboard with participant-level identifiers hidden</span>
+      </div>
+
+      <div class="ecrf-footer-right">
+        <a href="/contacts/">Contact</a>
+        <a href="mailto:marzansust16@gmail.com">Email</a>
+        <a href="/">Portfolio</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../ecrf.js?v=20260310-2"></script>
+</body>
+</html>
