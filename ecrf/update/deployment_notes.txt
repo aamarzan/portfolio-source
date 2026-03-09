@@ -1,0 +1,26 @@
+Deployment notes for the upgraded eCRF dashboard
+
+Files included:
+1. ecrf_dashboard_premium.html
+   - Single-file version with CSS and JavaScript embedded.
+   - Easiest option for Netlify: rename to index.html for the target page folder.
+
+2. ecrf_dashboard_bundle.zip
+   - Split-asset version containing:
+     - index.html
+     - styles.css
+     - app.js
+
+Recommended Netlify deployment:
+- If your current page lives at /ecrf/, replace the existing file(s) with either:
+  A) the single-file version renamed as index.html
+  or
+  B) the contents of the zip bundle.
+
+Important:
+- This version is designed as a public-safe dashboard.
+- Participant-level identifiers are intentionally hidden.
+- If you later want a protected internal version, the same design can be extended to record-level tracking.
+
+Suggested path:
+- /ecrf/index.html
