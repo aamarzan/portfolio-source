@@ -1,0 +1,25 @@
+Replace these files in your repo:
+
+1. E:\1. Github\3. portfolio-source\ecrf\index.html   <- use ecrf_index_updated.html
+2. E:\1. Github\3. portfolio-source\ecrf.css          <- use ecrf.css
+3. E:\1. Github\3. portfolio-source\ecrf.js           <- use ecrf.js
+
+What changed:
+- The filter area is now a left-side control rail on desktop, so it no longer blocks the charts.
+- The control rail scrolls internally if needed.
+- Tablet and mobile layouts stack cleanly without the sticky overlap issue.
+- All earlier dashboard data were replaced with the latest uploaded workbook snapshot.
+- Professional author credit added: Professionally developed by Abdullah Al Marzan
+
+Latest workbook snapshot used:
+- Query rows: 388
+- Active sites: 6
+- Participants represented: 137
+- Open in workbook: 384
+- Not entered in workbook: 4
+- Latest query batch date: 2026-03-09
+
+Git commands after replacement:
+git add ecrf/index.html ecrf.css ecrf.js
+git commit -m "Fix eCRF layout and refresh dashboard with latest workbook"
+git push origin main
