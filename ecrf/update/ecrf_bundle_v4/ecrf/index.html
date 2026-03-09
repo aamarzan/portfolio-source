@@ -168,8 +168,8 @@
         </section>
 
         <section class="control-group">
-          <label class="control-label" for="severitySelect">Severity</label>
-          <select id="severitySelect"></select>
+          <label class="control-label" for="scopeSelect">Issue scope</label>
+          <select id="scopeSelect"></select>
         </section>
 
         <section class="control-group">
@@ -213,7 +213,7 @@
             <div class="card-head">
               <div>
                 <h3>Site query load</h3>
-                <p>Stacked view of open, not-entered, and resolved rows by site.</p>
+                <p>Stacked view of open and resolved rows by site.</p>
               </div>
             </div>
             <div id="siteLoadChart" class="chart"></div>
@@ -242,11 +242,11 @@
           <article class="panel chart-card span-4">
             <div class="card-head">
               <div>
-                <h3>Severity mix</h3>
-                <p>Major, minor, and standard issue share.</p>
+                <h3>Issue scope mix</h3>
+                <p>Screen-specific versus general issue share under the current filters.</p>
               </div>
             </div>
-            <div id="severityChart" class="chart"></div>
+            <div id="scopeChart" class="chart"></div>
           </article>
 
           <article class="panel chart-card span-4">
@@ -293,7 +293,7 @@
         <section id="sites" class="panel">
           <div class="section-title">
             <h3>Site detail cards</h3>
-            <p>Quick operational reading by site, including latest batch date, open count, major/minor burden, and the dominant issue theme.</p>
+            <p>Quick operational reading by site, including latest batch date, open count, general-row burden, and the dominant issue theme.</p>
           </div>
           <div id="siteCardGrid" class="site-card-grid"></div>
         </section>
@@ -315,7 +315,7 @@
               <thead>
                 <tr>
                   <th>Query message</th>
-                  <th>Severity</th>
+                  <th>Scope</th>
                   <th>Form</th>
                   <th>Theme</th>
                   <th>Screen / module</th>

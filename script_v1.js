@@ -100,30 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
-    // --- ACTIVE NAVIGATION HIGHLIGHTING ---
-    const normalizePath = (path) => {
-        const cleaned = path.replace(/index\.html$/, '').replace(/\/+$/, '');
-        return cleaned === '' ? '/' : cleaned;
-    };
-
-    const currentPath = normalizePath(window.location.pathname);
-    const navLinks = document.querySelectorAll('.main-nav a[href], .submenu a[href]');
-
-    navLinks.forEach(link => {
-        const linkPath = normalizePath(new URL(link.href, window.location.origin).pathname);
-
-        if (linkPath === currentPath) {
-            if (link.closest('.submenu')) {
-                link.classList.add('active-submenu');
-                const parentTopLink = link.closest('.has-submenu')?.querySelector(':scope > a');
-                if (parentTopLink) parentTopLink.classList.add('active');
-            } else {
-                link.classList.add('active');
-            }
-        }
-    });
-
 // --- VIDEO PLAYER (Corrected for Single-Click Play) ---
 const videoWrappers = document.querySelectorAll('.video-wrapper');
 
