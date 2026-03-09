@@ -648,15 +648,6 @@ td .mono{
   max-width:100%;
   height:auto;
 }
-
-.ecrf-page #main-header .logo img,
-.ecrf-page .header-container .logo img{
-  height:1.7cm;
-  width:auto;
-  max-width:none;
-  display:block;
-}
-
 .ecrf-page .hero-copy p,
 .ecrf-page .site-name,
 .ecrf-page .mini-sub,
