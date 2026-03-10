@@ -1,11 +1,11 @@
 window.ECRF_PAYLOAD = {
   "META": {
     "title": "Methanol Trial eCRF Query Operations Dashboard",
-    "totalQueries": 274,
-    "activeSites": 9,
-    "totalParticipants": 94,
+    "totalQueries": 268,
+    "activeSites": 8,
+    "totalParticipants": 93,
     "lastQuerySent": "2026-03-09",
-    "openQueries": 48,
+    "openQueries": 42,
     "resolvedQueries": 226,
     "notEnteredQueries": 0,
     "siteCounts": {
@@ -16,8 +16,7 @@ window.ECRF_PAYLOAD = {
       "SZMCH": 20,
       "GGSMCH": 3,
       "SGRDUHS": 1,
-      "SOMCH": 1,
-      "COXMCH": 6
+      "SOMCH": 1
     },
     "siteNames": {
       "PGIMER": "Postgraduate Institute of Medical Education and Research, PGIMER",
@@ -27,8 +26,7 @@ window.ECRF_PAYLOAD = {
       "SZMCH": "Shaheed Ziaur Rahman Medical College Hospital, SZMCH",
       "GGSMCH": "Guru Gobind Singh Medical College Hospital, GGSMCH",
       "SGRDUHS": "SRI GURU RAM DAS UNIVERSITY OF HEALTH SCIENCES, SGRDUHS",
-      "SOMCH": "Sylhet MAG Osmani Medical College Hospital, SOMCH",
-      "COXMCH": "COXMCH"
+      "SOMCH": "Sylhet MAG Osmani Medical College Hospital, SOMCH"
     }
   },
   "DATA": [
@@ -3515,84 +3513,6 @@ window.ECRF_PAYLOAD = {
       "querySentDate": "2025-03-09",
       "dataEntryDate": "2025-03-05",
       "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "Recruitment Screen 7: Please review the investigation date and time. This must happen before the time of recruitment.",
-      "form": "Recruitment",
-      "severity": "Moderate",
-      "theme": "Chronology & timing",
-      "screen": "Recruitment Screen 7",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "Recruitment Screen 4: Please review whether the source is liquor as Intake of illegal/bootleg/spurious alcohol is marked as yes in screen 2.",
-      "form": "Recruitment",
-      "severity": "Moderate",
-      "theme": "Case classification & source logic",
-      "screen": "Recruitment Screen 4",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "There is no entry for 0 hour assessment or first assessment. Please review.",
-      "form": "Assessment",
-      "severity": "Moderate",
-      "theme": "Other / operational review",
-      "screen": "First assessment",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "Recruitment Screen 2: Both the Suspected Methanol Poisoning and Metabolic Acidosis Of Unknown Cause are selected as Yes. Please select only one option from these options as they are contradictory to each other. As Intake of illegal/bootleg/spurious alcohol is selected as yes, it seems its a Methanol Poisoning case. Please review.",
-      "form": "Recruitment",
-      "severity": "Moderate",
-      "theme": "Case classification & source logic",
-      "screen": "Recruitment Screen 2",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "Recruitment Screen 2: Adults aged 18+ providing informed consent and Participants lacking capacity, with a relative willing and able to consent on their behalf both of the options are marked as Yes. Which is contradictory. Please review.",
-      "form": "Recruitment",
-      "severity": "Moderate",
-      "theme": "Consent & eligibility",
-      "screen": "Recruitment Screen 2",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
-    },
-    {
-      "siteCode": "COXMCH",
-      "siteName": "COXMCH",
-      "query": "Recruitment Screen 4: Please review whether the source is liquor as Intake of illegal/bootleg/spurious alcohol is marked as yes in screen 2.",
-      "form": "Recruitment",
-      "severity": "Moderate",
-      "theme": "Case classification & source logic",
-      "screen": "Recruitment Screen 4",
-      "status_group": "Open",
-      "querySentDate": "2025-03-09",
-      "dataEntryDate": "2025-03-05",
-      "count": 1
     }
   ],
   "SITE_ORDER": [
@@ -3603,8 +3523,7 @@ window.ECRF_PAYLOAD = {
     "SZMCH",
     "GGSMCH",
     "SGRDUHS",
-    "SOMCH",
-    "COXMCH"
+    "SOMCH"
   ],
   "THEME_ORDER": [
     "Case classification & source logic",
@@ -3630,6 +3549,6 @@ window.ECRF_PAYLOAD = {
     "Minor",
     "Standard"
   ],
-  "GENERATED_AT": "2026-03-10T00:26:51Z",
+  "GENERATED_AT": "2026-03-10T00:28:56Z",
   "SOURCE_WORKBOOK": "query_dataset.xlsx"
 };
