@@ -1042,85 +1042,80 @@ td .mono{
 
 @media (max-width: 560px){
   .ecrf-topbar .container.ecrf-topbar-inner{
-    padding-top:10px;
-    padding-bottom:10px;
-    align-items:stretch;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .ecrf-topbar .ecrf-brand{
-    width:100%;
-    grid-template-columns:46px minmax(0, 1fr);
-    gap:10px;
-    align-items:center;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: center;
   }
 
   .ecrf-topbar .ecrf-brand img{
-    height:46px !important;
-    width:auto !important;
-    max-width:none !important;
+    width: 82px !important;
+    height: auto !important;
+    max-width: 82px !important;
+    display: block;
+    justify-self: start;
   }
 
   .ecrf-topbar .ecrf-brand-text{
-    min-width:0;
+    min-width: 0;
+    padding-left: 2px;
   }
 
   .ecrf-topbar .ecrf-brand-text strong{
-    display:block;
-    font-size:.88rem;
-    line-height:1.14;
-    letter-spacing:-.01em;
+    display: block;
+    font-size: 0.92rem;
+    line-height: 1.14;
+    white-space: normal;
   }
 
   .ecrf-topbar .ecrf-brand-text span{
-    display:block;
-    margin-top:2px;
-    font-size:.72rem;
-    line-height:1.24;
+    display: block;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    white-space: normal;
   }
 
   .ecrf-topbar .ecrf-topbar-actions{
-    width:100%;
-    display:flex !important;
-    flex-wrap:wrap;
-    gap:8px;
-    justify-content:flex-start;
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .ecrf-topbar .ecrf-link-btn{
-    width:auto;
-    min-width:136px;
-    min-height:40px;
-    padding:10px 12px;
-    border-radius:12px;
-    font-size:.86rem;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 380px){
   .ecrf-topbar .ecrf-brand{
-    grid-template-columns:40px minmax(0, 1fr);
-    gap:8px;
+    grid-template-columns: 74px minmax(0, 1fr);
+    column-gap: 8px;
   }
 
   .ecrf-topbar .ecrf-brand img{
-    height:40px !important;
+    width: 74px !important;
+    max-width: 74px !important;
   }
 
   .ecrf-topbar .ecrf-brand-text strong{
-    font-size:.81rem;
+    font-size: 0.84rem;
   }
 
   .ecrf-topbar .ecrf-brand-text span{
-    font-size:.68rem;
-  }
-
-  .ecrf-topbar .ecrf-topbar-actions{
-    display:grid !important;
-    grid-template-columns:1fr;
-  }
-
-  .ecrf-topbar .ecrf-link-btn{
-    width:100%;
-    min-width:0;
+    font-size: 0.68rem;
   }
 }
