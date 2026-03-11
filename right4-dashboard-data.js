@@ -1,6 +1,6 @@
 window.RIGHT4_DASHBOARD_DATA = {
   "meta": {
-    "generatedAt": "2026-03-11T21:29:32",
+    "generatedAt": "2026-03-12T03:52:38",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook."
@@ -3544,13 +3544,13 @@ window.RIGHT4_DASHBOARD_DATA = {
       "baseDeficit": 15.2,
       "patientStatus": "Enrolled",
       "outcome": "Survived",
-      "truePositive": "No",
+      "truePositive": "Yes",
       "excludedReason": "Not specified",
       "comment": "",
       "isEnrolled": true,
       "isExcluded": false,
       "isDiedEnrolled": false,
-      "isTruePositive": false
+      "isTruePositive": true
     },
     {
       "patientId": "RMCH-0044",
