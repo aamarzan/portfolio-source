@@ -323,8 +323,10 @@
     const recruitedTotal = enrolledRows.length;
     const truePositiveTotal = rows.filter(r => r.isTruePositive).length;
     const positiveRate = recruitedTotal ? (truePositiveTotal / recruitedTotal) : 0;
+    const positiveRatePct = positiveRate * 100;
+    const truePositiveTargetPct = truePositiveTarget ? ((truePositiveTotal / truePositiveTarget) * 100) : 0;
     const calculatedTargetCount = positiveRate > 0 ? (truePositiveTarget / positiveRate) : null;
-    const calculatedTargetRounded = calculatedTargetCount ? Math.round(calculatedTargetCount) : null;
+    const calculatedTargetRounded = calculatedTargetCount !== null ? Math.round(calculatedTargetCount) : null;
 
     const countryItems = [];
     const countryMap = new Map();
@@ -384,6 +386,7 @@
       textposition:'top right',
       name:'Total',
       line:{ width:4, color:'#0f355c' },
+      cliponaxis:false,
       hovertemplate:'Total: %{y}<extra></extra>'
     });
     Plotly.newPlot('recruitmentGraph', recruitmentTraces, {
@@ -393,7 +396,10 @@
       hovermode:'x unified',
       xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       yaxis:{ title:'Cumulative recruited', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
-      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''} }
+      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''}, traceorder:'normal' },
+      annotations:[
+        chartAnnotation(`<b>Total enrolled patients</b><br>${fmtInt.format(recruitedTotal)}`)
+      ]
     }, baseConfig());
 
     const actualPatients = targetSchedule.dates.map(cutoff => enrolledRows.filter(r => r.screeningDate <= cutoff).length);
@@ -421,15 +427,15 @@
         line:{ width:3, color:'#14a44d' }
       }
     ];
-    if(calculatedTargetCount){
+    if(calculatedTargetRounded !== null){
       targetActualTraces.splice(1, 0, {
         type:'scatter',
         mode:'lines+text',
-        x:targetSchedule.dates,
-        y:targetSchedule.dates.map(() => calculatedTargetCount),
+        x:[targetSchedule.dates[0], targetSchedule.dates[targetSchedule.dates.length - 1]],
+        y:[0, calculatedTargetRounded],
         name:'Calculated target',
-        text:targetSchedule.dates.map((_, i, arr) => i === arr.length - 1 ? fmtInt.format(calculatedTargetRounded) : ''),
-        textposition:'bottom left',
+        text:['', fmtInt.format(calculatedTargetRounded)],
+        textposition:'top right',
         line:{ width:2.2, dash:'dot', color:'#7c8cb1' }
       });
     }
@@ -443,8 +449,7 @@
       legend:{ orientation:'h', y:-0.28, x:0 },
       annotations:[
         chartAnnotation(
-          `<b>True Positive Cases (%)</b><br>${fmtPct(positiveRate * 100)} out of ${fmtInt.format(recruitedTotal)} enrolled patients` +
-          (calculatedTargetRounded ? `<br><b>Calculated target:</b> ${fmtInt.format(calculatedTargetRounded)}` : '')
+          `<b>True Positive Cases (%)</b><br>out of ${fmtInt.format(recruitedTotal)} enrolled patients (${fmtPct(positiveRatePct)})`
         )
       ]
     }, baseConfig());
@@ -481,8 +486,7 @@
       legend:{ orientation:'h', y:-0.28, x:0 },
       annotations:[
         chartAnnotation(
-          `<b>True Positive Cases (%)</b><br>${fmtPct(positiveRate * 100)} out of ${fmtInt.format(truePositiveTarget)} True Positive Target` +
-          (calculatedTargetRounded ? `<br>(${fmtInt.format(truePositiveTarget)} / ${fmtPct(positiveRate * 100)} = ${fmtInt.format(calculatedTargetRounded)} recruited target)` : '')
+          `<b>True Positive Cases (%)</b><br>out of ${fmtInt.format(truePositiveTarget)} True Positive Target<br>(${fmtPct(truePositiveTargetPct)})`
         )
       ]
     }, baseConfig());
@@ -525,7 +529,7 @@
       plot_bgcolor:'rgba(0,0,0,0)',
       xaxis:{ title:'Month', tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.04)', automargin:true },
       yaxis:{ title:'Recruited patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
-      legend:{ orientation:'h', y:-0.30, x:0 }
+      legend:{ orientation:'h', y:-0.30, x:0, traceorder:'normal' }
     }, baseConfig());
 
     const exclusionMap = new Map();

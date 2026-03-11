@@ -242,7 +242,16 @@ body.right4-page{
   align-items:start;
 }
 .left-rail{
-  position:relative;
+  position:sticky;
+  top:94px;
+  align-self:start;
+  height:calc(100vh - 112px);
+}
+.filter-panel{
+  padding:20px;
+  position:static;
+  max-height:100%;
+  overflow:auto;
 }
 .main-rail{
   min-width:0;
@@ -253,13 +262,7 @@ body.right4-page{
 .kpi-section:first-child{
   margin-top:0;
 }
-.filter-panel{
-  padding:20px;
-  position:sticky;
-  top:94px;
-  max-height:calc(100vh - 112px);
-  overflow:auto;
-}
+
 .compact-head{ align-items:center; }
 .filter-grid{
   display:grid;
@@ -419,6 +422,11 @@ body.right4-page{
 @media (max-width: 1200px){
   .hero-grid{ grid-template-columns:1fr; }
   .dashboard-layout{ grid-template-columns:1fr; }
+  .left-rail{
+    position:static;
+    top:auto;
+    height:auto;
+  }
   .filter-panel{
     position:static;
     max-height:none;
