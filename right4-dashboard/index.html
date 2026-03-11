@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NIHR RIGHT4 Methanol Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Operational recruitment, screening, and true-positive monitoring synced from the master workbook." />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="stylesheet" href="../right4-dashboard.css?v=TEST123" />
+</head>
+<body class="right4-page">
+  <header class="right4-topbar">
+    <div class="container right4-topbar-inner">
+      <div class="right4-brand" aria-label="NIHR RIGHT4 Methanol Dashboard">
+        <div class="brand-badge">R4</div>
+        <div class="right4-brand-text">
+          <strong>NIHR RIGHT4 Methanol Dashboard</strong>
+          <span>Workbook-synced recruitment, screening, and true-positive monitoring</span>
+        </div>
+      </div>
+      <div class="right4-topbar-actions">
+        <a href="/" class="right4-link-btn secondary">Back to Portfolio</a>
+        <a href="/contacts/" class="right4-link-btn primary">Collaborate</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="right4-shell">
+    <section class="hero-shell">
+      <div class="container hero-grid">
+        <div class="hero-copy panel hero-panel">
+          <div class="eyebrow">NIHR RIGHT4 methanol study operations</div>
+          <h1 id="pageTitle">NIHR RIGHT4 Methanol Dashboard</h1>
+          <p id="pageSubtitle">Operational recruitment, screening, and true-positive monitoring synced from the master workbook.</p>
+
+          <div class="hero-tags">
+            <span class="tag">Last synced <strong id="lastUpdate">-</strong></span>
+            <span class="tag">Master workbook pipeline</span>
+            <span class="tag">Public-safe operational summary</span>
+          </div>
+
+          <div class="metric-ribbon">
+            <div class="metric-pill">
+              <span class="label">Recruitment target progress</span>
+              <strong id="targetPct">-</strong>
+            </div>
+            <div class="metric-pill">
+              <span class="label">Positive rate among recruited</span>
+              <strong id="positivePct">-</strong>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-side">
+          <div class="panel country-panel">
+            <div class="panel-head">
+              <h2>Enrollment status</h2>
+              <p>Country split and classification overview from the current workbook.</p>
+            </div>
+            <div class="mini-chart-grid">
+              <div class="mini-chart-card">
+                <h3>Country split</h3>
+                <div id="countryChart" class="mini-chart"></div>
+              </div>
+              <div class="mini-chart-card">
+                <h3>Classification</h3>
+                <div id="classificationChart" class="mini-chart"></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="container kpi-section">
+      <div id="kpiGrid" class="kpi-grid"></div>
+    </section>
+
+    <section class="container table-zone">
+      <div class="section-head">
+        <div>
+          <h2>Operational summary tables</h2>
+          <p>Live-calculated site performance mirrors the workbook dashboard structure with total cases, last 14 days, and last 30 days.</p>
+        </div>
+      </div>
+      <div class="table-grid">
+        <article class="panel table-card">
+          <div class="table-card-head">
+            <h3>Total cases</h3>
+            <p>Screened, recruited, excluded, and died among enrolled.</p>
+          </div>
+          <div id="totalCasesTable"></div>
+        </article>
+        <article class="panel table-card">
+          <div class="table-card-head">
+            <h3>Last 14 days</h3>
+            <p>Recent screening and enrollment activity by site.</p>
+          </div>
+          <div id="last14Table"></div>
+        </article>
+        <article class="panel table-card">
+          <div class="table-card-head">
+            <h3>Last 30 days</h3>
+            <p>Rolling monthly operational view by site.</p>
+          </div>
+          <div id="last30Table"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="container chart-zone">
+      <div class="section-head">
+        <div>
+          <h2>Dashboard graphs</h2>
+          <p>Web-native versions of the workbook graphs, fed from the same master data refresh pipeline.</p>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <article class="panel chart-card span-12">
+          <div class="chart-card-head">
+            <div>
+              <h3>Recruitment graph</h3>
+              <p>Cumulative recruited patients over time by site, plus the total study curve.</p>
+            </div>
+          </div>
+          <div id="recruitmentGraph" class="chart"></div>
+        </article>
+
+        <article class="panel chart-card span-6">
+          <div class="chart-card-head">
+            <div>
+              <h3>Target patients vs actual patients</h3>
+              <p>Target trajectory, calculated target, and actual recruited cases.</p>
+            </div>
+          </div>
+          <div id="targetActualChart" class="chart"></div>
+        </article>
+
+        <article class="panel chart-card span-6">
+          <div class="chart-card-head">
+            <div>
+              <h3>Target positive vs true positive patients</h3>
+              <p>Target positive milestones against observed true-positive cases.</p>
+            </div>
+          </div>
+          <div id="positiveTargetChart" class="chart"></div>
+        </article>
+
+        <article class="panel chart-card span-8">
+          <div class="chart-card-head">
+            <div>
+              <h3>Month wise recruitment</h3>
+              <p>Monthly recruited patients by site.</p>
+            </div>
+          </div>
+          <div id="monthlyChart" class="chart"></div>
+        </article>
+
+        <article class="panel chart-card span-4">
+          <div class="chart-card-head">
+            <div>
+              <h3>Top exclusion reasons</h3>
+              <p>Most frequent reasons behind excluded patients.</p>
+            </div>
+          </div>
+          <div id="exclusionChart" class="chart"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="container recent-zone">
+      <div class="section-head">
+        <div>
+          <h2>Recent records snapshot</h2>
+          <p>A compact operational feed from the most recent records in the master workbook.</p>
+        </div>
+      </div>
+      <article class="panel recent-card">
+        <div id="recentRecordsTable"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="right4-footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>Developed for operational monitoring</strong>
+        <span>Generated from the local master workbook through a one-click publish pipeline.</span>
+      </div>
+      <div class="footer-links">
+        <a href="/">Portfolio</a>
+        <a href="/contacts/">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../right4-dashboard-data.js?v=TEST123"></script>
+  <script src="../right4-dashboard.js?v=TEST123"></script>
+</body>
+</html>
