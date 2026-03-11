@@ -1,15 +1,15 @@
-
 (function(){
   const DATA = window.RIGHT4_DASHBOARD_DATA;
-  const isSmallScreen = window.matchMedia('(max-width: 820px)').matches;
-  const config = {
+  const small = () => window.matchMedia('(max-width: 820px)').matches;
+  const baseConfig = () => ({
     displayModeBar: false,
     responsive: true,
-    staticPlot: isSmallScreen,
-    scrollZoom: false
-  };
+    staticPlot: small(),
+    scrollZoom: false,
+    doubleClick: false
+  });
 
-  if(!DATA){
+  if(!DATA || !Array.isArray(DATA.records)){
     document.body.insertAdjacentHTML('afterbegin','<div style="padding:16px;background:#fff1f1;color:#991b1b;font-weight:700">Dashboard data could not be loaded.</div>');
     return;
   }
@@ -17,35 +17,148 @@
   const fmtInt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
   const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;
   const toShortDate = (iso) => {
+    if(!iso) return '-';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  };
+  const colors = ['#1f63ff','#18b5ff','#0f355c','#14a44d','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#64748b','#10b981'];
+
+  const records = DATA.records.map((r, idx) => ({ ...r, _idx: idx, screeningTs: new Date(r.screeningDate) }));
+  const siteOrder = (DATA.config && DATA.config.siteOrder) || [...new Set(records.map(r => r.siteCode))];
+  const siteMeta = (DATA.config && DATA.config.siteMeta) || Object.fromEntries(siteOrder.map(code => [code, {label: code, country: 'Other'}]));
+  const targetSchedule = (DATA.config && DATA.config.targetSchedule) || { dates: [], targetPatients: [], calculatedTarget: [] };
+  const positiveTargetSchedule = (DATA.config && DATA.config.truePositiveTargetSchedule) || { dates: [], targetPositive: [] };
+  const allCountries = [...new Set(records.map(r => r.country).filter(Boolean))].sort();
+  const allStatuses = [...new Set(records.map(r => r.patientStatus).filter(Boolean))].sort();
+  const allOutcomes = [...new Set(records.map(r => r.outcome).filter(Boolean))].sort();
+  const minDate = records.length ? records.reduce((min, r) => r.screeningDate < min ? r.screeningDate : min, records[0].screeningDate) : '';
+  const maxDate = records.length ? records.reduce((max, r) => r.screeningDate > max ? r.screeningDate : max, records[0].screeningDate) : '';
+
+  const els = {
+    pageTitle: document.getElementById('pageTitle'),
+    pageSubtitle: document.getElementById('pageSubtitle'),
+    lastUpdate: document.getElementById('lastUpdate'),
+    targetPct: document.getElementById('targetPct'),
+    positivePct: document.getElementById('positivePct'),
+    kpiGrid: document.getElementById('kpiGrid'),
+    totalCasesTable: document.getElementById('totalCasesTable'),
+    last14Table: document.getElementById('last14Table'),
+    last30Table: document.getElementById('last30Table'),
+    last14Heading: document.getElementById('last14Heading'),
+    last30Heading: document.getElementById('last30Heading'),
+    recentRecordsTable: document.getElementById('recentRecordsTable'),
+    activeFilters: document.getElementById('activeFilters'),
+    countryFilter: document.getElementById('countryFilter'),
+    siteFilter: document.getElementById('siteFilter'),
+    statusFilter: document.getElementById('statusFilter'),
+    outcomeFilter: document.getElementById('outcomeFilter'),
+    positiveFilter: document.getElementById('positiveFilter'),
+    dateFromFilter: document.getElementById('dateFromFilter'),
+    dateToFilter: document.getElementById('dateToFilter'),
+    resetFilters: document.getElementById('resetFilters')
   };
 
-  document.getElementById('pageTitle').textContent = DATA.meta.pageTitle;
-  document.getElementById('pageSubtitle').textContent = DATA.meta.pageSubtitle;
-  document.getElementById('lastUpdate').textContent = DATA.summary.lastUpdate;
-  document.getElementById('targetPct').textContent = fmtPct(DATA.summary.truePositiveVsTargetPct);
-  document.getElementById('positivePct').textContent = fmtPct(DATA.summary.overallPositivePct);
+  function fillSelect(select, options, allLabel){
+    select.innerHTML = '';
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = allLabel;
+    select.appendChild(allOpt);
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      select.appendChild(option);
+    });
+  }
 
-  const kpis = [
-    ['Total screened', DATA.summary.totalScreened, 'All screened records currently available in the master workbook.'],
-    ['Total recruited', DATA.summary.totalRecruited, 'Patients marked as enrolled at the time of the latest refresh.'],
-    ['Total excluded', DATA.summary.totalExcluded, 'Patients excluded after screening, grouped directly from workbook status.'],
-    ['Died (enrolled)', DATA.summary.totalDiedEnrolled, 'Outcome marked as died among enrolled patients only.'],
-    ['True positive cases', DATA.summary.totalTruePositive, 'Cases explicitly marked “Yes” in the True Positive column.']
-  ];
-  const kpiGrid = document.getElementById('kpiGrid');
-  kpis.forEach(([label, value, sub]) => {
-    const card = document.createElement('article');
-    card.className = 'kpi-card';
-    card.innerHTML = `<span class="eyebrow-sm">${label}</span><div class="value">${fmtInt.format(value)}</div><div class="sub">${sub}</div>`;
-    kpiGrid.appendChild(card);
-  });
+  fillSelect(els.countryFilter, allCountries, 'All countries');
+  fillSelect(els.siteFilter, siteOrder, 'All sites');
+  fillSelect(els.statusFilter, allStatuses, 'All statuses');
+  fillSelect(els.outcomeFilter, allOutcomes, 'All outcomes');
+  fillSelect(els.positiveFilter, ['Yes','No'], 'All true-positive states');
+  els.dateFromFilter.value = minDate;
+  els.dateToFilter.value = maxDate;
+  els.dateFromFilter.min = minDate;
+  els.dateFromFilter.max = maxDate;
+  els.dateToFilter.min = minDate;
+  els.dateToFilter.max = maxDate;
 
-  function renderTable(mountId, rows){
-    const mount = document.getElementById(mountId);
+  els.pageTitle.textContent = DATA.meta?.pageTitle || 'NIHR RIGHT4 Methanol Dashboard';
+  els.pageSubtitle.textContent = DATA.meta?.pageSubtitle || 'Operational recruitment, screening, and true-positive monitoring synced from the master workbook.';
+  els.lastUpdate.textContent = DATA.meta?.generatedAt ? toShortDate(DATA.meta.generatedAt.slice(0,10)) : '-';
+
+  function getFilters(){
+    return {
+      country: els.countryFilter.value,
+      site: els.siteFilter.value,
+      status: els.statusFilter.value,
+      outcome: els.outcomeFilter.value,
+      positive: els.positiveFilter.value,
+      dateFrom: els.dateFromFilter.value,
+      dateTo: els.dateToFilter.value,
+    };
+  }
+
+  function getFilteredRecords(){
+    const f = getFilters();
+    return records.filter(r => {
+      if (f.country && r.country !== f.country) return false;
+      if (f.site && r.siteCode !== f.site) return false;
+      if (f.status && r.patientStatus !== f.status) return false;
+      if (f.outcome && r.outcome !== f.outcome) return false;
+      if (f.positive && r.truePositive !== f.positive) return false;
+      if (f.dateFrom && r.screeningDate < f.dateFrom) return false;
+      if (f.dateTo && r.screeningDate > f.dateTo) return false;
+      return true;
+    });
+  }
+
+  function activeFilterChips(){
+    const f = getFilters();
+    const chips = [];
+    if (f.country) chips.push(`Country: ${f.country}`);
+    if (f.site) chips.push(`Site: ${f.site}`);
+    if (f.status) chips.push(`Status: ${f.status}`);
+    if (f.outcome) chips.push(`Outcome: ${f.outcome}`);
+    if (f.positive) chips.push(`True positive: ${f.positive}`);
+    if (f.dateFrom) chips.push(`From: ${toShortDate(f.dateFrom)}`);
+    if (f.dateTo) chips.push(`To: ${toShortDate(f.dateTo)}`);
+    return chips;
+  }
+
+  function groupedBySiteRows(rows){
+    const mapped = siteOrder.map(code => {
+      const subset = rows.filter(r => r.siteCode === code);
+      return {
+        siteCode: code,
+        siteLabel: siteMeta[code]?.label || code,
+        screened: subset.length,
+        recruited: subset.filter(r => r.isEnrolled).length,
+        excluded: subset.filter(r => r.isExcluded).length,
+        diedEnrolled: subset.filter(r => r.isDiedEnrolled).length,
+      };
+    });
+    mapped.push({
+      siteCode: 'TOTAL',
+      siteLabel: 'Total',
+      screened: rows.length,
+      recruited: rows.filter(r => r.isEnrolled).length,
+      excluded: rows.filter(r => r.isExcluded).length,
+      diedEnrolled: rows.filter(r => r.isDiedEnrolled).length,
+    });
+    return mapped;
+  }
+
+  function renderTable(mount, rows){
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
+    if(!rows.length){
+      wrap.innerHTML = '<div class="empty-note">No records match the current filter selection.</div>';
+      mount.innerHTML = '';
+      mount.appendChild(wrap);
+      return;
+    }
     const table = document.createElement('table');
     table.className = 'r4-table';
     table.innerHTML = `
@@ -75,164 +188,15 @@
     mount.appendChild(wrap);
   }
 
-  renderTable('totalCasesTable', DATA.siteTables.totalCases);
-  renderTable('last14Table', DATA.siteTables.last14Days);
-  renderTable('last30Table', DATA.siteTables.last30Days);
-
-  const country = DATA.summary.countryEnrollment;
-  Plotly.newPlot('countryChart', [{
-    type:'pie',
-    labels:Object.keys(country),
-    values:Object.values(country),
-    hole:0.58,
-    textinfo:'label+value',
-    sort:false,
-    marker:{ colors:['#1f63ff','#18b5ff'] }
-  }], {
-    margin:{l:10,r:10,t:0,b:0},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    showlegend:false
-  }, config);
-
-  const classification = DATA.summary.classification;
-  Plotly.newPlot('classificationChart', [{
-    type:'pie',
-    labels:Object.keys(classification),
-    values:Object.values(classification),
-    hole:0.58,
-    textinfo:'label+value',
-    sort:false,
-    marker:{ colors:['#14a44d','#7a8da8'] }
-  }], {
-    margin:{l:10,r:10,t:0,b:0},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    showlegend:false
-  }, config);
-
-  const siteSeriesOrder = ['CMCH','SOMCH','SZMCH','RMCH','DMCH','PGIMER','SGRDUHS','GGSMCH'];
-  const recruitmentTraces = siteSeriesOrder.map((code, idx) => ({
-    type:'scatter',
-    mode:'lines',
-    x: DATA.charts.dailyCumulative.dates,
-    y: DATA.charts.dailyCumulative.series[code],
-    name: code,
-    line:{ width:2 }
-  }));
-  recruitmentTraces.push({
-    type:'scatter',
-    mode:'lines',
-    x: DATA.charts.dailyCumulative.dates,
-    y: DATA.charts.dailyCumulative.series.TOTAL,
-    name:'Total',
-    line:{ width:3.5, dash:'solid', color:'#0f355c' }
-  });
-  Plotly.newPlot('recruitmentGraph', recruitmentTraces, {
-    margin:{l:48,r:18,t:10,b:54},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Date', tickfont:{ size:isSmallScreen?10:12 }, gridcolor:'rgba(19,36,59,0.08)' },
-    yaxis:{ title:'Cumulative recruited', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)' },
-    legend:{ orientation:isSmallScreen?'h':'v', y:isSmallScreen?-0.28:1, x:0 }
-  }, config);
-
-  Plotly.newPlot('targetActualChart', [
-    {
-      type:'scatter',
-      mode:'lines+markers',
-      x: DATA.charts.targetVsActual.dates,
-      y: DATA.charts.targetVsActual.targetPatients,
-      name:'Target patients',
-      line:{ width:2.6, color:'#1f63ff' }
-    },
-    {
-      type:'scatter',
-      mode:'lines',
-      x: DATA.charts.targetVsActual.dates,
-      y: DATA.charts.targetVsActual.calculatedTarget,
-      name:'Calculated target',
-      line:{ width:2.2, dash:'dot', color:'#7c8cb1' }
-    },
-    {
-      type:'scatter',
-      mode:'lines+markers',
-      x: DATA.charts.targetVsActual.dates,
-      y: DATA.charts.targetVsActual.actualPatients,
-      name:'Actual patients',
-      line:{ width:3, color:'#14a44d' }
-    }
-  ], {
-    margin:{l:48,r:18,t:10,b:54},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Date', tickfont:{ size:isSmallScreen?10:12 }, gridcolor:'rgba(19,36,59,0.08)' },
-    yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)' },
-    legend:{ orientation:'h', y:-0.24, x:0 }
-  }, config);
-
-  Plotly.newPlot('positiveTargetChart', [
-    {
-      type:'scatter',
-      mode:'lines+markers',
-      x: DATA.charts.positiveVsTarget.dates,
-      y: DATA.charts.positiveVsTarget.targetPositive,
-      name:'Target positive',
-      line:{ width:2.6, color:'#8b5cf6' }
-    },
-    {
-      type:'scatter',
-      mode:'lines+markers',
-      x: DATA.charts.positiveVsTarget.dates,
-      y: DATA.charts.positiveVsTarget.actualPositive,
-      name:'True positive',
-      line:{ width:3, color:'#f59e0b' }
-    }
-  ], {
-    margin:{l:48,r:18,t:10,b:54},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Date', tickfont:{ size:isSmallScreen?10:12 }, gridcolor:'rgba(19,36,59,0.08)' },
-    yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)' },
-    legend:{ orientation:'h', y:-0.24, x:0 }
-  }, config);
-
-  const monthlyTraces = siteSeriesOrder.map(code => ({
-    type:'bar',
-    x: DATA.charts.monthlyRecruitment.labels,
-    y: DATA.charts.monthlyRecruitment.series[code],
-    name: code
-  }));
-  Plotly.newPlot('monthlyChart', monthlyTraces, {
-    barmode:'stack',
-    margin:{l:48,r:18,t:10,b:70},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Month', tickangle:isSmallScreen?-45:0, gridcolor:'rgba(19,36,59,0.04)' },
-    yaxis:{ title:'Recruited patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)' },
-    legend:{ orientation:'h', y:-0.28, x:0 }
-  }, config);
-
-  const exclusion = DATA.charts.exclusionReasons || [];
-  Plotly.newPlot('exclusionChart', [{
-    type:'bar',
-    orientation:'h',
-    x: exclusion.map(item => item.count).reverse(),
-    y: exclusion.map(item => item.reason).reverse(),
-    marker:{ color:'#f59e0b' }
-  }], {
-    margin:{l:120,r:18,t:10,b:40},
-    paper_bgcolor:'rgba(0,0,0,0)',
-    plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{ title:'Excluded cases', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)' },
-    yaxis:{ automargin:true }
-  }, config);
-
-  function renderRecent(){
-    const rows = DATA.recentRecords || [];
-    const mount = document.getElementById('recentRecordsTable');
+  function renderRecent(rows){
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
+    if(!rows.length){
+      wrap.innerHTML = '<div class="empty-note">No recent records are available under the current filters.</div>';
+      els.recentRecordsTable.innerHTML = '';
+      els.recentRecordsTable.appendChild(wrap);
+      return;
+    }
     const table = document.createElement('table');
     table.className = 'r4-table';
     table.innerHTML = `
@@ -255,22 +219,293 @@
             <td>${row.siteCode}</td>
             <td>${toShortDate(row.screeningDate)}</td>
             <td>${row.patientStatus}</td>
-            <td>${row.outcome || '-'}</td>
+            <td>${row.outcome}</td>
             <td>${row.truePositive}</td>
-            <td>${row.baseDeficit || '-'}</td>
+            <td>${row.baseDeficit ?? '-'}</td>
             <td>${row.comment || '-'}</td>
           </tr>
         `).join('')}
       </tbody>
     `;
     wrap.appendChild(table);
-    mount.innerHTML = '';
-    mount.appendChild(wrap);
+    els.recentRecordsTable.innerHTML = '';
+    els.recentRecordsTable.appendChild(wrap);
   }
-  renderRecent();
+
+  function donutLayout(titleText){
+    return {
+      margin:{l:30,r:30,t:10,b:30},
+      paper_bgcolor:'rgba(0,0,0,0)',
+      plot_bgcolor:'rgba(0,0,0,0)',
+      showlegend:false,
+      uniformtext:{minsize:11, mode:'show'},
+      annotations:[{ text:titleText, x:0.5, y:0.5, showarrow:false, font:{size:14, color:'#395778'} }]
+    };
+  }
+
+  function renderCharts(rows){
+    const enrolledRows = rows.filter(r => r.isEnrolled);
+    const recruitedTotal = enrolledRows.length;
+    const truePositiveTotal = rows.filter(r => r.isTruePositive).length;
+
+    const countryMap = new Map();
+    rows.forEach(r => {
+      if (!r.isEnrolled) return;
+      countryMap.set(r.country, (countryMap.get(r.country) || 0) + 1);
+    });
+    if(countryMap.size === 0){
+      countryMap.set('No recruited cases', 1);
+    }
+    Plotly.newPlot('countryChart', [{
+      type:'pie',
+      labels:[...countryMap.keys()],
+      values:[...countryMap.values()],
+      hole:0.62,
+      textposition:'outside',
+      texttemplate:'%{label}<br>%{value} | %{percent}',
+      hovertemplate:'%{label}: %{value} (%{percent})<extra></extra>',
+      marker:{ colors:['#1f63ff','#18b5ff','#0f355c','#14a44d'] },
+      sort:false,
+      automargin:true
+    }], donutLayout(`Enrolled\n${fmtInt.format(recruitedTotal)}`), baseConfig());
+
+    const classificationLabels = ['True Positive', 'Other Enrolled'];
+    const classificationValues = [truePositiveTotal, Math.max(recruitedTotal - truePositiveTotal, 0)];
+    Plotly.newPlot('classificationChart', [{
+      type:'pie',
+      labels:classificationLabels,
+      values:classificationValues,
+      hole:0.62,
+      textposition:'outside',
+      texttemplate:'%{label}<br>%{value} | %{percent}',
+      hovertemplate:'%{label}: %{value} (%{percent})<extra></extra>',
+      marker:{ colors:['#14a44d','#7a8da8'] },
+      sort:false,
+      automargin:true
+    }], donutLayout(`Positive\n${fmtInt.format(truePositiveTotal)}`), baseConfig());
+
+    const effectiveMin = rows.length ? rows.reduce((a,b)=> a.screeningDate < b.screeningDate ? a : b).screeningDate : minDate;
+    const effectiveMax = rows.length ? rows.reduce((a,b)=> a.screeningDate > b.screeningDate ? a : b).screeningDate : maxDate;
+    const dailyDates = [];
+    if (effectiveMin && effectiveMax){
+      let d = new Date(effectiveMin + 'T00:00:00');
+      const end = new Date(effectiveMax + 'T00:00:00');
+      while (d <= end){
+        dailyDates.push(d.toISOString().slice(0,10));
+        d.setDate(d.getDate()+1);
+      }
+    }
+    const recruitByDateSite = new Map();
+    enrolledRows.forEach(r => {
+      const key = `${r.siteCode}|${r.screeningDate}`;
+      recruitByDateSite.set(key, (recruitByDateSite.get(key) || 0) + 1);
+    });
+    const recruitmentTraces = siteOrder.map((code, idx) => {
+      let cum = 0;
+      const y = dailyDates.map(date => {
+        cum += recruitByDateSite.get(`${code}|${date}`) || 0;
+        return cum;
+      });
+      return {
+        type:'scatter',
+        mode:'lines',
+        x: dailyDates,
+        y,
+        name: code,
+        line:{ width:2, color:colors[idx % colors.length] },
+        hovertemplate:`${code}: %{y}<extra></extra>`
+      };
+    });
+    const totalSeries = dailyDates.map((_, idx) => recruitmentTraces.reduce((sum, tr) => sum + (tr.y[idx] || 0), 0));
+    recruitmentTraces.push({
+      type:'scatter',
+      mode:'lines+text',
+      x: dailyDates,
+      y: totalSeries,
+      text: totalSeries.map((v, idx) => idx === totalSeries.length - 1 && v ? fmtInt.format(v) : ''),
+      textposition:'top right',
+      name:'Total',
+      line:{ width:4, color:'#0f355c' },
+      hovertemplate:'Total: %{y}<extra></extra>'
+    });
+    Plotly.newPlot('recruitmentGraph', recruitmentTraces, {
+      margin:{l:56,r:24,t:10,b:62},
+      paper_bgcolor:'rgba(0,0,0,0)',
+      plot_bgcolor:'rgba(0,0,0,0)',
+      hovermode:'x unified',
+      xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      yaxis:{ title:'Cumulative recruited', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''} }
+    }, baseConfig());
+
+    const actualPatients = targetSchedule.dates.map(cutoff => enrolledRows.filter(r => r.screeningDate <= cutoff).length);
+    Plotly.newPlot('targetActualChart', [
+      {
+        type:'scatter', mode:'lines+markers+text', x:targetSchedule.dates, y:targetSchedule.targetPatients, name:'Target patients',
+        text:targetSchedule.targetPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''), textposition:'top center',
+        line:{ width:2.6, color:'#1f63ff' }
+      },
+      {
+        type:'scatter', mode:'lines', x:targetSchedule.dates, y:targetSchedule.calculatedTarget, name:'Calculated target',
+        line:{ width:2.2, dash:'dot', color:'#7c8cb1' }
+      },
+      {
+        type:'scatter', mode:'lines+markers+text', x:targetSchedule.dates, y:actualPatients, name:'Actual patients',
+        text:actualPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''), textposition:'top center',
+        line:{ width:3, color:'#14a44d' }
+      }
+    ], {
+      margin:{l:56,r:24,t:10,b:66},
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', hovermode:'x unified',
+      xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      legend:{ orientation:'h', y:-0.28, x:0 }
+    }, baseConfig());
+
+    const actualPositive = positiveTargetSchedule.dates.map(cutoff => rows.filter(r => r.isTruePositive && r.screeningDate <= cutoff).length);
+    Plotly.newPlot('positiveTargetChart', [
+      {
+        type:'scatter', mode:'lines+markers+text', x:positiveTargetSchedule.dates, y:positiveTargetSchedule.targetPositive, name:'Target positive',
+        text:positiveTargetSchedule.targetPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''), textposition:'top center',
+        line:{ width:2.6, color:'#8b5cf6' }
+      },
+      {
+        type:'scatter', mode:'lines+markers+text', x:positiveTargetSchedule.dates, y:actualPositive, name:'True positive',
+        text:actualPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''), textposition:'top center',
+        line:{ width:3, color:'#f59e0b' }
+      }
+    ], {
+      margin:{l:56,r:24,t:10,b:66},
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', hovermode:'x unified',
+      xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      legend:{ orientation:'h', y:-0.28, x:0 }
+    }, baseConfig());
+
+    const monthMap = new Map();
+    enrolledRows.forEach(r => {
+      const label = new Date(r.screeningDate + 'T00:00:00').toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+      if(!monthMap.has(label)) monthMap.set(label, {});
+      monthMap.get(label)[r.siteCode] = (monthMap.get(label)[r.siteCode] || 0) + 1;
+    });
+    const monthLabels = [...monthMap.keys()];
+    const monthlyTraces = siteOrder.map((code, idx) => ({
+      type:'bar',
+      x: monthLabels,
+      y: monthLabels.map(label => (monthMap.get(label)?.[code] || 0)),
+      name: code,
+      marker:{ color: colors[idx % colors.length] },
+      hovertemplate:`${code}: %{y}<extra></extra>`
+    }));
+    const monthlyTotals = monthLabels.map((_, idx) => monthlyTraces.reduce((sum, tr) => sum + (tr.y[idx] || 0), 0));
+    monthlyTraces.push({
+      type:'scatter',
+      mode:'text',
+      x: monthLabels,
+      y: monthlyTotals,
+      text: monthlyTotals.map(v => v ? fmtInt.format(v) : ''),
+      textposition:'top center',
+      showlegend:false,
+      hoverinfo:'skip'
+    });
+    Plotly.newPlot('monthlyChart', monthlyTraces, {
+      barmode:'stack',
+      margin:{l:56,r:24,t:10,b:76},
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+      xaxis:{ title:'Month', tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.04)', automargin:true },
+      yaxis:{ title:'Recruited patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      legend:{ orientation:'h', y:-0.30, x:0 }
+    }, baseConfig());
+
+    const exclusionMap = new Map();
+    rows.filter(r => r.isExcluded).forEach(r => {
+      const key = r.excludedReason || 'Not specified';
+      exclusionMap.set(key, (exclusionMap.get(key) || 0) + 1);
+    });
+    const exclusionItems = [...exclusionMap.entries()].sort((a,b) => b[1] - a[1]).slice(0,8).reverse();
+    Plotly.newPlot('exclusionChart', [{
+      type:'bar', orientation:'h', x: exclusionItems.map(i => i[1]), y: exclusionItems.map(i => i[0]),
+      text: exclusionItems.map(i => fmtInt.format(i[1])), textposition:'outside', cliponaxis:false,
+      marker:{ color:'#f59e0b' }, hovertemplate:'%{y}: %{x}<extra></extra>'
+    }], {
+      margin:{l:190,r:46,t:10,b:42},
+      paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+      xaxis:{ title:'Excluded cases', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
+      yaxis:{ automargin:true }
+    }, baseConfig());
+  }
+
+  function renderKpis(rows){
+    const totalScreened = rows.length;
+    const totalRecruited = rows.filter(r => r.isEnrolled).length;
+    const totalExcluded = rows.filter(r => r.isExcluded).length;
+    const totalDiedEnrolled = rows.filter(r => r.isDiedEnrolled).length;
+    const totalTruePositive = rows.filter(r => r.isTruePositive).length;
+    const visibleSites = new Set(rows.map(r => r.siteCode)).size;
+
+    els.targetPct.textContent = fmtPct((totalRecruited / Math.max(targetSchedule.targetPatients[targetSchedule.targetPatients.length - 1] || 1, 1)) * 100);
+    els.positivePct.textContent = fmtPct((totalTruePositive / Math.max(totalRecruited || 1, 1)) * 100);
+
+    const kpis = [
+      ['Total screened', totalScreened, 'All screened records returned by the current filter selection.'],
+      ['Total recruited', totalRecruited, 'Patients marked as enrolled in the visible record set.'],
+      ['Total excluded', totalExcluded, 'Patients excluded after screening within the current view.'],
+      ['Died (enrolled)', totalDiedEnrolled, 'Outcome marked as died among enrolled patients only.'],
+      ['True positive cases', totalTruePositive, `${fmtInt.format(visibleSites)} site(s) currently represented in the filtered records.`]
+    ];
+    els.kpiGrid.innerHTML = '';
+    kpis.forEach(([label, value, sub]) => {
+      const card = document.createElement('article');
+      card.className = 'kpi-card';
+      card.innerHTML = `<span class="eyebrow-sm">${label}</span><div class="value">${fmtInt.format(value)}</div><div class="sub">${sub}</div>`;
+      els.kpiGrid.appendChild(card);
+    });
+  }
+
+  function renderAll(){
+    const rows = getFilteredRecords();
+    const chips = activeFilterChips();
+    els.activeFilters.innerHTML = chips.length ? chips.map(text => `<span class="filter-chip">${text}</span>`).join('') : '<span class="filter-chip">Showing all records</span>';
+
+    renderKpis(rows);
+
+    const referenceRows = rows.length ? rows : records;
+    const refMaxDate = referenceRows.reduce((a,b)=> a.screeningDate > b.screeningDate ? a : b).screeningDate;
+    const refDateObj = new Date(refMaxDate + 'T00:00:00');
+    const last14Start = new Date(refDateObj); last14Start.setDate(last14Start.getDate() - 13);
+    const last30Start = new Date(refDateObj); last30Start.setDate(last30Start.getDate() - 29);
+    els.last14Heading.textContent = `Last 14 days (to ${toShortDate(refMaxDate)})`;
+    els.last30Heading.textContent = `Last 30 days (to ${toShortDate(refMaxDate)})`;
+
+    renderTable(els.totalCasesTable, groupedBySiteRows(rows));
+    renderTable(els.last14Table, groupedBySiteRows(rows.filter(r => r.screeningTs >= last14Start && r.screeningTs <= refDateObj)));
+    renderTable(els.last30Table, groupedBySiteRows(rows.filter(r => r.screeningTs >= last30Start && r.screeningTs <= refDateObj)));
+    renderCharts(rows);
+    renderRecent([...rows].sort((a,b) => b.screeningDate.localeCompare(a.screeningDate) || b.patientId.localeCompare(a.patientId)).slice(0, 12));
+  }
+
+  [els.countryFilter, els.siteFilter, els.statusFilter, els.outcomeFilter, els.positiveFilter, els.dateFromFilter, els.dateToFilter].forEach(el => {
+    el.addEventListener('change', renderAll);
+  });
+
+  els.resetFilters.addEventListener('click', () => {
+    els.countryFilter.value = '';
+    els.siteFilter.value = '';
+    els.statusFilter.value = '';
+    els.outcomeFilter.value = '';
+    els.positiveFilter.value = '';
+    els.dateFromFilter.value = minDate;
+    els.dateToFilter.value = maxDate;
+    renderAll();
+  });
 
   window.addEventListener('resize', () => {
     ['countryChart','classificationChart','recruitmentGraph','targetActualChart','positiveTargetChart','monthlyChart','exclusionChart']
-      .forEach(id => Plotly.Plots.resize(document.getElementById(id)));
+      .forEach(id => {
+        const node = document.getElementById(id);
+        if(node) Plotly.Plots.resize(node);
+      });
   });
+
+  renderAll();
 })();

@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Operational recruitment, screening, and true-positive monitoring synced from the master workbook." />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="../right4-dashboard.css?v=TEST123" />
+  <link rel="stylesheet" href="../right4-dashboard.css?v=20260312-1" />
 </head>
 <body class="right4-page">
   <header class="right4-topbar">
@@ -56,7 +56,7 @@
           <div class="panel country-panel">
             <div class="panel-head">
               <h2>Enrollment status</h2>
-              <p>Country split and classification overview from the current workbook.</p>
+              <p>Country split and classification overview from the current workbook and active filters.</p>
             </div>
             <div class="mini-chart-grid">
               <div class="mini-chart-card">
@@ -70,6 +70,49 @@
             </div>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <section class="container filter-zone">
+      <div class="panel filter-panel">
+        <div class="section-head compact-head">
+          <div>
+            <h2>Interactive filters</h2>
+            <p>Slice the dashboard by country, site, screening status, outcome, positivity, and date range. Every KPI, chart, and table refreshes from the same filtered record set.</p>
+          </div>
+          <button id="resetFilters" class="right4-link-btn secondary buttonish" type="button">Reset filters</button>
+        </div>
+        <div class="filter-grid">
+          <label class="filter-field">
+            <span>Country</span>
+            <select id="countryFilter"></select>
+          </label>
+          <label class="filter-field">
+            <span>Site</span>
+            <select id="siteFilter"></select>
+          </label>
+          <label class="filter-field">
+            <span>Patient status</span>
+            <select id="statusFilter"></select>
+          </label>
+          <label class="filter-field">
+            <span>Outcome</span>
+            <select id="outcomeFilter"></select>
+          </label>
+          <label class="filter-field">
+            <span>True positive</span>
+            <select id="positiveFilter"></select>
+          </label>
+          <label class="filter-field">
+            <span>Date from</span>
+            <input id="dateFromFilter" type="date" />
+          </label>
+          <label class="filter-field">
+            <span>Date to</span>
+            <input id="dateToFilter" type="date" />
+          </label>
+        </div>
+        <div id="activeFilters" class="active-filters"></div>
       </div>
     </section>
 
@@ -94,14 +137,14 @@
         </article>
         <article class="panel table-card">
           <div class="table-card-head">
-            <h3>Last 14 days</h3>
+            <h3 id="last14Heading">Last 14 days</h3>
             <p>Recent screening and enrollment activity by site.</p>
           </div>
           <div id="last14Table"></div>
         </article>
         <article class="panel table-card">
           <div class="table-card-head">
-            <h3>Last 30 days</h3>
+            <h3 id="last30Heading">Last 30 days</h3>
             <p>Rolling monthly operational view by site.</p>
           </div>
           <div id="last30Table"></div>
@@ -113,7 +156,7 @@
       <div class="section-head">
         <div>
           <h2>Dashboard graphs</h2>
-          <p>Web-native versions of the workbook graphs, fed from the same master data refresh pipeline.</p>
+          <p>Web-native versions of the workbook graphs, fed from the same master-data refresh pipeline.</p>
         </div>
       </div>
 
@@ -132,7 +175,7 @@
           <div class="chart-card-head">
             <div>
               <h3>Target patients vs actual patients</h3>
-              <p>Target trajectory, calculated target, and actual recruited cases.</p>
+              <p>Study-level target trajectory against actual recruited cases under the current filters.</p>
             </div>
           </div>
           <div id="targetActualChart" class="chart"></div>
@@ -152,7 +195,7 @@
           <div class="chart-card-head">
             <div>
               <h3>Month wise recruitment</h3>
-              <p>Monthly recruited patients by site.</p>
+              <p>Monthly recruited patients by site, with total labels shown above each month.</p>
             </div>
           </div>
           <div id="monthlyChart" class="chart"></div>
@@ -196,7 +239,7 @@
     </div>
   </footer>
 
-  <script src="../right4-dashboard-data.js?v=TEST123"></script>
-  <script src="../right4-dashboard.js?v=TEST123"></script>
+  <script src="../right4-dashboard-data.js?v=20260312-1"></script>
+  <script src="../right4-dashboard.js?v=20260312-1"></script>
 </body>
 </html>
