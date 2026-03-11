@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Operational recruitment, screening, and true-positive monitoring synced from the master workbook." />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="../right4-dashboard.css?v=20260312-1" />
+  <link rel="stylesheet" href="../right4-dashboard.css?v=20260312-2" />
 </head>
 <body class="right4-page">
   <header class="right4-topbar">
@@ -62,10 +62,12 @@
               <div class="mini-chart-card">
                 <h3>Country split</h3>
                 <div id="countryChart" class="mini-chart"></div>
+                <div id="countryLegend" class="mini-legend"></div>
               </div>
               <div class="mini-chart-card">
                 <h3>Classification</h3>
                 <div id="classificationChart" class="mini-chart"></div>
+                <div id="classificationLegend" class="mini-legend"></div>
               </div>
             </div>
           </div>
@@ -73,156 +75,160 @@
       </div>
     </section>
 
-    <section class="container filter-zone">
-      <div class="panel filter-panel">
-        <div class="section-head compact-head">
-          <div>
-            <h2>Interactive filters</h2>
-            <p>Slice the dashboard by country, site, screening status, outcome, positivity, and date range. Every KPI, chart, and table refreshes from the same filtered record set.</p>
-          </div>
-          <button id="resetFilters" class="right4-link-btn secondary buttonish" type="button">Reset filters</button>
-        </div>
-        <div class="filter-grid">
-          <label class="filter-field">
-            <span>Country</span>
-            <select id="countryFilter"></select>
-          </label>
-          <label class="filter-field">
-            <span>Site</span>
-            <select id="siteFilter"></select>
-          </label>
-          <label class="filter-field">
-            <span>Patient status</span>
-            <select id="statusFilter"></select>
-          </label>
-          <label class="filter-field">
-            <span>Outcome</span>
-            <select id="outcomeFilter"></select>
-          </label>
-          <label class="filter-field">
-            <span>True positive</span>
-            <select id="positiveFilter"></select>
-          </label>
-          <label class="filter-field">
-            <span>Date from</span>
-            <input id="dateFromFilter" type="date" />
-          </label>
-          <label class="filter-field">
-            <span>Date to</span>
-            <input id="dateToFilter" type="date" />
-          </label>
-        </div>
-        <div id="activeFilters" class="active-filters"></div>
-      </div>
-    </section>
-
-    <section class="container kpi-section">
-      <div id="kpiGrid" class="kpi-grid"></div>
-    </section>
-
-    <section class="container table-zone">
-      <div class="section-head">
-        <div>
-          <h2>Operational summary tables</h2>
-          <p>Live-calculated site performance mirrors the workbook dashboard structure with total cases, last 14 days, and last 30 days.</p>
-        </div>
-      </div>
-      <div class="table-grid">
-        <article class="panel table-card">
-          <div class="table-card-head">
-            <h3>Total cases</h3>
-            <p>Screened, recruited, excluded, and died among enrolled.</p>
-          </div>
-          <div id="totalCasesTable"></div>
-        </article>
-        <article class="panel table-card">
-          <div class="table-card-head">
-            <h3 id="last14Heading">Last 14 days</h3>
-            <p>Recent screening and enrollment activity by site.</p>
-          </div>
-          <div id="last14Table"></div>
-        </article>
-        <article class="panel table-card">
-          <div class="table-card-head">
-            <h3 id="last30Heading">Last 30 days</h3>
-            <p>Rolling monthly operational view by site.</p>
-          </div>
-          <div id="last30Table"></div>
-        </article>
-      </div>
-    </section>
-
-    <section class="container chart-zone">
-      <div class="section-head">
-        <div>
-          <h2>Dashboard graphs</h2>
-          <p>Web-native versions of the workbook graphs, fed from the same master-data refresh pipeline.</p>
-        </div>
-      </div>
-
-      <div class="chart-grid">
-        <article class="panel chart-card span-12">
-          <div class="chart-card-head">
+    <section class="container dashboard-layout">
+      <aside class="left-rail">
+        <div class="panel filter-panel">
+          <div class="section-head compact-head">
             <div>
-              <h3>Recruitment graph</h3>
-              <p>Cumulative recruited patients over time by site, plus the total study curve.</p>
+              <h2>Interactive filters</h2>
+              <p>Slice the dashboard by country, site, screening status, outcome, positivity, and date range. Every KPI, chart, and table refreshes from the same filtered record set.</p>
+            </div>
+            <button id="resetFilters" class="right4-link-btn secondary buttonish" type="button">Reset filters</button>
+          </div>
+          <div class="filter-grid">
+            <label class="filter-field">
+              <span>Country</span>
+              <select id="countryFilter"></select>
+            </label>
+            <label class="filter-field">
+              <span>Site</span>
+              <select id="siteFilter"></select>
+            </label>
+            <label class="filter-field">
+              <span>Patient status</span>
+              <select id="statusFilter"></select>
+            </label>
+            <label class="filter-field">
+              <span>Outcome</span>
+              <select id="outcomeFilter"></select>
+            </label>
+            <label class="filter-field">
+              <span>True positive</span>
+              <select id="positiveFilter"></select>
+            </label>
+            <label class="filter-field">
+              <span>Date from</span>
+              <input id="dateFromFilter" type="date" />
+            </label>
+            <label class="filter-field">
+              <span>Date to</span>
+              <input id="dateToFilter" type="date" />
+            </label>
+          </div>
+          <div id="activeFilters" class="active-filters"></div>
+        </div>
+      </aside>
+
+      <div class="main-rail">
+        <section class="kpi-section">
+          <div id="kpiGrid" class="kpi-grid"></div>
+        </section>
+
+        <section class="table-zone">
+          <div class="section-head">
+            <div>
+              <h2>Operational summary tables</h2>
+              <p>Live-calculated site performance mirrors the workbook dashboard structure with total cases, last 14 days, and last 30 days.</p>
             </div>
           </div>
-          <div id="recruitmentGraph" class="chart"></div>
-        </article>
+          <div class="table-grid">
+            <article class="panel table-card">
+              <div class="table-card-head">
+                <h3>Total cases</h3>
+                <p>Screened, recruited, excluded, and died among enrolled.</p>
+              </div>
+              <div id="totalCasesTable"></div>
+            </article>
+            <article class="panel table-card">
+              <div class="table-card-head">
+                <h3 id="last14Heading">Last 14 days</h3>
+                <p>Recent screening and enrollment activity by site.</p>
+              </div>
+              <div id="last14Table"></div>
+            </article>
+            <article class="panel table-card">
+              <div class="table-card-head">
+                <h3 id="last30Heading">Last 30 days</h3>
+                <p>Rolling monthly operational view by site.</p>
+              </div>
+              <div id="last30Table"></div>
+            </article>
+          </div>
+        </section>
 
-        <article class="panel chart-card span-6">
-          <div class="chart-card-head">
+        <section class="chart-zone">
+          <div class="section-head">
             <div>
-              <h3>Target patients vs actual patients</h3>
-              <p>Study-level target trajectory against actual recruited cases under the current filters.</p>
+              <h2>Dashboard graphs</h2>
+              <p>Web-native versions of the workbook graphs, fed from the same master-data refresh pipeline.</p>
             </div>
           </div>
-          <div id="targetActualChart" class="chart"></div>
-        </article>
 
-        <article class="panel chart-card span-6">
-          <div class="chart-card-head">
+          <div class="chart-grid">
+            <article class="panel chart-card span-12">
+              <div class="chart-card-head">
+                <div>
+                  <h3>Recruitment graph</h3>
+                  <p>Cumulative recruited patients over time by site, plus the total study curve.</p>
+                </div>
+              </div>
+              <div id="recruitmentGraph" class="chart"></div>
+            </article>
+
+            <article class="panel chart-card span-6">
+              <div class="chart-card-head">
+                <div>
+                  <h3>Target patients vs actual patients</h3>
+                  <p>Study-level target trajectory against actual recruited cases under the current filters.</p>
+                </div>
+              </div>
+              <div id="targetActualChart" class="chart"></div>
+            </article>
+
+            <article class="panel chart-card span-6">
+              <div class="chart-card-head">
+                <div>
+                  <h3>Target positive vs true positive patients</h3>
+                  <p>Target positive milestones against observed true-positive cases.</p>
+                </div>
+              </div>
+              <div id="positiveTargetChart" class="chart"></div>
+            </article>
+
+            <article class="panel chart-card span-8">
+              <div class="chart-card-head">
+                <div>
+                  <h3>Month wise recruitment</h3>
+                  <p>Monthly recruited patients by site, in workbook order, with total labels shown above each month.</p>
+                </div>
+              </div>
+              <div id="monthlyChart" class="chart"></div>
+            </article>
+
+            <article class="panel chart-card span-4">
+              <div class="chart-card-head">
+                <div>
+                  <h3>Top exclusion reasons</h3>
+                  <p>Most frequent reasons behind excluded patients.</p>
+                </div>
+              </div>
+              <div id="exclusionChart" class="chart"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="recent-zone">
+          <div class="section-head">
             <div>
-              <h3>Target positive vs true positive patients</h3>
-              <p>Target positive milestones against observed true-positive cases.</p>
+              <h2>Recent records snapshot</h2>
+              <p>A compact operational feed from the most recent records in the master workbook.</p>
             </div>
           </div>
-          <div id="positiveTargetChart" class="chart"></div>
-        </article>
-
-        <article class="panel chart-card span-8">
-          <div class="chart-card-head">
-            <div>
-              <h3>Month wise recruitment</h3>
-              <p>Monthly recruited patients by site, with total labels shown above each month.</p>
-            </div>
-          </div>
-          <div id="monthlyChart" class="chart"></div>
-        </article>
-
-        <article class="panel chart-card span-4">
-          <div class="chart-card-head">
-            <div>
-              <h3>Top exclusion reasons</h3>
-              <p>Most frequent reasons behind excluded patients.</p>
-            </div>
-          </div>
-          <div id="exclusionChart" class="chart"></div>
-        </article>
+          <article class="panel recent-card">
+            <div id="recentRecordsTable"></div>
+          </article>
+        </section>
       </div>
-    </section>
-
-    <section class="container recent-zone">
-      <div class="section-head">
-        <div>
-          <h2>Recent records snapshot</h2>
-          <p>A compact operational feed from the most recent records in the master workbook.</p>
-        </div>
-      </div>
-      <article class="panel recent-card">
-        <div id="recentRecordsTable"></div>
-      </article>
     </section>
   </main>
 
@@ -239,7 +245,7 @@
     </div>
   </footer>
 
-  <script src="../right4-dashboard-data.js?v=20260312-1"></script>
-  <script src="../right4-dashboard.js?v=20260312-1"></script>
+  <script src="../right4-dashboard-data.js?v=20260312-2"></script>
+  <script src="../right4-dashboard.js?v=20260312-2"></script>
 </body>
 </html>

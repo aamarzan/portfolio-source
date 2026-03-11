@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-03-12T03:52:38",
+    "generatedAt": "2026-03-11T22:18:18",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook."
@@ -8,10 +8,10 @@
   "config": {
     "siteOrder": [
       "CMCH",
-      "SOMCH",
-      "SZMCH",
       "RMCH",
       "DMCH",
+      "SZMCH",
+      "SOMCH",
       "PGIMER",
       "SGRDUHS",
       "GGSMCH"
@@ -21,20 +21,20 @@
         "label": "CMCH",
         "country": "Bangladesh"
       },
-      "SOMCH": {
-        "label": "SOMCH",
-        "country": "Bangladesh"
-      },
-      "SZMCH": {
-        "label": "SZMCH",
-        "country": "Bangladesh"
-      },
       "RMCH": {
         "label": "RMCH",
         "country": "Bangladesh"
       },
       "DMCH": {
         "label": "DMCH",
+        "country": "Bangladesh"
+      },
+      "SZMCH": {
+        "label": "SZMCH",
+        "country": "Bangladesh"
+      },
+      "SOMCH": {
+        "label": "SOMCH",
         "country": "Bangladesh"
       },
       "PGIMER": {
@@ -200,6 +200,10 @@
         78.0,
         81.0
       ]
+    },
+    "studyTargets": {
+      "overallRecruitmentTarget": 1620,
+      "truePositiveTarget": 81
     }
   },
   "records": [
@@ -3544,13 +3548,13 @@
       "baseDeficit": 15.2,
       "patientStatus": "Enrolled",
       "outcome": "Survived",
-      "truePositive": "Yes",
+      "truePositive": "No",
       "excludedReason": "Not specified",
       "comment": "",
       "isEnrolled": true,
       "isExcluded": false,
       "isDiedEnrolled": false,
-      "isTruePositive": true
+      "isTruePositive": false
     },
     {
       "patientId": "RMCH-0044",

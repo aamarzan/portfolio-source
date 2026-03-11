@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
 
-PREFERRED_SITE_ORDER = ["CMCH","SOMCH","SZMCH","RMCH","DMCH","PGIMER","SGRDUHS","GGSMCH"]
+PREFERRED_SITE_ORDER = ["CMCH","RMCH","DMCH","SZMCH","SOMCH","PGIMER","SGRDUHS","GGSMCH"]
 SITE_COUNTRY_MAP = {
     "CMCH":"Bangladesh",
     "SOMCH":"Bangladesh",
@@ -158,6 +158,10 @@ def make_payload(df: pd.DataFrame) -> dict:
             "truePositiveTargetSchedule": {
                 "dates": [d for d, _ in TRUE_POSITIVE_TARGET_SCHEDULE],
                 "targetPositive": [float(t) for _, t in TRUE_POSITIVE_TARGET_SCHEDULE],
+            },
+            "studyTargets": {
+                "overallRecruitmentTarget": 1620,
+                "truePositiveTarget": 81,
             },
         },
         "records": records,
