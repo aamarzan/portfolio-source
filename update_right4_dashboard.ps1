@@ -32,7 +32,7 @@ else {
     throw "Python was not found. Install Python or make sure py/python is on PATH."
 }
 
-git add right4-dashboard\index.html right4-dashboard.css right4-dashboard.js right4-dashboard-data.js right4-dashboard-data.json .gitignore
+git add right4-dashboard\index.html right4-dashboard.css right4-dashboard.js right4-dashboard-data.js right4-dashboard-data.json scripts\update_right4_dashboard_from_excel.py .gitignore
 
 git diff --cached --quiet
 if ($LASTEXITCODE -eq 0) {
