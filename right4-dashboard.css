@@ -576,3 +576,19 @@ body.right4-page{
 .records-pagination .right4-link-btn.secondary[disabled]{
   color:#7e93af !important;
 }
+
+@media (max-width: 1200px){
+  .left-rail{
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    align-self: auto !important;
+  }
+
+  .filter-panel{
+    position: static !important;
+    top: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
