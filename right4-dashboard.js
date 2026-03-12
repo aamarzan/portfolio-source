@@ -420,14 +420,23 @@
       hovermode:'x unified',
       xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       yaxis:{ title:'Cumulative recruited', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
-      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''}, traceorder:'normal' }
+      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''}, traceorder:'normal' },
+      hoverlabel:{ bgcolor:'#000000', bordercolor:'#000000', font:{ color:'#ffffff', size:12 } }
     }, baseConfig());
 
     const targetDates = targetSchedule.dates;
-    const currentDates = targetDates.filter(date => date <= effectiveMax);
-    const actualPatients = currentDates.map(cutoff => enrolledRows.filter(r => r.screeningDate <= cutoff).length);
+    const enrolledByDate = new Map();
+    enrolledRows.forEach(r => {
+      enrolledByDate.set(r.screeningDate, (enrolledByDate.get(r.screeningDate) || 0) + 1);
+    });
+    let enrolledCum = 0;
+    const actualDates = dailyDates.slice();
+    const actualPatients = actualDates.map(date => {
+      enrolledCum += enrolledByDate.get(date) || 0;
+      return enrolledCum;
+    });
     const targetPatientLastText = targetSchedule.targetPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : '');
-    const actualPatientsLastText = actualPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : '');
+    const actualPatientsLastText = actualPatients.map((v, i, arr) => i === arr.length - 1 && arr.length ? fmtInt.format(v) : '');
     const targetActualTraces = [
       {
         type:'scatter',
@@ -437,17 +446,19 @@
         name:'Target patients',
         text:targetPatientLastText,
         textposition:'top center',
-        line:{ width:2.6, color:'#1f63ff' }
+        line:{ width:2.6, color:'#1f63ff' },
+        hovertemplate:'Target patients<br>%{x}: %{y}<extra></extra>'
       },
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:currentDates,
+        x:actualDates,
         y:actualPatients,
         name:'Actual patients',
         text:actualPatientsLastText,
         textposition:'top center',
-        line:{ width:3, color:'#14a44d' }
+        line:{ width:3, color:'#14a44d' },
+        hovertemplate:'Actual patients<br>%{x}: %{y}<extra></extra>'
       }
     ];
     if(calculatedTargetRounded !== null){
@@ -470,6 +481,7 @@
       xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       legend:{ orientation:'h', y:-0.28, x:0 },
+      hoverlabel:{ bgcolor:'#000000', bordercolor:'#000000', font:{ color:'#ffffff', size:12 } },
       annotations:[
         chartAnnotation(
           `<b>True Positive Cases (%)</b><br>out of ${fmtInt.format(recruitedTotal)} enrolled patients (${fmtPct(positiveRatePct)})`
@@ -478,8 +490,16 @@
     }, baseConfig());
 
     const positiveTargetDates = positiveTargetSchedule.dates;
-    const positiveCurrentDates = positiveTargetDates.filter(date => date <= effectiveMax);
-    const actualPositive = positiveCurrentDates.map(cutoff => rows.filter(r => r.isTruePositive && r.screeningDate <= cutoff).length);
+    const positiveByDate = new Map();
+    rows.filter(r => r.isTruePositive).forEach(r => {
+      positiveByDate.set(r.screeningDate, (positiveByDate.get(r.screeningDate) || 0) + 1);
+    });
+    let positiveCum = 0;
+    const positiveActualDates = dailyDates.slice();
+    const actualPositive = positiveActualDates.map(date => {
+      positiveCum += positiveByDate.get(date) || 0;
+      return positiveCum;
+    });
     Plotly.newPlot('positiveTargetChart', [
       {
         type:'scatter',
@@ -489,17 +509,19 @@
         name:'Target positive',
         text:positiveTargetSchedule.targetPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''),
         textposition:'top center',
-        line:{ width:2.6, color:'#8b5cf6' }
+        line:{ width:2.6, color:'#8b5cf6' },
+        hovertemplate:'Target positive<br>%{x}: %{y}<extra></extra>'
       },
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:positiveCurrentDates,
+        x:positiveActualDates,
         y:actualPositive,
         name:'True positive',
-        text:actualPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''),
+        text:actualPositive.map((v, i, arr) => i === arr.length - 1 && arr.length ? fmtInt.format(v) : ''),
         textposition:'top center',
-        line:{ width:3, color:'#f59e0b' }
+        line:{ width:3, color:'#f59e0b' },
+        hovertemplate:'True positive<br>%{x}: %{y}<extra></extra>'
       }
     ], {
       margin:{l:56,r:24,t:10,b:66},
@@ -509,6 +531,7 @@
       xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, tickangle:small()?-40:0, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       yaxis:{ title:'Patients', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       legend:{ orientation:'h', y:-0.28, x:0 },
+      hoverlabel:{ bgcolor:'#000000', bordercolor:'#000000', font:{ color:'#ffffff', size:12 } },
       annotations:[
         chartAnnotation(
           `<b>True Positive Cases (%)</b><br>out of ${fmtInt.format(truePositiveTarget)} True Positive Target<br>(${fmtPct(truePositiveTargetPct)})`

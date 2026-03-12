@@ -242,13 +242,16 @@ body.right4-page{
   align-items:start;
 }
 .left-rail{
+  position:sticky;
+  top:94px;
   align-self:start;
   min-width:0;
+  height:fit-content;
 }
 .filter-panel{
   padding:20px;
-  position:sticky;
-  top:94px;
+  position:relative;
+  top:auto;
   max-height:calc(100vh - 112px);
   overflow:auto;
 }
@@ -416,6 +419,24 @@ body.right4-page{
   cursor:not-allowed;
   transform:none;
 }
+
+.records-pagination .right4-link-btn.secondary{
+  color:var(--blue1);
+  border:1px solid rgba(31,99,255,0.18);
+  background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(226,238,255,0.96));
+  box-shadow:0 8px 18px rgba(31,99,255,0.10);
+}
+.records-pagination .right4-link-btn.secondary:hover:not([disabled]){
+  color:#0f355c;
+  border-color:rgba(31,99,255,0.26);
+  background:linear-gradient(180deg, #ffffff, #dbeafe);
+}
+.records-pagination .right4-link-btn.secondary[disabled]{
+  color:#6b85a8;
+  background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,245,249,0.96));
+  border-color:rgba(148,163,184,0.18);
+}
+
 .right4-footer{
   margin-top:34px;
   background:#07111f;
