@@ -150,6 +150,8 @@ def build_payload(df: pd.DataFrame) -> dict:
     total_excluded = int(df["isExcluded"].sum())
     total_died_enrolled = int(df["isDiedEnrolled"].sum())
     latest_date = df["Date of Screening"].max().date().isoformat() if not df.empty else ""
+    latest_enrolled_date = df.loc[df["isEnrolled"], "Date of Screening"].max().date().isoformat() if df["isEnrolled"].any() else ""
+    latest_true_positive_date = df.loc[df["isTruePositive"], "Date of Screening"].max().date().isoformat() if df["isTruePositive"].any() else ""
 
     payload = {
         "meta": {
@@ -158,6 +160,8 @@ def build_payload(df: pd.DataFrame) -> dict:
             "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
             "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
             "latestScreeningDate": latest_date,
+            "latestEnrolledDate": latest_enrolled_date,
+            "latestTruePositiveDate": latest_true_positive_date,
         },
         "config": {
             "siteOrder": SITE_ORDER,
@@ -183,6 +187,8 @@ def build_payload(df: pd.DataFrame) -> dict:
             "totalDiedEnrolled": total_died_enrolled,
             "totalTruePositive": total_true_positive,
             "overallPositivePct": (total_true_positive / total_recruited * 100) if total_recruited else 0,
+            "latestEnrolledDate": latest_enrolled_date,
+            "latestTruePositiveDate": latest_true_positive_date,
         },
         "records": build_records(df),
     }
@@ -234,6 +240,8 @@ def main() -> None:
     print(f"Total true positive: {payload['summary']['totalTruePositive']}")
     print(f"Last updated: {payload['meta']['generatedAt']}")
     print(f"Latest screening date in workbook: {payload['meta']['latestScreeningDate']}")
+    print(f"Latest enrolled date in workbook: {payload['meta']['latestEnrolledDate'] or '-'}")
+    print(f"Latest true positive date in workbook: {payload['meta']['latestTruePositiveDate'] or '-'}")
 
 
 if __name__ == "__main__":

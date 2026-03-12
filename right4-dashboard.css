@@ -252,8 +252,8 @@ body.right4-page{
   padding:20px;
   position:relative;
   top:auto;
-  max-height:calc(100vh - 112px);
-  overflow:auto;
+  max-height:none;
+  overflow:visible;
 }
 .main-rail{
   min-width:0;
@@ -547,4 +547,25 @@ body.right4-page{
 .records-pagination .right4-link-btn.secondary[disabled]{
   color:#7e93af;
   background:#f3f6fb;
+}
+
+
+/* realtime plot polish overrides */
+.left-rail{
+  position:sticky;
+  top:94px;
+  align-self:start;
+}
+.records-pagination .right4-link-btn.secondary{
+  color:#1f63ff !important;
+  background:linear-gradient(180deg, #f5f9ff, #e8f1ff) !important;
+  border:1px solid rgba(31,99,255,0.22) !important;
+  box-shadow:0 8px 18px rgba(31,99,255,0.10);
+}
+.records-pagination .right4-link-btn.secondary:hover:not([disabled]){
+  color:#0f355c !important;
+  background:linear-gradient(180deg, #ffffff, #dbeafe) !important;
+}
+.records-pagination .right4-link-btn.secondary[disabled]{
+  color:#7e93af !important;
 }
