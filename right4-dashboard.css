@@ -534,3 +534,17 @@ body.right4-page{
   background:rgba(31,99,255,0.22);
   border-radius:999px;
 }
+
+
+.records-pagination .right4-link-btn.secondary{
+  color:#1f63ff;
+  background:#eef5ff;
+  border:1px solid rgba(31,99,255,0.18);
+}
+.records-pagination .right4-link-btn.secondary:hover{
+  background:#e3efff;
+}
+.records-pagination .right4-link-btn.secondary[disabled]{
+  color:#7e93af;
+  background:#f3f6fb;
+}

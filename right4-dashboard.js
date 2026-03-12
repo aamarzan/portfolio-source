@@ -1,5 +1,4 @@
-(function(){
-  const DATA = window.RIGHT4_DASHBOARD_DATA;
+(async function(){
   const small = () => window.matchMedia('(max-width: 820px)').matches;
   const baseConfig = () => ({
     displayModeBar: false,
@@ -9,6 +8,31 @@
     doubleClick: false
   });
 
+  async function resolveData(){
+    if(window.RIGHT4_DASHBOARD_DATA && Array.isArray(window.RIGHT4_DASHBOARD_DATA.records)){
+      return window.RIGHT4_DASHBOARD_DATA;
+    }
+    const assetConfig = window.RIGHT4_DASHBOARD_ASSETS || {};
+    const candidates = [
+      assetConfig.dataJson,
+      '../right4-dashboard-data.json',
+      '/right4-dashboard-data.json'
+    ].filter(Boolean);
+
+    for(const url of candidates){
+      try{
+        const response = await fetch(url, { cache: 'no-store' });
+        if(!response.ok) continue;
+        const json = await response.json();
+        if(json && Array.isArray(json.records)) return json;
+      }catch(err){
+        // try next candidate
+      }
+    }
+    return null;
+  }
+
+  const DATA = await resolveData();
   if(!DATA || !Array.isArray(DATA.records)){
     document.body.insertAdjacentHTML('afterbegin','<div style="padding:16px;background:#fff1f1;color:#991b1b;font-weight:700">Dashboard data could not be loaded.</div>');
     return;
