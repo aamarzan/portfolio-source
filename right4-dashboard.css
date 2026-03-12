@@ -242,15 +242,14 @@ body.right4-page{
   align-items:start;
 }
 .left-rail{
-  position:sticky;
-  top:94px;
   align-self:start;
-  height:calc(100vh - 112px);
+  min-width:0;
 }
 .filter-panel{
   padding:20px;
-  position:static;
-  max-height:100%;
+  position:sticky;
+  top:94px;
+  max-height:calc(100vh - 112px);
   overflow:auto;
 }
 .main-rail{
@@ -394,6 +393,29 @@ body.right4-page{
 .span-4{ grid-column:span 4; }
 .chart{ height:430px; margin-top:10px; }
 .recent-card{ padding:18px; }
+.records-pagination{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.records-page-info{
+  color:#4d6484;
+  font-weight:700;
+  min-width:90px;
+  text-align:center;
+}
+.records-pagination .right4-link-btn{
+  min-height:38px;
+  padding:8px 12px;
+}
+.records-pagination .right4-link-btn[disabled]{
+  opacity:0.45;
+  cursor:not-allowed;
+  transform:none;
+}
 .right4-footer{
   margin-top:34px;
   background:#07111f;
@@ -429,6 +451,7 @@ body.right4-page{
   }
   .filter-panel{
     position:static;
+    top:auto;
     max-height:none;
     overflow:visible;
   }
@@ -469,6 +492,17 @@ body.right4-page{
   .compact-head .buttonish{
     width:100%;
     justify-content:center;
+  }
+  .records-pagination{
+    justify-content:space-between;
+  }
+  .records-pagination .right4-link-btn{
+    flex:1 1 auto;
+    justify-content:center;
+  }
+  .records-page-info{
+    width:100%;
+    order:-1;
   }
 }
 

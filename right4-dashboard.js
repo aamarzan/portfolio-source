@@ -68,8 +68,15 @@
     dateToFilter: document.getElementById('dateToFilter'),
     resetFilters: document.getElementById('resetFilters'),
     countryLegend: document.getElementById('countryLegend'),
-    classificationLegend: document.getElementById('classificationLegend')
+    classificationLegend: document.getElementById('classificationLegend'),
+    recordsPrev: document.getElementById('recordsPrev'),
+    recordsNext: document.getElementById('recordsNext'),
+    recordsPageInfo: document.getElementById('recordsPageInfo')
   };
+
+  const RECORDS_PAGE_SIZE = 20;
+  let recordsPage = 1;
+  let filteredRecordsForPagination = [];
 
   function fillSelect(select, options, allLabel){
     select.innerHTML = '';
@@ -202,14 +209,26 @@
   }
 
   function renderRecent(rows){
+    filteredRecordsForPagination = [...rows];
+    const totalPages = Math.max(1, Math.ceil(filteredRecordsForPagination.length / RECORDS_PAGE_SIZE));
+    if (recordsPage > totalPages) recordsPage = totalPages;
+    if (recordsPage < 1) recordsPage = 1;
+
+    const start = (recordsPage - 1) * RECORDS_PAGE_SIZE;
+    const pageRows = filteredRecordsForPagination.slice(start, start + RECORDS_PAGE_SIZE);
+
     const wrap = document.createElement('div');
     wrap.className = 'table-wrap';
-    if(!rows.length){
-      wrap.innerHTML = '<div class="empty-note">No recent records are available under the current filters.</div>';
+    if(!pageRows.length){
+      wrap.innerHTML = '<div class="empty-note">No records are available under the current filters.</div>';
       els.recentRecordsTable.innerHTML = '';
       els.recentRecordsTable.appendChild(wrap);
+      if (els.recordsPageInfo) els.recordsPageInfo.textContent = 'Page 1 of 1';
+      if (els.recordsPrev) els.recordsPrev.disabled = true;
+      if (els.recordsNext) els.recordsNext.disabled = true;
       return;
     }
+
     const table = document.createElement('table');
     table.className = 'r4-table';
     table.innerHTML = `
@@ -226,7 +245,7 @@
         </tr>
       </thead>
       <tbody>
-        ${rows.map(row => `
+        ${pageRows.map(row => `
           <tr>
             <td>${row.patientId}</td>
             <td>${row.siteCode}</td>
@@ -243,6 +262,10 @@
     wrap.appendChild(table);
     els.recentRecordsTable.innerHTML = '';
     els.recentRecordsTable.appendChild(wrap);
+
+    if (els.recordsPageInfo) els.recordsPageInfo.textContent = `Page ${recordsPage} of ${totalPages}`;
+    if (els.recordsPrev) els.recordsPrev.disabled = recordsPage <= 1;
+    if (els.recordsNext) els.recordsNext.disabled = recordsPage >= totalPages;
   }
 
   function renderLegend(mount, items){
@@ -294,7 +317,8 @@
         colors:safeItems.map(i => i.color),
         line:{ color:'#ffffff', width:2 }
       },
-      hovertemplate:'%{label}: %{value} (%{percent})<extra></extra>'
+      hovertemplate:'%{label}: %{value} (%{percent})<extra></extra>',
+      hoverlabel:{ bgcolor:'#000000', bordercolor:'#000000', font:{ color:'#ffffff', size:12 } }
     }], donutLayout(centerLabel), baseConfig());
     renderLegend(legendEl, items);
   }
@@ -396,20 +420,19 @@
       hovermode:'x unified',
       xaxis:{ title:'Date', tickfont:{ size:small()?10:12 }, gridcolor:'rgba(19,36,59,0.08)', automargin:true },
       yaxis:{ title:'Cumulative recruited', rangemode:'tozero', gridcolor:'rgba(19,36,59,0.08)', automargin:true },
-      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''}, traceorder:'normal' },
-      annotations:[
-        chartAnnotation(`<b>Total enrolled patients</b><br>${fmtInt.format(recruitedTotal)}`)
-      ]
+      legend:{ orientation:small()?'h':'v', y:small()?-0.34:1, x:0, title:{text:''}, traceorder:'normal' }
     }, baseConfig());
 
-    const actualPatients = targetSchedule.dates.map(cutoff => enrolledRows.filter(r => r.screeningDate <= cutoff).length);
+    const targetDates = targetSchedule.dates;
+    const currentDates = targetDates.filter(date => date <= effectiveMax);
+    const actualPatients = currentDates.map(cutoff => enrolledRows.filter(r => r.screeningDate <= cutoff).length);
     const targetPatientLastText = targetSchedule.targetPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : '');
     const actualPatientsLastText = actualPatients.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : '');
     const targetActualTraces = [
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:targetSchedule.dates,
+        x:targetDates,
         y:targetSchedule.targetPatients,
         name:'Target patients',
         text:targetPatientLastText,
@@ -419,7 +442,7 @@
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:targetSchedule.dates,
+        x:currentDates,
         y:actualPatients,
         name:'Actual patients',
         text:actualPatientsLastText,
@@ -454,12 +477,14 @@
       ]
     }, baseConfig());
 
-    const actualPositive = positiveTargetSchedule.dates.map(cutoff => rows.filter(r => r.isTruePositive && r.screeningDate <= cutoff).length);
+    const positiveTargetDates = positiveTargetSchedule.dates;
+    const positiveCurrentDates = positiveTargetDates.filter(date => date <= effectiveMax);
+    const actualPositive = positiveCurrentDates.map(cutoff => rows.filter(r => r.isTruePositive && r.screeningDate <= cutoff).length);
     Plotly.newPlot('positiveTargetChart', [
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:positiveTargetSchedule.dates,
+        x:positiveTargetDates,
         y:positiveTargetSchedule.targetPositive,
         name:'Target positive',
         text:positiveTargetSchedule.targetPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''),
@@ -469,7 +494,7 @@
       {
         type:'scatter',
         mode:'lines+markers+text',
-        x:positiveTargetSchedule.dates,
+        x:positiveCurrentDates,
         y:actualPositive,
         name:'True positive',
         text:actualPositive.map((v, i, arr) => i === arr.length - 1 ? fmtInt.format(v) : ''),
@@ -603,11 +628,11 @@
     renderTable(els.last14Table, groupedBySiteRows(rows.filter(r => r.screeningTs >= last14Start && r.screeningTs <= refDateObj)));
     renderTable(els.last30Table, groupedBySiteRows(rows.filter(r => r.screeningTs >= last30Start && r.screeningTs <= refDateObj)));
     renderCharts(rows);
-    renderRecent([...rows].sort((a,b) => b.screeningDate.localeCompare(a.screeningDate) || b.patientId.localeCompare(a.patientId)).slice(0, 12));
+    renderRecent([...rows].sort((a,b) => b.screeningDate.localeCompare(a.screeningDate) || b.patientId.localeCompare(a.patientId)));
   }
 
   [els.countryFilter, els.siteFilter, els.statusFilter, els.outcomeFilter, els.positiveFilter, els.dateFromFilter, els.dateToFilter].forEach(el => {
-    el.addEventListener('change', renderAll);
+    el.addEventListener('change', () => { recordsPage = 1; renderAll(); });
   });
 
   els.resetFilters.addEventListener('click', () => {
@@ -618,8 +643,28 @@
     els.positiveFilter.value = '';
     els.dateFromFilter.value = minDate;
     els.dateToFilter.value = maxDate;
+    recordsPage = 1;
     renderAll();
   });
+
+  if (els.recordsPrev) {
+    els.recordsPrev.addEventListener('click', () => {
+      if (recordsPage > 1) {
+        recordsPage -= 1;
+        renderRecent(filteredRecordsForPagination);
+      }
+    });
+  }
+
+  if (els.recordsNext) {
+    els.recordsNext.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(filteredRecordsForPagination.length / RECORDS_PAGE_SIZE));
+      if (recordsPage < totalPages) {
+        recordsPage += 1;
+        renderRecent(filteredRecordsForPagination);
+      }
+    });
+  }
 
   window.addEventListener('resize', () => {
     ['countryChart','classificationChart','recruitmentGraph','targetActualChart','positiveTargetChart','monthlyChart','exclusionChart']
