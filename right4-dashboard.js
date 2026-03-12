@@ -158,7 +158,7 @@
   els.dateToFilter.max = maxDate;
 
   els.pageTitle.textContent = DATA.meta?.pageTitle || 'NIHR RIGHT4 Methanol Dashboard';
-  els.pageSubtitle.textContent = DATA.meta?.pageSubtitle || 'Operational recruitment, screening, and true-positive monitoring synced from the master workbook.';
+  els.pageSubtitle.textContent = DATA.meta?.pageSubtitle || 'Operational recruitment, screening, and true-positive monitoring based on the eCRF.';
   els.lastUpdate.textContent = DATA.meta?.generatedAt ? toShortDate(DATA.meta.generatedAt.slice(0,10)) : '-';
 
   function getFilters(){

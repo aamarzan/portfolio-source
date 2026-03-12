@@ -242,18 +242,23 @@ body.right4-page{
   align-items:start;
 }
 .left-rail{
-  position:sticky;
-  top:94px;
-  align-self:start;
-  min-width:0;
-  height:fit-content;
+  position: sticky;
+  top: 94px;
+  align-self: start;
+  min-width: 0;
+  height: calc(100vh - 106px);
 }
+
 .filter-panel{
-  padding:20px;
-  position:relative;
-  top:auto;
-  max-height:none;
-  overflow:visible;
+  padding: 20px;
+  position: relative;
+  top: auto;
+  max-height: calc(100vh - 106px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
 }
 .main-rail{
   min-width:0;
@@ -552,9 +557,11 @@ body.right4-page{
 
 /* realtime plot polish overrides */
 .left-rail{
-  position:sticky;
-  top:94px;
-  align-self:start;
+  position: sticky;
+  top: 94px;
+  align-self: start;
+  min-width: 0;
+  height: calc(100vh - 106px);
 }
 .records-pagination .right4-link-btn.secondary{
   color:#1f63ff !important;

@@ -3,7 +3,7 @@ window.RIGHT4_DASHBOARD_DATA = {
     "generatedAt": "2026-03-12T14:01:12",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
-    "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
+    "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring based on the eCRF.",
     "latestScreeningDate": "2026-03-12",
     "latestEnrolledDate": "2026-03-12",
     "latestTruePositiveDate": "2026-03-11"
