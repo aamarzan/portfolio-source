@@ -1,13 +1,13 @@
 window.RIGHT4_DASHBOARD_DATA = {
   "meta": {
-    "generatedAt": "2026-03-12T06:36:56",
+    "generatedAt": "2026-03-12T06:49:46",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
     "latestScreeningDate": "2026-03-11"
   },
   "summary": {
-    "lastUpdate": "12 Mar 2026, 06:36 AM",
+    "lastUpdate": "12 Mar 2026, 06:49 AM",
     "totalScreened": 204,
     "totalRecruited": 170,
     "totalExcluded": 34,
