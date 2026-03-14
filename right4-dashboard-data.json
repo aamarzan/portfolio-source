@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-03-12T14:01:12",
+    "generatedAt": "2026-03-14T10:14:40",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
-    "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring based on the eCRF.",
-    "latestScreeningDate": "2026-03-12",
-    "latestEnrolledDate": "2026-03-12",
-    "latestTruePositiveDate": "2026-03-11"
+    "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
+    "latestScreeningDate": "2026-03-13",
+    "latestEnrolledDate": "2026-03-13",
+    "latestTruePositiveDate": "2026-03-12"
   },
   "config": {
     "siteOrder": [
@@ -210,14 +210,14 @@
     }
   },
   "summary": {
-    "totalScreened": 205,
-    "totalRecruited": 171,
+    "totalScreened": 209,
+    "totalRecruited": 175,
     "totalExcluded": 34,
     "totalDiedEnrolled": 22,
-    "totalTruePositive": 29,
-    "overallPositivePct": 16.95906432748538,
-    "latestEnrolledDate": "2026-03-12",
-    "latestTruePositiveDate": "2026-03-11"
+    "totalTruePositive": 30,
+    "overallPositivePct": 17.142857142857142,
+    "latestEnrolledDate": "2026-03-13",
+    "latestTruePositiveDate": "2026-03-12"
   },
   "records": [
     {
@@ -3689,12 +3689,80 @@
       "isTruePositive": true
     },
     {
+      "patientId": "DMCH-0040",
+      "siteCode": "DMCH",
+      "siteLabel": "DMCH",
+      "country": "Bangladesh",
+      "screeningDate": "2026-03-12",
+      "baseDeficit": "28.7",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "truePositive": "Yes",
+      "comment": "",
+      "excludedReason": "",
+      "isEnrolled": true,
+      "isExcluded": false,
+      "isDiedEnrolled": false,
+      "isTruePositive": true
+    },
+    {
       "patientId": "GGSMC-0003",
       "siteCode": "GGSMCH",
       "siteLabel": "GGSMCH",
       "country": "India",
       "screeningDate": "2026-03-12",
       "baseDeficit": "14.7",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "truePositive": "No",
+      "comment": "",
+      "excludedReason": "",
+      "isEnrolled": true,
+      "isExcluded": false,
+      "isDiedEnrolled": false,
+      "isTruePositive": false
+    },
+    {
+      "patientId": "GGSMC-0004",
+      "siteCode": "GGSMCH",
+      "siteLabel": "GGSMCH",
+      "country": "India",
+      "screeningDate": "2026-03-12",
+      "baseDeficit": "17.6",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "truePositive": "No",
+      "comment": "",
+      "excludedReason": "",
+      "isEnrolled": true,
+      "isExcluded": false,
+      "isDiedEnrolled": false,
+      "isTruePositive": false
+    },
+    {
+      "patientId": "SGRDUSH-0007",
+      "siteCode": "SGRDUHS",
+      "siteLabel": "SGRDUHS",
+      "country": "India",
+      "screeningDate": "2026-03-12",
+      "baseDeficit": "15.9",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "truePositive": "No",
+      "comment": "",
+      "excludedReason": "",
+      "isEnrolled": true,
+      "isExcluded": false,
+      "isDiedEnrolled": false,
+      "isTruePositive": false
+    },
+    {
+      "patientId": "GGSMC-0005",
+      "siteCode": "GGSMCH",
+      "siteLabel": "GGSMCH",
+      "country": "India",
+      "screeningDate": "2026-03-13",
+      "baseDeficit": "15.4",
       "patientStatus": "Enrolled",
       "outcome": "Survived",
       "truePositive": "No",
