@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generatedAt": "2026-03-25T13:43:46",
+    "generatedAt": "2026-03-25T13:49:59",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
@@ -210,12 +210,12 @@
     }
   },
   "summary": {
-    "totalScreened": 228,
-    "totalRecruited": 189,
+    "totalScreened": 227,
+    "totalRecruited": 188,
     "totalExcluded": 39,
     "totalDiedEnrolled": 22,
     "totalTruePositive": 33,
-    "overallPositivePct": 17.46031746031746,
+    "overallPositivePct": 17.5531914893617,
     "latestEnrolledDate": "2026-03-24",
     "latestTruePositiveDate": "2026-03-24"
   },
@@ -2709,23 +2709,6 @@
       "country": "Bangladesh",
       "screeningDate": "2026-01-26",
       "baseDeficit": "20.5",
-      "patientStatus": "Enrolled",
-      "outcome": "Survived",
-      "truePositive": "No",
-      "comment": "",
-      "excludedReason": "",
-      "isEnrolled": true,
-      "isExcluded": false,
-      "isDiedEnrolled": false,
-      "isTruePositive": false
-    },
-    {
-      "patientId": "SOMCH-0006",
-      "siteCode": "SOMCH",
-      "siteLabel": "SOMCH",
-      "country": "Bangladesh",
-      "screeningDate": "2026-01-26",
-      "baseDeficit": "20.7",
       "patientStatus": "Enrolled",
       "outcome": "Survived",
       "truePositive": "No",
