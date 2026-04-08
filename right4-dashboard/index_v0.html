@@ -6,7 +6,8 @@
   <title>NIHR RIGHT4 Methanol Dashboard</title>
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Operational recruitment, screening, and true-positive monitoring based on the ecrf" />
-  <link rel="stylesheet" href="../right4-dashboard.css?v=20260409-141048" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="stylesheet" href="../right4-dashboard.css?v=20260407-143402" />
 </head>
 <body class="right4-page">
   <header class="right4-topbar">
@@ -19,35 +20,12 @@
         </div>
       </div>
       <div class="right4-topbar-actions">
-        <span id="accessStatus" class="access-status-pill" aria-live="polite">Restricted</span>
-        <button id="logoutButton" class="right4-link-btn secondary buttonish" type="button" hidden>Logout</button>
+        
+        
       </div>
     </div>
   </header>
 
-  <section id="accessGate" class="access-shell" aria-labelledby="accessTitle">
-    <div class="container access-wrap">
-      <div class="access-card panel">
-        <div class="access-kicker">Restricted viewer access</div>
-        <h1 id="accessTitle">RIGHT4 dashboard login</h1>
-        <p class="access-copy">Enter the shared password to open the operational dashboard. The page will load the dashboard assets only after successful sign-in.</p>
-
-        <form id="accessForm" class="access-form" novalidate>
-          <label class="access-field" for="accessPassword">Password</label>
-          <div class="access-input-row">
-            <input id="accessPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter dashboard password" required />
-            <button id="togglePassword" class="right4-link-btn secondary buttonish toggle-password" type="button" aria-label="Show password">Show</button>
-          </div>
-          <button id="accessSubmit" class="right4-link-btn primary buttonish access-submit" type="submit">Open dashboard</button>
-          <p id="accessMessage" class="access-message" aria-live="polite"></p>
-        </form>
-
-
-      </div>
-    </div>
-  </section>
-
-  <div id="securedApp" hidden aria-hidden="true">
   <main class="right4-shell">
     <section class="hero-shell">
       <div class="container hero-grid">
@@ -58,6 +36,7 @@
 
           <div class="hero-tags">
             <span class="tag">Last synced <strong id="lastUpdate">-</strong></span>
+            
             <span class="tag">Public-safe operational summary</span>
           </div>
 
@@ -269,18 +248,11 @@
       </div>
     </div>
   </footer>
-  </div>
 
   <script>
-    window.RIGHT4_DASHBOARD_ASSETS = {
-      plotlyUrl: "https://cdn.plot.ly/plotly-2.35.2.min.js",
-      dataJson: "../right4-dashboard-data.json?v=20260408-141048",
-      dataScript: "../right4-dashboard-data.js?v=20260408-141048",
-      appScript: "../right4-dashboard.js?v=20260408-141048",
-      passwordSalt: "right4-2026-secure",
-      passwordHash: "c15015725661438919bf109614ceb83c29d751158c7161ec0e97a4be94a22abd"
-    };
+    window.RIGHT4_DASHBOARD_ASSETS = { dataJson: "../right4-dashboard-data.json?v=20260407-143402" };
   </script>
-  <script src="../right4-access.js?v=20260407-locked"></script>
+  <script src="../right4-dashboard-data.js?v=20260407-143402"></script>
+  <script src="../right4-dashboard.js?v=20260407-143402"></script>
 </body>
 </html>
