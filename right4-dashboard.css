@@ -592,3 +592,117 @@ body.right4-page{
     overflow: visible !important;
   }
 }
+
+
+/* access gate */
+[hidden]{ display:none !important; }
+.access-shell{
+  padding:32px 0 12px;
+}
+.access-wrap{
+  display:grid;
+  place-items:center;
+  min-height:calc(100vh - 180px);
+}
+.access-card{
+  width:min(560px, 100%);
+  padding:30px;
+}
+.access-kicker{
+  display:inline-flex;
+  align-items:center;
+  padding:9px 14px;
+  border-radius:999px;
+  background:rgba(31,99,255,0.09);
+  border:1px solid rgba(31,99,255,0.14);
+  color:#1f63ff;
+  font-weight:800;
+  font-size:0.88rem;
+  letter-spacing:0.02em;
+}
+.access-card h1{
+  margin:16px 0 10px;
+  font-size:clamp(1.9rem, 4vw, 2.6rem);
+  line-height:1.04;
+}
+.access-copy{
+  margin:0;
+  color:var(--muted);
+  line-height:1.7;
+}
+.access-form{
+  margin-top:22px;
+  display:grid;
+  gap:12px;
+}
+.access-field{
+  font-size:0.88rem;
+  font-weight:800;
+  color:#4d6484;
+}
+.access-input-row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:10px;
+}
+.access-input-row input{
+  width:100%;
+  min-height:50px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid rgba(19,36,59,0.14);
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+  outline:none;
+}
+.access-input-row input:focus{
+  border-color:#5ea6ff;
+  box-shadow:0 0 0 4px rgba(31,99,255,0.12);
+}
+.toggle-password{
+  min-width:88px;
+}
+.access-submit{
+  width:100%;
+  margin-top:4px;
+}
+.access-message{
+  min-height:22px;
+  margin:0;
+  font-size:0.93rem;
+  font-weight:700;
+  color:#38526f;
+}
+.access-message.is-error{ color:#b42318; }
+.access-message.is-success{ color:#0f8a42; }
+.access-note{
+  margin-top:18px;
+  padding:14px 16px;
+  border-radius:18px;
+  background:#fff7e8;
+  border:1px solid rgba(245, 158, 11, 0.18);
+  color:#8c5b09;
+  line-height:1.6;
+}
+.access-status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.06);
+  color:#fff;
+  font-weight:800;
+}
+.access-status-pill.is-open{
+  background:rgba(20,164,77,0.16);
+  border-color:rgba(20,164,77,0.30);
+}
+@media (max-width: 640px){
+  .access-card{ padding:20px; }
+  .access-input-row{ grid-template-columns:1fr; }
+  .toggle-password{ width:100%; }
+}
