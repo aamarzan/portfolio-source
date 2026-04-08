@@ -30,6 +30,75 @@
     gtag('config', 'G-2YNVQSMXTM');
   </script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+    .access-shell{
+      padding:40px 0 24px;
+      background:linear-gradient(180deg,#07111f 0%, #0f1e33 100%);
+    }
+    .access-wrap{
+      display:flex;
+      justify-content:center;
+    }
+    .access-card{
+      max-width:560px;
+      width:100%;
+      background:#fff;
+      border-radius:20px;
+      padding:28px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12);
+    }
+    .access-kicker{
+      display:inline-block;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#eef4ff;
+      color:#1e5a9c;
+      font-weight:600;
+      font-size:.88rem;
+      margin-bottom:12px;
+    }
+    .access-copy{
+      margin:0 0 18px;
+      color:#4b5563;
+      line-height:1.65;
+    }
+    .access-form{
+      display:grid;
+      gap:14px;
+    }
+    .access-field{
+      font-weight:600;
+      color:#112034;
+    }
+    .access-input-row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .access-input-row input{
+      flex:1;
+      min-height:48px;
+      padding:10px 14px;
+      border:1px solid #d1d5db;
+      border-radius:14px;
+      font:inherit;
+    }
+    .access-message{
+      min-height:24px;
+      margin:0;
+      font-weight:600;
+    }
+    .access-message.is-error{ color:#b91c1c; }
+    .access-message.is-success{ color:#166534; }
+    @media (max-width:640px){
+      .access-input-row{
+        flex-direction:column;
+      }
+      .access-input-row .btn{
+        width:100%;
+      }
+    }
+  </style>
 </head>
 <body class="ecrf-page">
   <header class="ecrf-topbar">
@@ -42,13 +111,35 @@
         </div>
       </div>
 
-      <div class="ecrf-topbar-actions">
-        
-      </div>
+    <div class="ecrf-topbar-actions" style="display:flex;gap:10px;align-items:center;">
+      <span id="accessStatus" style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.12);color:#fff;font-size:.9rem;">Restricted</span>
+      <button id="logoutButton" class="btn secondary" type="button" hidden>Logout</button>
+    </div>
     </div>
   </header>
 
-  <main>
+      <section id="accessGate" class="access-shell" aria-labelledby="accessTitle">
+      <div class="container access-wrap">
+        <div class="access-card">
+          <div class="access-kicker">Restricted viewer access</div>
+          <h1 id="accessTitle">eCRF dashboard login</h1>
+          <p class="access-copy">Enter the shared password to open the operational dashboard. The page will load the dashboard assets only after successful sign-in.</p>
+
+          <form id="accessForm" class="access-form" novalidate>
+            <label class="access-field" for="accessPassword">Password</label>
+            <div class="access-input-row">
+              <input id="accessPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter dashboard password" required />
+              <button id="togglePassword" class="btn secondary" type="button">Show</button>
+            </div>
+            <button id="accessSubmit" class="btn primary" type="submit">Open dashboard</button>
+            <p id="accessMessage" class="access-message" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <div id="securedApp" hidden aria-hidden="true">
+    <main>
     <header class="hero-shell">
       <div class="container hero">
 <!--    <div class="hero-top">
@@ -311,7 +402,17 @@
     </div>
   </footer>
 
-  <script src="../ecrf-data.js?v=20260311"></script>
-  <script src="../ecrf.js?v=20260311"></script>
+</div>
+
+<script>
+  window.RIGHT4_DASHBOARD_ASSETS = {
+    plotlyUrl: "https://cdn.plot.ly/plotly-2.35.2.min.js",
+    dataScript: "../ecrf-data.js?v=20260311",
+    appScript: "../ecrf.js?v=20260311",
+    passwordSalt: "right4-2026-secure",
+    passwordHash: "c15015725661438919bf109614ceb83c29d751158c7161ec0e97a4be94a22abd"
+  };
+</script>
+<script src="../right4-access.js?v=3412415-locked"></script>
 </body>
 </html>

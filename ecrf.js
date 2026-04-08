@@ -32,7 +32,7 @@ const state = {
 
 const els = {};
 
-document.addEventListener("DOMContentLoaded", () => {
+function initEcrfDashboard(){
   if(!window.ECRF_PAYLOAD){
     console.warn("ECRF_PAYLOAD was not found. Check that ecrf-data.js loads before ecrf.js.");
   }
@@ -42,7 +42,13 @@ document.addEventListener("DOMContentLoaded", () => {
   populateSelects();
   bindControls();
   updateDashboard();
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initEcrfDashboard);
+} else {
+  initEcrfDashboard();
+}
 
 function cacheEls(){
   [
