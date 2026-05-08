@@ -1,7 +1,6 @@
 (function(){
   const assets = window.RIGHT4_DASHBOARD_ASSETS || {};
   const sessionKey = 'right4-dashboard-auth-v1';
-  const themeKey = 'right4-dashboard-theme-v1';
   const gate = document.getElementById('accessGate');
   const securedApp = document.getElementById('securedApp');
   const form = document.getElementById('accessForm');
@@ -10,9 +9,7 @@
   const messageEl = document.getElementById('accessMessage');
   const toggleButton = document.getElementById('togglePassword');
   const logoutButton = document.getElementById('logoutButton');
-  const themeToggle = document.getElementById('themeToggle');
-  const themeLabel = document.getElementById('themeLabel');
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  const statusPill = document.getElementById('accessStatus');
 
   if(!gate || !securedApp || !form || !passwordInput || !submitButton || !messageEl){
     return;
@@ -46,8 +43,14 @@
 
   function loadScript(src){
     return new Promise((resolve, reject) => {
-      if(!src){ reject(new Error('Missing script URL.')); return; }
-      if(scriptAlreadyLoaded(src)){ resolve(); return; }
+      if(!src){
+        reject(new Error('Missing script URL.'));
+        return;
+      }
+      if(scriptAlreadyLoaded(src)){
+        resolve();
+        return;
+      }
       const script = document.createElement('script');
       script.src = src;
       script.async = false;
@@ -57,35 +60,15 @@
     });
   }
 
-  function currentTheme(){
-    const savedTheme = localStorage.getItem(themeKey);
-    if(savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
-    return 'dark';
-  }
-
-  function applyTheme(theme){
-    const nextTheme = theme === 'dark' ? 'dark' : 'light';
-    document.body.dataset.theme = nextTheme;
-    if(themeLabel) themeLabel.textContent = nextTheme === 'dark' ? '🌙' : '🌤️';
-    if(themeToggle){
-      themeToggle.setAttribute('aria-pressed', String(nextTheme === 'dark'));
-      themeToggle.setAttribute('title', `Switch to ${nextTheme === 'dark' ? 'light' : 'dark'} theme`);
-    }
-    if(metaTheme){
-      metaTheme.setAttribute('content', nextTheme === 'dark' ? '#020817' : '#eaf3ff');
-    }
-    localStorage.setItem(themeKey, nextTheme);
-    window.dispatchEvent(new CustomEvent('right4-theme-change', { detail:{ theme: nextTheme } }));
-  }
-
   async function unlock(){
     gate.hidden = true;
     securedApp.hidden = false;
     securedApp.setAttribute('aria-hidden', 'false');
-    if(logoutButton) logoutButton.hidden = false;
+    logoutButton.hidden = false;
+    statusPill.textContent = 'Access granted';
+    statusPill.classList.add('is-open');
 
     if(window.__RIGHT4_ACCESS_LOADED__){
-      if(window.__RIGHT4_RENDER_ALL__) window.__RIGHT4_RENDER_ALL__();
       return;
     }
 
@@ -98,15 +81,6 @@
   async function authenticate(password){
     const candidate = await sha256Hex(`${assets.passwordSalt}|${password}`);
     return candidate === assets.passwordHash;
-  }
-
-  applyTheme(currentTheme());
-
-  if(themeToggle){
-    themeToggle.addEventListener('click', () => {
-      applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
-      if(window.__RIGHT4_RENDER_ALL__) window.__RIGHT4_RENDER_ALL__();
-    });
   }
 
   if(!isConfigured()){
@@ -136,7 +110,7 @@
         return;
       }
       sessionStorage.setItem(sessionKey, assets.passwordHash);
-      setMessage('Dashboard unlocked. Loading…', 'success');
+      setMessage('Access granted. Loading dashboard…', 'success');
       await unlock();
     }catch(error){
       setMessage('The login gate could not be initialized. Please check the browser console.', 'error');

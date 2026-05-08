@@ -1,6 +1,6 @@
 window.RIGHT4_DASHBOARD_DATA = {
   "meta": {
-    "generatedAt": "2026-05-08T21:19:02",
+    "generatedAt": "2026-05-08T18:24:44",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
@@ -15,6 +15,7 @@ window.RIGHT4_DASHBOARD_DATA = {
       "DMCH",
       "SZMCH",
       "SOMCH",
+      "CoxMCH",
       "PGIMER",
       "SGRDUHS",
       "GGSMCH"
@@ -40,6 +41,10 @@ window.RIGHT4_DASHBOARD_DATA = {
         "label": "SOMCH",
         "country": "Bangladesh"
       },
+      "CoxMCH": {
+        "label": "CoxMCH",
+        "country": "Bangladesh"
+      },
       "PGIMER": {
         "label": "PGIMER",
         "country": "India"
@@ -52,6 +57,10 @@ window.RIGHT4_DASHBOARD_DATA = {
         "label": "GGSMCH",
         "country": "India"
       }
+    },
+    "studyTimeline": {
+      "startDate": "2025-06-01",
+      "endDate": "2026-12-31"
     },
     "targetSchedule": {
       "dates": [
@@ -81,7 +90,8 @@ window.RIGHT4_DASHBOARD_DATA = {
         "2026-05-27",
         "2026-06-11",
         "2026-06-26",
-        "2026-07-11"
+        "2026-07-11",
+        "2026-12-31"
       ],
       "targetPatients": [
         0.0,
@@ -110,36 +120,38 @@ window.RIGHT4_DASHBOARD_DATA = {
         1440.0,
         1500.0,
         1560.0,
-        1620.0
+        1620.0,
+        1620
       ],
       "calculatedTarget": [
         0.0,
-        18.2,
-        36.4,
-        54.6,
-        72.8,
-        91.0,
-        109.2,
-        127.4,
-        145.6,
-        163.8,
-        182.0,
-        200.2,
-        218.4,
-        236.6,
-        254.8,
-        273.0,
-        291.2,
-        309.4,
-        327.6,
-        345.8,
-        364.0,
-        382.2,
-        400.4,
-        418.6,
-        436.8,
-        455.0,
-        474.0
+        13.9,
+        27.9,
+        41.8,
+        55.7,
+        69.6,
+        83.6,
+        98.4,
+        112.3,
+        126.3,
+        141.1,
+        155.0,
+        171.8,
+        183.8,
+        196.8,
+        210.8,
+        226.5,
+        240.5,
+        261.8,
+        278.5,
+        292.5,
+        306.4,
+        320.3,
+        334.2,
+        348.2,
+        362.1,
+        376.0,
+        536.6
       ]
     },
     "truePositiveTargetSchedule": {
@@ -171,7 +183,8 @@ window.RIGHT4_DASHBOARD_DATA = {
         "2026-06-02",
         "2026-06-17",
         "2026-07-02",
-        "2026-07-17"
+        "2026-07-17",
+        "2026-12-31"
       ],
       "targetPositive": [
         0.0,
@@ -201,12 +214,13 @@ window.RIGHT4_DASHBOARD_DATA = {
         72.0,
         75.0,
         78.0,
-        81.0
+        81.0,
+        85
       ]
     },
     "studyTargets": {
       "overallRecruitmentTarget": 1620,
-      "truePositiveTarget": 81
+      "truePositiveTarget": 85
     }
   },
   "summary": {
@@ -216,6 +230,7 @@ window.RIGHT4_DASHBOARD_DATA = {
     "totalDiedEnrolled": 83,
     "totalTruePositive": 40,
     "overallPositivePct": 15.09433962264151,
+    "calculatedRecruitmentTarget": 536.6,
     "latestEnrolledDate": "2026-05-08",
     "latestTruePositiveDate": "2026-05-05"
   },
