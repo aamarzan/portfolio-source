@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POC Performance | NIHR RIGHT4 Methanol Dashboard</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Diagnostic performance analytics for RIGHT4 point-of-care formate testing against formal laboratory assay." />
+  <link rel="icon" type="image/png" href="../favicon/favicon-96x96.png?v=1" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="../favicon/favicon.svg?v=1" />
+  <link rel="shortcut icon" href="../favicon/favicon.ico?v=1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../favicon/apple-touch-icon.png?v=1" />
+  <meta name="apple-mobile-web-app-title" content="Marzan" />
+  <link rel="manifest" href="../favicon/site.webmanifest?v=1" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="../right4-dashboard.css?v=20260509-010000" />
+  <link rel="stylesheet" href="../right4-poc-performance.css?v=20260509-173000" />
+</head>
+<body class="right4-page poc-page">
+  <header class="right4-topbar">
+    <div class="container right4-topbar-inner">
+      <div class="right4-brand" aria-label="POC Performance Analytics">
+        <div class="brand-badge poc-brand-badge">POC</div>
+        <div class="right4-brand-text">
+          <strong>POC Performance Analytics</strong>
+          <span>Sensitivity, specificity, agreement, and critical diagnostic metrics</span>
+        </div>
+      </div>
+      <div class="right4-topbar-actions">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch dashboard theme" aria-pressed="false">
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+          <span id="themeLabel" class="theme-toggle-label" aria-hidden="true">🌤️</span>
+        </button>
+        <a class="right4-link-btn primary" href="../right4-dashboard/">Back to RIGHT4</a>
+        <button id="logoutButton" class="right4-link-btn secondary buttonish" type="button" hidden>Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="accessGate" class="access-shell" aria-labelledby="accessTitle">
+    <div class="container access-wrap">
+      <div class="access-card panel">
+        <div class="access-kicker">Restricted viewer access</div>
+        <h1 id="accessTitle">POC performance login</h1>
+        <p class="access-copy">Enter the shared RIGHT4 password to open the POC performance analytics page.</p>
+        <form id="accessForm" class="access-form" novalidate>
+          <label class="access-field" for="accessPassword">Password</label>
+          <div class="access-input-row">
+            <input id="accessPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter dashboard password" required />
+            <button id="togglePassword" class="right4-link-btn secondary buttonish toggle-password" type="button" aria-label="Show password">Show</button>
+          </div>
+          <button id="accessSubmit" class="right4-link-btn primary buttonish access-submit" type="submit">Open POC analytics</button>
+          <p id="accessMessage" class="access-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div id="securedApp" hidden aria-hidden="true">
+    <main class="right4-shell poc-shell">
+      <section class="hero-shell">
+        <div class="container hero-grid poc-hero-grid">
+          <div class="hero-copy panel hero-panel poc-hero-panel">
+            <div class="eyebrow">Point-of-care diagnostic validation layer</div>
+            <h1 id="pageTitle">POC Performance Analytics</h1>
+            <p id="pageSubtitle">Diagnostic performance of POC formate testing against the formal laboratory assay, with filter-aware sensitivity, specificity, predictive values, MCC, and agreement diagnostics.</p>
+            <div class="hero-tags">
+              <span class="tag">Last synced <strong id="lastUpdate">-</strong></span>
+              <span class="tag">Classified records <strong id="pairedRecordsTag">-</strong></span>
+              <span class="tag">Formal lab assay comparator</span>
+            </div>
+            <div id="dataCompletenessNotice" class="poc-notice" hidden></div>
+          </div>
+          <aside class="hero-side">
+            <div class="panel poc-brief-card">
+              <div class="panel-head">
+                <h2>Protocol interpretation</h2>
+                <p>Formate thresholds used for positive/negative calls and severity-level agreement.</p>
+              </div>
+              <div id="interpretationGrid" class="interpretation-grid"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="container poc-layout">
+        <aside class="left-rail poc-left-rail">
+          <div class="panel filter-panel poc-filter-panel">
+            <div class="section-head compact-head">
+              <div>
+                <h2>POC filters</h2>
+                <p>Review diagnostic performance by country, site, date, and classification.</p>
+              </div>
+              <button id="resetFilters" class="right4-link-btn secondary buttonish" type="button">Reset filters</button>
+            </div>
+            <div class="filter-grid">
+              <label class="filter-field"><span>Country</span><select id="countryFilter"></select></label>
+              <label class="filter-field"><span>Site</span><select id="siteFilter"></select></label>
+              <label class="filter-field"><span>Diagnostic class</span><select id="classFilter"></select></label>
+              <label class="filter-field"><span>POC call</span><select id="pocCallFilter"></select></label>
+              <label class="filter-field"><span>Lab call</span><select id="labCallFilter"></select></label>
+              <label class="filter-field"><span>Date from</span><input id="dateFromFilter" type="date" /></label>
+              <label class="filter-field"><span>Date to</span><input id="dateToFilter" type="date" /></label>
+            </div>
+            <div id="activeFilters" class="active-filters"></div>
+          </div>
+        </aside>
+
+        <div class="main-rail">
+          <section class="kpi-section"><div id="kpiGrid" class="poc-kpi-grid"></div></section>
+
+          <section class="chart-zone poc-chart-zone">
+            <div class="section-head"><div><h2>Critical diagnostic analysis</h2><p>Filter-aware POC assessment using formal laboratory assay as the reference standard.</p></div></div>
+            <div class="chart-grid poc-chart-grid">
+              <article class="panel chart-card span-4"><div class="chart-card-head"><h3>2×2 confusion matrix</h3><p>POC result against laboratory result.</p></div><div id="confusionMatrixChart" class="chart poc-chart-sm"></div></article>
+              <article class="panel chart-card span-4"><div class="chart-card-head"><h3>Diagnostic class split</h3><p>True/false positive/negative distribution.</p></div><div id="classDonutChart" class="chart poc-chart-sm"></div></article>
+              <article class="panel chart-card span-4"><div class="chart-card-head"><h3>Metric profile</h3><p>Sensitivity, specificity, predictive values, accuracy, and F1 score.</p></div><div id="metricsChart" class="chart poc-chart-sm"></div></article>
+              <article class="panel chart-card span-6"><div class="chart-card-head"><h3>Severity agreement matrix</h3><p>Agreement across negative, low, moderate, and high positive formate categories.</p></div><div id="severityAgreementChart" class="chart"></div></article>
+              <article class="panel chart-card span-6"><div class="chart-card-head"><h3>Site-level diagnostic performance</h3><p>Classified results and performance metrics by site.</p></div><div id="sitePerformanceTable"></div></article>
+            </div>
+          </section>
+
+          <section class="table-zone poc-table-zone">
+            <div class="section-head true-positive-head">
+              <div><h2>POC diagnostic line-list</h2><p>Patient-level POC/lab comparison with automatic diagnostic classification.</p></div>
+              <div class="registry-actions">
+                <input id="pocSearch" class="registry-search" type="search" placeholder="Search POC records..." aria-label="Search POC records" />
+                <button id="exportPocCsv" class="right4-link-btn secondary buttonish export-btn" type="button">Export CSV</button>
+              </div>
+            </div>
+            <article class="panel true-positive-card poc-line-card">
+              <div id="pocLineListTable"></div>
+              <div class="records-pagination">
+                <button id="recordsPrev" class="right4-link-btn secondary buttonish" type="button">Previous</button>
+                <span id="recordsPageInfo" class="records-page-info">Page 1</span>
+                <button id="recordsNext" class="right4-link-btn secondary buttonish" type="button">Next</button>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="right4-footer">
+      <div class="container footer-inner">
+        <div><strong>Developed by Abdullah Al Marzan</strong><span>POC performance page generated from the same RIGHT4 master workbook.</span></div>
+        <div class="footer-links"><a href="../right4-dashboard/">RIGHT4 Dashboard</a><a href="/contacts/">Contact</a></div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    window.RIGHT4_DASHBOARD_ASSETS = {
+      plotlyUrl: "https://cdn.plot.ly/plotly-2.35.2.min.js",
+      dataJson: "../right4-poc-performance-data.json?v=20260509-173000",
+      dataScript: "../right4-poc-performance-data.js?v=20260509-173000",
+      appScript: "../right4-poc-performance.js?v=20260509-173000",
+      passwordSalt: "right4-2026-secure",
+      passwordHash: "c15015725661438919bf109614ceb83c29d751158c7161ec0e97a4be94a22abd"
+    };
+  </script>
+  <script src="../right4-access.js?v=20260509-173000"></script>
+</body>
+</html>
