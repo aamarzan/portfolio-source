@@ -1,10 +1,10 @@
 window.RIGHT4_POC_PERFORMANCE_DATA = {
   "meta": {
-    "generatedAt": "2026-05-13T06:48:42",
+    "generatedAt": "2026-05-13T18:16:33",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "POC Performance Analytics",
     "pageSubtitle": "Diagnostic performance of point-of-care formate testing against formal laboratory formate assay.",
-    "latestScreeningDate": "2026-05-12",
+    "latestScreeningDate": "2026-05-13",
     "workbookColumns": [
       "Sl No",
       "Patient ID",
@@ -118,26 +118,26 @@ window.RIGHT4_POC_PERFORMANCE_DATA = {
     "thresholdRule": "Lab ≥2.00 mmol/L is positive; lab <2.00 mmol/L is negative. POC low, moderate/medium, or high positive is positive."
   },
   "summary": {
-    "totalRows": 321,
-    "classifiableRows": 275,
-    "unclassifiedRows": 46,
+    "totalRows": 322,
+    "classifiableRows": 277,
+    "unclassifiedRows": 45,
     "classCounts": {
-      "True positive": 39,
+      "True positive": 40,
       "False positive": 11,
       "False negative": 1,
-      "True negative": 224,
-      "Unclassified": 46
+      "True negative": 225,
+      "Unclassified": 45
     },
-    "truePositiveDeclarations": 39,
+    "truePositiveDeclarations": 40,
     "metrics": {
-      "sensitivity": 0.975,
-      "specificity": 0.9531914893617022,
-      "ppv": 0.78,
-      "npv": 0.9955555555555555,
-      "accuracy": 0.9563636363636364,
-      "f1": 0.8666666666666667,
-      "mcc": 0.84844803387942,
-      "youden": 0.9281914893617023
+      "sensitivity": 0.975609756097561,
+      "specificity": 0.9533898305084746,
+      "ppv": 0.7843137254901961,
+      "npv": 0.995575221238938,
+      "accuracy": 0.9566787003610109,
+      "f1": 0.8695652173913043,
+      "mcc": 0.8511853553192643,
+      "youden": 0.9289995866060354
     }
   },
   "records": [
@@ -2073,16 +2073,16 @@ window.RIGHT4_POC_PERFORMANCE_DATA = {
       "baseDeficit": "17.3",
       "truePositiveRaw": "No",
       "isMasterTruePositive": false,
-      "pocResult": "Not Conducted",
-      "labResult": "Not Conducted",
-      "labNumeric": null,
-      "pocCall": "Missing",
-      "labCall": "Missing",
-      "pocSeverity": "Missing",
-      "labSeverity": "Missing",
-      "diagnosticClass": "Unclassified",
-      "isClassifiable": false,
-      "classificationNote": "Missing or uninterpretable POC/lab pair.",
+      "pocResult": "Negative",
+      "labResult": "0",
+      "labNumeric": 0.0,
+      "pocCall": "Negative",
+      "labCall": "Negative",
+      "pocSeverity": "Negative",
+      "labSeverity": "Negative",
+      "diagnosticClass": "True negative",
+      "isClassifiable": true,
+      "classificationNote": "Lab <2.00 mmol/L and POC negative.",
       "comments": ""
     },
     {
@@ -7844,6 +7844,30 @@ window.RIGHT4_POC_PERFORMANCE_DATA = {
       "isClassifiable": true,
       "classificationNote": "Lab <2.00 mmol/L and POC negative.",
       "comments": ""
+    },
+    {
+      "patientId": "CMCH-0026",
+      "siteCode": "CMCH",
+      "siteLabel": "CMCH",
+      "country": "Bangladesh",
+      "screeningDate": "2026-05-13",
+      "screeningDateRaw": "2026-05-13",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "baseDeficit": "13.7",
+      "truePositiveRaw": "Yes",
+      "isMasterTruePositive": true,
+      "pocResult": "Medium Positive",
+      "labResult": "14.1",
+      "labNumeric": 14.1,
+      "pocCall": "Positive",
+      "labCall": "Positive",
+      "pocSeverity": "Moderate positive",
+      "labSeverity": "High positive",
+      "diagnosticClass": "True positive",
+      "isClassifiable": true,
+      "classificationNote": "Lab ≥2.00 mmol/L and POC positive.",
+      "comments": "The initial ABG result showed BD 11.6 mmol/L. After fluid trial the BD did not improve and the result was 13.7 mmol/L in the 2nd ABG result. Thus the patient was recruited."
     }
   ]
 };

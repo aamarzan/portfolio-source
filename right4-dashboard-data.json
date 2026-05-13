@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-05-13T06:48:41",
+    "generatedAt": "2026-05-13T18:16:32",
     "sourceWorkbook": "private/master_data.xlsx",
     "pageTitle": "NIHR RIGHT4 Methanol Dashboard",
     "pageSubtitle": "Operational recruitment, screening, and true-positive monitoring synced from the master workbook.",
-    "latestScreeningDate": "2026-05-12",
-    "latestEnrolledDate": "2026-05-12",
-    "latestTruePositiveDate": "2026-05-05"
+    "latestScreeningDate": "2026-05-13",
+    "latestEnrolledDate": "2026-05-13",
+    "latestTruePositiveDate": "2026-05-13"
   },
   "config": {
     "siteOrder": [
@@ -125,33 +125,33 @@
       ],
       "calculatedTarget": [
         0.0,
-        14.9,
-        29.8,
-        44.6,
-        59.5,
-        74.4,
-        89.3,
-        105.1,
-        120.0,
-        134.9,
-        150.7,
-        165.6,
-        183.5,
-        196.4,
-        210.3,
-        225.1,
-        242.0,
-        256.9,
-        279.7,
-        297.5,
-        312.4,
-        327.3,
-        342.2,
-        357.0,
-        371.9,
-        386.8,
-        401.7,
-        573.2
+        14.6,
+        29.1,
+        43.7,
+        58.2,
+        72.8,
+        87.3,
+        102.9,
+        117.4,
+        132.0,
+        147.5,
+        162.1,
+        179.5,
+        192.2,
+        205.7,
+        220.3,
+        236.8,
+        251.3,
+        273.7,
+        291.1,
+        305.7,
+        320.3,
+        334.8,
+        349.4,
+        363.9,
+        378.5,
+        393.0,
+        560.9
       ]
     },
     "truePositiveTargetSchedule": {
@@ -224,15 +224,15 @@
     }
   },
   "summary": {
-    "totalScreened": 321,
-    "totalRecruited": 276,
+    "totalScreened": 322,
+    "totalRecruited": 277,
     "totalExcluded": 45,
     "totalDiedEnrolled": 86,
-    "totalTruePositive": 39,
-    "overallPositivePct": 14.130434782608695,
-    "calculatedRecruitmentTarget": 573.2,
-    "latestEnrolledDate": "2026-05-12",
-    "latestTruePositiveDate": "2026-05-05"
+    "totalTruePositive": 40,
+    "overallPositivePct": 14.440433212996389,
+    "calculatedRecruitmentTarget": 560.9,
+    "latestEnrolledDate": "2026-05-13",
+    "latestTruePositiveDate": "2026-05-13"
   },
   "records": [
     {
@@ -5691,6 +5691,23 @@
       "isExcluded": false,
       "isDiedEnrolled": false,
       "isTruePositive": false
+    },
+    {
+      "patientId": "CMCH-0026",
+      "siteCode": "CMCH",
+      "siteLabel": "CMCH",
+      "country": "Bangladesh",
+      "screeningDate": "2026-05-13",
+      "baseDeficit": "13.7",
+      "patientStatus": "Enrolled",
+      "outcome": "Survived",
+      "truePositive": "Yes",
+      "comment": "The initial ABG result showed BD 11.6 mmol/L. After fluid trial the BD did not improve and the result was 13.7 mmol/L in the 2nd ABG result. Thus the patient was recruited.",
+      "excludedReason": "",
+      "isEnrolled": true,
+      "isExcluded": false,
+      "isDiedEnrolled": false,
+      "isTruePositive": true
     }
   ]
 }
