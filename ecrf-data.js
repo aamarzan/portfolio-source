@@ -5,8 +5,8 @@ window.ECRF_PAYLOAD = {
     "activeSites": 8,
     "totalParticipants": 93,
     "lastQuerySent": "2026-03-09",
-    "openQueries": 42,
-    "resolvedQueries": 226,
+    "openQueries": 0,
+    "resolvedQueries": 268,
     "notEnteredQueries": 0,
     "siteCounts": {
       "PGIMER": 150,
@@ -2937,7 +2937,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Clinical values & investigations",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-09-07",
       "count": 1
@@ -2950,7 +2950,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Clinical values & investigations",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-09-18",
       "count": 1
@@ -2963,7 +2963,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-09-28",
       "count": 1
@@ -2976,7 +2976,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Clinical values & investigations",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-09-22",
       "count": 1
@@ -2989,7 +2989,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 5",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-09-22",
       "count": 1
@@ -3002,7 +3002,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 5",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-09-29",
       "count": 1
@@ -3015,7 +3015,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 5",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-10-02",
       "count": 1
@@ -3028,7 +3028,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-10-04",
       "count": 1
@@ -3041,7 +3041,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Clinical values & investigations",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-10-04",
       "count": 1
@@ -3054,7 +3054,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Clinical values & investigations",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-10-05",
       "count": 1
@@ -3067,7 +3067,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 5",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-11-02",
       "count": 1
@@ -3080,7 +3080,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 2",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-11-02",
       "count": 1
@@ -3093,7 +3093,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 2",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-01",
       "count": 1
@@ -3106,7 +3106,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 5",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2025-12-01",
       "count": 1
@@ -3119,7 +3119,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2026-01-04",
       "count": 1
@@ -3132,7 +3132,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-01-06",
       "count": 1
@@ -3145,7 +3145,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Minor",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 4",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-01-20",
       "count": 1
@@ -3158,7 +3158,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Minor",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 4",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-01-20",
       "count": 1
@@ -3171,7 +3171,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Minor",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 4",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-01-21",
       "count": 1
@@ -3184,7 +3184,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-08",
       "dataEntryDate": "2026-01-21",
       "count": 1
@@ -3197,7 +3197,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Minor",
       "theme": "Laboratory / image evidence",
       "screen": "Recruitment Screen 9",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-17",
       "count": 1
@@ -3210,7 +3210,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Minor",
       "theme": "Case classification & source logic",
       "screen": "Recruitment Screen 4",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-03-04",
       "count": 1
@@ -3223,7 +3223,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Treatment regimen / administration",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-07-01",
       "count": 1
@@ -3236,7 +3236,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-08-09",
       "count": 1
@@ -3249,7 +3249,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-08-09",
       "count": 1
@@ -3262,7 +3262,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "First assessment",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-10-03",
       "count": 1
@@ -3275,7 +3275,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Treatment regimen / administration",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-10-04",
       "count": 1
@@ -3288,7 +3288,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-10-04",
       "count": 1
@@ -3301,7 +3301,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Treatment regimen / administration",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-01",
       "count": 1
@@ -3314,7 +3314,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-02",
       "count": 1
@@ -3327,7 +3327,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-06",
       "count": 1
@@ -3340,7 +3340,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Treatment regimen / administration",
       "screen": "Assessment Screen 10",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-06",
       "count": 1
@@ -3353,7 +3353,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-15",
       "count": 1
@@ -3366,7 +3366,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-23",
       "count": 1
@@ -3379,7 +3379,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2025-12-27",
       "count": 1
@@ -3392,7 +3392,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-01-05",
       "count": 1
@@ -3405,7 +3405,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Major",
       "theme": "Outcome & follow-up consistency",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-04",
       "count": 1
@@ -3418,7 +3418,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-05",
       "count": 1
@@ -3431,7 +3431,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-07",
       "count": 1
@@ -3444,7 +3444,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-16",
       "count": 1
@@ -3457,7 +3457,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Duplicate / repeated records",
       "screen": "General",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2026-03-09",
       "dataEntryDate": "2026-02-24",
       "count": 1
@@ -3509,7 +3509,7 @@ window.ECRF_PAYLOAD = {
       "severity": "Moderate",
       "theme": "Chronology & timing",
       "screen": "Recruitment Screen 7",
-      "status_group": "Open",
+      "status_group": "Resolved",
       "querySentDate": "2025-03-09",
       "dataEntryDate": "2025-03-05",
       "count": 1
@@ -3549,6 +3549,6 @@ window.ECRF_PAYLOAD = {
     "Minor",
     "Standard"
   ],
-  "GENERATED_AT": "2026-03-10T00:28:56Z",
+  "GENERATED_AT": "2026-07-14T07:02:25Z",
   "SOURCE_WORKBOOK": "query_dataset.xlsx"
 };
