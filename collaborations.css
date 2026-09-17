@@ -64,6 +64,7 @@
     line-height: 1.75;
     max-width: 700px;
     margin: 0 auto;
+    text-align: center;
 }
 
 .collab-flag-row {
@@ -513,6 +514,7 @@
     line-height: 1.85;
     margin-bottom: 10px;
     color: #dce6f2;
+    text-align: center;
 }
 
 .collab-cta .btn {
