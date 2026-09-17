@@ -25,7 +25,7 @@
 
   <!-- Stylesheets (versioned for cache-busting) -->
   <link rel="stylesheet" href="../style.css?v=1">
-  <link rel="stylesheet" href="../collaborations.css?v=4">
+  <link rel="stylesheet" href="../collaborations.css?v=5">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.5.0/css/flag-icons.min.css">
@@ -246,10 +246,10 @@
 
                     <div class="collab-card no-image accent-ongoing">
                         <div class="collab-card-body">
-                            <span class="status-badge status-ongoing">Manuscript Submitted</span>
+                            <span class="status-badge status-ongoing">Manuscript in Preparation</span>
                             <h3>Clinical Outcome of Acute Organophosphorus/Pyrethroid Combination Self-Poisoning: A Comparative Analysis of Chlorpyrifos/Cypermethrin with Chlorpyrifos Alone</h3>
                             <p class="collab-meta">Harrison, E., Al Marzan, A., Sayeed, A. A., et al., Eddleston, M., &amp; Chowdhury, F. R. (corresponding) &nbsp;|&nbsp; Prospective multi-centre study across 9 Bangladeshi hospitals, nested within the CCBOC trial infrastructure</p>
-                            <p>This study compared 1,240 laboratory-confirmed cases of acute self-poisoning with a mixed chlorpyrifos/cypermethrin insecticide against chlorpyrifos or cypermethrin alone, drawn from 1,728 patients enrolled and 2,572 screened between December 2020 and April 2024. Mixed-agent poisoning was associated with greater acetylcholinesterase inhibition and a longer hospital stay, though in-hospital mortality and complication rates did not differ significantly from chlorpyrifos alone; overall case fatality in the mixed-poisoning group was 9.7%. The manuscript has been submitted for publication.</p>
+                            <p>This study compared 1,240 laboratory-confirmed cases of acute self-poisoning with a mixed chlorpyrifos/cypermethrin insecticide against chlorpyrifos or cypermethrin alone, drawn from 1,728 patients enrolled and 2,572 screened between December 2020 and April 2024. Mixed-agent poisoning was associated with greater acetylcholinesterase inhibition and a longer hospital stay, though in-hospital mortality and complication rates did not differ significantly from chlorpyrifos alone; overall case fatality in the mixed-poisoning group was 9.7%. The manuscript is being finalized for submission.</p>
                         </div>
                     </div>
                 </div>
@@ -466,5 +466,45 @@
 
     <audio id="click-sound" src="../media/sounds/click-sound.mp3?v=1" preload="auto"></audio>
     <script src="../script.js?v=1" defer></script>
+    <script>
+    (function () {
+        var DURATION = 3000;
+        var statsSection = document.querySelector('.collab-stats-section');
+        if (!statsSection) return;
+        var statEls = statsSection.querySelectorAll('.stat-num');
+
+        function animateCount(el) {
+            var raw = el.textContent.trim();
+            var hasComma = raw.indexOf(',') !== -1;
+            var endVal = parseInt(raw.replace(/,/g, ''), 10);
+            if (isNaN(endVal)) return;
+            var startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var progress = Math.min((timestamp - startTime) / DURATION, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                var current = Math.round(eased * endVal);
+                el.textContent = hasComma ? current.toLocaleString('en-US') : current;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        var played = false;
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting && !played) {
+                    played = true;
+                    statEls.forEach(function (el) { animateCount(el); });
+                    observer.disconnect();
+                }
+            });
+        }, { threshold: 0.4 });
+        observer.observe(statsSection);
+    })();
+    </script>
 </body>
 </html>

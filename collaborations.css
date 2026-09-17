@@ -189,6 +189,7 @@
     line-height: 1.6;
     color: var(--dark-color);
     margin-top: -20px;
+    text-align: center;
 }
 
 /* --- Global collaboration network graphic --- */
