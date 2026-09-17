@@ -311,6 +311,33 @@
     padding-left: 78px;
 }
 
+.collab-group-intro.no-indent {
+    padding-left: 0;
+    margin-top: 8px;
+}
+
+/* --- Published / Ongoing sub-section headings --- */
+.collab-subheading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--dark-color);
+    margin: 34px 0 18px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.collab-subheading:first-of-type { margin-top: 6px; }
+
+.collab-subheading i { font-size: 0.95rem; }
+.collab-subheading.published i { color: #1b7a3d; }
+.collab-subheading.ongoing i { color: #0d47a1; }
+
 /* --- Status badges --- */
 .status-badge {
     display: inline-block;
@@ -443,6 +470,15 @@
 }
 
 .collab-link-btn i { font-size: 0.78rem; }
+
+.collab-list {
+    margin: 14px 0 16px 20px;
+    line-height: 1.85;
+}
+
+.collab-list li { margin-bottom: 6px; }
+
+.collab-group-header .collab-heading .flag-pill i { color: var(--button-default-blue); }
 
 /* --- Closing CTA --- */
 .collab-cta-section {
