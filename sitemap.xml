@@ -27,6 +27,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://marzan.org/collaborations/</loc>
+    <lastmod>2026-09-17</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://marzan.org/ongoing-projects/</loc>
     <lastmod>2025-09-28</lastmod>
     <changefreq>monthly</changefreq>
@@ -48,7 +53,7 @@
   </url>
   <url>
     <loc>https://marzan.org/articles/</loc>
-    <lastmod>2025-09-28</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
